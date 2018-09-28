@@ -1,11 +1,10 @@
 #include "context.hpp"
 #include "window.hpp"
-#include <cstdio>
 #include <iostream>
 
 using namespace vkr;
 
-// Debug callback stuff
+// Debug callback
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugReportFlagsEXT flags,
@@ -16,7 +15,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const char *layerPrefix,
     const char *msg,
     void *userData) {
-  printf("Validation layer: %s\n", msg);
+  std::cerr << "Validation layer: " << msg << "\n";
 
   return VK_FALSE;
 }
@@ -55,8 +54,9 @@ Context::Context(const Window &window) {
 
   this->createDevice();
 
+  this->getDeviceQueues();
+
   // TODO:
-  // this->getDeviceQueues();
   // this->setupMemoryAllocator();
 
   // this->createSyncObjects();
@@ -119,14 +119,12 @@ void Context::createInstance(std::vector<const char *> sdlExtensions) {
 void Context::createDevice() {
   auto physicalDevices = this->instance.enumeratePhysicalDevices();
 
-  // Selected queue indices
-  uint32_t graphicsQueue = UINT32_MAX;
-  uint32_t presentQueue = UINT32_MAX;
-  uint32_t transferQueue = UINT32_MAX;
-
   for (auto physicalDevice : physicalDevices) {
     if (checkPhysicalDeviceProperties(
-            physicalDevice, &graphicsQueue, &presentQueue, &transferQueue)) {
+            physicalDevice,
+            &graphicsQueueFamilyIndex,
+            &presentQueueFamilyIndex,
+            &transferQueueFamilyIndex)) {
       this->physicalDevice = physicalDevice;
       break;
     }
@@ -142,24 +140,24 @@ void Context::createDevice() {
 
   queueCreateInfos.push_back({
       {},
-      graphicsQueue,
+      graphicsQueueFamilyIndex,
       static_cast<uint32_t>(queuePriorities.size()),
       queuePriorities.data(),
   });
 
-  if (presentQueue != graphicsQueue) {
+  if (presentQueueFamilyIndex != graphicsQueueFamilyIndex) {
     queueCreateInfos.push_back({
         {},
-        presentQueue,
+        presentQueueFamilyIndex,
         static_cast<uint32_t>(queuePriorities.size()),
         queuePriorities.data(),
     });
   }
 
-  if (transferQueue != graphicsQueue) {
+  if (transferQueueFamilyIndex != graphicsQueueFamilyIndex) {
     queueCreateInfos.push_back({
         {},
-        transferQueue,
+        transferQueueFamilyIndex,
         static_cast<uint32_t>(queuePriorities.size()),
         queuePriorities.data(),
     });
@@ -189,6 +187,12 @@ void Context::createDevice() {
   this->device = this->physicalDevice.createDevice(deviceCreateInfo);
 }
 
+void Context::getDeviceQueues() {
+  this->device.getQueue(this->graphicsQueueFamilyIndex, 0, &this->graphicsQueue);
+  this->device.getQueue(this->presentQueueFamilyIndex, 0, &this->presentQueue);
+  this->device.getQueue(this->transferQueueFamilyIndex, 0, &this->transferQueue);
+}
+
 // Misc
 
 std::vector<const char *>
@@ -203,11 +207,7 @@ Context::getRequiredExtensions(std::vector<const char *> sdlExtensions) {
 }
 
 bool Context::checkValidationLayerSupport() {
-  uint32_t layerCount;
-  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-  std::vector<VkLayerProperties> availableLayers(layerCount);
-  vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+  auto availableLayers = vk::enumerateInstanceLayerProperties();
 
   for (const char *layerName : REQUIRED_VALIDATION_LAYERS) {
     bool layerFound = false;
@@ -245,9 +245,9 @@ void Context::setupDebugCallback() {
 
 bool Context::checkPhysicalDeviceProperties(
     vk::PhysicalDevice physicalDevice,
-    uint32_t *graphicsQueue,
-    uint32_t *presentQueue,
-    uint32_t *transferQueue) {
+    uint32_t *graphicsQueueFamily,
+    uint32_t *presentQueueFamily,
+    uint32_t *transferQueueFamily) {
   auto availableExtensions =
       physicalDevice.enumerateDeviceExtensionProperties();
 
@@ -308,10 +308,10 @@ bool Context::checkPhysicalDeviceProperties(
 
       if (queuePresentSupport[i]) {
         if (transferQueueFamilyIndex == UINT32_MAX) {
-          *transferQueue = i;
+          *transferQueueFamily = i;
         }
-        *graphicsQueue = i;
-        *presentQueue = i;
+        *graphicsQueueFamily = i;
+        *presentQueueFamily = i;
         return true;
       }
     }
@@ -337,9 +337,9 @@ bool Context::checkPhysicalDeviceProperties(
     return false;
   }
 
-  *graphicsQueue = graphicsQueueFamilyIndex;
-  *presentQueue = presentQueueFamilyIndex;
-  *transferQueue = transferQueueFamilyIndex;
+  *graphicsQueueFamily = graphicsQueueFamilyIndex;
+  *presentQueueFamily = presentQueueFamilyIndex;
+  *transferQueueFamily = transferQueueFamilyIndex;
 
   return true;
 }

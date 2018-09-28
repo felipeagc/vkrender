@@ -29,13 +29,22 @@ private:
   vk::Instance instance;
   vk::SurfaceKHR surface;
 
+  vk::DebugReportCallbackEXT callback;
+
   vk::PhysicalDevice physicalDevice;
   vk::Device device;
 
-  vk::DebugReportCallbackEXT callback;
+  uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
+  uint32_t presentQueueFamilyIndex = UINT32_MAX;
+  uint32_t transferQueueFamilyIndex = UINT32_MAX;
+
+  vk::Queue graphicsQueue;
+  vk::Queue presentQueue;
+  vk::Queue transferQueue;
 
   void createInstance(std::vector<const char *> sdlExtensions);
   void createDevice();
+  void getDeviceQueues();
 
   std::vector<const char *>
   getRequiredExtensions(std::vector<const char *> sdlExtensions);

@@ -23,6 +23,8 @@ target_include_directories(
 target_link_libraries(
   vkrender
   PUBLIC
+  vma
+  stb_image
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
   )
