@@ -46,17 +46,17 @@ private:
   vk::Queue transferQueue;
 
   struct FrameResources {
-    VkImage depthImage;
+    vk::Image depthImage;
     VmaAllocation depthImageAllocation;
-    VkImageView depthImageView;
+    vk::ImageView depthImageView;
 
-    VkSemaphore imageAvailableSemaphore{VK_NULL_HANDLE};
-    VkSemaphore renderingFinishedSemaphore{VK_NULL_HANDLE};
-    VkFence fence{VK_NULL_HANDLE};
+    vk::Semaphore imageAvailableSemaphore;
+    vk::Semaphore renderingFinishedSemaphore;
+    vk::Fence fence;
 
-    VkFramebuffer framebuffer{VK_NULL_HANDLE};
+    vk::Framebuffer framebuffer;
 
-    VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
+    vk::CommandBuffer commandBuffer;
   };
 
   std::vector<FrameResources> frameResources{MAX_FRAMES_IN_FLIGHT};
@@ -67,12 +67,23 @@ private:
   std::vector<vk::Image> swapchainImages;
   std::vector<vk::ImageView> swapchainImageViews;
 
+  vk::CommandPool graphicsCommandPool;
+  vk::CommandPool transientCommandPool;
+
   void createInstance(std::vector<const char *> sdlExtensions);
   void createDevice();
   void getDeviceQueues();
+
   void createSyncObjects();
+
   void createSwapchain(uint32_t width, uint32_t height);
   void createSwapchainImageViews();
+
+  void createGraphicsCommandPool();
+  void createTransientCommandPool();
+
+  void allocateGraphicsCommandBuffers();
+
 
   std::vector<const char *>
   getRequiredExtensions(std::vector<const char *> sdlExtensions);

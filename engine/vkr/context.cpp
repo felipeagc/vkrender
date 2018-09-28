@@ -63,9 +63,9 @@ Context::Context(const Window &window) {
   this->createSwapchain(window.getWidth(), window.getHeight());
   this->createSwapchainImageViews();
 
-  // this->createGraphicsCommandPool();
-  // this->createTransientCommandPool();
-  // this->allocateGraphicsCommandBuffers();
+  this->createGraphicsCommandPool();
+  this->createTransientCommandPool();
+  this->allocateGraphicsCommandBuffers();
 
   // this->createDepthResources();
 
@@ -73,6 +73,9 @@ Context::Context(const Window &window) {
 }
 
 Context::~Context() {
+  this->device.destroy(transientCommandPool);
+  this->device.destroy(graphicsCommandPool);
+
   for (auto &swapchainImageView : this->swapchainImageViews) {
     this->device.destroy(swapchainImageView);
   }
@@ -287,6 +290,29 @@ void Context::createSwapchainImageViews() {
         {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
 
     this->swapchainImageViews[i] = this->device.createImageView(createInfo);
+  }
+}
+
+void Context::createGraphicsCommandPool() {
+  this->graphicsCommandPool = this->device.createCommandPool(
+      {vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+       this->graphicsQueueFamilyIndex});
+}
+
+void Context::createTransientCommandPool() {
+  this->transientCommandPool =
+      this->device.createCommandPool({vk::CommandPoolCreateFlagBits::eTransient,
+                                      this->graphicsQueueFamilyIndex});
+}
+
+void Context::allocateGraphicsCommandBuffers() {
+  auto commandBuffers =
+      this->device.allocateCommandBuffers({this->graphicsCommandPool,
+                                           vk::CommandBufferLevel::ePrimary,
+                                           MAX_FRAMES_IN_FLIGHT});
+
+  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    this->frameResources[i].commandBuffer = commandBuffers[i];
   }
 }
 
