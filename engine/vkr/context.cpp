@@ -69,10 +69,12 @@ Context::Context(const Window &window) {
 
   this->createDepthResources();
 
-  // this->createRenderPass();
+  this->createRenderPass();
 }
 
 Context::~Context() {
+  this->device.destroy(this->renderPass);
+
   for (auto &frameResource : this->frameResources) {
     this->device.destroy(frameResource.depthImageView);
     vmaDestroyImage(this->allocator, frameResource.depthImage, frameResource.depthImageAllocation);
@@ -394,6 +396,87 @@ void Context::createDepthResources() {
     resources.depthImageView =
         this->device.createImageView(imageViewCreateInfo);
   }
+}
+
+void Context::createRenderPass() {
+  std::array<vk::AttachmentDescription, 2> attachmentDescriptions{
+      vk::AttachmentDescription{
+          {},                               // flags
+          this->swapchainImageFormat,       // format
+          vk::SampleCountFlagBits::e1,      // samples
+          vk::AttachmentLoadOp::eClear,     // loadOp
+          vk::AttachmentStoreOp::eStore,    // storeOp
+          vk::AttachmentLoadOp::eDontCare,  // stencilLoadOp
+          vk::AttachmentStoreOp::eDontCare, // stencilStoreOp
+          vk::ImageLayout::eUndefined,      // initialLayout
+          vk::ImageLayout::ePresentSrcKHR,  // finalLayout (TODO: maybe change
+                                            // this?)
+      },
+      vk::AttachmentDescription{
+          {},                                            // flags
+          this->depthImageFormat,                        // format
+          vk::SampleCountFlagBits::e1,                   // samples
+          vk::AttachmentLoadOp::eClear,                  // loadOp
+          vk::AttachmentStoreOp::eStore,                 // storeOp
+          vk::AttachmentLoadOp::eDontCare,               // stencilLoadOp
+          vk::AttachmentStoreOp::eDontCare,              // stencilStoreOp
+          vk::ImageLayout::eUndefined,                   // initialLayout
+          vk::ImageLayout::eDepthStencilReadOnlyOptimal, // finalLayout
+      },
+  };
+
+  std::array<vk::AttachmentReference, 1> colorAttachmentReferences{
+      vk::AttachmentReference{
+          0,                                        // attachment
+          vk::ImageLayout::eColorAttachmentOptimal, // layout
+      },
+  };
+
+  std::array<vk::AttachmentReference, 1> depthAttachmentReferences{
+      vk::AttachmentReference{
+          1,                                               // attachment
+          vk::ImageLayout::eDepthStencilAttachmentOptimal, // layout
+      },
+  };
+
+  std::array<vk::SubpassDescription, 1> subpassDescriptions{
+      vk::SubpassDescription{
+          {},                               // flags
+          vk::PipelineBindPoint::eGraphics, // pipelineBindPoint
+          0,                                // inputAttachmentCount
+          nullptr,                          // pInputAttachments
+          1,                                // colorAttachmentCount
+          colorAttachmentReferences.data(), // pColorAttachments
+          nullptr,                          // pResolveAttachments
+          depthAttachmentReferences.data(), // pDepthStencilAttachment
+          0,                                // preserveAttachmentCount
+          nullptr,                          // pPreserveAttachments
+      },
+  };
+
+  std::array<vk::SubpassDependency, 1> dependencies{
+      vk::SubpassDependency{
+          0,                                                 // srcSubpass
+          VK_SUBPASS_EXTERNAL,                               // dstSubpass
+          vk::PipelineStageFlagBits::eColorAttachmentOutput, // srcStageMask
+          vk::PipelineStageFlagBits::eFragmentShader,        // dstStageMask
+          vk::AccessFlagBits::eColorAttachmentWrite,         // srcAccessMask
+          vk::AccessFlagBits::eShaderRead,                   // dstAccessMask
+          {},                                                // dependencyFlags
+      },
+  };
+
+  vk::RenderPassCreateInfo renderPassCreateInfo{
+      {},                                                   // flags
+      static_cast<uint32_t>(attachmentDescriptions.size()), // attachmentCount
+      attachmentDescriptions.data(),                        // pAttachments
+      1,                                                    // subpassCount
+      subpassDescriptions.data(),                           // pSubpasses
+      static_cast<uint32_t>(dependencies.size()),           // dependencyCount
+      dependencies.data(),                                  // pDependencies
+  };
+
+  this->renderPass = this->device.createRenderPass(renderPassCreateInfo);
 }
 
 // Misc

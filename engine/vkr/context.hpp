@@ -74,6 +74,8 @@ private:
   vk::CommandPool graphicsCommandPool;
   vk::CommandPool transientCommandPool;
 
+  vk::RenderPass renderPass;
+
   void createInstance(std::vector<const char *> sdlExtensions);
   void createDevice();
   void getDeviceQueues();
@@ -90,6 +92,8 @@ private:
   void allocateGraphicsCommandBuffers();
 
   void createDepthResources();
+
+  void createRenderPass();
 
 
   std::vector<const char *>
