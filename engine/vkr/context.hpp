@@ -45,6 +45,10 @@ private:
   vk::Queue presentQueue;
   vk::Queue transferQueue;
 
+  VmaAllocator allocator;
+
+  vk::Format depthImageFormat;
+
   struct FrameResources {
     vk::Image depthImage;
     VmaAllocation depthImageAllocation;
@@ -74,6 +78,8 @@ private:
   void createDevice();
   void getDeviceQueues();
 
+  void setupMemoryAllocator();
+
   void createSyncObjects();
 
   void createSwapchain(uint32_t width, uint32_t height);
@@ -81,8 +87,9 @@ private:
 
   void createGraphicsCommandPool();
   void createTransientCommandPool();
-
   void allocateGraphicsCommandBuffers();
+
+  void createDepthResources();
 
 
   std::vector<const char *>

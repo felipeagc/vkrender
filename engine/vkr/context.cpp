@@ -56,7 +56,7 @@ Context::Context(const Window &window) {
 
   this->getDeviceQueues();
 
-  // this->setupMemoryAllocator();
+  this->setupMemoryAllocator();
 
   this->createSyncObjects();
 
@@ -67,12 +67,17 @@ Context::Context(const Window &window) {
   this->createTransientCommandPool();
   this->allocateGraphicsCommandBuffers();
 
-  // this->createDepthResources();
+  this->createDepthResources();
 
   // this->createRenderPass();
 }
 
 Context::~Context() {
+  for (auto &frameResource : this->frameResources) {
+    this->device.destroy(frameResource.depthImageView);
+    vmaDestroyImage(this->allocator, frameResource.depthImage, frameResource.depthImageAllocation);
+  }
+
   this->device.destroy(transientCommandPool);
   this->device.destroy(graphicsCommandPool);
 
@@ -86,6 +91,10 @@ Context::~Context() {
     this->device.destroy(frameResource.imageAvailableSemaphore);
     this->device.destroy(frameResource.renderingFinishedSemaphore);
     this->device.destroy(frameResource.fence);
+  }
+
+  if (this->allocator != VK_NULL_HANDLE) {
+    vmaDestroyAllocator(this->allocator);
   }
 
   this->device.destroy();
@@ -208,6 +217,15 @@ void Context::getDeviceQueues() {
   this->device.getQueue(this->transferQueueFamilyIndex, 0, &this->transferQueue);
 }
 
+void Context::setupMemoryAllocator() {
+    VmaAllocatorCreateInfo allocatorInfo = {
+      .physicalDevice = this->physicalDevice,
+      .device = this->device,
+  };
+
+  vmaCreateAllocator(&allocatorInfo, &this->allocator);
+}
+
 void Context::createSyncObjects() {
   for (auto &resources : this->frameResources) {
     resources.imageAvailableSemaphore =
@@ -313,6 +331,68 @@ void Context::allocateGraphicsCommandBuffers() {
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     this->frameResources[i].commandBuffer = commandBuffers[i];
+  }
+}
+
+void Context::createDepthResources() {
+  for (auto &resources : this->frameResources) {
+    this->depthImageFormat = vk::Format::eD16Unorm; // TODO: change this?
+    vk::ImageCreateInfo imageCreateInfo{
+        {},
+        vk::ImageType::e2D,
+        this->depthImageFormat,
+        {
+            this->swapchainExtent.width,
+            this->swapchainExtent.height,
+            1,
+        },
+        1,
+        1,
+        vk::SampleCountFlagBits::e1,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment |
+            vk::ImageUsageFlagBits::eSampled,
+        vk::SharingMode::eExclusive,
+        0,
+        nullptr,
+        vk::ImageLayout::eUndefined,
+    };
+
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    if (vmaCreateImage(
+            this->allocator,
+            reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
+            &allocInfo,
+            reinterpret_cast<VkImage *>(&resources.depthImage),
+            &resources.depthImageAllocation,
+            nullptr) != VK_SUCCESS) {
+      throw std::runtime_error("Failed to create one of the depth images");
+    }
+
+    vk::ImageViewCreateInfo imageViewCreateInfo{
+        {},
+        resources.depthImage,
+        vk::ImageViewType::e2D,
+        this->depthImageFormat,
+        {
+            vk::ComponentSwizzle::eIdentity, // r
+            vk::ComponentSwizzle::eIdentity, // g
+            vk::ComponentSwizzle::eIdentity, // b
+            vk::ComponentSwizzle::eIdentity, // a
+        },                                   // components
+        {
+            vk::ImageAspectFlagBits::eDepth, // aspectMask
+            0,                               // baseMipLevel
+            1,                               // levelCount
+            0,                               // baseArrayLayer
+            1,                               // layerCount
+        },                                   // subresourceRange
+    };
+
+    resources.depthImageView =
+        this->device.createImageView(imageViewCreateInfo);
   }
 }
 
