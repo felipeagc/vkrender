@@ -26,6 +26,18 @@ SDL_Event Window::pollEvent() {
   return event;
 }
 
+uint32_t Window::getWidth() const {
+  int width;
+  SDL_GetWindowSize(this->window, &width, nullptr);
+  return static_cast<uint32_t>(width);
+}
+
+uint32_t Window::getHeight() const {
+  int height;
+  SDL_GetWindowSize(this->window, nullptr, &height);
+  return static_cast<uint32_t>(height);
+}
+
 std::vector<const char *> Window::getVulkanExtensions() const {
   uint32_t sdlExtensionCount = 0;
   SDL_Vulkan_GetInstanceExtensions(this->window, &sdlExtensionCount, nullptr);

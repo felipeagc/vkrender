@@ -56,13 +56,12 @@ Context::Context(const Window &window) {
 
   this->getDeviceQueues();
 
-  // TODO:
   // this->setupMemoryAllocator();
 
-  // this->createSyncObjects();
+  this->createSyncObjects();
 
-  // this->createSwapchain(window->getWidth(), window->getHeight());
-  // this->createSwapchainImageViews();
+  this->createSwapchain(window.getWidth(), window.getHeight());
+  this->createSwapchainImageViews();
 
   // this->createGraphicsCommandPool();
   // this->createTransientCommandPool();
@@ -74,7 +73,20 @@ Context::Context(const Window &window) {
 }
 
 Context::~Context() {
+  for (auto &swapchainImageView : this->swapchainImageViews) {
+    this->device.destroy(swapchainImageView);
+  }
+
+  this->device.destroy(this->swapchain);
+
+  for (auto &frameResource : this->frameResources) {
+    this->device.destroy(frameResource.imageAvailableSemaphore);
+    this->device.destroy(frameResource.renderingFinishedSemaphore);
+    this->device.destroy(frameResource.fence);
+  }
+
   this->device.destroy();
+
   instance.destroy(this->surface);
 
   if (this->callback) {
@@ -191,6 +203,91 @@ void Context::getDeviceQueues() {
   this->device.getQueue(this->graphicsQueueFamilyIndex, 0, &this->graphicsQueue);
   this->device.getQueue(this->presentQueueFamilyIndex, 0, &this->presentQueue);
   this->device.getQueue(this->transferQueueFamilyIndex, 0, &this->transferQueue);
+}
+
+void Context::createSyncObjects() {
+  for (auto &resources : this->frameResources) {
+    resources.imageAvailableSemaphore =
+      this->device.createSemaphore({});
+    resources.renderingFinishedSemaphore =
+      this->device.createSemaphore({});
+    resources.fence = this->device.createFence({vk::FenceCreateFlagBits::eSignaled});
+  }
+}
+
+void Context::createSwapchain(uint32_t width, uint32_t height) {
+  for (const auto &imageView : this->swapchainImageViews) {
+    if (imageView) {
+      this->device.destroy(imageView);
+    }
+  }
+  this->swapchainImageViews.clear();
+
+  auto surfaceCapabilities = this->physicalDevice.getSurfaceCapabilitiesKHR(this->surface);
+  auto surfaceFormats = this->physicalDevice.getSurfaceFormatsKHR(this->surface);
+  auto presentModes = this->physicalDevice.getSurfacePresentModesKHR(this->surface);
+
+  auto desiredNumImages = getSwapchainNumImages(surfaceCapabilities);
+  auto desiredFormat = getSwapchainFormat(surfaceFormats);
+  auto desiredExtent =
+      getSwapchainExtent(width, height, surfaceCapabilities);
+  auto desiredUsage = getSwapchainUsageFlags(surfaceCapabilities);
+  auto desiredTransform =
+      getSwapchainTransform(surfaceCapabilities);
+  auto desiredPresentMode = getSwapchainPresentMode(presentModes);
+
+  vk::SwapchainKHR oldSwapchain = this->swapchain;
+
+  vk::SwapchainCreateInfoKHR createInfo{
+    {}, // flags
+    this->surface,
+    desiredNumImages, // minImageCount
+    desiredFormat.format, // imageFormat
+    desiredFormat.colorSpace, // imageColorSpace
+    desiredExtent, // imageExtent
+    1, // imageArrayLayers
+    desiredUsage, // imageUsage
+    vk::SharingMode::eExclusive, // imageSharingMode
+    0, // queueFamilyIndexCount
+    nullptr, // pQueueFamiylIndices
+    desiredTransform, // preTransform
+    vk::CompositeAlphaFlagBitsKHR::eOpaque, // compositeAlpha
+    desiredPresentMode, // presentMode
+    VK_TRUE, // clipped
+    oldSwapchain // oldSwapchain
+  };
+
+  this->swapchain = this->device.createSwapchainKHR(createInfo);
+
+  if (oldSwapchain) {
+    this->device.destroy(oldSwapchain);
+  }
+
+  this->swapchainImageFormat = desiredFormat.format;
+  this->swapchainExtent = desiredExtent;
+
+  this->swapchainImages = this->device.getSwapchainImagesKHR(this->swapchain);
+}
+
+void Context::createSwapchainImageViews() {
+  this->swapchainImageViews.resize(this->swapchainImages.size());
+
+  for (size_t i = 0; i < swapchainImages.size(); i++) {
+    vk::ImageViewCreateInfo createInfo{
+        {},
+        this->swapchainImages[i],
+        vk::ImageViewType::e2D,
+        this->swapchainImageFormat,
+        {
+            vk::ComponentSwizzle::eIdentity, // r
+            vk::ComponentSwizzle::eIdentity, // g
+            vk::ComponentSwizzle::eIdentity, // b
+            vk::ComponentSwizzle::eIdentity, // a
+        },
+        {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+
+    this->swapchainImageViews[i] = this->device.createImageView(createInfo);
+  }
 }
 
 // Misc
@@ -342,4 +439,145 @@ bool Context::checkPhysicalDeviceProperties(
   *transferQueueFamily = transferQueueFamilyIndex;
 
   return true;
+}
+
+// Swapchain misc functions
+
+uint32_t Context::getSwapchainNumImages(
+    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+  uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
+
+  if (surfaceCapabilities.maxImageCount > 0 &&
+      imageCount > surfaceCapabilities.maxImageCount) {
+    imageCount = surfaceCapabilities.maxImageCount;
+  }
+
+  return imageCount;
+}
+
+vk::SurfaceFormatKHR
+Context::getSwapchainFormat(const std::vector<vk::SurfaceFormatKHR> &formats) {
+  if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined) {
+    return {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear};
+  }
+
+  for (const auto &format : formats) {
+    if (format.format == vk::Format::eR8G8B8A8Unorm) {
+      return format;
+    }
+  }
+
+  return formats[0];
+}
+
+vk::Extent2D Context::getSwapchainExtent(
+    uint32_t width,
+    uint32_t height,
+    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+  if (surfaceCapabilities.currentExtent.width == static_cast<uint32_t>(-1)) {
+    VkExtent2D swapchainExtent = {width, height};
+    if (swapchainExtent.width < surfaceCapabilities.minImageExtent.width) {
+      swapchainExtent.width = surfaceCapabilities.minImageExtent.width;
+    }
+
+    if (swapchainExtent.height < surfaceCapabilities.minImageExtent.height) {
+      swapchainExtent.height = surfaceCapabilities.minImageExtent.height;
+    }
+
+    if (swapchainExtent.width > surfaceCapabilities.maxImageExtent.width) {
+      swapchainExtent.width = surfaceCapabilities.maxImageExtent.width;
+    }
+
+    if (swapchainExtent.height > surfaceCapabilities.maxImageExtent.height) {
+      swapchainExtent.height = surfaceCapabilities.maxImageExtent.height;
+    }
+
+    return swapchainExtent;
+  }
+
+  return surfaceCapabilities.currentExtent;
+}
+
+vk::ImageUsageFlags Context::getSwapchainUsageFlags(
+    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+  if (surfaceCapabilities.supportedUsageFlags &
+      vk::ImageUsageFlagBits::eTransferDst) {
+    return vk::ImageUsageFlagBits::eColorAttachment |
+           vk::ImageUsageFlagBits::eTransferDst;
+  }
+  std::cout << "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by "
+               "the swap chain!"
+            << std::endl
+            << "Supported swap chain's image usages include:" << std::endl
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eTransferSrc
+                    ? "    vk::ImageUsageFlagBits::TRANSFER_SRC\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eTransferDst
+                    ? "    vk::ImageUsageFlagBits::TRANSFER_DST\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eSampled
+                    ? "    vk::ImageUsageFlagBits::SAMPLED\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eStorage
+                    ? "    vk::ImageUsageFlagBits::STORAGE\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eColorAttachment
+                    ? "    vk::ImageUsageFlagBits::COLOR_ATTACHMENT\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eDepthStencilAttachment
+                    ? "    vk::ImageUsageFlagBits::DEPTH_STENCIL_ATTACHMENT\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eTransientAttachment
+                    ? "    vk::ImageUsageFlagBits::TRANSIENT_ATTACHMENT\n"
+                    : "")
+            << (surfaceCapabilities.supportedUsageFlags &
+                        vk::ImageUsageFlagBits::eInputAttachment
+                    ? "    vk::ImageUsageFlagBits::INPUT_ATTACHMENT"
+                    : "")
+            << std::endl;
+
+  return static_cast<vk::ImageUsageFlags>(-1);
+}
+
+vk::SurfaceTransformFlagBitsKHR Context::getSwapchainTransform(
+    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+  if (surfaceCapabilities.supportedTransforms &
+      vk::SurfaceTransformFlagBitsKHR::eIdentity) {
+    return vk::SurfaceTransformFlagBitsKHR::eIdentity;
+  } else {
+    return surfaceCapabilities.currentTransform;
+  }
+}
+
+vk::PresentModeKHR Context::getSwapchainPresentMode(
+    const std::vector<vk::PresentModeKHR> &presentModes) {
+  for (const auto &presentMode : presentModes) {
+    if (presentMode == vk::PresentModeKHR::eImmediate) {
+      return presentMode;
+    }
+  }
+
+  for (const auto &presentMode : presentModes) {
+    if (presentMode == vk::PresentModeKHR::eMailbox) {
+      return presentMode;
+    }
+  }
+
+  for (const auto &presentMode : presentModes) {
+    if (presentMode == vk::PresentModeKHR::eFifo) {
+      return presentMode;
+    }
+  }
+
+  std::cout << "FIFO present mode is not supported by the swap chain!"
+            << std::endl;
+
+  return static_cast<vk::PresentModeKHR>(-1);
 }

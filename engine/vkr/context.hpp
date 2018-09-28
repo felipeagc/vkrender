@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
 namespace vkr {
@@ -17,6 +18,8 @@ const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {
 const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
+
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Context {
 public:
@@ -42,9 +45,34 @@ private:
   vk::Queue presentQueue;
   vk::Queue transferQueue;
 
+  struct FrameResources {
+    VkImage depthImage;
+    VmaAllocation depthImageAllocation;
+    VkImageView depthImageView;
+
+    VkSemaphore imageAvailableSemaphore{VK_NULL_HANDLE};
+    VkSemaphore renderingFinishedSemaphore{VK_NULL_HANDLE};
+    VkFence fence{VK_NULL_HANDLE};
+
+    VkFramebuffer framebuffer{VK_NULL_HANDLE};
+
+    VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
+  };
+
+  std::vector<FrameResources> frameResources{MAX_FRAMES_IN_FLIGHT};
+
+  vk::SwapchainKHR swapchain;
+  vk::Format swapchainImageFormat;
+  vk::Extent2D swapchainExtent;
+  std::vector<vk::Image> swapchainImages;
+  std::vector<vk::ImageView> swapchainImageViews;
+
   void createInstance(std::vector<const char *> sdlExtensions);
   void createDevice();
   void getDeviceQueues();
+  void createSyncObjects();
+  void createSwapchain(uint32_t width, uint32_t height);
+  void createSwapchainImageViews();
 
   std::vector<const char *>
   getRequiredExtensions(std::vector<const char *> sdlExtensions);
@@ -55,5 +83,20 @@ private:
       uint32_t *graphicsQueue,
       uint32_t *presentQueue,
       uint32_t *transferQueue);
+
+  uint32_t
+  getSwapchainNumImages(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
+  vk::SurfaceFormatKHR
+  getSwapchainFormat(const std::vector<vk::SurfaceFormatKHR> &formats);
+  vk::Extent2D getSwapchainExtent(
+      uint32_t width,
+      uint32_t height,
+      const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
+  vk::ImageUsageFlags
+  getSwapchainUsageFlags(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
+  vk::SurfaceTransformFlagBitsKHR
+  getSwapchainTransform(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
+  vk::PresentModeKHR
+  getSwapchainPresentMode(const std::vector<vk::PresentModeKHR> &presentModes);
 };
 } // namespace vkr

@@ -14,6 +14,9 @@ public:
 
   SDL_Event pollEvent();
 
+  uint32_t getWidth() const;
+  uint32_t getHeight() const;
+
   std::vector<const char *> getVulkanExtensions() const;
   vk::SurfaceKHR createVulkanSurface(vk::Instance instance) const;
 
