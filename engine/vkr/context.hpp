@@ -28,7 +28,15 @@ public:
   Context(const Context &other) = delete;
   Context &operator=(Context other) = delete;
 
+  void beginRenderPass();
+  void endRenderPass();
+  void present();
+
+  void updateSize(uint32_t width, uint32_t height);
+
 private:
+  const Window &window;
+
   vk::Instance instance;
   vk::SurfaceKHR surface;
 
@@ -65,6 +73,11 @@ private:
 
   std::vector<FrameResources> frameResources{MAX_FRAMES_IN_FLIGHT};
 
+  // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
+  int currentFrame = 0;
+  // Index of the current swapchain image
+  uint32_t currentImageIndex;
+
   vk::SwapchainKHR swapchain;
   vk::Format swapchainImageFormat;
   vk::Extent2D swapchainExtent;
@@ -95,6 +108,12 @@ private:
 
   void createRenderPass();
 
+  void regenFramebuffer(
+      vk::Framebuffer &framebuffer,
+      vk::ImageView colorImageView,
+      vk::ImageView depthImageView);
+
+  void destroyResizables();
 
   std::vector<const char *>
   getRequiredExtensions(std::vector<const char *> sdlExtensions);

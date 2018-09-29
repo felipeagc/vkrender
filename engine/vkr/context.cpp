@@ -45,7 +45,7 @@ void DestroyDebugReportCallbackEXT(
   }
 }
 
-Context::Context(const Window &window) {
+Context::Context(const Window &window): window(window) {
   this->createInstance(window.getVulkanExtensions());
 #ifndef NDEBUG
   this->setupDebugCallback();
@@ -73,12 +73,9 @@ Context::Context(const Window &window) {
 }
 
 Context::~Context() {
-  this->device.destroy(this->renderPass);
+  this->device.waitIdle();
 
-  for (auto &frameResource : this->frameResources) {
-    this->device.destroy(frameResource.depthImageView);
-    vmaDestroyImage(this->allocator, frameResource.depthImage, frameResource.depthImageAllocation);
-  }
+  this->destroyResizables();
 
   this->device.destroy(transientCommandPool);
   this->device.destroy(graphicsCommandPool);
@@ -90,6 +87,7 @@ Context::~Context() {
   this->device.destroy(this->swapchain);
 
   for (auto &frameResource : this->frameResources) {
+    this->device.destroy(frameResource.framebuffer);
     this->device.destroy(frameResource.imageAvailableSemaphore);
     this->device.destroy(frameResource.renderingFinishedSemaphore);
     this->device.destroy(frameResource.fence);
@@ -109,6 +107,182 @@ Context::~Context() {
 
   instance.destroy();
 }
+
+
+void Context::beginRenderPass() {
+  this->device.waitForFences(this->frameResources[this->currentFrame].fence, VK_TRUE, UINT64_MAX);
+
+  this->device.resetFences(this->frameResources[this->currentFrame].fence);
+
+  try {
+    this->device.acquireNextImageKHR(
+        this->swapchain,
+        UINT64_MAX,
+        this->frameResources[this->currentFrame].imageAvailableSemaphore,
+        {},
+        &this->currentImageIndex);
+  } catch (const vk::OutOfDateKHRError &e) {
+    this->updateSize(this->window.getWidth(), this->window.getHeight());
+  }
+
+  vk::ImageSubresourceRange imageSubresourceRange{
+      vk::ImageAspectFlagBits::eColor, // aspectMask
+      0,                               // baseMipLevel
+      1,                               // levelCount
+      0,                               // baseArrayLayer
+      1,                               // layerCount
+  };
+
+  this->regenFramebuffer(
+      this->frameResources[this->currentFrame].framebuffer,
+      this->swapchainImageViews[this->currentImageIndex],
+      this->frameResources[this->currentFrame].depthImageView);
+
+  vk::CommandBufferBeginInfo beginInfo{
+      vk::CommandBufferUsageFlagBits::eSimultaneousUse, // flags
+      nullptr,                                          // pInheritanceInfo
+  };
+
+  this->frameResources[this->currentFrame].commandBuffer.begin(beginInfo);
+
+  if (this->presentQueue != this->graphicsQueue) {
+    vk::ImageMemoryBarrier barrierFromPresentToDraw = {
+        vk::AccessFlagBits::eMemoryRead,   // srcAccessMask
+        vk::AccessFlagBits::eMemoryRead,   // dstAccessMask
+        vk::ImageLayout::eUndefined,       // oldLayout
+        vk::ImageLayout::ePresentSrcKHR,   // newLayout
+        this->presentQueueFamilyIndex,     // srcQueueFamilyIndex
+        this->graphicsQueueFamilyIndex,    // dstQueueFamilyIndex
+        this->swapchainImages[this->currentImageIndex], // image
+        imageSubresourceRange,             // subresourceRange
+    };
+
+    this->frameResources[this->currentFrame].commandBuffer.pipelineBarrier(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        {},
+        {},
+        {},
+        barrierFromPresentToDraw);
+    }
+
+    std::array<vk::ClearValue, 2> clearValues{
+        vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+        vk::ClearValue{{1.0f, 0}},
+    };
+
+    vk::RenderPassBeginInfo renderPassBeginInfo{
+      this->renderPass, // renderPass
+      this->frameResources[this->currentFrame].framebuffer, // framebuffer
+      {{0, 0}, this->swapchainExtent}, // renderArea
+      static_cast<uint32_t>(clearValues.size()), // clearValueCount
+      clearValues.data(), // pClearValues
+    };
+
+    this->frameResources[this->currentFrame].commandBuffer.beginRenderPass(
+        renderPassBeginInfo, vk::SubpassContents::eInline);
+
+    vk::Viewport viewport{
+      0.0f, // x
+      0.0f, // y
+      static_cast<float>(this->swapchainExtent.width), // width
+      static_cast<float>(this->swapchainExtent.height), // height
+      0.0f, // minDepth
+      1.0f, // maxDepth
+    };
+
+    vk::Rect2D scissor{{0, 0}, this->swapchainExtent};
+    this->frameResources[this->currentFrame].commandBuffer.setViewport(0, viewport);
+
+    this->frameResources[this->currentFrame].commandBuffer.setScissor(0, scissor);
+}
+
+void Context::endRenderPass() {
+  this->frameResources[this->currentFrame].commandBuffer.endRenderPass();
+
+  vk::ImageSubresourceRange imageSubresourceRange{
+      vk::ImageAspectFlagBits::eColor, // aspectMask
+      0,                               // baseMipLevel
+      1,                               // levelCount
+      0,                               // baseArrayLayer
+      1,                               // layerCount
+  };
+
+  if (this->presentQueue != this->graphicsQueue) {
+    vk::ImageMemoryBarrier barrierFromDrawToPresent{
+        vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
+        vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
+        vk::ImageLayout::ePresentSrcKHR,                // oldLayout
+        vk::ImageLayout::ePresentSrcKHR,                // newLayout
+        this->graphicsQueueFamilyIndex,                 // srcQueueFamilyIndex
+        this->presentQueueFamilyIndex,                  // dstQueueFamilyIndex
+        this->swapchainImages[this->currentImageIndex], // image
+        imageSubresourceRange,                          // subresourceRange
+    };
+
+    this->frameResources[this->currentFrame].commandBuffer.pipelineBarrier(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput, // srcStageMask
+        vk::PipelineStageFlagBits::eBottomOfPipe,          // dstStageMask
+        {},                                                // dependencyFlags
+        nullptr,                                           // memoryBarriers
+        nullptr,                 // bufferMemoryBarriers
+        barrierFromDrawToPresent // imageMemoryBarriers
+    );
+  }
+
+  this->frameResources[this->currentFrame].commandBuffer.end();
+}
+
+void Context::present() {
+  vk::PipelineStageFlags waitDstStageMask =
+    vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+  vk::SubmitInfo submitInfo = {
+      1, // waitSemaphoreCount
+      &this->frameResources[this->currentFrame]
+           .imageAvailableSemaphore, // pWaitSemaphores
+      &waitDstStageMask,             // pWaitDstStageMask
+      1,                             // commandBufferCount
+      &this->frameResources[this->currentFrame]
+           .commandBuffer, // pCommandBuffers
+      1,                   // signalSemaphoreCount
+      &this->frameResources[this->currentFrame]
+           .renderingFinishedSemaphore, // pSignalSemaphores
+  };
+
+  this->graphicsQueue.submit(
+      submitInfo, this->frameResources[this->currentFrame].fence);
+
+  vk::PresentInfoKHR presentInfo{
+    1, // waitSemaphoreCount
+      &this->frameResources[this->currentFrame].renderingFinishedSemaphore, // pWaitSemaphores
+      1, // swapchainCount
+      &this->swapchain, // pSwapchains
+      &this->currentImageIndex, // pImageIndices
+      nullptr, // pResults
+  };
+
+  try {
+    this->presentQueue.presentKHR(presentInfo);
+  } catch(const vk::OutOfDateKHRError &e) {
+    this->updateSize(this->window.getWidth(), this->window.getHeight());
+  }
+
+  this->currentFrame = (this->currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Context::updateSize(uint32_t width, uint32_t height) {
+  this->device.waitIdle();
+
+  this->destroyResizables();
+
+  this->createSwapchain(this->window.getWidth(), this->window.getHeight());
+  this->createSwapchainImageViews();
+  this->createDepthResources();
+  this->createRenderPass();
+  this->allocateGraphicsCommandBuffers();
+}
+
 
 void Context::createInstance(std::vector<const char *> sdlExtensions) {
 #ifndef NDEBUG
@@ -478,6 +652,52 @@ void Context::createRenderPass() {
 
   this->renderPass = this->device.createRenderPass(renderPassCreateInfo);
 }
+
+
+void Context::regenFramebuffer(
+    vk::Framebuffer &framebuffer,
+    vk::ImageView colorImageView,
+    vk::ImageView depthImageView) {
+  this->device.destroy(framebuffer);
+
+  std::array<vk::ImageView, 2> attachments{
+      colorImageView,
+      depthImageView,
+  };
+
+  vk::FramebufferCreateInfo createInfo = {
+    {}, // flags
+    this->renderPass, // renderPass
+    static_cast<uint32_t>(attachments.size()), // attachmentCount
+    attachments.data(), // pAttachments
+    this->swapchainExtent.width, // width
+    this->swapchainExtent.height, // height
+    1, // layers
+  };
+
+  framebuffer = this->device.createFramebuffer(createInfo);
+}
+
+void Context::destroyResizables() {
+  this->device.waitIdle();
+
+  for (auto &resources : this->frameResources) {
+    this->device.freeCommandBuffers(this->graphicsCommandPool, resources.commandBuffer);
+
+    if (resources.depthImage) {
+      this->device.destroy(resources.depthImageView);
+      vmaDestroyImage(
+          this->allocator,
+          resources.depthImage,
+          resources.depthImageAllocation);
+      resources.depthImage = nullptr;
+      resources.depthImageAllocation = VK_NULL_HANDLE;
+    }
+  }
+
+  this->device.destroy(this->renderPass);
+}
+
 
 // Misc
 
