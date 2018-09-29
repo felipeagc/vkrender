@@ -7,6 +7,7 @@ set(
   VKRENDER_SOURCES
   vkr/context.cpp
   vkr/window.cpp
+  vkr/pipeline.cpp
   )
 
 add_library(vkrender ${VKRENDER_SOURCES})

@@ -109,7 +109,8 @@ Context::~Context() {
 }
 
 
-void Context::beginRenderPass() {
+void Context::present(std::function<void(vk::CommandBuffer&)> drawFunction) {
+  // Begin
   this->device.waitForFences(this->frameResources[this->currentFrame].fence, VK_TRUE, UINT64_MAX);
 
   this->device.resetFences(this->frameResources[this->currentFrame].fence);
@@ -143,7 +144,9 @@ void Context::beginRenderPass() {
       nullptr,                                          // pInheritanceInfo
   };
 
-  this->frameResources[this->currentFrame].commandBuffer.begin(beginInfo);
+  auto &commandBuffer = this->frameResources[this->currentFrame].commandBuffer;
+
+  commandBuffer.begin(beginInfo);
 
   if (this->presentQueue != this->graphicsQueue) {
     vk::ImageMemoryBarrier barrierFromPresentToDraw = {
@@ -157,56 +160,50 @@ void Context::beginRenderPass() {
         imageSubresourceRange,             // subresourceRange
     };
 
-    this->frameResources[this->currentFrame].commandBuffer.pipelineBarrier(
+    commandBuffer.pipelineBarrier(
         vk::PipelineStageFlagBits::eColorAttachmentOutput,
         vk::PipelineStageFlagBits::eColorAttachmentOutput,
         {},
         {},
         {},
         barrierFromPresentToDraw);
-    }
+  }
 
-    std::array<vk::ClearValue, 2> clearValues{
-        vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
-        vk::ClearValue{{1.0f, 0}},
-    };
-
-    vk::RenderPassBeginInfo renderPassBeginInfo{
-      this->renderPass, // renderPass
-      this->frameResources[this->currentFrame].framebuffer, // framebuffer
-      {{0, 0}, this->swapchainExtent}, // renderArea
-      static_cast<uint32_t>(clearValues.size()), // clearValueCount
-      clearValues.data(), // pClearValues
-    };
-
-    this->frameResources[this->currentFrame].commandBuffer.beginRenderPass(
-        renderPassBeginInfo, vk::SubpassContents::eInline);
-
-    vk::Viewport viewport{
-      0.0f, // x
-      0.0f, // y
-      static_cast<float>(this->swapchainExtent.width), // width
-      static_cast<float>(this->swapchainExtent.height), // height
-      0.0f, // minDepth
-      1.0f, // maxDepth
-    };
-
-    vk::Rect2D scissor{{0, 0}, this->swapchainExtent};
-    this->frameResources[this->currentFrame].commandBuffer.setViewport(0, viewport);
-
-    this->frameResources[this->currentFrame].commandBuffer.setScissor(0, scissor);
-}
-
-void Context::endRenderPass() {
-  this->frameResources[this->currentFrame].commandBuffer.endRenderPass();
-
-  vk::ImageSubresourceRange imageSubresourceRange{
-      vk::ImageAspectFlagBits::eColor, // aspectMask
-      0,                               // baseMipLevel
-      1,                               // levelCount
-      0,                               // baseArrayLayer
-      1,                               // layerCount
+  std::array<vk::ClearValue, 2> clearValues{
+      vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+      vk::ClearValue{{1.0f, 0}},
   };
+
+  vk::RenderPassBeginInfo renderPassBeginInfo{
+    this->renderPass, // renderPass
+    this->frameResources[this->currentFrame].framebuffer, // framebuffer
+    {{0, 0}, this->swapchainExtent}, // renderArea
+    static_cast<uint32_t>(clearValues.size()), // clearValueCount
+    clearValues.data(), // pClearValues
+  };
+
+  commandBuffer.beginRenderPass(
+      renderPassBeginInfo, vk::SubpassContents::eInline);
+
+  vk::Viewport viewport{
+    0.0f, // x
+    0.0f, // y
+    static_cast<float>(this->swapchainExtent.width), // width
+    static_cast<float>(this->swapchainExtent.height), // height
+    0.0f, // minDepth
+    1.0f, // maxDepth
+  };
+
+  vk::Rect2D scissor{{0, 0}, this->swapchainExtent};
+  commandBuffer.setViewport(0, viewport);
+
+  commandBuffer.setScissor(0, scissor);
+
+  // Draw
+  drawFunction(commandBuffer);
+
+  // End
+  commandBuffer.endRenderPass();
 
   if (this->presentQueue != this->graphicsQueue) {
     vk::ImageMemoryBarrier barrierFromDrawToPresent{
@@ -220,7 +217,7 @@ void Context::endRenderPass() {
         imageSubresourceRange,                          // subresourceRange
     };
 
-    this->frameResources[this->currentFrame].commandBuffer.pipelineBarrier(
+    commandBuffer.pipelineBarrier(
         vk::PipelineStageFlagBits::eColorAttachmentOutput, // srcStageMask
         vk::PipelineStageFlagBits::eBottomOfPipe,          // dstStageMask
         {},                                                // dependencyFlags
@@ -230,10 +227,9 @@ void Context::endRenderPass() {
     );
   }
 
-  this->frameResources[this->currentFrame].commandBuffer.end();
-}
+  commandBuffer.end();
 
-void Context::present() {
+  // Present
   vk::PipelineStageFlags waitDstStageMask =
     vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
@@ -243,8 +239,7 @@ void Context::present() {
            .imageAvailableSemaphore, // pWaitSemaphores
       &waitDstStageMask,             // pWaitDstStageMask
       1,                             // commandBufferCount
-      &this->frameResources[this->currentFrame]
-           .commandBuffer, // pCommandBuffers
+      &commandBuffer, // pCommandBuffers
       1,                   // signalSemaphoreCount
       &this->frameResources[this->currentFrame]
            .renderingFinishedSemaphore, // pSignalSemaphores

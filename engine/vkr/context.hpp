@@ -1,11 +1,14 @@
 #pragma once
 
+#include <functional>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
 namespace vkr {
 class Window;
+class Pipeline;
+class Shader;
 
 #ifdef NDEBUG
 const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {};
@@ -22,19 +25,20 @@ const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Context {
+  friend class Pipeline;
+  friend class Shader;
+
 public:
   Context(const Window &window);
   ~Context();
   Context(const Context &other) = delete;
   Context &operator=(Context other) = delete;
 
-  void beginRenderPass();
-  void endRenderPass();
-  void present();
+  void present(std::function<void(vk::CommandBuffer &)> drawFunction);
 
   void updateSize(uint32_t width, uint32_t height);
 
-private:
+protected:
   const Window &window;
 
   vk::Instance instance;
