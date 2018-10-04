@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.hpp>
 
-namespace {
+namespace vkr {
   template<typename T>
   using ArrayProxy = vk::ArrayProxy<T>;
 }
