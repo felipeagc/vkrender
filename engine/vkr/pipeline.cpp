@@ -84,7 +84,7 @@ vk::ShaderModule Shader::createShaderModule(
   });
 }
 
-Pipeline::Pipeline(
+GraphicsPipeline::GraphicsPipeline(
     const Context &context, const Shader &shader, VertexFormat &vertexFormat)
     : context(context) {
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo =
@@ -209,11 +209,7 @@ Pipeline::Pipeline(
       {}, 1, &pipelineCreateInfo, nullptr, &this->pipeline);
 }
 
-vk::Pipeline Pipeline::getPipeline() const {
-  return this->pipeline;
-}
-
-void Pipeline::destroy() {
+void GraphicsPipeline::destroy() {
   this->context.device.waitIdle();
   this->context.device.destroy(this->pipeline);
   this->context.device.destroy(this->pipelineLayout);

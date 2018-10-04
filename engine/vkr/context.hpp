@@ -7,8 +7,7 @@
 
 namespace vkr {
 class Window;
-class Pipeline;
-class Shader;
+class CommandBuffer;
 
 #ifdef NDEBUG
 const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {};
@@ -25,8 +24,10 @@ const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Context {
-  friend class Pipeline;
+  friend class GraphicsPipeline;
   friend class Shader;
+  friend class Buffer;
+  friend class StagingBuffer;
 
 public:
   Context(const Window &window);
@@ -34,7 +35,7 @@ public:
   Context(const Context &other) = delete;
   Context &operator=(Context other) = delete;
 
-  void present(std::function<void(vk::CommandBuffer &)> drawFunction);
+  void present(std::function<void(CommandBuffer &)> drawFunction);
 
   void updateSize(uint32_t width, uint32_t height);
 

@@ -5,10 +5,10 @@
 
 namespace vkr {
 class Context;
-class Pipeline;
+class GraphicsPipeline;
 
 class VertexFormat {
-  friend class Pipeline;
+  friend class GraphicsPipeline;
 
 public:
   VertexFormat(
@@ -91,15 +91,15 @@ private:
   createShaderModule(const Context &context, std::vector<char> code) const;
 };
 
-class Pipeline {
-public:
-  Pipeline(
-      const Context &context, const Shader &shader, VertexFormat &vertexFormat);
-  ~Pipeline() {};
-  Pipeline(const Pipeline &other) = delete;
-  Pipeline &operator=(Pipeline &other) = delete;
+class GraphicsPipeline {
+  friend class CommandBuffer;
 
-  vk::Pipeline getPipeline() const;
+public:
+  GraphicsPipeline(
+      const Context &context, const Shader &shader, VertexFormat &vertexFormat);
+  ~GraphicsPipeline() {};
+  GraphicsPipeline(const GraphicsPipeline &other) = delete;
+  GraphicsPipeline &operator=(GraphicsPipeline &other) = delete;
 
   void destroy();
 

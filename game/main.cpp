@@ -1,5 +1,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
+#include <vkr/buffer.hpp>
+#include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/pipeline.hpp>
 #include <vkr/window.hpp>
@@ -26,7 +28,24 @@ int main() {
       context,
       vkr::Shader::loadCode("../shaders/vert.spv"),
       vkr::Shader::loadCode("../shaders/frag.spv"));
-  vkr::Pipeline pipeline(context, shader, vertexFormat);
+  vkr::GraphicsPipeline pipeline(context, shader, vertexFormat);
+
+  std::array<Vertex, 3> vertices{
+      Vertex{{-0.5, 0.5, 0.0}, {1.0, 0.0, 0.0}},
+      Vertex{{0.5, 0.5, 0.0}, {0.0, 1.0, 0.0}},
+      Vertex{{0.0, -0.5, 0.0}, {0.0, 0.0, 1.0}},
+  };
+
+  vkr::Buffer vertexBuffer{context,
+                           sizeof(Vertex) * vertices.size(),
+                           vkr::BufferUsage::eVertexBuffer,
+                           vkr::MemoryUsage::eCpuToGpu,
+                           vkr::MemoryProperty::eHostCoherent};
+
+  void *vertexBufferMemory;
+  vertexBuffer.mapMemory(&vertexBufferMemory);
+  memcpy(vertexBufferMemory, vertices.data(), sizeof(Vertex) * vertices.size());
+  vertexBuffer.unmapMemory();
 
   bool shouldClose = false;
 
@@ -48,12 +67,14 @@ int main() {
       break;
     }
 
-    context.present([&](vk::CommandBuffer &commandBuffer) {
-      commandBuffer.bindPipeline(
-          vk::PipelineBindPoint::eGraphics, pipeline.getPipeline());
+    context.present([&](vkr::CommandBuffer &commandBuffer) {
+      commandBuffer.bindGraphicsPipeline(pipeline);
+      commandBuffer.bindVertexBuffers(vertexBuffer);
+      commandBuffer.draw(vertices.size(), 1, 0, 0);
     });
   }
 
+  vertexBuffer.destroy();
   pipeline.destroy();
   shader.destroy();
 

@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "commandbuffer.hpp"
 #include "window.hpp"
 #include <iostream>
 
@@ -109,7 +110,7 @@ Context::~Context() {
 }
 
 
-void Context::present(std::function<void(vk::CommandBuffer&)> drawFunction) {
+void Context::present(std::function<void(CommandBuffer&)> drawFunction) {
   // Begin
   this->device.waitForFences(this->frameResources[this->currentFrame].fence, VK_TRUE, UINT64_MAX);
 
@@ -200,7 +201,10 @@ void Context::present(std::function<void(vk::CommandBuffer&)> drawFunction) {
   commandBuffer.setScissor(0, scissor);
 
   // Draw
-  drawFunction(commandBuffer);
+  {
+    vkr::CommandBuffer cmdBuffer{commandBuffer};
+    drawFunction(cmdBuffer);
+  }
 
   // End
   commandBuffer.endRenderPass();
@@ -692,7 +696,6 @@ void Context::destroyResizables() {
 
   this->device.destroy(this->renderPass);
 }
-
 
 // Misc
 
