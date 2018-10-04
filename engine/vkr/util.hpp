@@ -22,6 +22,10 @@ enum class MemoryUsageFlagBits {
 
 using MemoryUsageFlags = vk::Flags<MemoryUsageFlagBits, VmaMemoryUsage>;
 
+using IndexType = vk::IndexType;
+
+using DeviceSize = vk::DeviceSize;
+
 class Destroyable {
 public:
   virtual void destroy() = 0;

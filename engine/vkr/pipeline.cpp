@@ -10,7 +10,8 @@ VertexFormat::VertexFormat(
       attributeDescriptions(attributeDescriptions) {
 }
 
-vk::PipelineVertexInputStateCreateInfo VertexFormat::getPipelineVertexInputStateCreateInfo() const {
+vk::PipelineVertexInputStateCreateInfo
+VertexFormat::getPipelineVertexInputStateCreateInfo() const {
   return vk::PipelineVertexInputStateCreateInfo{
       {}, // flags
       static_cast<uint32_t>(
@@ -114,7 +115,7 @@ GraphicsPipeline::GraphicsPipeline(
       VK_FALSE,                         // depthClampEnable
       VK_FALSE,                         // rasterizerDiscardEnable
       vk::PolygonMode::eFill,           // polygonMode
-      vk::CullModeFlagBits::eBack,      // cullMode
+      vk::CullModeFlagBits::eNone,      // cullMode
       vk::FrontFace::eCounterClockwise, // frontFace
       VK_FALSE,                         // depthBiasEnable
       0.0f,                             // depthBiasConstantFactor,

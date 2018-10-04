@@ -33,10 +33,15 @@ int main() {
        vkr::Shader::loadCode("../shaders/frag.spv")}};
   vkr::Unique<vkr::GraphicsPipeline> pipeline{{context, *shader, vertexFormat}};
 
-  std::array<Vertex, 3> vertices{
-      Vertex{{-0.5, 0.5, 0.0}, {1.0, 0.0, 0.0}},
-      Vertex{{0.5, 0.5, 0.0}, {0.0, 1.0, 0.0}},
-      Vertex{{0.0, -0.5, 0.0}, {0.0, 0.0, 1.0}},
+  std::array<Vertex, 4> vertices{
+    Vertex{{-0.5, -0.5, 0.0}, {1.0, 0.0, 0.0}}, // top left
+    Vertex{{0.5, -0.5, 0.0}, {0.0, 1.0, 0.0}}, // top right
+    Vertex{{0.5, 0.5, 0.0}, {0.0, 0.0, 1.0}}, // bottom right
+    Vertex{{-0.5, 0.5, 0.0}, {0.0, 1.0, 1.0}}, // bottom left
+  };
+
+  std::array<uint32_t, 6> indices {
+    0, 1, 2, 2, 3, 0
   };
 
   vkr::Unique<vkr::Buffer> vertexBuffer{
@@ -49,6 +54,17 @@ int main() {
 
   stagingBuffer->copyMemory(vertices.data(), sizeof(Vertex) * vertices.size());
   stagingBuffer->transfer(*vertexBuffer, sizeof(Vertex) * vertices.size());
+
+  vkr::Unique<vkr::Buffer> indexBuffer{
+      {context,
+       sizeof(uint32_t) * indices.size(),
+       vkr::BufferUsageFlagBits::eIndexBuffer |
+           vkr::BufferUsageFlagBits::eTransferDst,
+       vkr::MemoryUsageFlagBits::eGpuOnly,
+       vkr::MemoryPropertyFlagBits::eDeviceLocal}};
+
+  stagingBuffer->copyMemory(indices.data(), sizeof(uint32_t) * indices.size());
+  stagingBuffer->transfer(*indexBuffer, sizeof(uint32_t) * indices.size());
 
   bool shouldClose = false;
 
@@ -72,8 +88,9 @@ int main() {
 
     context.present([&](vkr::CommandBuffer &commandBuffer) {
       commandBuffer.bindGraphicsPipeline(*pipeline);
+      commandBuffer.bindIndexBuffer(*indexBuffer, 0, vkr::IndexType::eUint32);
       commandBuffer.bindVertexBuffers(*vertexBuffer);
-      commandBuffer.draw(vertices.size(), 1, 0, 0);
+      commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
     });
   }
 
