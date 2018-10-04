@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util.hpp"
 #include <fstream>
 #include <vulkan/vulkan.hpp>
 
@@ -45,20 +46,20 @@ private:
   std::vector<vk::VertexInputAttributeDescription> attributeDescriptions;
 };
 
-class Shader {
+class Shader : public Destroyable {
 public:
   Shader(
       const Context &context,
       std::vector<char> vertexCode,
       std::vector<char> fragmentCode);
-  ~Shader() {};
+  ~Shader(){};
   Shader(const Shader &other) = delete;
   Shader &operator=(Shader &other) = delete;
 
   std::vector<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
-  void destroy();
+  void destroy() override;
 
   static std::vector<char> loadCode(const std::string &path) {
     std::ifstream file(path, std::ios::binary);
@@ -75,7 +76,7 @@ public:
     std::vector<char> result(static_cast<size_t>(end - begin));
 
     file.seekg(0, std::ios::beg);
-    file.read(result.data(), end-begin);
+    file.read(result.data(), end - begin);
     file.close();
 
     return result;
@@ -91,17 +92,17 @@ private:
   createShaderModule(const Context &context, std::vector<char> code) const;
 };
 
-class GraphicsPipeline {
+class GraphicsPipeline : public Destroyable {
   friend class CommandBuffer;
 
 public:
   GraphicsPipeline(
       const Context &context, const Shader &shader, VertexFormat &vertexFormat);
-  ~GraphicsPipeline() {};
+  ~GraphicsPipeline(){};
   GraphicsPipeline(const GraphicsPipeline &other) = delete;
   GraphicsPipeline &operator=(GraphicsPipeline &other) = delete;
 
-  void destroy();
+  void destroy() override;
 
 private:
   const Context &context;

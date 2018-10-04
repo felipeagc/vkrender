@@ -1,31 +1,15 @@
 #pragma once
 
-#include <vulkan/vk_mem_alloc.h>
+#include "util.hpp"
 #include <vulkan/vulkan.hpp>
 
 namespace vkr {
 class Context;
 
-using BufferUsageFlagBits = vk::BufferUsageFlagBits;
-using BufferUsageFlags = vk::BufferUsageFlags;
-
-using MemoryPropertyFlagBits = vk::MemoryPropertyFlagBits;
-using MemoryPropertyFlags = vk::MemoryPropertyFlags;
-
-enum class MemoryUsageFlagBits {
-  eUnknown = VMA_MEMORY_USAGE_UNKNOWN,
-  eGpuOnly = VMA_MEMORY_USAGE_GPU_ONLY,
-  eCpuOnly = VMA_MEMORY_USAGE_CPU_ONLY,
-  eCpuToGpu = VMA_MEMORY_USAGE_CPU_TO_GPU,
-  eGpuToCpu = VMA_MEMORY_USAGE_GPU_TO_CPU,
-};
-
-using MemoryUsageFlags = vk::Flags<MemoryUsageFlagBits, VmaMemoryUsage>;
-
 class StagingBuffer;
 class CommandBuffer;
 
-class Buffer {
+class Buffer : public Destroyable {
   friend class StagingBuffer;
   friend class CommandBuffer;
 
@@ -44,7 +28,7 @@ public:
   void mapMemory(void **dest);
   void unmapMemory();
 
-  void destroy();
+  void destroy() override;
 
 protected:
   const Context &context;
