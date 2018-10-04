@@ -15,6 +15,8 @@ int main() {
   vkr::Window window("Hello");
   vkr::Context context(window);
 
+  vkr::StagingBuffer stagingBuffer{context, sizeof(uint8_t) * 1000 * 1000};
+
   vkr::VertexFormat vertexFormat =
       vkr::VertexFormatBuilder()
           .addBinding(0, sizeof(Vertex), vk::VertexInputRate::eVertex)
@@ -38,14 +40,13 @@ int main() {
 
   vkr::Buffer vertexBuffer{context,
                            sizeof(Vertex) * vertices.size(),
-                           vkr::BufferUsage::eVertexBuffer,
-                           vkr::MemoryUsage::eCpuToGpu,
-                           vkr::MemoryProperty::eHostCoherent};
+                           vkr::BufferUsageFlagBits::eVertexBuffer |
+                               vkr::BufferUsageFlagBits::eTransferDst,
+                           vkr::MemoryUsageFlagBits::eGpuOnly,
+                           vkr::MemoryPropertyFlagBits::eDeviceLocal};
 
-  void *vertexBufferMemory;
-  vertexBuffer.mapMemory(&vertexBufferMemory);
-  memcpy(vertexBufferMemory, vertices.data(), sizeof(Vertex) * vertices.size());
-  vertexBuffer.unmapMemory();
+  stagingBuffer.copyMemory(vertices.data(), sizeof(Vertex) * vertices.size());
+  stagingBuffer.transfer(vertexBuffer, sizeof(Vertex) * vertices.size());
 
   bool shouldClose = false;
 
@@ -76,6 +77,7 @@ int main() {
 
   vertexBuffer.destroy();
   pipeline.destroy();
+  stagingBuffer.destroy();
   shader.destroy();
 
   return 0;
