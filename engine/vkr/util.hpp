@@ -26,4 +26,47 @@ class Destroyable {
 public:
   virtual void destroy() = 0;
 };
+
+// T must be a Destroyable (or have a destroy() method)
+// Use this class to have self destructing Destroyables
+template <class T> class Unique {
+public:
+  Unique(T t) : t(t){};
+  ~Unique() {
+    t.destroy();
+  }
+
+  Unique(const Unique &other) = delete;
+  Unique(Unique &&other) noexcept = delete;
+
+  Unique &operator=(const Unique &other) = delete;
+  Unique &operator=(const Unique &&other) noexcept = delete;
+
+  T *operator->() {
+    return &t;
+  }
+
+  T const *operator->() const {
+    return &t;
+  }
+
+  T &operator*() {
+    return t;
+  }
+
+  T const &operator*() const {
+    return t;
+  }
+
+  const T &get() const {
+    return t;
+  }
+
+  T &get() {
+    return t;
+  }
+
+private:
+  T t;
+};
 } // namespace vkr

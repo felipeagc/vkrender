@@ -15,7 +15,8 @@ int main() {
   vkr::Window window("Hello");
   vkr::Context context(window);
 
-  vkr::StagingBuffer stagingBuffer{context, sizeof(uint8_t) * 1000 * 1000};
+  vkr::Unique<vkr::StagingBuffer> stagingBuffer{
+      {context, sizeof(uint8_t) * 1000 * 1000}};
 
   vkr::VertexFormat vertexFormat =
       vkr::VertexFormatBuilder()
@@ -26,11 +27,11 @@ int main() {
               1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
           .build();
 
-  vkr::Shader shader(
-      context,
-      vkr::Shader::loadCode("../shaders/vert.spv"),
-      vkr::Shader::loadCode("../shaders/frag.spv"));
-  vkr::GraphicsPipeline pipeline(context, shader, vertexFormat);
+  vkr::Unique<vkr::Shader> shader{
+      {context,
+       vkr::Shader::loadCode("../shaders/vert.spv"),
+       vkr::Shader::loadCode("../shaders/frag.spv")}};
+  vkr::Unique<vkr::GraphicsPipeline> pipeline{{context, *shader, vertexFormat}};
 
   std::array<Vertex, 3> vertices{
       Vertex{{-0.5, 0.5, 0.0}, {1.0, 0.0, 0.0}},
@@ -38,15 +39,16 @@ int main() {
       Vertex{{0.0, -0.5, 0.0}, {0.0, 0.0, 1.0}},
   };
 
-  vkr::Buffer vertexBuffer{context,
-                           sizeof(Vertex) * vertices.size(),
-                           vkr::BufferUsageFlagBits::eVertexBuffer |
-                               vkr::BufferUsageFlagBits::eTransferDst,
-                           vkr::MemoryUsageFlagBits::eGpuOnly,
-                           vkr::MemoryPropertyFlagBits::eDeviceLocal};
+  vkr::Unique<vkr::Buffer> vertexBuffer{
+      {context,
+       sizeof(Vertex) * vertices.size(),
+       vkr::BufferUsageFlagBits::eVertexBuffer |
+           vkr::BufferUsageFlagBits::eTransferDst,
+       vkr::MemoryUsageFlagBits::eGpuOnly,
+       vkr::MemoryPropertyFlagBits::eDeviceLocal}};
 
-  stagingBuffer.copyMemory(vertices.data(), sizeof(Vertex) * vertices.size());
-  stagingBuffer.transfer(vertexBuffer, sizeof(Vertex) * vertices.size());
+  stagingBuffer->copyMemory(vertices.data(), sizeof(Vertex) * vertices.size());
+  stagingBuffer->transfer(*vertexBuffer, sizeof(Vertex) * vertices.size());
 
   bool shouldClose = false;
 
@@ -69,16 +71,11 @@ int main() {
     }
 
     context.present([&](vkr::CommandBuffer &commandBuffer) {
-      commandBuffer.bindGraphicsPipeline(pipeline);
-      commandBuffer.bindVertexBuffers(vertexBuffer);
+      commandBuffer.bindGraphicsPipeline(*pipeline);
+      commandBuffer.bindVertexBuffers(*vertexBuffer);
       commandBuffer.draw(vertices.size(), 1, 0, 0);
     });
   }
-
-  vertexBuffer.destroy();
-  pipeline.destroy();
-  stagingBuffer.destroy();
-  shader.destroy();
 
   return 0;
 }

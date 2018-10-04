@@ -53,7 +53,7 @@ public:
       std::vector<char> vertexCode,
       std::vector<char> fragmentCode);
   ~Shader(){};
-  Shader(const Shader &other) = delete;
+  Shader(const Shader &other) = default;
   Shader &operator=(Shader &other) = delete;
 
   std::vector<vk::PipelineShaderStageCreateInfo>
@@ -99,7 +99,7 @@ public:
   GraphicsPipeline(
       const Context &context, const Shader &shader, VertexFormat &vertexFormat);
   ~GraphicsPipeline(){};
-  GraphicsPipeline(const GraphicsPipeline &other) = delete;
+  GraphicsPipeline(const GraphicsPipeline &other) = default;
   GraphicsPipeline &operator=(GraphicsPipeline &other) = delete;
 
   void destroy() override;
