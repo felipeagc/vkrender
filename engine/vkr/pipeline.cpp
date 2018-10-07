@@ -41,7 +41,7 @@ VertexFormat::getPipelineVertexInputStateCreateInfo() const {
 
 VertexFormatBuilder VertexFormatBuilder::addBinding(
     uint32_t binding, uint32_t stride, vk::VertexInputRate inputRate) {
-  this->bindingDescriptions.push_back({0, stride, inputRate});
+  this->bindingDescriptions.push_back({binding, stride, inputRate});
   return *this;
 }
 
