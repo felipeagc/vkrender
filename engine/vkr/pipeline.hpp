@@ -3,6 +3,7 @@
 #include "buffer.hpp"
 #include "util.hpp"
 #include <fstream>
+#include <spirv_reflect.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace vkr {
@@ -99,6 +100,8 @@ public:
   std::vector<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
+  std::vector<vkr::DescriptorSetLayoutBinding> getDescriptorSetLayoutBindings() const;
+
   void destroy();
 
   static std::vector<char> loadCode(const std::string &path) {
@@ -123,10 +126,13 @@ public:
   }
 
 private:
+  std::vector<char> vertexCode;
+  std::vector<char> fragmentCode;
   vk::ShaderModule vertexModule;
   vk::ShaderModule fragmentModule;
 
   vk::ShaderModule createShaderModule(std::vector<char> code) const;
+
 };
 
 class GraphicsPipeline {

@@ -28,6 +28,11 @@ target_link_libraries(
   PUBLIC
   vma
   stb_image
+  spirv-cross-core
+  spirv-cross-glsl
+  spirv-cross-cpp
+  spirv-cross-reflect
+  fmt
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
   )

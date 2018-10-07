@@ -1,5 +1,6 @@
 #include "context.hpp"
 #include "commandbuffer.hpp"
+#include "logging.hpp"
 #include "window.hpp"
 #include <iostream>
 
@@ -16,7 +17,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const char *layerPrefix,
     const char *msg,
     void *userData) {
-  std::cerr << "Validation layer: " << msg << "\n";
+  log::error("Validation layer: {}", msg);
 
   return VK_FALSE;
 }
@@ -137,10 +138,14 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
     }
   }
 
-  if (!physicalDevice) {
+  if (!this->physicalDevice) {
     throw std::runtime_error(
         "Could not select physical device based on chosen properties");
   }
+
+  log::info(
+      "Using physical device: {}",
+      this->physicalDevice.getProperties().deviceName);
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
   std::array<float, 1> queuePriorities = {1.0f};
@@ -203,10 +208,9 @@ void Context::getDeviceQueues() {
 }
 
 void Context::setupMemoryAllocator() {
-  VmaAllocatorCreateInfo allocatorInfo = {
-      .physicalDevice = this->physicalDevice,
-      .device = this->device,
-  };
+  VmaAllocatorCreateInfo allocatorInfo = {};
+  allocatorInfo.physicalDevice = this->physicalDevice;
+  allocatorInfo.device = this->device;
 
   vmaCreateAllocator(&allocatorInfo, &this->allocator);
 }
@@ -291,23 +295,25 @@ bool Context::checkPhysicalDeviceProperties(
     }
 
     if (!found) {
-      std::cout << "Physical device " << physicalDevice
-                << " doesn't support extension named \"" << requiredExtension
-                << "\"" << std::endl;
+      log::warn(
+          "Physical device {} doesn't support extension named \"{}\"",
+          physicalDevice.getProperties().deviceName,
+          requiredExtension);
       return false;
     }
   }
 
   auto deviceProperties = physicalDevice.getProperties();
-  auto deviceFeatures = physicalDevice.getFeatures();
+  // auto deviceFeatures = physicalDevice.getFeatures();
 
   uint32_t majorVersion = VK_VERSION_MAJOR(deviceProperties.apiVersion);
   // uint32_t minorVersion = VK_VERSION_MINOR(deviceProperties.apiVersion);
   // uint32_t patchVersion = VK_VERSION_PATCH(deviceProperties.apiVersion);
 
   if (majorVersion < 1 && deviceProperties.limits.maxImageDimension2D < 4096) {
-    std::cout << "Physical device " << physicalDevice
-              << " doesn't support required parameters!" << std::endl;
+    log::warn(
+        "Physical device {} doesn't support required parameters!",
+        physicalDevice.getProperties().deviceName);
     return false;
   }
 
@@ -361,9 +367,10 @@ bool Context::checkPhysicalDeviceProperties(
   if (graphicsQueueFamilyIndex == UINT32_MAX ||
       presentQueueFamilyIndex == UINT32_MAX ||
       transferQueueFamilyIndex == UINT32_MAX) {
-    std::cout << "Could not find queue family with requested properties on "
-                 "physical device "
-              << physicalDevice << std::endl;
+    log::warn(
+        "Could not find queue family with requested properties on physical "
+        "device {}",
+        physicalDevice.getProperties().deviceName);
     return false;
   }
 

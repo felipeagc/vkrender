@@ -1,8 +1,8 @@
 #include "window.hpp"
 #include "commandbuffer.hpp"
 #include "context.hpp"
+#include "logging.hpp"
 #include <SDL2/SDL_vulkan.h>
-#include <iostream>
 
 using namespace vkr;
 
@@ -96,7 +96,7 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
         {},
         &this->currentImageIndex);
   } catch (const vk::OutOfDateKHRError &e) {
-    this->updateSize(this->getWidth(), this->getHeight());
+    this->updateSize();
   }
 
   vk::ImageSubresourceRange imageSubresourceRange{
@@ -237,13 +237,13 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
   try {
     Context::get().presentQueue.presentKHR(presentInfo);
   } catch (const vk::OutOfDateKHRError &e) {
-    this->updateSize(this->getWidth(), this->getHeight());
+    this->updateSize();
   }
 
   this->currentFrame = (this->currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Window::updateSize(uint32_t width, uint32_t height) {
+void Window::updateSize() {
   Context::getDevice().waitIdle();
 
   this->destroyResizables();
@@ -645,43 +645,44 @@ vk::ImageUsageFlags Window::getSwapchainUsageFlags(
     return vk::ImageUsageFlagBits::eColorAttachment |
            vk::ImageUsageFlagBits::eTransferDst;
   }
-  std::cout << "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by "
-               "the swap chain!"
-            << std::endl
-            << "Supported swap chain's image usages include:" << std::endl
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eTransferSrc
-                    ? "    vk::ImageUsageFlagBits::TRANSFER_SRC\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eTransferDst
-                    ? "    vk::ImageUsageFlagBits::TRANSFER_DST\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eSampled
-                    ? "    vk::ImageUsageFlagBits::SAMPLED\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eStorage
-                    ? "    vk::ImageUsageFlagBits::STORAGE\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eColorAttachment
-                    ? "    vk::ImageUsageFlagBits::COLOR_ATTACHMENT\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eDepthStencilAttachment
-                    ? "    vk::ImageUsageFlagBits::DEPTH_STENCIL_ATTACHMENT\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eTransientAttachment
-                    ? "    vk::ImageUsageFlagBits::TRANSIENT_ATTACHMENT\n"
-                    : "")
-            << (surfaceCapabilities.supportedUsageFlags &
-                        vk::ImageUsageFlagBits::eInputAttachment
-                    ? "    vk::ImageUsageFlagBits::INPUT_ATTACHMENT"
-                    : "")
-            << std::endl;
+
+  log::fatal(
+      "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by the "
+      "swapchain!\n"
+      "Supported swapchain image usages include:\n"
+      "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n",
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eTransferSrc
+           ? "    vk::ImageUsageFlagBits::TRANSFER_SRC\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eTransferDst
+           ? "    vk::ImageUsageFlagBits::TRANSFER_DST\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eSampled
+           ? "    vk::ImageUsageFlagBits::SAMPLED\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eStorage
+           ? "    vk::ImageUsageFlagBits::STORAGE\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eColorAttachment
+           ? "    vk::ImageUsageFlagBits::COLOR_ATTACHMENT\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eDepthStencilAttachment
+           ? "    vk::ImageUsageFlagBits::DEPTH_STENCIL_ATTACHMENT\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eTransientAttachment
+           ? "    vk::ImageUsageFlagBits::TRANSIENT_ATTACHMENT\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags &
+               vk::ImageUsageFlagBits::eInputAttachment
+           ? "    vk::ImageUsageFlagBits::INPUT_ATTACHMENT"
+           : ""));
 
   return static_cast<vk::ImageUsageFlags>(-1);
 }
@@ -716,8 +717,7 @@ vk::PresentModeKHR Window::getSwapchainPresentMode(
     }
   }
 
-  std::cout << "FIFO present mode is not supported by the swap chain!"
-            << std::endl;
+  log::fatal("FIFO present mode is not supported by the swapchain!");
 
   return static_cast<vk::PresentModeKHR>(-1);
 }

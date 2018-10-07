@@ -26,7 +26,7 @@ public:
 
   void present(std::function<void(CommandBuffer &)> drawFunction);
   // TODO: remove this function and automate its behaviour
-  void updateSize(uint32_t width, uint32_t height);
+  void updateSize();
 
   uint32_t getWidth() const;
   uint32_t getHeight() const;

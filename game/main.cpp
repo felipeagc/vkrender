@@ -5,6 +5,7 @@
 #include <vkr/context.hpp>
 #include <vkr/pipeline.hpp>
 #include <vkr/window.hpp>
+#include <vkr/logging.hpp>
 
 struct Vertex {
   glm::vec3 pos;
@@ -27,12 +28,14 @@ int main() {
       vkr::Shader::loadCode("../shaders/frag.spv"),
   }};
 
-  std::vector<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings = {{
-      0,
-      vkr::DescriptorType::eUniformBuffer,
-      1,
-      vkr::ShaderStageFlagBits::eFragment,
-  }};
+  auto descriptorSetLayoutBindings = shader-> getDescriptorSetLayoutBindings();
+
+  // std::vector<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings = {{
+  //     0,
+  //     vkr::DescriptorType::eUniformBuffer,
+  //     1,
+  //     vkr::ShaderStageFlagBits::eFragment,
+  // }};
 
   vkr::Unique<vkr::DescriptorSetLayout> descriptorSetLayout{
       {descriptorSetLayoutBindings}};
@@ -126,14 +129,12 @@ int main() {
     case SDL_WINDOWEVENT:
       switch (event.window.type) {
       case SDL_WINDOWEVENT_RESIZED:
-        window.updateSize(
-            static_cast<uint32_t>(event.window.data1),
-            static_cast<uint32_t>(event.window.data2));
+        window.updateSize();
         break;
       }
       break;
     case SDL_QUIT:
-      std::cout << "Goodbye\n";
+      vkr::log::info("Goodbye");
       window.setShouldClose(true);
       break;
     }

@@ -1,9 +1,23 @@
 #include "pipeline.hpp"
 #include "context.hpp"
 #include "window.hpp"
+#include "logging.hpp"
 #include <cassert>
+#include <functional>
+#include <iostream>
+#include <spirv_reflect.hpp>
 
 using namespace vkr;
+
+#define ADD_BINDING(type_spv, type_vk)                                         \
+  for (auto &res : resources.type_spv) {                                       \
+    bindings.push_back({                                                       \
+        comp.get_decoration(res.id, spv::Decoration::DecorationBinding),       \
+        vk::DescriptorType::type_vk,                                           \
+        1,                                                                     \
+        shaderStage,                                                           \
+    });                                                                        \
+  }
 
 VertexFormat::VertexFormat(
     std::vector<vk::VertexInputBindingDescription> bindingDescriptions,
@@ -42,6 +56,9 @@ VertexFormat VertexFormatBuilder::build() {
 }
 
 Shader::Shader(std::vector<char> vertexCode, std::vector<char> fragmentCode) {
+  log::debug("Creating shader from SPV code");
+  this->vertexCode = vertexCode;
+  this->fragmentCode = fragmentCode;
   this->vertexModule = this->createShaderModule(vertexCode);
   this->fragmentModule = this->createShaderModule(fragmentCode);
 }
@@ -64,6 +81,32 @@ Shader::getPipelineShaderStageCreateInfos() const {
           nullptr,                            // pSpecializationInfo
       },
   };
+}
+
+std::vector<vkr::DescriptorSetLayoutBinding>
+Shader::getDescriptorSetLayoutBindings() const {
+  std::vector<vkr::DescriptorSetLayoutBinding> bindings;
+
+  auto addBindings = [&](std::vector<char> code,
+                         vk::ShaderStageFlags shaderStage) {
+    spirv_cross::Compiler comp(
+        reinterpret_cast<uint32_t *>(code.data()),
+        code.size() / sizeof(uint32_t));
+
+    auto resources = comp.get_shader_resources();
+
+    ADD_BINDING(separate_samplers, eSampler);
+    ADD_BINDING(sampled_images, eCombinedImageSampler);
+    ADD_BINDING(separate_images, eSampledImage);
+    ADD_BINDING(storage_images, eStorageImage);
+    ADD_BINDING(uniform_buffers, eUniformBuffer);
+    ADD_BINDING(storage_buffers, eStorageBuffer);
+  };
+
+  addBindings(this->vertexCode, vk::ShaderStageFlagBits::eVertex);
+  addBindings(this->fragmentCode, vk::ShaderStageFlagBits::eFragment);
+
+  return bindings;
 }
 
 void Shader::destroy() {
@@ -118,12 +161,8 @@ DescriptorPool::DescriptorPool(
     poolSize.descriptorCount *= maxSets;
   }
 
-  vk::DescriptorPool descriptorPool =
-      Context::getDevice().createDescriptorPool(
-          {{},
-           maxSets,
-           static_cast<uint32_t>(poolSizes.size()),
-           poolSizes.data()});
+  vk::DescriptorPool descriptorPool = Context::getDevice().createDescriptorPool(
+      {{}, maxSets, static_cast<uint32_t>(poolSizes.size()), poolSizes.data()});
 
   *this = static_cast<DescriptorPool &>(descriptorPool);
 }
@@ -167,6 +206,8 @@ GraphicsPipeline::GraphicsPipeline(
     const Shader &shader,
     VertexFormat &vertexFormat,
     std::vector<DescriptorSetLayout> descriptorSetLayouts) {
+  log::debug("Creating graphics pipeline");
+
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo =
       vertexFormat.getPipelineVertexInputStateCreateInfo();
 
