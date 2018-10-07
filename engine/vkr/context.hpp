@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util.hpp"
 #include <functional>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
@@ -21,29 +22,33 @@ const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
-
 class Context {
+  friend class Window;
   friend class GraphicsPipeline;
   friend class Shader;
   friend class Buffer;
   friend class StagingBuffer;
+  friend class DescriptorSetLayout;
+  friend class DescriptorPool;
+  friend class DescriptorSet;
 
 public:
-  Context(const Window &window);
+  Context();
   ~Context();
-  Context(const Context &other) = delete;
-  Context &operator=(Context other) = delete;
+  Context(Context const &) = delete;
+  Context &operator=(Context const &) = delete;
 
-  void present(std::function<void(CommandBuffer &)> drawFunction);
+  static Context &get() {
+    static Context context;
+    return context;
+  }
 
-  void updateSize(uint32_t width, uint32_t height);
+  static Device &getDevice() {
+    return Context::get().device;
+  }
 
 protected:
-  const Window &window;
-
   vk::Instance instance;
-  vk::SurfaceKHR surface;
 
   vk::DebugReportCallbackEXT callback;
 
@@ -60,65 +65,22 @@ protected:
 
   VmaAllocator allocator;
 
-  vk::Format depthImageFormat;
-
-  struct FrameResources {
-    vk::Image depthImage;
-    VmaAllocation depthImageAllocation;
-    vk::ImageView depthImageView;
-
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderingFinishedSemaphore;
-    vk::Fence fence;
-
-    vk::Framebuffer framebuffer;
-
-    vk::CommandBuffer commandBuffer;
-  };
-
-  std::vector<FrameResources> frameResources{MAX_FRAMES_IN_FLIGHT};
-
-  // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
-  int currentFrame = 0;
-  // Index of the current swapchain image
-  uint32_t currentImageIndex;
-
-  vk::SwapchainKHR swapchain;
-  vk::Format swapchainImageFormat;
-  vk::Extent2D swapchainExtent;
-  std::vector<vk::Image> swapchainImages;
-  std::vector<vk::ImageView> swapchainImageViews;
-
   vk::CommandPool graphicsCommandPool;
   vk::CommandPool transientCommandPool;
 
-  vk::RenderPass renderPass;
+  vk::Format depthImageFormat;
 
-  void createInstance(std::vector<const char *> sdlExtensions);
-  void createDevice();
+  void createInstance();
+
+  void lazyInit(vk::SurfaceKHR &surface);
+
+  void createDevice(vk::SurfaceKHR &surface);
   void getDeviceQueues();
 
   void setupMemoryAllocator();
 
-  void createSyncObjects();
-
-  void createSwapchain(uint32_t width, uint32_t height);
-  void createSwapchainImageViews();
-
   void createGraphicsCommandPool();
   void createTransientCommandPool();
-  void allocateGraphicsCommandBuffers();
-
-  void createDepthResources();
-
-  void createRenderPass();
-
-  void regenFramebuffer(
-      vk::Framebuffer &framebuffer,
-      vk::ImageView colorImageView,
-      vk::ImageView depthImageView);
-
-  void destroyResizables();
 
   std::vector<const char *>
   getRequiredExtensions(std::vector<const char *> sdlExtensions);
@@ -126,23 +88,10 @@ protected:
   void setupDebugCallback();
   bool checkPhysicalDeviceProperties(
       vk::PhysicalDevice physicalDevice,
+      vk::SurfaceKHR &surface,
       uint32_t *graphicsQueue,
       uint32_t *presentQueue,
       uint32_t *transferQueue);
-
-  uint32_t
-  getSwapchainNumImages(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::SurfaceFormatKHR
-  getSwapchainFormat(const std::vector<vk::SurfaceFormatKHR> &formats);
-  vk::Extent2D getSwapchainExtent(
-      uint32_t width,
-      uint32_t height,
-      const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::ImageUsageFlags
-  getSwapchainUsageFlags(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::SurfaceTransformFlagBitsKHR
-  getSwapchainTransform(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::PresentModeKHR
-  getSwapchainPresentMode(const std::vector<vk::PresentModeKHR> &presentModes);
 };
+
 } // namespace vkr

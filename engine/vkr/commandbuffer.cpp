@@ -8,13 +8,30 @@ using namespace vkr;
 void CommandBuffer::bindVertexBuffers(ArrayProxy<const vkr::Buffer> buffers) {
   for (auto &buffer : buffers) {
     // TODO: find a way to do this without multiple bind calls
-    this->commandBuffer.bindVertexBuffers(0, buffer.buffer, {0});
+    // TODO: WTF this is wrong it replaces the old binding
+    this->commandBuffer.bindVertexBuffers(0, buffer.getVkBuffer(), {0});
   }
 }
 
 void CommandBuffer::bindIndexBuffer(
     Buffer &buffer, DeviceSize offset, IndexType indexType) {
-  this->commandBuffer.bindIndexBuffer(buffer.buffer, offset, indexType);
+  this->commandBuffer.bindIndexBuffer(buffer.getVkBuffer(), offset, indexType);
+}
+
+void CommandBuffer::bindDescriptorSets(
+    PipelineBindPoint pipelineBindPoint,
+    PipelineLayout layout,
+    uint32_t firstSet,
+    ArrayProxy<const DescriptorSet> descriptorSets,
+    ArrayProxy<const uint32_t> dynamicOffsets) {
+  this->commandBuffer.bindDescriptorSets(
+      pipelineBindPoint,
+      layout,
+      firstSet,
+      descriptorSets.size(),
+      descriptorSets.data(),
+      dynamicOffsets.size(),
+      dynamicOffsets.data());
 }
 
 void CommandBuffer::bindGraphicsPipeline(vkr::GraphicsPipeline &pipeline) {

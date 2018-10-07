@@ -6,15 +6,22 @@
 namespace vkr {
 class Buffer;
 class GraphicsPipeline;
+class DescriptorSet;
 
 class CommandBuffer {
 public:
-  CommandBuffer(vk::CommandBuffer &commandBuffer)
+  CommandBuffer(vk::CommandBuffer commandBuffer)
       : commandBuffer(commandBuffer){};
   ~CommandBuffer(){};
 
   void bindVertexBuffers(ArrayProxy<const Buffer> buffers);
   void bindIndexBuffer(Buffer &buffer, DeviceSize offset, IndexType indexType);
+  void bindDescriptorSets(
+      PipelineBindPoint pipelineBindPoint,
+      PipelineLayout layout,
+      uint32_t firstSet,
+      ArrayProxy<const DescriptorSet> descriptorSets,
+      ArrayProxy<const uint32_t> dynamicOffsets);
   void bindGraphicsPipeline(GraphicsPipeline &pipeline);
 
   void draw(
@@ -30,6 +37,6 @@ public:
       uint32_t firstInstance);
 
 private:
-  vk::CommandBuffer &commandBuffer;
+  vk::CommandBuffer commandBuffer;
 };
 } // namespace vkr

@@ -22,17 +22,19 @@ enum class MemoryUsageFlagBits {
 
 using MemoryUsageFlags = vk::Flags<MemoryUsageFlagBits, VmaMemoryUsage>;
 
+using Device = vk::Device;
+using VertexInputRate = vk::VertexInputRate;
+using Format = vk::Format;
 using IndexType = vk::IndexType;
-
 using DeviceSize = vk::DeviceSize;
+using PipelineBindPoint = vk::PipelineBindPoint;
+using PipelineLayout = vk::PipelineLayout;
+using DescriptorSetLayoutBinding = vk::DescriptorSetLayoutBinding;
+using DescriptorPoolSize = vk::DescriptorPoolSize;
+using DescriptorType = vk::DescriptorType;
+using ShaderStageFlagBits = vk::ShaderStageFlagBits;
 
-class Destroyable {
-public:
-  virtual void destroy() = 0;
-};
-
-// T must be a Destroyable (or have a destroy() method)
-// Use this class to have self destructing Destroyables
+// Use this wrapper to call .destroy() on destruction
 template <class T> class Unique {
 public:
   Unique(T t) : t(t){};

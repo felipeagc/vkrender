@@ -1,5 +1,7 @@
 #include "pipeline.hpp"
 #include "context.hpp"
+#include "window.hpp"
+#include <cassert>
 
 using namespace vkr;
 
@@ -23,9 +25,6 @@ VertexFormat::getPipelineVertexInputStateCreateInfo() const {
   };
 }
 
-VertexFormatBuilder::VertexFormatBuilder() {
-}
-
 VertexFormatBuilder VertexFormatBuilder::addBinding(
     uint32_t binding, uint32_t stride, vk::VertexInputRate inputRate) {
   this->bindingDescriptions.push_back({0, stride, inputRate});
@@ -42,13 +41,9 @@ VertexFormat VertexFormatBuilder::build() {
   return {this->bindingDescriptions, this->attributeDescriptions};
 }
 
-Shader::Shader(
-    const Context &context,
-    std::vector<char> vertexCode,
-    std::vector<char> fragmentCode)
-    : context(context) {
-  this->vertexModule = this->createShaderModule(context, vertexCode);
-  this->fragmentModule = this->createShaderModule(context, fragmentCode);
+Shader::Shader(std::vector<char> vertexCode, std::vector<char> fragmentCode) {
+  this->vertexModule = this->createShaderModule(vertexCode);
+  this->fragmentModule = this->createShaderModule(fragmentCode);
 }
 
 std::vector<vk::PipelineShaderStageCreateInfo>
@@ -72,22 +67,106 @@ Shader::getPipelineShaderStageCreateInfos() const {
 }
 
 void Shader::destroy() {
-  this->context.device.destroy(this->vertexModule);
-  this->context.device.destroy(this->fragmentModule);
+  Context::getDevice().waitIdle();
+  Context::getDevice().destroy(this->vertexModule);
+  Context::getDevice().destroy(this->fragmentModule);
 }
 
-vk::ShaderModule Shader::createShaderModule(
-    const Context &context, std::vector<char> code) const {
-  return context.device.createShaderModule({
+vk::ShaderModule Shader::createShaderModule(std::vector<char> code) const {
+  return Context::getDevice().createShaderModule({
       {},                                              // flags
       code.size(),                                     // codeSize
       reinterpret_cast<const uint32_t *>(code.data()), // pCode
   });
 }
 
+DescriptorSetLayout::DescriptorSetLayout(
+    std::vector<vk::DescriptorSetLayoutBinding> bindings)
+    : vk::DescriptorSetLayout(Context::getDevice().createDescriptorSetLayout(
+          {{}, static_cast<uint32_t>(bindings.size()), bindings.data()})) {
+}
+
+void DescriptorSetLayout::destroy() {
+  Context::getDevice().waitIdle();
+  Context::getDevice().destroy(*this);
+}
+
+DescriptorPool::DescriptorPool(
+    uint32_t maxSets, std::vector<vk::DescriptorSetLayoutBinding> bindings) {
+  std::vector<vk::DescriptorPoolSize> poolSizes;
+
+  for (auto &binding : bindings) {
+    vk::DescriptorPoolSize *foundp = nullptr;
+    for (auto &poolSize : poolSizes) {
+      if (poolSize.type == binding.descriptorType) {
+        foundp = &poolSize;
+        break;
+      }
+    }
+
+    if (foundp == nullptr) {
+      poolSizes.push_back({
+          binding.descriptorType,
+          binding.descriptorCount,
+      });
+    } else {
+      foundp->descriptorCount += binding.descriptorCount;
+    }
+  }
+
+  for (auto &poolSize : poolSizes) {
+    poolSize.descriptorCount *= maxSets;
+  }
+
+  vk::DescriptorPool descriptorPool =
+      Context::getDevice().createDescriptorPool(
+          {{},
+           maxSets,
+           static_cast<uint32_t>(poolSizes.size()),
+           poolSizes.data()});
+
+  *this = static_cast<DescriptorPool &>(descriptorPool);
+}
+
+DescriptorPool::DescriptorPool(
+    uint32_t maxSets, std::vector<vk::DescriptorPoolSize> poolSizes)
+    : vk::DescriptorPool(Context::getDevice().createDescriptorPool(
+          {{},
+           maxSets,
+           static_cast<uint32_t>(poolSizes.size()),
+           poolSizes.data()})) {
+}
+
+std::vector<DescriptorSet> DescriptorPool::allocateDescriptorSets(
+    uint32_t setCount, DescriptorSetLayout layout) {
+  std::vector<DescriptorSetLayout> layouts(setCount, layout);
+  return this->allocateDescriptorSets(layouts);
+}
+
+std::vector<DescriptorSet> DescriptorPool::allocateDescriptorSets(
+    std::vector<DescriptorSetLayout> layouts) {
+  auto sets = Context::getDevice().allocateDescriptorSets(
+      {*this, static_cast<uint32_t>(layouts.size()), layouts.data()});
+
+  std::vector<DescriptorSet> descriptorSets(sets.size());
+
+  for (size_t i = 0; i < sets.size(); i++) {
+    descriptorSets[i] = {sets[i]};
+  }
+
+  return descriptorSets;
+}
+
+void DescriptorPool::destroy() {
+  Context::getDevice().waitIdle();
+  Context::getDevice().destroy(*this);
+}
+
 GraphicsPipeline::GraphicsPipeline(
-    const Context &context, const Shader &shader, VertexFormat &vertexFormat)
-    : context(context) {
+    const Window &window,
+    const Shader &shader,
+    VertexFormat &vertexFormat,
+    std::vector<DescriptorSetLayout> descriptorSetLayouts) {
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo =
       vertexFormat.getPipelineVertexInputStateCreateInfo();
 
@@ -178,10 +257,10 @@ GraphicsPipeline::GraphicsPipeline(
       dynamicStates.data()                         // pDyanmicStates
   };
 
-  this->pipelineLayout = context.device.createPipelineLayout({
-      {},      // flags
-      0,       // setLayoutCount
-      nullptr, // pSetLayouts
+  this->pipelineLayout = Context::getDevice().createPipelineLayout({
+      {},                                                 // flags
+      static_cast<uint32_t>(descriptorSetLayouts.size()), // setLayoutCount
+      descriptorSetLayouts.data(),                        // pSetLayouts
       0,       // pushConstantRangeCount
       nullptr, // pPushConstantRanges
   });
@@ -200,18 +279,22 @@ GraphicsPipeline::GraphicsPipeline(
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
       pipelineLayout,                // pipelineLayout
-      context.renderPass,            // renderPass
+      window.renderPass,             // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex
   };
 
-  this->context.device.createGraphicsPipelines(
+  Context::getDevice().createGraphicsPipelines(
       {}, 1, &pipelineCreateInfo, nullptr, &this->pipeline);
 }
 
+PipelineLayout GraphicsPipeline::getLayout() const {
+  return this->pipelineLayout;
+}
+
 void GraphicsPipeline::destroy() {
-  this->context.device.waitIdle();
-  this->context.device.destroy(this->pipeline);
-  this->context.device.destroy(this->pipelineLayout);
+  Context::getDevice().waitIdle();
+  Context::getDevice().destroy(this->pipeline);
+  Context::getDevice().destroy(this->pipelineLayout);
 }

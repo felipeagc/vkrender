@@ -1,16 +1,15 @@
 #include "buffer.hpp"
 #include "context.hpp"
+#include <iostream>
 
 using namespace vkr;
 
 // Buffer
 Buffer::Buffer(
-    const Context &context,
     size_t size,
     BufferUsageFlags bufferUsage,
     MemoryUsageFlags memoryUsage,
-    MemoryPropertyFlags requiredFlags)
-    : context(context) {
+    MemoryPropertyFlags requiredFlags) {
   vk::BufferCreateInfo bufferCreateInfo = {
       {},                          // flags
       size,                        // size
@@ -25,7 +24,7 @@ Buffer::Buffer(
   allocInfo.requiredFlags = static_cast<VkMemoryPropertyFlags>(requiredFlags);
 
   if (vmaCreateBuffer(
-          this->context.allocator,
+          Context::get().allocator,
           reinterpret_cast<VkBufferCreateInfo *>(&bufferCreateInfo),
           &allocInfo,
           reinterpret_cast<VkBuffer *>(&this->buffer),
@@ -36,25 +35,28 @@ Buffer::Buffer(
 }
 
 void Buffer::mapMemory(void **dest) {
-  if (vmaMapMemory(this->context.allocator, this->allocation, dest) !=
+  if (vmaMapMemory(Context::get().allocator, this->allocation, dest) !=
       VK_SUCCESS) {
     throw std::runtime_error("Failed to map image memory");
   }
 }
 
 void Buffer::unmapMemory() {
-  vmaUnmapMemory(this->context.allocator, this->allocation);
+  vmaUnmapMemory(Context::get().allocator, this->allocation);
+}
+
+vk::Buffer Buffer::getVkBuffer() const {
+  return this->buffer;
 }
 
 void Buffer::destroy() {
-  this->context.device.waitIdle();
-  vmaDestroyBuffer(this->context.allocator, this->buffer, this->allocation);
+  Context::getDevice().waitIdle();
+  vmaDestroyBuffer(Context::get().allocator, this->buffer, this->allocation);
 }
 
 // StagingBuffer
-StagingBuffer::StagingBuffer(const Context &context, size_t size)
+StagingBuffer::StagingBuffer(size_t size)
     : Buffer(
-          context,
           size,
           BufferUsageFlagBits::eTransferSrc,
           MemoryUsageFlagBits::eCpuOnly,
@@ -74,13 +76,13 @@ void StagingBuffer::innerBufferTransfer(
     vk::AccessFlags dstAccessMask,
     vk::PipelineStageFlags dstStageMask) {
   vk::CommandBufferAllocateInfo allocateInfo{
-      this->context.transientCommandPool, // commandPool
-      vk::CommandBufferLevel::ePrimary,   // level
-      1,                                  // commandBufferCount
+      Context::get().transientCommandPool, // commandPool
+      vk::CommandBufferLevel::ePrimary,  // level
+      1,                                 // commandBufferCount
   };
 
   auto commandBuffers =
-      this->context.device.allocateCommandBuffers(allocateInfo);
+      Context::getDevice().allocateCommandBuffers(allocateInfo);
   auto commandBuffer = commandBuffers[0];
 
   vk::CommandBufferBeginInfo commandBufferBeginInfo{
@@ -96,14 +98,14 @@ void StagingBuffer::innerBufferTransfer(
       size, // size
   };
 
-  commandBuffer.copyBuffer(this->buffer, buffer.buffer, 1, &bufferCopyInfo);
+  commandBuffer.copyBuffer(this->buffer, buffer.getVkBuffer(), 1, &bufferCopyInfo);
 
   vk::BufferMemoryBarrier bufferMemoryBarrier{
       vk::AccessFlagBits::eMemoryWrite, // srcAccessMask
       dstAccessMask,                    // dstAccessMask
       VK_QUEUE_FAMILY_IGNORED,          // srcQueueFamilyIndex
       VK_QUEUE_FAMILY_IGNORED,          // dstQueueFamilyIndex
-      buffer.buffer,                    // buffer
+      buffer.getVkBuffer(),                    // buffer
       0,                                // offset
       VK_WHOLE_SIZE,                    // size
   };
@@ -128,12 +130,12 @@ void StagingBuffer::innerBufferTransfer(
       nullptr,        // pSignalSemaphores
   };
 
-  this->context.transferQueue.submit(submitInfo, {});
+  Context::get().transferQueue.submit(submitInfo, {});
 
-  this->context.transferQueue.waitIdle();
+  Context::get().transferQueue.waitIdle();
 
-  this->context.device.freeCommandBuffers(
-      this->context.transientCommandPool, commandBuffer);
+  Context::getDevice().freeCommandBuffers(
+      Context::get().transientCommandPool, commandBuffer);
 }
 
 void StagingBuffer::transfer(Buffer &buffer, size_t size) {

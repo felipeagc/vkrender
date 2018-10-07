@@ -1,5 +1,6 @@
 #pragma once
 
+#include "buffer.hpp"
 #include "util.hpp"
 #include <fstream>
 #include <vulkan/vulkan.hpp>
@@ -7,6 +8,7 @@
 namespace vkr {
 class Context;
 class GraphicsPipeline;
+class Window;
 
 class VertexFormat {
   friend class GraphicsPipeline;
@@ -29,7 +31,7 @@ protected:
 
 class VertexFormatBuilder {
 public:
-  VertexFormatBuilder();
+  VertexFormatBuilder(){};
   ~VertexFormatBuilder(){};
   VertexFormatBuilder(const VertexFormatBuilder &other) = default;
   VertexFormatBuilder &operator=(VertexFormatBuilder &other) = default;
@@ -46,12 +48,50 @@ private:
   std::vector<vk::VertexInputAttributeDescription> attributeDescriptions;
 };
 
-class Shader : public Destroyable {
+class DescriptorSetLayout : public vk::DescriptorSetLayout {
 public:
-  Shader(
-      const Context &context,
-      std::vector<char> vertexCode,
-      std::vector<char> fragmentCode);
+  DescriptorSetLayout(std::vector<DescriptorSetLayoutBinding> bindings);
+  ~DescriptorSetLayout(){};
+  DescriptorSetLayout(const DescriptorSetLayout &other) = default;
+  DescriptorSetLayout &operator=(const DescriptorSetLayout &other) = default;
+
+  void destroy();
+};
+
+class DescriptorSet : public vk::DescriptorSet {
+public:
+  using vk::DescriptorSet::DescriptorSet;
+};
+
+class DescriptorPool : public vk::DescriptorPool {
+public:
+  // Create a descriptor pool with sizes derived from the bindings and maxSets
+  DescriptorPool(
+      uint32_t maxSets, std::vector<DescriptorSetLayoutBinding> bindings);
+
+  // Create a descriptor pool with manually specified poolSizes
+  DescriptorPool(uint32_t maxSets, std::vector<DescriptorPoolSize> poolSizes);
+  ~DescriptorPool(){};
+
+  DescriptorPool(const DescriptorPool &) = default;
+
+  // Allocate many descriptor sets with one layout
+  std::vector<DescriptorSet>
+  allocateDescriptorSets(uint32_t setCount, DescriptorSetLayout layout);
+
+  // Allocate many descriptor sets with different layouts
+  std::vector<DescriptorSet>
+  allocateDescriptorSets(std::vector<DescriptorSetLayout> layouts);
+
+  void destroy();
+
+private:
+  DescriptorPool &operator=(DescriptorPool &) = default;
+};
+
+class Shader {
+public:
+  Shader(std::vector<char> vertexCode, std::vector<char> fragmentCode);
   ~Shader(){};
   Shader(const Shader &other) = default;
   Shader &operator=(Shader &other) = delete;
@@ -59,7 +99,7 @@ public:
   std::vector<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
-  void destroy() override;
+  void destroy();
 
   static std::vector<char> loadCode(const std::string &path) {
     std::ifstream file(path, std::ios::binary);
@@ -83,31 +123,32 @@ public:
   }
 
 private:
-  const Context &context;
-
   vk::ShaderModule vertexModule;
   vk::ShaderModule fragmentModule;
 
-  vk::ShaderModule
-  createShaderModule(const Context &context, std::vector<char> code) const;
+  vk::ShaderModule createShaderModule(std::vector<char> code) const;
 };
 
-class GraphicsPipeline : public Destroyable {
+class GraphicsPipeline {
   friend class CommandBuffer;
 
 public:
   GraphicsPipeline(
-      const Context &context, const Shader &shader, VertexFormat &vertexFormat);
+      const Window &window,
+      const Shader &shader,
+      VertexFormat &vertexFormat,
+      std::vector<DescriptorSetLayout> descriptorSetLayouts =
+          std::vector<DescriptorSetLayout>());
   ~GraphicsPipeline(){};
   GraphicsPipeline(const GraphicsPipeline &other) = default;
   GraphicsPipeline &operator=(GraphicsPipeline &other) = delete;
 
-  void destroy() override;
+  PipelineLayout getLayout() const;
+
+  void destroy();
 
 private:
-  const Context &context;
-
   vk::Pipeline pipeline;
-  vk::PipelineLayout pipelineLayout;
+  PipelineLayout pipelineLayout;
 };
 } // namespace vkr

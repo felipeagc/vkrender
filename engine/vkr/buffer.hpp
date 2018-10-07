@@ -9,13 +9,9 @@ class Context;
 class StagingBuffer;
 class CommandBuffer;
 
-class Buffer : public Destroyable {
-  friend class StagingBuffer;
-  friend class CommandBuffer;
-
+class Buffer {
 public:
   Buffer(
-      const Context &context,
       size_t size,
       BufferUsageFlags bufferUsage,
       MemoryUsageFlags memoryUsage = MemoryUsageFlagBits::eGpuOnly,
@@ -28,18 +24,18 @@ public:
   void mapMemory(void **dest);
   void unmapMemory();
 
-  void destroy() override;
+  vk::Buffer getVkBuffer() const;
+
+  void destroy();
 
 protected:
-  const Context &context;
-
   vk::Buffer buffer;
   VmaAllocation allocation;
 };
 
 class StagingBuffer : public Buffer {
 public:
-  StagingBuffer(const Context &context, size_t size);
+  StagingBuffer(size_t size);
   ~StagingBuffer() {
   }
   StagingBuffer(const StagingBuffer &other) = default;
