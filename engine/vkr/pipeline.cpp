@@ -1,23 +1,14 @@
 #include "pipeline.hpp"
 #include "context.hpp"
-#include "window.hpp"
 #include "logging.hpp"
+#include "window.hpp"
+#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <iostream>
 #include <spirv_reflect.hpp>
 
 using namespace vkr;
-
-#define ADD_BINDING(type_spv, type_vk)                                         \
-  for (auto &res : resources.type_spv) {                                       \
-    bindings.push_back({                                                       \
-        comp.get_decoration(res.id, spv::Decoration::DecorationBinding),       \
-        vk::DescriptorType::type_vk,                                           \
-        1,                                                                     \
-        shaderStage,                                                           \
-    });                                                                        \
-  }
 
 VertexFormat::VertexFormat(
     std::vector<vk::VertexInputBindingDescription> bindingDescriptions,
@@ -83,30 +74,107 @@ Shader::getPipelineShaderStageCreateInfos() const {
   };
 }
 
-std::vector<vkr::DescriptorSetLayoutBinding>
-Shader::getDescriptorSetLayoutBindings() const {
-  std::vector<vkr::DescriptorSetLayoutBinding> bindings;
+Shader::ShaderMetadata Shader::getAutoMetadata() const {
+  Shader::ShaderMetadata metadata{};
 
-  auto addBindings = [&](std::vector<char> code,
+  spirv_cross::Compiler vertexComp(
+      reinterpret_cast<const uint32_t *>(this->vertexCode.data()),
+      this->vertexCode.size() / sizeof(uint32_t));
+
+  spirv_cross::Compiler fragmentComp(
+      reinterpret_cast<const uint32_t *>(this->fragmentCode.data()),
+      this->fragmentCode.size() / sizeof(uint32_t));
+
+  // Descriptor stuff ===========================
+
+  auto addBindings = [&](const spirv_cross::Compiler &comp,
                          vk::ShaderStageFlags shaderStage) {
-    spirv_cross::Compiler comp(
-        reinterpret_cast<uint32_t *>(code.data()),
-        code.size() / sizeof(uint32_t));
-
     auto resources = comp.get_shader_resources();
 
-    ADD_BINDING(separate_samplers, eSampler);
-    ADD_BINDING(sampled_images, eCombinedImageSampler);
-    ADD_BINDING(separate_images, eSampledImage);
-    ADD_BINDING(storage_images, eStorageImage);
-    ADD_BINDING(uniform_buffers, eUniformBuffer);
-    ADD_BINDING(storage_buffers, eStorageBuffer);
+    auto addBinding = [&](auto resources, auto type) {
+      for (auto &res : resources) {
+        metadata.descriptorSetLayoutBindings.push_back({
+            comp.get_decoration(res.id, spv::Decoration::DecorationBinding),
+            type,
+            1,
+            shaderStage,
+        });
+      }
+    };
+
+    addBinding(resources.separate_samplers, vk::DescriptorType::eSampler);
+    addBinding(
+        resources.sampled_images, vk::DescriptorType::eCombinedImageSampler);
+    addBinding(resources.separate_images, vk::DescriptorType::eSampledImage);
+    addBinding(resources.storage_images, vk::DescriptorType::eStorageImage);
+    addBinding(resources.uniform_buffers, vk::DescriptorType::eUniformBuffer);
+    addBinding(resources.storage_buffers, vk::DescriptorType::eStorageBuffer);
   };
 
-  addBindings(this->vertexCode, vk::ShaderStageFlagBits::eVertex);
-  addBindings(this->fragmentCode, vk::ShaderStageFlagBits::eFragment);
+  addBindings(vertexComp, vk::ShaderStageFlagBits::eVertex);
+  addBindings(fragmentComp, vk::ShaderStageFlagBits::eFragment);
 
-  return bindings;
+  // Vertex inputs ===========================
+
+  auto resources = vertexComp.get_shader_resources();
+
+  // <location, format, size, offset>
+  std::vector<std::tuple<uint32_t, vk::Format, uint32_t, uint32_t>> locations;
+
+  for (auto &input : resources.stage_inputs) {
+    auto location = vertexComp.get_decoration(
+        input.id, spv::Decoration::DecorationLocation);
+    auto type = vertexComp.get_type_from_variable(input.id);
+
+    auto byteSize = (type.width * type.vecsize) / 8;
+
+    std::array<vk::Format, 4> possibleFormats{vk::Format::eR32Sfloat,
+                                              vk::Format::eR32G32Sfloat,
+                                              vk::Format::eR32G32B32Sfloat,
+                                              vk::Format::eR32G32B32A32Sfloat};
+
+    locations.push_back(
+        {location, possibleFormats[type.vecsize - 1], byteSize, 0});
+  }
+
+  std::sort(locations.begin(), locations.end(), [](auto &a, auto &b) {
+      return std::get<0>(a) < std::get<0>(b);
+  });
+
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (i == 0) {
+      // offset
+      std::get<3>(locations[i]) = 0;
+    } else {
+      // Sum of the previous sizes
+      uint32_t sum = 0;
+      for (size_t j = 0; j < i; j++) {
+        sum += std::get<2>(locations[j]);
+      }
+
+      // offset
+      std::get<3>(locations[i]) = sum;
+    }
+  }
+
+  uint32_t vertexSize = 0;
+  for (auto &p : locations) {
+    // sum of all sizes
+    vertexSize += std::get<2>(p);
+  }
+
+  metadata.vertexFormat.bindingDescriptions.push_back(
+      {0, vertexSize, vk::VertexInputRate::eVertex});
+
+  for (size_t i = 0; i < locations.size(); i++) {
+    metadata.vertexFormat.attributeDescriptions.push_back(
+        {std::get<0>(locations[i]),
+         0,
+         std::get<1>(locations[i]),
+         std::get<3>(locations[i])});
+  }
+
+  return metadata;
 }
 
 void Shader::destroy() {

@@ -70,15 +70,100 @@ void StagingBuffer::copyMemory(void *data, size_t size) {
   this->unmapMemory();
 }
 
-void StagingBuffer::innerBufferTransfer(
-    Buffer &buffer,
-    size_t size,
-    vk::AccessFlags dstAccessMask,
-    vk::PipelineStageFlags dstStageMask) {
+void StagingBuffer::transfer(Buffer &buffer, size_t size) {
+  vk::CommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
+
+  vk::BufferCopy bufferCopyInfo = {
+      0,    // srcOffset
+      0,    // dstOffset
+      size, // size
+  };
+
+  commandBuffer.copyBuffer(
+      this->buffer, buffer.getVkBuffer(), 1, &bufferCopyInfo);
+
+  endSingleTimeCommandBuffer(commandBuffer);
+}
+
+void StagingBuffer::transfer(Image &image, uint32_t width, uint32_t height) {
+  vk::CommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
+
+  auto transitionImageLayout = [&](vk::ImageLayout oldLayout,
+                                   vk::ImageLayout newLayout) {
+    vk::ImageMemoryBarrier barrier{
+        {},                      // srcAccessMask (we'll set this later)
+        {},                      // dstAccessMask (we'll set this later)
+        oldLayout,               // oldLayout
+        newLayout,               // newLayout
+        VK_QUEUE_FAMILY_IGNORED, // srcQueueFamilyIndex
+        VK_QUEUE_FAMILY_IGNORED, // dstQueueFamilyIndex
+        image,                   // image
+        {
+            vk::ImageAspectFlagBits::eColor, // aspectMask
+            0,                               // baseMipLevel
+            1,                               // levelCount
+            0,                               // baseArrayLayer
+            1,                               // layerCount
+        },                                   // subresourceRange
+    };
+
+    vk::PipelineStageFlags srcStage;
+    vk::PipelineStageFlags dstStage;
+
+    if (oldLayout == vk::ImageLayout::eUndefined &&
+        newLayout == vk::ImageLayout::eTransferDstOptimal) {
+      barrier.srcAccessMask = {};
+      barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+      srcStage = vk::PipelineStageFlagBits::eTopOfPipe;
+      dstStage = vk::PipelineStageFlagBits::eTransfer;
+    } else if (
+        oldLayout == vk::ImageLayout::eTransferDstOptimal &&
+        newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+      barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+      barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+      srcStage = vk::PipelineStageFlagBits::eTransfer;
+      dstStage = vk::PipelineStageFlagBits::eFragmentShader;
+    } else {
+      throw std::invalid_argument("Unsupported layout transition!");
+    }
+
+    commandBuffer.pipelineBarrier(srcStage, dstStage, {}, {}, {}, barrier);
+  };
+
+  transitionImageLayout(
+      vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+
+  vk::BufferImageCopy region{
+      0, // bufferOffset
+      0, // bufferRowLength
+      0, // bufferImageHeight
+      {
+          vk::ImageAspectFlagBits::eColor, // aspectMask
+          0,                               // mipLevel
+          0,                               // baseArrayLayer
+          1,                               // layerCount
+      },                                   // imageSubresource
+      {0, 0, 0},                           // imageOffset
+      {width, height, 1},                  // imageExtent
+  };
+
+  commandBuffer.copyBufferToImage(
+      this->buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
+
+  transitionImageLayout(
+      vk::ImageLayout::eTransferDstOptimal,
+      vk::ImageLayout::eShaderReadOnlyOptimal);
+
+  endSingleTimeCommandBuffer(commandBuffer);
+}
+
+vk::CommandBuffer StagingBuffer::beginSingleTimeCommandBuffer() {
   vk::CommandBufferAllocateInfo allocateInfo{
       Context::get().transientCommandPool, // commandPool
-      vk::CommandBufferLevel::ePrimary,  // level
-      1,                                 // commandBufferCount
+      vk::CommandBufferLevel::ePrimary,    // level
+      1,                                   // commandBufferCount
   };
 
   auto commandBuffers =
@@ -92,32 +177,11 @@ void StagingBuffer::innerBufferTransfer(
 
   commandBuffer.begin(commandBufferBeginInfo);
 
-  vk::BufferCopy bufferCopyInfo = {
-      0,    // srcOffset
-      0,    // dstOffset
-      size, // size
-  };
+  return commandBuffer;
+}
 
-  commandBuffer.copyBuffer(this->buffer, buffer.getVkBuffer(), 1, &bufferCopyInfo);
-
-  vk::BufferMemoryBarrier bufferMemoryBarrier{
-      vk::AccessFlagBits::eMemoryWrite, // srcAccessMask
-      dstAccessMask,                    // dstAccessMask
-      VK_QUEUE_FAMILY_IGNORED,          // srcQueueFamilyIndex
-      VK_QUEUE_FAMILY_IGNORED,          // dstQueueFamilyIndex
-      buffer.getVkBuffer(),                    // buffer
-      0,                                // offset
-      VK_WHOLE_SIZE,                    // size
-  };
-
-  commandBuffer.pipelineBarrier(
-      vk::PipelineStageFlagBits::eTransfer,
-      dstStageMask,
-      {},
-      {},
-      bufferMemoryBarrier,
-      {});
-
+void StagingBuffer::endSingleTimeCommandBuffer(
+    vk::CommandBuffer commandBuffer) {
   commandBuffer.end();
 
   vk::SubmitInfo submitInfo{
@@ -136,12 +200,4 @@ void StagingBuffer::innerBufferTransfer(
 
   Context::getDevice().freeCommandBuffers(
       Context::get().transientCommandPool, commandBuffer);
-}
-
-void StagingBuffer::transfer(Buffer &buffer, size_t size) {
-  this->innerBufferTransfer(
-      buffer,
-      size,
-      vk::AccessFlagBits::eVertexAttributeRead,
-      vk::PipelineStageFlagBits::eVertexInput);
 }

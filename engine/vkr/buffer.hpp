@@ -47,20 +47,11 @@ public:
   // Issues a command to transfer this buffer's memory into a vertex buffer
   void transfer(Buffer &buffer, size_t size);
 
-  // Issues a command to transfer this buffer's memory into an index buffer
-  // void transfer(IndexBuffer &buffer, size_t size);
-
-  // Issues a command to transfer this buffer's memory into a uniform buffer
-  // void transfer(UniformBuffer &buffer, size_t size);
-
   // Issues a command to transfer this buffer's memory into a texture's image
-  // void transfer(Texture &texture);
+  void transfer(Image &image, uint32_t width, uint32_t height);
 
 protected:
-  void innerBufferTransfer(
-      Buffer &buffer,
-      size_t size,
-      vk::AccessFlags dstAccessMask,
-      vk::PipelineStageFlags dstStageMask);
+  vk::CommandBuffer beginSingleTimeCommandBuffer();
+  void endSingleTimeCommandBuffer(vk::CommandBuffer commandBuffer);
 };
 } // namespace vkr

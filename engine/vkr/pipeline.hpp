@@ -13,8 +13,10 @@ class Window;
 
 class VertexFormat {
   friend class GraphicsPipeline;
+  friend class Shader;
 
 public:
+  VertexFormat(){};
   VertexFormat(
       std::vector<vk::VertexInputBindingDescription> bindingDescriptions,
       std::vector<vk::VertexInputAttributeDescription> attributeDescriptions);
@@ -100,7 +102,12 @@ public:
   std::vector<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
-  std::vector<vkr::DescriptorSetLayoutBinding> getDescriptorSetLayoutBindings() const;
+  struct ShaderMetadata {
+    std::vector<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+    vkr::VertexFormat vertexFormat;
+  };
+
+  ShaderMetadata getAutoMetadata() const;
 
   void destroy();
 
@@ -132,7 +139,6 @@ private:
   vk::ShaderModule fragmentModule;
 
   vk::ShaderModule createShaderModule(std::vector<char> code) const;
-
 };
 
 class GraphicsPipeline {

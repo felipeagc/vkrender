@@ -23,6 +23,7 @@ enum class MemoryUsageFlagBits {
 using MemoryUsageFlags = vk::Flags<MemoryUsageFlagBits, VmaMemoryUsage>;
 
 using Device = vk::Device;
+using Image = vk::Image;
 using VertexInputRate = vk::VertexInputRate;
 using Format = vk::Format;
 using IndexType = vk::IndexType;

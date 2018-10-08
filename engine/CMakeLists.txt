@@ -10,6 +10,7 @@ set(
   vkr/pipeline.cpp
   vkr/buffer.cpp
   vkr/commandbuffer.cpp
+  vkr/texture.cpp
   )
 
 add_library(vkrender ${VKRENDER_SOURCES})

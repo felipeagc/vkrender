@@ -24,13 +24,9 @@ const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
 
 class Context {
   friend class Window;
-  friend class GraphicsPipeline;
-  friend class Shader;
   friend class Buffer;
   friend class StagingBuffer;
-  friend class DescriptorSetLayout;
-  friend class DescriptorPool;
-  friend class DescriptorSet;
+  friend class Texture;
 
 public:
   Context();

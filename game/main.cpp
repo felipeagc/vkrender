@@ -3,13 +3,15 @@
 #include <vkr/buffer.hpp>
 #include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
-#include <vkr/pipeline.hpp>
-#include <vkr/window.hpp>
 #include <vkr/logging.hpp>
+#include <vkr/pipeline.hpp>
+#include <vkr/texture.hpp>
+#include <vkr/window.hpp>
 
 struct Vertex {
   glm::vec3 pos;
   glm::vec3 color;
+  glm::vec2 texCoords;
 };
 
 struct UniformBufferObject {
@@ -28,39 +30,23 @@ int main() {
       vkr::Shader::loadCode("../shaders/frag.spv"),
   }};
 
-  auto descriptorSetLayoutBindings = shader-> getDescriptorSetLayoutBindings();
-
-  // std::vector<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings = {{
-  //     0,
-  //     vkr::DescriptorType::eUniformBuffer,
-  //     1,
-  //     vkr::ShaderStageFlagBits::eFragment,
-  // }};
+  auto shaderMetadata = shader->getAutoMetadata();
 
   vkr::Unique<vkr::DescriptorSetLayout> descriptorSetLayout{
-      {descriptorSetLayoutBindings}};
-
-  vkr::VertexFormat vertexFormat =
-      vkr::VertexFormatBuilder()
-          .addBinding(0, sizeof(Vertex), vkr::VertexInputRate::eVertex)
-          .addAttribute(
-              0, 0, vkr::Format::eR32G32B32Sfloat, offsetof(Vertex, pos))
-          .addAttribute(
-              1, 0, vkr::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
-          .build();
+      {shaderMetadata.descriptorSetLayoutBindings}};
 
   vkr::Unique<vkr::GraphicsPipeline> pipeline{{
       window,
       *shader,
-      vertexFormat,
+      shaderMetadata.vertexFormat,
       {*descriptorSetLayout},
   }};
 
   std::array<Vertex, 4> vertices{
-      Vertex{{-0.5, -0.5, 0.0}, {1.0, 0.0, 0.0}}, // top left
-      Vertex{{0.5, -0.5, 0.0}, {0.0, 1.0, 0.0}},  // top right
-      Vertex{{0.5, 0.5, 0.0}, {0.0, 0.0, 1.0}},   // bottom right
-      Vertex{{-0.5, 0.5, 0.0}, {0.0, 1.0, 1.0}},  // bottom left
+      Vertex{{-0.5, -0.5, 0.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}}, // top left
+      Vertex{{0.5, -0.5, 0.0}, {0.0, 1.0, 0.0}, {1.0, 0.0}},  // top right
+      Vertex{{0.5, 0.5, 0.0}, {0.0, 0.0, 1.0}, {1.0, 1.0}},   // bottom right
+      Vertex{{-0.5, 0.5, 0.0}, {0.0, 1.0, 1.0}, {0.0, 1.0}},  // bottom left
   };
 
   vkr::Unique<vkr::Buffer> vertexBuffer{{
@@ -102,24 +88,43 @@ int main() {
   stagingBuffer->copyMemory(&ubo, sizeof(ubo));
   stagingBuffer->transfer(*uniformBuffer, sizeof(ubo));
 
+  vkr::Unique<vkr::Texture> texture{{"../assets/texture.png"}};
+
   vkr::Unique<vkr::DescriptorPool> descriptorPool{
-      {1, {descriptorSetLayoutBindings}}};
+      {1, {shaderMetadata.descriptorSetLayoutBindings}}};
 
   auto descriptorSets =
       descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout);
 
-  vk::DescriptorBufferInfo bufferInfo = {
+  vk::DescriptorBufferInfo bufferInfo{
       uniformBuffer->getVkBuffer(), 0, sizeof(ubo)};
+  vk::DescriptorImageInfo imageInfo{
+      texture->getSampler(),
+      texture->getImageView(),
+      vk::ImageLayout::eShaderReadOnlyOptimal,
+  };
   vkr::Context::getDevice().updateDescriptorSets(
-      vk::WriteDescriptorSet{
-          descriptorSets[0],                   // dstSet
-          0,                                   // dstBinding
-          0,                                   // dstArrayElement
-          1,                                   // descriptorCount
-          vkr::DescriptorType::eUniformBuffer, // descriptorType
-          nullptr,                             // pImageInfo
-          &bufferInfo,                         // pBufferInfo
-          nullptr,                             // pTexelBufferView
+      {
+          vk::WriteDescriptorSet{
+              descriptorSets[0],                   // dstSet
+              0,                                   // dstBinding
+              0,                                   // dstArrayElement
+              1,                                   // descriptorCount
+              vkr::DescriptorType::eUniformBuffer, // descriptorType
+              nullptr,                             // pImageInfo
+              &bufferInfo,                         // pBufferInfo
+              nullptr,                             // pTexelBufferView
+          },
+          vk::WriteDescriptorSet{
+              descriptorSets[0],                          // dstSet
+              1,                                          // dstBinding
+              0,                                          // dstArrayElement
+              1,                                          // descriptorCount
+              vkr::DescriptorType::eCombinedImageSampler, // descriptorType
+              &imageInfo,                                 // pImageInfo
+              nullptr,                                    // pBufferInfo
+              nullptr,                                    // pTexelBufferView
+          },
       },
       {});
 
