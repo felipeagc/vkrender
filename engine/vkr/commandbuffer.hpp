@@ -14,7 +14,7 @@ public:
       : commandBuffer(commandBuffer){};
   ~CommandBuffer(){};
 
-  void bindVertexBuffers(ArrayProxy<const Buffer> buffers);
+  void bindVertexBuffer(Buffer &buffer);
   void bindIndexBuffer(Buffer &buffer, DeviceSize offset, IndexType indexType);
   void bindDescriptorSets(
       PipelineBindPoint pipelineBindPoint,

@@ -147,7 +147,7 @@ int main() {
     window.present([&](vkr::CommandBuffer &commandBuffer) {
       commandBuffer.bindGraphicsPipeline(*pipeline);
       commandBuffer.bindIndexBuffer(*indexBuffer, 0, vkr::IndexType::eUint32);
-      commandBuffer.bindVertexBuffers(*vertexBuffer);
+      commandBuffer.bindVertexBuffer(*vertexBuffer);
       commandBuffer.bindDescriptorSets(
           vkr::PipelineBindPoint::eGraphics,
           pipeline->getLayout(),

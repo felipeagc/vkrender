@@ -5,12 +5,8 @@
 
 using namespace vkr;
 
-void CommandBuffer::bindVertexBuffers(ArrayProxy<const vkr::Buffer> buffers) {
-  for (auto &buffer : buffers) {
-    // TODO: find a way to do this without multiple bind calls
-    // TODO: WTF this is wrong it replaces the old binding
-    this->commandBuffer.bindVertexBuffers(0, buffer.getVkBuffer(), {0});
-  }
+void CommandBuffer::bindVertexBuffer(Buffer &buffer) {
+  this->commandBuffer.bindVertexBuffers(0, buffer.getVkBuffer(), {0});
 }
 
 void CommandBuffer::bindIndexBuffer(
