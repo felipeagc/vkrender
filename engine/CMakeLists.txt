@@ -34,6 +34,7 @@ target_link_libraries(
   spirv-cross-cpp
   spirv-cross-reflect
   fmt
+  glslang
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
   )
