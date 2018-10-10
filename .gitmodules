@@ -4,6 +4,3 @@
 [submodule "fmt"]
 	path = thirdparty/fmt
 	url = https://github.com/fmtlib/fmt.git
-[submodule "thirdparty/glslang"]
-	path = thirdparty/glslang
-	url = https://github.com/KhronosGroup/glslang.git
