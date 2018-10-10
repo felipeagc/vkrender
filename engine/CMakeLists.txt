@@ -11,6 +11,7 @@ set(
   vkr/buffer.cpp
   vkr/commandbuffer.cpp
   vkr/texture.cpp
+  vkr/shader_compilation.cpp
   )
 
 add_library(vkrender ${VKRENDER_SOURCES})
@@ -34,6 +35,9 @@ target_link_libraries(
   spirv-cross-cpp
   spirv-cross-reflect
   fmt
+  glslang
+  glslang-default-resource-limits
+  SPIRV
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
   )

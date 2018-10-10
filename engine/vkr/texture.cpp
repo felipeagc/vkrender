@@ -7,7 +7,7 @@
 using namespace vkr;
 
 Texture::Texture(const std::string_view &path) {
-  log::info("Loading texture: {}", path);
+  log::debug("Loading texture: {}", path);
 
   auto pixels = this->loadImage(path);
 
