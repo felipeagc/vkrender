@@ -94,7 +94,12 @@ private:
 
 class Shader {
 public:
-  Shader(std::vector<char> vertexCode, std::vector<char> fragmentCode);
+  // Creates a shader from a path to a GLSL file
+  Shader(const std::string &vertexPath, const std::string &fragmentPath);
+
+  // Creates a shader from SPIR-V code
+  Shader(std::vector<uint32_t> vertexCode, std::vector<uint32_t> fragmentCode);
+
   ~Shader(){};
   Shader(const Shader &other) = default;
   Shader &operator=(Shader &other) = delete;
@@ -111,7 +116,7 @@ public:
 
   void destroy();
 
-  static std::vector<char> loadCode(const std::string &path) {
+  static std::vector<uint32_t> loadCode(const std::string &path) {
     std::ifstream file(path, std::ios::binary);
 
     if (file.fail()) {
@@ -123,22 +128,22 @@ public:
     file.seekg(0, std::ios::end);
     end = file.tellg();
 
-    std::vector<char> result(static_cast<size_t>(end - begin));
+    std::vector<uint32_t> result(static_cast<size_t>(end - begin) / 4);
 
     file.seekg(0, std::ios::beg);
-    file.read(result.data(), end - begin);
+    file.read(reinterpret_cast<char *>(result.data()), end - begin);
     file.close();
 
     return result;
   }
 
 private:
-  std::vector<char> vertexCode;
-  std::vector<char> fragmentCode;
+  std::vector<uint32_t> vertexCode;
+  std::vector<uint32_t> fragmentCode;
   vk::ShaderModule vertexModule;
   vk::ShaderModule fragmentModule;
 
-  vk::ShaderModule createShaderModule(std::vector<char> code) const;
+  vk::ShaderModule createShaderModule(std::vector<uint32_t> code) const;
 };
 
 class GraphicsPipeline {

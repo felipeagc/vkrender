@@ -1,6 +1,7 @@
 #include "pipeline.hpp"
 #include "context.hpp"
 #include "logging.hpp"
+#include "shader_compilation.hpp"
 #include "window.hpp"
 #include <algorithm>
 #include <cassert>
@@ -46,7 +47,16 @@ VertexFormat VertexFormatBuilder::build() {
   return {this->bindingDescriptions, this->attributeDescriptions};
 }
 
-Shader::Shader(std::vector<char> vertexCode, std::vector<char> fragmentCode) {
+Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
+  log::debug("Creating shader from GLSL code");
+  this->vertexCode = compileShader(vertexPath, ShaderType::eVertex);
+  this->fragmentCode = compileShader(fragmentPath, ShaderType::eFragment);
+  this->vertexModule = this->createShaderModule(vertexCode);
+  this->fragmentModule = this->createShaderModule(fragmentCode);
+}
+
+Shader::Shader(
+    std::vector<uint32_t> vertexCode, std::vector<uint32_t> fragmentCode) {
   log::debug("Creating shader from SPV code");
   this->vertexCode = vertexCode;
   this->fragmentCode = fragmentCode;
@@ -78,12 +88,10 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   Shader::ShaderMetadata metadata{};
 
   spirv_cross::Compiler vertexComp(
-      reinterpret_cast<const uint32_t *>(this->vertexCode.data()),
-      this->vertexCode.size() / sizeof(uint32_t));
+      this->vertexCode.data(), this->vertexCode.size());
 
   spirv_cross::Compiler fragmentComp(
-      reinterpret_cast<const uint32_t *>(this->fragmentCode.data()),
-      this->fragmentCode.size() / sizeof(uint32_t));
+      this->fragmentCode.data(), this->fragmentCode.size());
 
   // Descriptor stuff ===========================
 
@@ -138,7 +146,7 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   }
 
   std::sort(locations.begin(), locations.end(), [](auto &a, auto &b) {
-      return std::get<0>(a) < std::get<0>(b);
+    return std::get<0>(a) < std::get<0>(b);
   });
 
   for (size_t i = 0; i < locations.size(); i++) {
@@ -183,11 +191,11 @@ void Shader::destroy() {
   Context::getDevice().destroy(this->fragmentModule);
 }
 
-vk::ShaderModule Shader::createShaderModule(std::vector<char> code) const {
+vk::ShaderModule Shader::createShaderModule(std::vector<uint32_t> code) const {
   return Context::getDevice().createShaderModule({
-      {},                                              // flags
-      code.size(),                                     // codeSize
-      reinterpret_cast<const uint32_t *>(code.data()), // pCode
+      {},                             // flags
+      code.size() * sizeof(uint32_t), // codeSize
+      code.data(),                    // pCode
   });
 }
 

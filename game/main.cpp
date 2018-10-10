@@ -26,8 +26,8 @@ int main() {
   }};
 
   vkr::Unique<vkr::Shader> shader{{
-      vkr::Shader::loadCode("../shaders/vert.spv"),
-      vkr::Shader::loadCode("../shaders/frag.spv"),
+      "../shaders/shader.vert",
+      "../shaders/shader.frag",
   }};
 
   auto shaderMetadata = shader->getAutoMetadata();
