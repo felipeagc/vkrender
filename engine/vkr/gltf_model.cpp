@@ -46,19 +46,19 @@ GltfModel::Primitive::Primitive(
 
 GltfModel::Mesh::Mesh(glm::mat4 matrix)
     : uniformBuffer(
-          sizeof(ModelUniform),
+          sizeof(MeshUniform),
           vk::BufferUsageFlagBits::eUniformBuffer,
           vkr::MemoryUsageFlagBits::eCpuToGpu,
           vkr::MemoryPropertyFlagBits::eHostVisible |
               vkr::MemoryPropertyFlagBits::eHostCoherent) {
-  modelUniform.model = matrix;
-  uniformBuffer.mapMemory(&mapped);
-  bufferInfo = vk::DescriptorBufferInfo{
-      uniformBuffer.getVkBuffer(), 0, sizeof(ModelUniform)};
+  this->ubo.model = matrix;
+  this->uniformBuffer.mapMemory(&mapped);
+  this->bufferInfo = vk::DescriptorBufferInfo{
+      this->uniformBuffer.getVkBuffer(), 0, sizeof(MeshUniform)};
 }
 
 void GltfModel::Mesh::updateUniform() {
-  memcpy(this->mapped, &modelUniform, sizeof(ModelUniform));
+  memcpy(this->mapped, &this->ubo, sizeof(MeshUniform));
 }
 
 glm::mat4 GltfModel::Node::localMatrix() {
@@ -94,7 +94,7 @@ void GltfModel::Node::update(GltfModel &model) {
   if (this->meshIndex != -1) {
     glm::mat4 m = this->getMatrix(model);
     auto &mesh = model.meshes[meshIndex];
-    mesh.modelUniform.model = m;
+    mesh.ubo.model = m;
     mesh.updateUniform();
   }
 
@@ -103,7 +103,7 @@ void GltfModel::Node::update(GltfModel &model) {
   }
 }
 
-GltfModel::GltfModel(const std::string &path) {
+GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   tinygltf::TinyGLTF loader;
   tinygltf::Model model;
 
@@ -142,7 +142,7 @@ GltfModel::GltfModel(const std::string &path) {
   this->meshes.resize(model.meshes.size());
 
   for (size_t i = 0; i < scene.nodes.size(); i++) {
-    this->loadNode(-1, scene.nodes[i], model, indices, vertices);
+    this->loadNode(-1, scene.nodes[i], model, indices, vertices, flipUVs);
   }
 
   for (auto &node : nodes) {
@@ -301,7 +301,8 @@ void GltfModel::loadNode(
     int nodeIndex,
     const tinygltf::Model &model,
     std::vector<uint32_t> &indices,
-    std::vector<Vertex> &vertices) {
+    std::vector<Vertex> &vertices,
+    bool flipUVs) {
   const tinygltf::Node &node = model.nodes[nodeIndex];
   Node newNode;
   newNode.index = nodeIndex;
@@ -327,7 +328,7 @@ void GltfModel::loadNode(
   // Node with children
   if (node.children.size() > 0) {
     for (size_t i = 0; i < node.children.size(); i++) {
-      loadNode(nodeIndex, node.children[i], model, indices, vertices);
+      loadNode(nodeIndex, node.children[i], model, indices, vertices, flipUVs);
     }
   }
 
@@ -408,6 +409,10 @@ void GltfModel::loadNode(
                             : glm::vec3(0.0f));
           vert.uv = bufferTexCoords ? glm::make_vec2(&bufferTexCoords[v * 2])
                                     : glm::vec2(0.0f);
+
+          if (flipUVs) {
+            vert.uv = glm::vec2(vert.uv.x, 1.0f - vert.uv.y);
+          }
 
           vertices.push_back(vert);
         }

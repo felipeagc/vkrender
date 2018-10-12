@@ -7,7 +7,7 @@
 - [x] Figure out a way to scale a whole model (probably a member
       matrix for GltfModel that multiplies before passing to GPU)
 - [x] Load glTF models
-- [ ] Figure out UV flipping of GltfModels
+- [x] Figure out UV flipping of GltfModels
 - [ ] Document as much as possible
 - [ ] Make more flexible DescriptorManager (with unordered_map)
 - [ ] Default descriptor sets for assets that don't have defined properties (like textures)
@@ -39,8 +39,8 @@ For the material's stuff
 - Albedo texture (binding = 0)
 
 ### Descriptor set 2
-For the model's stuff
-- Model matrix (binding = 0)
+For the model's mesh stuff
+- Mesh matrix (binding = 0)
 
 ### Descriptor sets 3 and beyond
 For user-defined stuff

@@ -57,9 +57,9 @@ public:
     vk::DescriptorBufferInfo bufferInfo;
     vk::DescriptorSet descriptorSet;
 
-    struct ModelUniform {
+    struct MeshUniform {
       glm::mat4 model;
-    } modelUniform;
+    } ubo;
 
     void updateUniform();
 
@@ -110,7 +110,7 @@ public:
         .build();
   }
 
-  GltfModel(const std::string &path);
+  GltfModel(const std::string &path, bool flipUVs = false);
   ~GltfModel();
   GltfModel(const GltfModel &other) = default;
   GltfModel &operator=(GltfModel &other) = default;
@@ -140,7 +140,6 @@ private:
 
   Buffer vertexBuffer;
   Buffer indexBuffer;
-  uint32_t indexCount;
 
   void loadMaterials(tinygltf::Model &model);
 
@@ -151,7 +150,8 @@ private:
       int nodeIndex,
       const tinygltf::Model &model,
       std::vector<uint32_t> &indices,
-      std::vector<Vertex> &vertices);
+      std::vector<Vertex> &vertices,
+      bool flipUVs);
 
   void getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max);
 
