@@ -63,7 +63,7 @@ StagingBuffer::StagingBuffer(size_t size)
           MemoryPropertyFlagBits::eHostCoherent) {
 }
 
-void StagingBuffer::copyMemory(void *data, size_t size) {
+void StagingBuffer::copyMemory(const void *data, size_t size) {
   void *stagingMemoryPointer;
   this->mapMemory(&stagingMemoryPointer);
   memcpy(stagingMemoryPointer, data, size);

@@ -12,6 +12,9 @@ set(
   vkr/commandbuffer.cpp
   vkr/texture.cpp
   vkr/shader_compilation.cpp
+  vkr/gltf_model.cpp
+  vkr/camera.cpp
+  vkr/descriptor_manager.cpp
   )
 
 add_library(vkrender ${VKRENDER_SOURCES})
@@ -38,6 +41,7 @@ target_link_libraries(
   glslang
   glslang-default-resource-limits
   SPIRV
+  tinygltf
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
   )

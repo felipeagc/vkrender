@@ -1,5 +1,6 @@
 #pragma once
 
+#include "descriptor_manager.hpp"
 #include "util.hpp"
 #include <functional>
 #include <vector>
@@ -43,6 +44,14 @@ public:
     return Context::get().device;
   }
 
+  static PhysicalDevice &getPhysicalDevice() {
+    return Context::get().physicalDevice;
+  }
+
+  static DescriptorManager &getDescriptorManager() {
+    return Context::get().descriptorManager;
+  }
+
 protected:
   vk::Instance instance;
 
@@ -65,6 +74,8 @@ protected:
   vk::CommandPool transientCommandPool;
 
   vk::Format depthImageFormat;
+
+  DescriptorManager descriptorManager;
 
   void createInstance();
 

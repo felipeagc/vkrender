@@ -6,7 +6,6 @@
 namespace vkr {
 class Buffer;
 class GraphicsPipeline;
-class DescriptorSet;
 
 class CommandBuffer {
 public:

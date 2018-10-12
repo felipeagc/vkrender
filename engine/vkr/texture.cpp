@@ -18,12 +18,25 @@ Texture::Texture(const std::string_view &path) {
   stagingBuffer->transfer(this->image, this->width, this->height);
 }
 
-vk::Sampler Texture::getSampler() {
-  return this->sampler;
+Texture::Texture(
+    const std::vector<unsigned char> &data,
+    const uint32_t width,
+    const uint32_t height)
+    : width(width), height(height) {
+  this->createImage();
+
+  Unique<StagingBuffer> stagingBuffer(data.size());
+  stagingBuffer->copyMemory(data.data(), data.size());
+  stagingBuffer->transfer(this->image, this->width, this->height);
 }
 
-vk::ImageView Texture::getImageView() {
-  return this->imageView;
+vk::Sampler Texture::getSampler() const { return this->sampler; }
+
+vk::ImageView Texture::getImageView() const { return this->imageView; }
+
+DescriptorImageInfo Texture::getDescriptorInfo() const {
+  return {
+      this->sampler, this->imageView, vk::ImageLayout::eShaderReadOnlyOptimal};
 }
 
 void Texture::destroy() {
@@ -92,15 +105,15 @@ void Texture::createImage() {
       {},                                      // flags
       vk::Filter::eLinear,                     // magFilter
       vk::Filter::eLinear,                     // minFilter
-      vk::SamplerMipmapMode::eNearest,         // mipmapMode
-      vk::SamplerAddressMode::eClampToEdge,    // addressModeU
-      vk::SamplerAddressMode::eClampToEdge,    // addressModeV
-      vk::SamplerAddressMode::eClampToEdge,    // addressModeW
+      vk::SamplerMipmapMode::eLinear,          // mipmapMode
+      vk::SamplerAddressMode::eMirroredRepeat, // addressModeU
+      vk::SamplerAddressMode::eMirroredRepeat, // addressModeV
+      vk::SamplerAddressMode::eMirroredRepeat, // addressModeW
       0.0f,                                    // mipLodBias
       VK_FALSE,                                // anisotropyEnable
       1.0f,                                    // maxAnisotropy
       VK_FALSE,                                // compareEnable
-      vk::CompareOp::eAlways,                  // compareOp
+      vk::CompareOp::eNever,                   // compareOp
       0.0f,                                    // minLod
       0.0f,                                    // maxLod
       vk::BorderColor::eFloatTransparentBlack, // borderColor

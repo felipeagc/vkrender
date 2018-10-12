@@ -22,17 +22,23 @@ enum class MemoryUsageFlagBits {
 
 using MemoryUsageFlags = vk::Flags<MemoryUsageFlagBits, VmaMemoryUsage>;
 
+using PhysicalDevice = vk::PhysicalDevice;
 using Device = vk::Device;
 using Image = vk::Image;
+using Sampler = vk::Sampler;
+using ImageView = vk::ImageView;
 using VertexInputRate = vk::VertexInputRate;
 using Format = vk::Format;
 using IndexType = vk::IndexType;
 using DeviceSize = vk::DeviceSize;
 using PipelineBindPoint = vk::PipelineBindPoint;
 using PipelineLayout = vk::PipelineLayout;
+using DescriptorSet = vk::DescriptorSet;
 using DescriptorSetLayoutBinding = vk::DescriptorSetLayoutBinding;
 using DescriptorPoolSize = vk::DescriptorPoolSize;
 using DescriptorType = vk::DescriptorType;
+using DescriptorBufferInfo = vk::DescriptorBufferInfo;
+using DescriptorImageInfo = vk::DescriptorImageInfo;
 using ShaderStageFlagBits = vk::ShaderStageFlagBits;
 
 // Use this wrapper to call .destroy() on destruction

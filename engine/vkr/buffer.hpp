@@ -11,6 +11,8 @@ class CommandBuffer;
 
 class Buffer {
 public:
+  Buffer() {
+  }
   Buffer(
       size_t size,
       BufferUsageFlags bufferUsage,
@@ -20,6 +22,10 @@ public:
   }
   Buffer(const Buffer &other) = default;
   Buffer &operator=(const Buffer &other) = default;
+
+  operator bool() {
+    return this->buffer;
+  }
 
   void mapMemory(void **dest);
   void unmapMemory();
@@ -42,7 +48,7 @@ public:
   StagingBuffer &operator=(const StagingBuffer &other) = default;
 
   // Copies memory into the staging buffer
-  void copyMemory(void *data, size_t size);
+  void copyMemory(const void *data, size_t size);
 
   // Issues a command to transfer this buffer's memory into a vertex buffer
   void transfer(Buffer &buffer, size_t size);
