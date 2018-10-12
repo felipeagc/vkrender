@@ -61,6 +61,8 @@ public:
       glm::mat4 model;
     } modelUniform;
 
+    void updateUniform();
+
     Mesh(){};
     Mesh(glm::mat4 matrix);
   };
@@ -115,6 +117,15 @@ public:
 
   void draw(vkr::CommandBuffer &commandBuffer, vkr::GraphicsPipeline &pipeline);
 
+  void setPosition(glm::vec3 pos);
+  glm::vec3 getPosition() const;
+
+  void setRotation(glm::vec3 rotation);
+  glm::vec3 getRotation() const;
+
+  void setScale(glm::vec3 scale);
+  glm::vec3 getScale() const;
+
   void destroy();
 
 private:
@@ -122,6 +133,10 @@ private:
   std::vector<Mesh> meshes;
   std::vector<Texture> textures;
   std::vector<Material> materials;
+
+  glm::vec3 pos = {0.0, 0.0, 0.0};
+  glm::vec3 scale = {1.0, 1.0, 1.0};
+  glm::vec3 rotation = {0.0, 0.0, 0.0};
 
   Buffer vertexBuffer;
   Buffer indexBuffer;

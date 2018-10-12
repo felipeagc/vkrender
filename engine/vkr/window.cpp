@@ -128,7 +128,7 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
         vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
         vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
         vk::ImageLayout::eUndefined,                    // oldLayout
-        vk::ImageLayout::ePresentSrcKHR,                // newLayout
+        vk::ImageLayout::eColorAttachmentOptimal,       // newLayout
         Context::get().presentQueueFamilyIndex,         // srcQueueFamilyIndex
         Context::get().graphicsQueueFamilyIndex,        // dstQueueFamilyIndex
         this->swapchainImages[this->currentImageIndex], // image
@@ -146,7 +146,7 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
 
   std::array<vk::ClearValue, 2> clearValues{
       vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
-      vk::ClearValue{{1.0f, 0}},
+      vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
   };
 
   vk::RenderPassBeginInfo renderPassBeginInfo{
@@ -187,7 +187,7 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
     vk::ImageMemoryBarrier barrierFromDrawToPresent{
         vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
         vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
-        vk::ImageLayout::ePresentSrcKHR,                // oldLayout
+        vk::ImageLayout::eColorAttachmentOptimal,       // oldLayout
         vk::ImageLayout::ePresentSrcKHR,                // newLayout
         Context::get().graphicsQueueFamilyIndex,        // srcQueueFamilyIndex
         Context::get().presentQueueFamilyIndex,         // dstQueueFamilyIndex
@@ -301,9 +301,7 @@ int Window::getRelativeMouseY() const {
   return y;
 }
 
-float Window::getDelta() const {
-  return (float) this->deltaTicks / 1000.0f;
-}
+float Window::getDelta() const { return (float)this->deltaTicks / 1000.0f; }
 
 bool Window::getShouldClose() const { return this->shouldClose; }
 
@@ -431,8 +429,25 @@ void Window::allocateGraphicsCommandBuffers() {
 }
 
 void Window::createDepthResources() {
+  std::array<vk::Format, 5> depthFormats = {vk::Format::eD32SfloatS8Uint,
+                                            vk::Format::eD32Sfloat,
+                                            vk::Format::eD24UnormS8Uint,
+                                            vk::Format::eD16UnormS8Uint,
+                                            vk::Format::eD16Unorm};
+  bool validDepthFormat = false;
+  for (auto &format : depthFormats) {
+    vk::FormatProperties formatProps =
+        Context::getPhysicalDevice().getFormatProperties(format);
+    if (formatProps.optimalTilingFeatures &
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+      this->depthImageFormat = format;
+      validDepthFormat = true;
+      break;
+    }
+  }
+  assert(validDepthFormat);
+
   for (auto &resources : this->frameResources) {
-    this->depthImageFormat = vk::Format::eD16Unorm; // TODO: change this?
     vk::ImageCreateInfo imageCreateInfo{
         {},
         vk::ImageType::e2D,
@@ -479,12 +494,13 @@ void Window::createDepthResources() {
             vk::ComponentSwizzle::eIdentity, // a
         },                                   // components
         {
-            vk::ImageAspectFlagBits::eDepth, // aspectMask
-            0,                               // baseMipLevel
-            1,                               // levelCount
-            0,                               // baseArrayLayer
-            1,                               // layerCount
-        },                                   // subresourceRange
+            vk::ImageAspectFlagBits::eDepth |
+                vk::ImageAspectFlagBits::eStencil, // aspectMask
+            0,                                     // baseMipLevel
+            1,                                     // levelCount
+            0,                                     // baseArrayLayer
+            1,                                     // layerCount
+        },                                         // subresourceRange
     };
 
     resources.depthImageView =
@@ -507,15 +523,15 @@ void Window::createRenderPass() {
                                             // this?)
       },
       vk::AttachmentDescription{
-          {},                                            // flags
-          this->depthImageFormat,                        // format
-          vk::SampleCountFlagBits::e1,                   // samples
-          vk::AttachmentLoadOp::eClear,                  // loadOp
-          vk::AttachmentStoreOp::eStore,                 // storeOp
-          vk::AttachmentLoadOp::eDontCare,               // stencilLoadOp
-          vk::AttachmentStoreOp::eDontCare,              // stencilStoreOp
-          vk::ImageLayout::eUndefined,                   // initialLayout
-          vk::ImageLayout::eDepthStencilReadOnlyOptimal, // finalLayout
+          {},                                              // flags
+          this->depthImageFormat,                          // format
+          vk::SampleCountFlagBits::e1,                     // samples
+          vk::AttachmentLoadOp::eClear,                    // loadOp
+          vk::AttachmentStoreOp::eStore,                   // storeOp
+          vk::AttachmentLoadOp::eDontCare,                 // stencilLoadOp
+          vk::AttachmentStoreOp::eDontCare,                // stencilStoreOp
+          vk::ImageLayout::eUndefined,                     // initialLayout
+          vk::ImageLayout::eDepthStencilAttachmentOptimal, // finalLayout
       },
   };
 

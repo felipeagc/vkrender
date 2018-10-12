@@ -4,9 +4,11 @@
 - [x] Compile GLSL shaders using glslang
 - [x] Free descriptor sets after destruction of resources
 - [x] Camera options
-- [ ] Figure out a way to scale a whole model (probably a member
+- [x] Figure out a way to scale a whole model (probably a member
       matrix for GltfModel that multiplies before passing to GPU)
 - [x] Load glTF models
+- [ ] Figure out UV flipping of GltfModels
+- [ ] Document as much as possible
 - [ ] Make more flexible DescriptorManager (with unordered_map)
 - [ ] Default descriptor sets for assets that don't have defined properties (like textures)
 - [ ] Small vector class (for usage in cases where an allocation would be done each frame)

@@ -22,6 +22,7 @@ enum class MemoryUsageFlagBits {
 
 using MemoryUsageFlags = vk::Flags<MemoryUsageFlagBits, VmaMemoryUsage>;
 
+using PhysicalDevice = vk::PhysicalDevice;
 using Device = vk::Device;
 using Image = vk::Image;
 using Sampler = vk::Sampler;

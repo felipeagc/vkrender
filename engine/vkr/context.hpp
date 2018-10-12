@@ -44,6 +44,10 @@ public:
     return Context::get().device;
   }
 
+  static PhysicalDevice &getPhysicalDevice() {
+    return Context::get().physicalDevice;
+  }
+
   static DescriptorManager &getDescriptorManager() {
     return Context::get().descriptorManager;
   }

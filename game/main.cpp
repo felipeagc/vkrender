@@ -38,7 +38,7 @@ int main() {
 
   window.setRelativeMouse();
 
-  vkr::Unique<vkr::GltfModel> model{{"../assets/Duck.glb"}};
+  vkr::Unique<vkr::GltfModel> model{{"../assets/DamagedHelmet.glb"}};
 
   float time = 0.0;
 
@@ -64,7 +64,13 @@ int main() {
     float camX = sin(time) * radius;
     float camY = cos(time) * radius;
     camera.setPos({camX, radius, camY});
-    camera.lookAt({0.0, 0.0, 0.0});
+    camera.lookAt(model->getPosition());
+
+    // model->setScale(glm::vec3(1.0) * (sin(time) / 2.0f + 1.0f));
+    // model->setPosition(
+    //     model->getPosition() + glm::vec3(window.getDelta(), 0.0, 0.0));
+    // model->setRotation(
+    //     model->getRotation() + glm::vec3(0.0, window.getDelta() * 100.0, 0.0));
 
     camera.update(window.getWidth(), window.getHeight());
 

@@ -57,6 +57,10 @@ GltfModel::Mesh::Mesh(glm::mat4 matrix)
       uniformBuffer.getVkBuffer(), 0, sizeof(ModelUniform)};
 }
 
+void GltfModel::Mesh::updateUniform() {
+  memcpy(this->mapped, &modelUniform, sizeof(ModelUniform));
+}
+
 glm::mat4 GltfModel::Node::localMatrix() {
   return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) *
          glm::scale(glm::mat4(1.0f), scale) * matrix;
@@ -69,13 +73,29 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
     m = model.nodes[this->parentIndex].localMatrix() * m;
     p = model.nodes[this->parentIndex].parentIndex;
   }
+
+  auto translation = glm::translate(glm::mat4(1.0f), model.pos);
+  auto rotation = glm::rotate(
+      glm::mat4(1.0f), glm::radians(model.rotation.x), {1.0, 0.0, 0.0});
+  rotation =
+      glm::rotate(rotation, glm::radians(model.rotation.y), {0.0, 1.0, 0.0});
+  rotation =
+      glm::rotate(rotation, glm::radians(model.rotation.z), {0.0, 0.0, 1.0});
+  auto scaling = glm::scale(glm::mat4(1.0f), model.scale);
+
+  auto modelMatrix = translation * rotation * scaling;
+
+  m = modelMatrix * m;
+
   return m;
 }
 
 void GltfModel::Node::update(GltfModel &model) {
   if (this->meshIndex != -1) {
-    glm::mat4 m = getMatrix(model);
-    memcpy(model.meshes[meshIndex].mapped, &m, sizeof(glm::mat4));
+    glm::mat4 m = this->getMatrix(model);
+    auto &mesh = model.meshes[meshIndex];
+    mesh.modelUniform.model = m;
+    mesh.updateUniform();
   }
 
   for (auto &childIndex : childrenIndices) {
@@ -176,6 +196,42 @@ void GltfModel::draw(
     drawNode(node, commandBuffer, pipeline);
   }
 }
+
+void GltfModel::setPosition(glm::vec3 pos) {
+  this->pos = pos;
+
+  for (auto &node : nodes) {
+    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
+      node.update(*this);
+    }
+  }
+}
+
+glm::vec3 GltfModel::getPosition() const { return this->pos; }
+
+void GltfModel::setRotation(glm::vec3 rotation) {
+  this->rotation = rotation;
+
+  for (auto &node : nodes) {
+    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
+      node.update(*this);
+    }
+  }
+}
+
+glm::vec3 GltfModel::getRotation() const { return this->rotation; }
+
+void GltfModel::setScale(glm::vec3 scale) {
+  this->scale = scale;
+
+  for (auto &node : nodes) {
+    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
+      node.update(*this);
+    }
+  }
+}
+
+glm::vec3 GltfModel::getScale() const { return this->scale; }
 
 void GltfModel::destroy() {
   vertexBuffer.destroy();
