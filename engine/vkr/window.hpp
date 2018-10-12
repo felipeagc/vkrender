@@ -31,6 +31,17 @@ public:
   uint32_t getWidth() const;
   uint32_t getHeight() const;
 
+  bool getRelativeMouse() const;
+  void setRelativeMouse(bool relative = true);
+
+  int getMouseX() const;
+  int getMouseY() const;
+
+  int getRelativeMouseX() const;
+  int getRelativeMouseY() const;
+
+  float getDelta() const;
+
   bool getShouldClose() const;
   void setShouldClose(bool shouldClose);
 
@@ -40,6 +51,9 @@ protected:
   static std::vector<const char *> requiredVulkanExtensions;
 
   SDL_Window *window{nullptr};
+
+  uint32_t lastTicks = 0;
+  uint32_t deltaTicks = 0;
 
   vk::SurfaceKHR surface;
 

@@ -1,18 +1,28 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include "util.hpp"
 #include <vulkan/vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkr {
 class Texture {
 public:
+  Texture(){};
   Texture(const std::string_view &path);
-  ~Texture() {};
+  Texture(
+      const std::vector<unsigned char> &data,
+      const uint32_t width,
+      const uint32_t height);
+  ~Texture(){};
   Texture(const Texture &other) = default;
-  Texture& operator=(Texture &other) = delete;
+  Texture &operator=(const Texture &other) = default;
 
-  vk::Sampler getSampler();
-  vk::ImageView getImageView();
+  operator bool() { return this->image; }
+
+  Sampler getSampler() const;
+  ImageView getImageView() const;
+
+  DescriptorImageInfo getDescriptorInfo() const;
 
   void destroy();
 

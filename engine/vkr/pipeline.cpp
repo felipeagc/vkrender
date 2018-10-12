@@ -15,8 +15,7 @@ VertexFormat::VertexFormat(
     std::vector<vk::VertexInputBindingDescription> bindingDescriptions,
     std::vector<vk::VertexInputAttributeDescription> attributeDescriptions)
     : bindingDescriptions(bindingDescriptions),
-      attributeDescriptions(attributeDescriptions) {
-}
+      attributeDescriptions(attributeDescriptions) {}
 
 vk::PipelineVertexInputStateCreateInfo
 VertexFormat::getPipelineVertexInputStateCreateInfo() const {
@@ -102,10 +101,12 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
     auto addBinding = [&](auto resources, auto type) {
       for (auto &res : resources) {
         metadata.descriptorSetLayoutBindings.push_back({
-            comp.get_decoration(res.id, spv::Decoration::DecorationBinding),
-            type,
-            1,
-            shaderStage,
+            comp.get_decoration(
+                res.id, spv::Decoration::DecorationBinding), // binding
+            type,                                            // descriptorType
+            1,                                               // descriptorCount
+            shaderStage,                                     // stageFlags
+            nullptr, // pImmutableSamplers
         });
       }
     };
@@ -202,8 +203,7 @@ vk::ShaderModule Shader::createShaderModule(std::vector<uint32_t> code) const {
 DescriptorSetLayout::DescriptorSetLayout(
     std::vector<vk::DescriptorSetLayoutBinding> bindings)
     : vk::DescriptorSetLayout(Context::getDevice().createDescriptorSetLayout(
-          {{}, static_cast<uint32_t>(bindings.size()), bindings.data()})) {
-}
+          {{}, static_cast<uint32_t>(bindings.size()), bindings.data()})) {}
 
 void DescriptorSetLayout::destroy() {
   Context::getDevice().waitIdle();
@@ -237,8 +237,13 @@ DescriptorPool::DescriptorPool(
     poolSize.descriptorCount *= maxSets;
   }
 
-  vk::DescriptorPool descriptorPool = Context::getDevice().createDescriptorPool(
-      {{}, maxSets, static_cast<uint32_t>(poolSizes.size()), poolSizes.data()});
+  vk::DescriptorPool descriptorPool =
+      Context::getDevice().createDescriptorPool({
+          vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, // flags
+          maxSets,                                              // maxSets
+          static_cast<uint32_t>(poolSizes.size()),              // poolSizeCount
+          poolSizes.data(),                                     // pPoolSizes
+      });
 
   *this = static_cast<DescriptorPool &>(descriptorPool);
 }
@@ -249,8 +254,7 @@ DescriptorPool::DescriptorPool(
           {{},
            maxSets,
            static_cast<uint32_t>(poolSizes.size()),
-           poolSizes.data()})) {
-}
+           poolSizes.data()})) {}
 
 std::vector<DescriptorSet> DescriptorPool::allocateDescriptorSets(
     uint32_t setCount, DescriptorSetLayout layout) {
@@ -280,8 +284,8 @@ void DescriptorPool::destroy() {
 GraphicsPipeline::GraphicsPipeline(
     const Window &window,
     const Shader &shader,
-    VertexFormat &vertexFormat,
-    std::vector<DescriptorSetLayout> descriptorSetLayouts) {
+    const VertexFormat &vertexFormat,
+    const std::vector<DescriptorSetLayout> descriptorSetLayouts) {
   log::debug("Creating graphics pipeline");
 
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo =
@@ -291,9 +295,9 @@ GraphicsPipeline::GraphicsPipeline(
       shader.getPipelineShaderStageCreateInfos();
 
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{
-      {},                                    // flags
-      vk::PrimitiveTopology::eTriangleStrip, // topology
-      VK_FALSE                               // primitiveRestartEnable
+      {},                                   // flags
+      vk::PrimitiveTopology::eTriangleList, // topology
+      VK_FALSE                              // primitiveRestartEnable
   };
 
   // pViewports and pScissors are null because we're defining them through a
@@ -311,7 +315,7 @@ GraphicsPipeline::GraphicsPipeline(
       VK_FALSE,                         // depthClampEnable
       VK_FALSE,                         // rasterizerDiscardEnable
       vk::PolygonMode::eFill,           // polygonMode
-      vk::CullModeFlagBits::eNone,      // cullMode
+      vk::CullModeFlagBits::eFront,     // cullMode
       vk::FrontFace::eCounterClockwise, // frontFace
       VK_FALSE,                         // depthBiasEnable
       0.0f,                             // depthBiasConstantFactor,
@@ -331,24 +335,24 @@ GraphicsPipeline::GraphicsPipeline(
   };
 
   vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{
-      {},                   // flags
-      VK_TRUE,              // depthTestEnable
-      VK_TRUE,              // depthWriteEnable
-      vk::CompareOp::eLess, // depthCompareOp
-      VK_FALSE,             // depthBoundsTestEnable
-      VK_FALSE,             // stencilTestEnable
+      {},                          // flags
+      VK_TRUE,                     // depthTestEnable
+      VK_TRUE,                     // depthWriteEnable
+      vk::CompareOp::eLessOrEqual, // depthCompareOp
+      VK_FALSE,                    // depthBoundsTestEnable
+      VK_FALSE,                    // stencilTestEnable
 
       // Ignore stencil stuff
   };
 
   vk::PipelineColorBlendAttachmentState colorBlendAttachmentState = {
-      VK_FALSE,               // blendEnable
-      vk::BlendFactor::eOne,  // srcColorBlendFactor
-      vk::BlendFactor::eZero, // dstColorBlendFactor
-      vk::BlendOp::eAdd,      // colorBlendOp
-      vk::BlendFactor::eOne,  // srcAlphaBlendFactor
-      vk::BlendFactor::eZero, // dstAlphaBlendFactor
-      vk::BlendOp::eAdd,      // alphaBlendOp
+      VK_TRUE,                            // blendEnable
+      vk::BlendFactor::eSrcAlpha,         // srcColorBlendFactor
+      vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
+      vk::BlendOp::eAdd,                  // colorBlendOp
+      vk::BlendFactor::eOneMinusSrcAlpha, // srcAlphaBlendFactor
+      vk::BlendFactor::eZero,             // dstAlphaBlendFactor
+      vk::BlendOp::eAdd,                  // alphaBlendOp
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
           vk::ColorComponentFlagBits::eB |
           vk::ColorComponentFlagBits::eA // colorWriteMask

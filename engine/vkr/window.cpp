@@ -81,6 +81,8 @@ SDL_Event Window::pollEvent() {
 }
 
 void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
+  this->lastTicks = SDL_GetTicks();
+
   // Begin
   Context::getDevice().waitForFences(
       this->frameResources[this->currentFrame].fence, VK_TRUE, UINT64_MAX);
@@ -241,6 +243,8 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
   }
 
   this->currentFrame = (this->currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+  this->deltaTicks = SDL_GetTicks() - this->lastTicks;
 }
 
 void Window::updateSize() {
@@ -267,9 +271,41 @@ uint32_t Window::getHeight() const {
   return static_cast<uint32_t>(height);
 }
 
-bool Window::getShouldClose() const {
-  return this->shouldClose;
+bool Window::getRelativeMouse() const { return SDL_GetRelativeMouseMode(); }
+
+void Window::setRelativeMouse(bool relative) {
+  SDL_SetRelativeMouseMode((SDL_bool)relative);
 }
+
+int Window::getMouseX() const {
+  int x;
+  SDL_GetMouseState(&x, nullptr);
+  return x;
+}
+
+int Window::getMouseY() const {
+  int y;
+  SDL_GetMouseState(nullptr, &y);
+  return y;
+}
+
+int Window::getRelativeMouseX() const {
+  int x;
+  SDL_GetRelativeMouseState(&x, nullptr);
+  return x;
+}
+
+int Window::getRelativeMouseY() const {
+  int y;
+  SDL_GetRelativeMouseState(nullptr, &y);
+  return y;
+}
+
+float Window::getDelta() const {
+  return (float) this->deltaTicks / 1000.0f;
+}
+
+bool Window::getShouldClose() const { return this->shouldClose; }
 
 void Window::setShouldClose(bool shouldClose) {
   this->shouldClose = shouldClose;

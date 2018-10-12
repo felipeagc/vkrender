@@ -61,6 +61,8 @@ Context::Context() {
 Context::~Context() {
   this->device.waitIdle();
 
+  this->descriptorManager.destroy();
+
   this->device.destroy(transientCommandPool);
   this->device.destroy(graphicsCommandPool);
 
@@ -125,6 +127,8 @@ void Context::lazyInit(vk::SurfaceKHR &surface) {
 
   this->createGraphicsCommandPool();
   this->createTransientCommandPool();
+
+  this->descriptorManager.init();
 }
 
 void Context::createDevice(vk::SurfaceKHR &surface) {

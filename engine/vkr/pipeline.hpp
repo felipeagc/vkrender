@@ -53,6 +53,7 @@ private:
 
 class DescriptorSetLayout : public vk::DescriptorSetLayout {
 public:
+  DescriptorSetLayout(){};
   DescriptorSetLayout(std::vector<DescriptorSetLayoutBinding> bindings);
   ~DescriptorSetLayout(){};
   DescriptorSetLayout(const DescriptorSetLayout &other) = default;
@@ -61,13 +62,9 @@ public:
   void destroy();
 };
 
-class DescriptorSet : public vk::DescriptorSet {
-public:
-  using vk::DescriptorSet::DescriptorSet;
-};
-
 class DescriptorPool : public vk::DescriptorPool {
 public:
+  DescriptorPool(){};
   // Create a descriptor pool with sizes derived from the bindings and maxSets
   DescriptorPool(
       uint32_t maxSets, std::vector<DescriptorSetLayoutBinding> bindings);
@@ -77,6 +74,7 @@ public:
   ~DescriptorPool(){};
 
   DescriptorPool(const DescriptorPool &) = default;
+  DescriptorPool &operator=(const DescriptorPool &) = default;
 
   // Allocate many descriptor sets with one layout
   std::vector<DescriptorSet>
@@ -87,9 +85,6 @@ public:
   allocateDescriptorSets(std::vector<DescriptorSetLayout> layouts);
 
   void destroy();
-
-private:
-  DescriptorPool &operator=(DescriptorPool &) = default;
 };
 
 class Shader {
@@ -153,8 +148,8 @@ public:
   GraphicsPipeline(
       const Window &window,
       const Shader &shader,
-      VertexFormat &vertexFormat,
-      std::vector<DescriptorSetLayout> descriptorSetLayouts =
+      const VertexFormat &vertexFormat,
+      const std::vector<DescriptorSetLayout> descriptorSetLayouts =
           std::vector<DescriptorSetLayout>());
   ~GraphicsPipeline(){};
   GraphicsPipeline(const GraphicsPipeline &other) = default;
