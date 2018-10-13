@@ -27,9 +27,10 @@ int main() {
       *modelShader,
       vkr::GltfModel::getVertexFormat(),
       {
-          vkr::Context::getDescriptorManager().getCameraSetLayout(),
-          vkr::Context::getDescriptorManager().getMaterialSetLayout(),
-          vkr::Context::getDescriptorManager().getModelSetLayout(),
+          *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_CAMERA),
+          *vkr::Context::getDescriptorManager().getSetLayout(
+              vkr::DESC_MATERIAL),
+          *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_MESH),
       },
   }};
 

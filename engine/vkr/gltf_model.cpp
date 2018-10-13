@@ -5,12 +5,13 @@
 using namespace vkr;
 
 void GltfModel::Material::init(GltfModel &model) {
-  auto &descriptorPool = Context::getDescriptorManager().getMaterialPool();
-  auto &descriptorSetLayout =
-      Context::getDescriptorManager().getMaterialSetLayout();
+  auto [descriptorPool, descriptorSetLayout] =
+      Context::getDescriptorManager()[DESC_MATERIAL];
+
+  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   this->descriptorSet =
-      descriptorPool.allocateDescriptorSets({descriptorSetLayout})[0];
+      descriptorPool->allocateDescriptorSets({*descriptorSetLayout})[0];
 
   auto &texture = model.textures[this->albedoTextureIndex];
 
@@ -243,17 +244,24 @@ void GltfModel::destroy() {
     }
 
     if (mesh.descriptorSet) {
-      auto &descriptorPool = Context::getDescriptorManager().getModelPool();
+      auto descriptorPool = Context::getDescriptorManager().getPool(DESC_MESH);
+
+      assert(descriptorPool != nullptr);
+
       Context::getDevice().freeDescriptorSets(
-          descriptorPool, mesh.descriptorSet);
+          *descriptorPool, mesh.descriptorSet);
     }
   }
 
   for (auto &material : materials) {
     if (material.descriptorSet) {
-      auto &descriptorPool = Context::getDescriptorManager().getMaterialPool();
+      auto descriptorPool =
+          Context::getDescriptorManager().getPool(DESC_MATERIAL);
+
+      assert(descriptorPool != nullptr);
+
       Context::getDevice().freeDescriptorSets(
-          descriptorPool, material.descriptorSet);
+          *descriptorPool, material.descriptorSet);
     }
   }
 
@@ -474,12 +482,13 @@ void GltfModel::loadNode(
       newMesh.primitives.push_back(newPrimitive);
     }
 
-    auto &descriptorPool = Context::getDescriptorManager().getModelPool();
-    auto &descriptorSetLayout =
-        Context::getDescriptorManager().getModelSetLayout();
+    auto [descriptorPool, descriptorSetLayout] =
+        Context::getDescriptorManager()[DESC_MESH];
+
+    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
     newMesh.descriptorSet =
-        descriptorPool.allocateDescriptorSets(1, descriptorSetLayout)[0];
+        descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
 
     vkr::Context::getDevice().updateDescriptorSets(
         {vk::WriteDescriptorSet{

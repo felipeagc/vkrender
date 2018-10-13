@@ -19,12 +19,13 @@ Camera::Camera(glm::vec3 position)
       sizeof(CameraUniform),
   };
 
-  auto &descriptorPool = Context::getDescriptorManager().getCameraPool();
-  auto &descriptorSetLayout =
-      Context::getDescriptorManager().getCameraSetLayout();
+  auto [descriptorPool, descriptorSetLayout] =
+      Context::getDescriptorManager()[DESC_CAMERA];
+
+  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   this->descriptorSet =
-      descriptorPool.allocateDescriptorSets(1, descriptorSetLayout)[0];
+      descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
 
   vkr::Context::getDevice().updateDescriptorSets(
       {vk::WriteDescriptorSet{
@@ -44,8 +45,12 @@ Camera::~Camera() {
   uniformBuffer.unmapMemory();
   uniformBuffer.destroy();
 
-  auto &descriptorPool = Context::getDescriptorManager().getCameraPool();
-  Context::getDevice().freeDescriptorSets(descriptorPool, this->descriptorSet);
+  auto descriptorPool =
+      Context::getDescriptorManager().getPool(DESC_CAMERA);
+
+  assert(descriptorPool != nullptr);
+
+  Context::getDevice().freeDescriptorSets(*descriptorPool, this->descriptorSet);
 }
 
 void Camera::setPos(glm::vec3 pos) {

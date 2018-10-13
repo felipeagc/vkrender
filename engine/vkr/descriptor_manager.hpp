@@ -1,32 +1,34 @@
 #pragma once
 
 #include "pipeline.hpp"
+#include <utility>
+#include <vector>
 
 namespace vkr {
+const std::string DESC_CAMERA = "camera";
+const std::string DESC_MESH = "mesh";
+const std::string DESC_MATERIAL = "material";
+
 class DescriptorManager {
   friend class Context;
 
 public:
-  DescriptorSetLayout &getCameraSetLayout();
-  DescriptorPool &getCameraPool();
+  std::pair<DescriptorPool *, DescriptorSetLayout *>
+  operator[](const std::string &key);
 
-  DescriptorSetLayout &getMaterialSetLayout();
-  DescriptorPool &getMaterialPool();
+  DescriptorPool *getPool(const std::string &key);
+  DescriptorSetLayout *getSetLayout(const std::string &key);
 
-  DescriptorSetLayout &getModelSetLayout();
-  DescriptorPool &getModelPool();
+  // Returns true if successful
+  // Returns false if a key with that name already exists
+  bool addPool(const std::string &key, DescriptorPool pool);
+  bool addSetLayout(const std::string &key, DescriptorSetLayout setLayout);
 
 protected:
   void init();
   void destroy();
 
-  DescriptorSetLayout cameraSetLayout;
-  DescriptorPool cameraPool;
-
-  DescriptorSetLayout materialSetLayout;
-  DescriptorPool materialPool;
-
-  DescriptorSetLayout modelSetLayout;
-  DescriptorPool modelPool;
+  std::vector<std::pair<std::string, DescriptorPool>> pools;
+  std::vector<std::pair<std::string, DescriptorSetLayout>> setLayouts;
 };
 } // namespace vkr
