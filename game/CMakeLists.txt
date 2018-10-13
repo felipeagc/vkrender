@@ -10,3 +10,5 @@ target_link_libraries(
   PRIVATE
   vkrender
   )
+
+cotire(game)
