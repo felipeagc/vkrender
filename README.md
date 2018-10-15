@@ -9,10 +9,11 @@
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
 - [ ] Document as much as possible
-- [ ] Make more flexible DescriptorManager (with unordered_map)
+- [x] Make more flexible DescriptorManager with customizable pools and sets
 - [ ] Default descriptor sets for assets that don't have defined properties (like textures)
 - [ ] Small vector class (for usage in cases where an allocation would be done each frame)
   https://dendibakh.github.io/blog/2016/11/25/Small_size_optimization
+- [ ] Figure out a way to pass more parameters to the pipeline on creation
 - [ ] Model buffers whould be on the GPU
 - [ ] Figure out Unique with a move constructor
 - [ ] Make a better abstraction for updating descriptor sets

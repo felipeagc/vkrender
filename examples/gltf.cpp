@@ -1,5 +1,4 @@
 #include <glm/glm.hpp>
-#include <iostream>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
 #include <vkr/commandbuffer.hpp>
@@ -10,12 +9,8 @@
 #include <vkr/texture.hpp>
 #include <vkr/window.hpp>
 
-struct UniformBufferObject {
-  glm::vec3 tint;
-};
-
 int main() {
-  vkr::Window window("Hello");
+  vkr::Window window("GLTF models");
 
   vkr::Unique<vkr::Shader> modelShader{{
       "../shaders/model.vert",
@@ -36,8 +31,6 @@ int main() {
 
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
-
-  window.setRelativeMouse();
 
   vkr::Unique<vkr::GltfModel> helmet{{"../assets/DamagedHelmet.glb", true}};
   helmet->setPosition({0.0, 0.0, 1.0});

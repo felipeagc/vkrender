@@ -11,21 +11,17 @@ class CommandBuffer;
 
 class Buffer {
 public:
-  Buffer() {
-  }
+  Buffer() {}
   Buffer(
       size_t size,
       BufferUsageFlags bufferUsage,
       MemoryUsageFlags memoryUsage = MemoryUsageFlagBits::eGpuOnly,
       MemoryPropertyFlags memoryProperty = {});
-  ~Buffer() {
-  }
+  ~Buffer() {}
   Buffer(const Buffer &other) = default;
   Buffer &operator=(const Buffer &other) = default;
 
-  operator bool() {
-    return this->buffer;
-  }
+  operator bool() { return this->buffer; }
 
   void mapMemory(void **dest);
   void unmapMemory();
@@ -42,8 +38,7 @@ protected:
 class StagingBuffer : public Buffer {
 public:
   StagingBuffer(size_t size);
-  ~StagingBuffer() {
-  }
+  ~StagingBuffer() {}
   StagingBuffer(const StagingBuffer &other) = default;
   StagingBuffer &operator=(const StagingBuffer &other) = default;
 
