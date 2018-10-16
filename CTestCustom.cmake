@@ -1,0 +1,11 @@
+set(CTEST_CUSTOM_TESTS_IGNORE
+  spirv-cross-test
+  spirv-cross-test-no-opt
+  spirv-cross-test-metal
+  spirv-cross-test-metal-no-opt
+  spirv-cross-test-hlsl
+  spirv-cross-test-hlsl-no-opt
+  spirv-cross-test-opt
+  spirv-cross-test-metal-opt
+  spirv-cross-test-hlsl-opt
+)

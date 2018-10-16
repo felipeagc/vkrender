@@ -1,5 +1,10 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 project(vkrender)
+
+enable_testing()
+
+# Disable submodule tests
+configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -24,3 +29,4 @@ include(cotire)
 add_subdirectory(thirdparty)
 add_subdirectory(engine)
 add_subdirectory(examples)
+add_subdirectory(tests)

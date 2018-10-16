@@ -9,100 +9,134 @@ template <typename T, size_t N = 8> class SmallVec {
 public:
   SmallVec() {}
 
+  SmallVec(size_t count) { this->resize(count); }
+
+  SmallVec(size_t count, const T &value) {
+    this->resize(count);
+
+    for (size_t i = 0; i < count; i++) {
+      this->m_heapVector[i] = value;
+    }
+  }
+
   SmallVec(std::initializer_list<T> const &data) {
     size_t len = data.end() - data.begin();
 
     this->resize(len);
-    this->count = len;
+    this->m_size = len;
 
     size_t i = 0;
     for (auto p = data.begin(); p < data.end(); p++) {
-      this->heapVector[i++] = *p;
+      this->m_heapVector[i++] = *p;
     }
   }
 
   ~SmallVec() {
-    if (heapVector != array.data()) {
-      delete[] heapVector;
+    if (m_heapVector != m_array.data()) {
+      delete[] m_heapVector;
     }
   }
 
   SmallVec(const SmallVec &other) {
-    this->resize(other.count);
-    this->count = other.count;
+    this->resize(other.m_size);
+    this->m_size = other.m_size;
 
-    for (size_t i = 0; i < other.count; i++) {
-      this->heapVector[i] = other[i];
+    for (size_t i = 0; i < other.m_size; i++) {
+      this->m_heapVector[i] = other[i];
     }
   }
 
   SmallVec &operator=(const SmallVec &other) {
-    this->resize(other.count);
-    this->count = other.count;
+    this->resize(other.m_size);
+    this->m_size = other.m_size;
 
-    for (size_t i = 0; i < other.count; i++) {
-      this->heapVector[i] = other[i];
+    for (size_t i = 0; i < other.m_size; i++) {
+      this->m_heapVector[i] = other[i];
     }
 
     return *this;
   }
 
   void push_back(const T &value) noexcept {
-    if (this->count >= this->capacity) {
-      this->capacity *= 2;
-      T *newStorage = new T[this->capacity];
-      memcpy(newStorage, this->heapVector, this->count * sizeof(T));
-
-      // Delete heap vector if it's not the stack allocated array
-      if (this->heapVector != this->array.data()) {
-        delete[] this->heapVector;
+    if (this->m_size == this->m_capacity) {
+      T *newStorage = new T[this->m_capacity * 2];
+      
+      for (size_t i = 0; i < this->m_capacity; i++) {
+        newStorage[i] = this->m_heapVector[i];
       }
 
-      this->heapVector = newStorage;
+      this->m_capacity *= 2;
+
+      // Delete heap vector if it's not the stack allocated array
+      if (this->m_heapVector != this->m_array.data()) {
+        delete[] this->m_heapVector;
+      }
+
+      this->m_heapVector = newStorage;
     }
-    this->heapVector[this->count++] = value;
+
+    this->m_size++;
+    this->m_heapVector[this->m_size-1] = value;
   }
 
-  T &operator[](size_t index) const noexcept { return heapVector[index]; }
+  T &operator[](size_t index) const noexcept { return m_heapVector[index]; }
 
   T &at(size_t index) const {
-    if (index >= count) {
+    if (index >= m_size) {
       throw std::runtime_error("Bad index");
     }
-    return heapVector[index];
+    return m_heapVector[index];
   }
 
   void resize(size_t newCapacity) noexcept {
-    this->count = newCapacity;
+    this->m_size = newCapacity;
     if (newCapacity <= N) {
+      if (m_heapVector != m_array.data()) {
+        for (size_t i = 0; i < N; i++) {
+          m_array[i] = m_heapVector[i];
+        }
+
+        delete[] m_heapVector;
+
+        m_heapVector = m_array.data();
+        this->m_capacity = N;
+      }
       return;
     }
 
     T *newStorage = new T[newCapacity];
-    size_t copySize =
-        newCapacity <= this->capacity ? newCapacity : this->capacity;
-    memcpy(newStorage, heapVector, copySize * sizeof(T));
 
-    if (heapVector != array.data()) {
-      delete[] heapVector;
+    size_t minCapacity =
+        newCapacity <= this->m_capacity ? newCapacity : this->m_capacity;
+
+    for (size_t i = 0; i < minCapacity; i++) {
+      newStorage[i] = this->m_heapVector[i];
     }
 
-    heapVector = newStorage;
-    this->capacity = newCapacity;
+    for (size_t i = minCapacity; i < newCapacity; i++) {
+      newStorage[i] = T{};
+    }
+
+    if (m_heapVector != m_array.data()) {
+      delete[] m_heapVector;
+    }
+
+    m_heapVector = newStorage;
+    this->m_capacity = newCapacity;
   }
 
-  size_t size() const noexcept { return this->count; }
+  size_t size() const noexcept { return this->m_size; }
 
-  T *data() const noexcept { return heapVector; }
+  T *data() const noexcept { return m_heapVector; }
 
-  T* begin() const noexcept { return &heapVector[0]; }
+  T *begin() const noexcept { return &m_heapVector[0]; }
 
-  T* end() const noexcept { return &heapVector[this->count-1]; }
+  T *end() const noexcept { return &m_heapVector[this->m_size]; }
 
 protected:
-  std::array<T, N> array;
-  size_t count{0};
-  size_t capacity{N};
-  T *heapVector{array.data()};
+  std::array<T, N> m_array{};
+  size_t m_size{0};
+  size_t m_capacity{N};
+  T *m_heapVector{m_array.data()};
 };
 } // namespace vkr
