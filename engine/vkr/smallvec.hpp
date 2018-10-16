@@ -73,6 +73,7 @@ public:
   }
 
   void resize(size_t newCapacity) noexcept {
+    this->count = newCapacity;
     if (newCapacity <= N) {
       return;
     }
@@ -88,10 +89,15 @@ public:
 
     heapVector = newStorage;
     this->capacity = newCapacity;
-    this->count = this->count <= newCapacity ? this->count : newCapacity;
   }
 
   size_t size() const noexcept { return this->count; }
+
+  T *data() const noexcept { return heapVector; }
+
+  T* begin() const noexcept { return &heapVector[0]; }
+
+  T* end() const noexcept { return &heapVector[this->count-1]; }
 
 protected:
   std::array<T, N> array;
