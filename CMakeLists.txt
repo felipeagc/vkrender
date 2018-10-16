@@ -24,8 +24,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   add_compile_options (-fcolor-diagnostics)
 endif ()
 
-include(cotire)
-
 add_subdirectory(thirdparty)
 add_subdirectory(engine)
 add_subdirectory(examples)
