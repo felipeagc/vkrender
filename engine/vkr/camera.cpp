@@ -45,8 +45,7 @@ Camera::~Camera() {
   uniformBuffer.unmapMemory();
   uniformBuffer.destroy();
 
-  auto descriptorPool =
-      Context::getDescriptorManager().getPool(DESC_CAMERA);
+  auto descriptorPool = Context::getDescriptorManager().getPool(DESC_CAMERA);
 
   assert(descriptorPool != nullptr);
 
@@ -84,7 +83,7 @@ void Camera::bind(CommandBuffer &commandBuffer, GraphicsPipeline &pipeline) {
   commandBuffer.bindDescriptorSets(
       vkr::PipelineBindPoint::eGraphics,
       pipeline.getLayout(),
-      0,                     // firstIndex
-      {this->descriptorSet}, // pDescriptorSets
+      0,                   // firstIndex
+      this->descriptorSet, // pDescriptorSets
       {});
 }

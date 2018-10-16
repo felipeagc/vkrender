@@ -1,6 +1,7 @@
 #pragma once
 
 #include "buffer.hpp"
+#include "smallvec.hpp"
 #include "util.hpp"
 #include <fstream>
 #include <spirv_reflect.hpp>
@@ -18,15 +19,15 @@ class VertexFormat {
 public:
   VertexFormat(){};
   VertexFormat(
-      std::vector<vk::VertexInputBindingDescription> bindingDescriptions,
-      std::vector<vk::VertexInputAttributeDescription> attributeDescriptions);
+      SmallVec<vk::VertexInputBindingDescription> bindingDescriptions,
+      SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions);
   ~VertexFormat(){};
   VertexFormat(const VertexFormat &other) = default;
   VertexFormat &operator=(VertexFormat &other) = default;
 
 protected:
-  std::vector<vk::VertexInputBindingDescription> bindingDescriptions;
-  std::vector<vk::VertexInputAttributeDescription> attributeDescriptions;
+  SmallVec<vk::VertexInputBindingDescription> bindingDescriptions;
+  SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions;
 
   vk::PipelineVertexInputStateCreateInfo
   getPipelineVertexInputStateCreateInfo() const;
@@ -47,14 +48,14 @@ public:
   VertexFormat build();
 
 private:
-  std::vector<vk::VertexInputBindingDescription> bindingDescriptions;
-  std::vector<vk::VertexInputAttributeDescription> attributeDescriptions;
+  SmallVec<vk::VertexInputBindingDescription> bindingDescriptions;
+  SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions;
 };
 
 class DescriptorSetLayout : public vk::DescriptorSetLayout {
 public:
   DescriptorSetLayout(){};
-  DescriptorSetLayout(std::vector<DescriptorSetLayoutBinding> bindings);
+  DescriptorSetLayout(const SmallVec<DescriptorSetLayoutBinding> &bindings);
   ~DescriptorSetLayout(){};
   DescriptorSetLayout(const DescriptorSetLayout &other) = default;
   DescriptorSetLayout &operator=(const DescriptorSetLayout &other) = default;
@@ -67,22 +68,23 @@ public:
   DescriptorPool(){};
   // Create a descriptor pool with sizes derived from the bindings and maxSets
   DescriptorPool(
-      uint32_t maxSets, std::vector<DescriptorSetLayoutBinding> bindings);
+      uint32_t maxSets, const SmallVec<DescriptorSetLayoutBinding> &bindings);
 
   // Create a descriptor pool with manually specified poolSizes
-  DescriptorPool(uint32_t maxSets, std::vector<DescriptorPoolSize> poolSizes);
+  DescriptorPool(
+      uint32_t maxSets, const SmallVec<DescriptorPoolSize> &poolSizes);
   ~DescriptorPool(){};
 
   DescriptorPool(const DescriptorPool &) = default;
   DescriptorPool &operator=(const DescriptorPool &) = default;
 
   // Allocate many descriptor sets with one layout
-  std::vector<DescriptorSet>
-  allocateDescriptorSets(uint32_t setCount, DescriptorSetLayout layout);
+  SmallVec<DescriptorSet>
+  allocateDescriptorSets(uint32_t setCount, DescriptorSetLayout &layout);
 
   // Allocate many descriptor sets with different layouts
-  std::vector<DescriptorSet>
-  allocateDescriptorSets(std::vector<DescriptorSetLayout> layouts);
+  SmallVec<DescriptorSet>
+  allocateDescriptorSets(const SmallVec<DescriptorSetLayout> &layouts);
 
   void destroy();
 };
@@ -93,17 +95,19 @@ public:
   Shader(const std::string &vertexPath, const std::string &fragmentPath);
 
   // Creates a shader from SPIR-V code
-  Shader(std::vector<uint32_t> vertexCode, std::vector<uint32_t> fragmentCode);
+  Shader(
+      const std::vector<uint32_t> &vertexCode,
+      const std::vector<uint32_t> &fragmentCode);
 
   ~Shader(){};
   Shader(const Shader &other) = default;
   Shader &operator=(Shader &other) = delete;
 
-  std::vector<vk::PipelineShaderStageCreateInfo>
+  SmallVec<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
   struct ShaderMetadata {
-    std::vector<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+    SmallVec<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings;
     vkr::VertexFormat vertexFormat;
   };
 
@@ -138,7 +142,7 @@ private:
   vk::ShaderModule vertexModule;
   vk::ShaderModule fragmentModule;
 
-  vk::ShaderModule createShaderModule(std::vector<uint32_t> code) const;
+  vk::ShaderModule createShaderModule(const std::vector<uint32_t> &code) const;
 };
 
 class GraphicsPipeline {
@@ -149,8 +153,7 @@ public:
       const Window &window,
       const Shader &shader,
       const VertexFormat &vertexFormat,
-      const std::vector<DescriptorSetLayout> descriptorSetLayouts =
-          std::vector<DescriptorSetLayout>());
+      const SmallVec<DescriptorSetLayout> &descriptorSetLayouts = {});
   ~GraphicsPipeline(){};
   GraphicsPipeline(const GraphicsPipeline &other) = default;
   GraphicsPipeline &operator=(GraphicsPipeline &other) = delete;

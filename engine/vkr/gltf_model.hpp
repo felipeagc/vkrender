@@ -29,7 +29,7 @@ public:
     vk::DescriptorSet descriptorSet;
 
     // Call this after texture index is established
-    void init(GltfModel &model);
+    void init(const GltfModel &model);
   };
 
   struct Primitive {
@@ -64,7 +64,7 @@ public:
     void updateUniform();
 
     Mesh(){};
-    Mesh(glm::mat4 matrix);
+    Mesh(const glm::mat4 &matrix);
   };
 
   struct Node {

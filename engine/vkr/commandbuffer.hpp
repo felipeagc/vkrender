@@ -1,5 +1,6 @@
 #pragma once
 
+#include "smallvec.hpp"
 #include "util.hpp"
 #include <vulkan/vulkan.hpp>
 
@@ -13,7 +14,7 @@ public:
       : commandBuffer(commandBuffer){};
   ~CommandBuffer(){};
 
-  void bindVertexBuffer(Buffer &buffer);
+  void bindVertexBuffers(const ArrayProxy<const Buffer> &buffers);
   void bindIndexBuffer(Buffer &buffer, DeviceSize offset, IndexType indexType);
   void bindDescriptorSets(
       PipelineBindPoint pipelineBindPoint,

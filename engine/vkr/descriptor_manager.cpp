@@ -6,7 +6,7 @@ const uint32_t CAMERA_MAX_SETS = 20;
 const uint32_t MATERIAL_MAX_SETS = 50;
 const uint32_t MESH_MAX_SETS = 500;
 
-const std::vector<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
+const SmallVec<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
     0,                                   // binding
     vkr::DescriptorType::eUniformBuffer, // descriptorType
     1,                                   // descriptorCount
@@ -14,7 +14,7 @@ const std::vector<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
     nullptr,                             // pImmutableSamplers
 }};
 
-const std::vector<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
+const SmallVec<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
     0,                                   // binding
     vkr::DescriptorType::eUniformBuffer, // descriptorType
     1,                                   // descriptorCount
@@ -22,7 +22,7 @@ const std::vector<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
     nullptr,                             // pImmutableSamplers
 }};
 
-const std::vector<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {{
+const SmallVec<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {{
     0,                                          // binding
     vkr::DescriptorType::eCombinedImageSampler, // descriptorType
     1,                                          // descriptorCount

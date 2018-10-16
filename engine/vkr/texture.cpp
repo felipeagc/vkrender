@@ -23,6 +23,8 @@ Texture::Texture(
     const uint32_t width,
     const uint32_t height)
     : width(width), height(height) {
+  log::debug("Loading texture from binary data");
+
   this->createImage();
 
   Unique<StagingBuffer> stagingBuffer(data.size());

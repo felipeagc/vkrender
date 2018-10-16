@@ -5,8 +5,18 @@
 
 using namespace vkr;
 
-void CommandBuffer::bindVertexBuffer(Buffer &buffer) {
-  this->commandBuffer.bindVertexBuffers(0, buffer.getVkBuffer(), {0});
+void CommandBuffer::bindVertexBuffers(const ArrayProxy<const Buffer> &buffers) {
+  SmallVec<vk::Buffer> handles;
+  handles.resize(buffers.size());
+  SmallVec<vk::DeviceSize> offsets;
+  offsets.resize(buffers.size());
+  for (size_t i = 0; i < buffers.size(); i++) {
+    handles[i] = (buffers.begin()+i)->getVkBuffer();
+    offsets[i] = 0;
+  }
+
+  this->commandBuffer.bindVertexBuffers(
+      0, handles.size(), handles.data(), offsets.data());
 }
 
 void CommandBuffer::bindIndexBuffer(

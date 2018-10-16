@@ -66,7 +66,7 @@ int main() {
 
     window.present([&](vkr::CommandBuffer &commandBuffer) {
       commandBuffer.bindGraphicsPipeline(*pipeline);
-      commandBuffer.bindVertexBuffer(*vertexBuffer);
+      commandBuffer.bindVertexBuffers({*vertexBuffer});
 
       commandBuffer.draw(vertices.size(), 1, 0, 0);
     });

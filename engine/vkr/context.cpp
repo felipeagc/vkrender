@@ -9,8 +9,8 @@ using namespace vkr;
 // Debug callback
 
 // Ignore warnings for this function
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugReportFlagsEXT flags,
     VkDebugReportObjectTypeEXT objType,
@@ -24,7 +24,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
   return VK_FALSE;
 }
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 VkResult CreateDebugReportCallbackEXT(
     VkInstance instance,

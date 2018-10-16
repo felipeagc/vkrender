@@ -4,7 +4,7 @@
 
 using namespace vkr;
 
-void GltfModel::Material::init(GltfModel &model) {
+void GltfModel::Material::init(const GltfModel &model) {
   auto [descriptorPool, descriptorSetLayout] =
       Context::getDescriptorManager()[DESC_MATERIAL];
 
@@ -45,7 +45,7 @@ GltfModel::Primitive::Primitive(
       indexCount(indexCount),
       materialIndex(materialIndex) {}
 
-GltfModel::Mesh::Mesh(glm::mat4 matrix)
+GltfModel::Mesh::Mesh(const glm::mat4 &matrix)
     : uniformBuffer(
           sizeof(MeshUniform),
           vk::BufferUsageFlagBits::eUniformBuffer,
@@ -105,6 +105,8 @@ void GltfModel::Node::update(GltfModel &model) {
 }
 
 GltfModel::GltfModel(const std::string &path, bool flipUVs) {
+  log::debug("Loading glTF model: {}", path);
+
   tinygltf::TinyGLTF loader;
   tinygltf::Model model;
 
@@ -113,7 +115,7 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   // TODO: check file extension and load accordingly
   std::string ext = path.substr(path.find_last_of('.'), path.size());
   bool ret;
-  if (ext == ".glb") {
+  if (std::strncmp(ext.c_str(), ".glb", ext.length()) == 0) {
     ret = loader.LoadBinaryFromFile(&model, &err, &warn, path);
   } else {
     ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
@@ -190,7 +192,7 @@ GltfModel::~GltfModel() {}
 void GltfModel::draw(
     vkr::CommandBuffer &commandBuffer, vkr::GraphicsPipeline &pipeline) {
   commandBuffer.bindGraphicsPipeline(pipeline);
-  commandBuffer.bindVertexBuffer(vertexBuffer);
+  commandBuffer.bindVertexBuffers({vertexBuffer});
   commandBuffer.bindIndexBuffer(indexBuffer, 0, vkr::IndexType::eUint32);
 
   for (auto &node : nodes) {
