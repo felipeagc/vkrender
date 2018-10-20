@@ -11,7 +11,7 @@ void CommandBuffer::bindVertexBuffers(const ArrayProxy<const Buffer> &buffers) {
   SmallVec<vk::DeviceSize> offsets;
   offsets.resize(buffers.size());
   for (size_t i = 0; i < buffers.size(); i++) {
-    handles[i] = (buffers.begin()+i)->getVkBuffer();
+    handles[i] = (buffers.begin()+i)->getHandle();
     offsets[i] = 0;
   }
 
@@ -21,7 +21,7 @@ void CommandBuffer::bindVertexBuffers(const ArrayProxy<const Buffer> &buffers) {
 
 void CommandBuffer::bindIndexBuffer(
     Buffer &buffer, DeviceSize offset, IndexType indexType) {
-  this->commandBuffer.bindIndexBuffer(buffer.getVkBuffer(), offset, indexType);
+  this->commandBuffer.bindIndexBuffer(buffer.getHandle(), offset, indexType);
 }
 
 void CommandBuffer::bindDescriptorSets(

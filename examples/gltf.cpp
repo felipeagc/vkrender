@@ -12,29 +12,29 @@
 int main() {
   vkr::Window window("GLTF models");
 
-  vkr::Unique<vkr::Shader> modelShader{{
+  vkr::Unique<vkr::Shader> modelShader{
       "../shaders/model.vert",
       "../shaders/model.frag",
-  }};
+  };
 
-  vkr::Unique<vkr::GraphicsPipeline> modelPipeline{{
+  vkr::Unique<vkr::GraphicsPipeline> modelPipeline{
       window,
       *modelShader,
       vkr::GltfModel::getVertexFormat(),
-      {
+      vkr::SmallVec<vkr::DescriptorSetLayout>{
           *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_CAMERA),
           *vkr::Context::getDescriptorManager().getSetLayout(
               vkr::DESC_MATERIAL),
           *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_MESH),
       },
-  }};
+  };
 
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
 
-  vkr::Unique<vkr::GltfModel> helmet{{"../assets/DamagedHelmet.glb", true}};
+  vkr::Unique<vkr::GltfModel> helmet{"../assets/DamagedHelmet.glb", true};
   helmet->setPosition({0.0, 0.0, 1.0});
-  vkr::Unique<vkr::GltfModel> duck{{"../assets/Duck.glb"}};
+  vkr::Unique<vkr::GltfModel> duck{"../assets/Duck.glb"};
   duck->setPosition({0.0, 0.0, -1.0});
 
   float time = 0.0;

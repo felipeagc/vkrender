@@ -15,7 +15,7 @@
 - [x] Small vector class (for usage in cases where an allocation would be done each frame)
 - [ ] Figure out a way to pass more parameters to the pipeline on creation
 - [ ] Model buffers whould be on the GPU
-- [ ] Figure out Unique with a move constructor
+- [x] Figure out Unique with a move constructor
 - [ ] Make a better abstraction for updating descriptor sets
 - [ ] First person camera
 - [ ] Imgui

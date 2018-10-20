@@ -1,0 +1,7 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+BinPackParameters: false
+BinPackArguments: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AlignAfterOpenBracket: AlwaysBreak
+AllowAllParametersOfDeclarationOnNextLine: true

@@ -44,7 +44,11 @@ using ShaderStageFlagBits = vk::ShaderStageFlagBits;
 // Use this wrapper to call .destroy() on destruction
 template <class T> class Unique {
 public:
-  Unique(T t) : t(t){};
+  Unique(T &&t) : t(std::move(t)){};
+
+  template<typename... Args>
+  Unique(Args&&... args): t(args...){};
+
   ~Unique() {
     t.destroy();
   }
@@ -54,6 +58,10 @@ public:
 
   Unique &operator=(const Unique &other) = delete;
   Unique &operator=(const Unique &&other) noexcept = delete;
+
+  operator bool() {
+    return t;
+  }
 
   T *operator->() {
     return &t;

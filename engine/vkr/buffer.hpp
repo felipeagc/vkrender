@@ -18,15 +18,17 @@ public:
       MemoryUsageFlags memoryUsage = MemoryUsageFlagBits::eGpuOnly,
       MemoryPropertyFlags memoryProperty = {});
   ~Buffer() {}
-  Buffer(const Buffer &other) = default;
+  Buffer(const Buffer &other) = delete;
   Buffer &operator=(const Buffer &other) = default;
+  Buffer(Buffer&&) = default;
+  Buffer &operator=(Buffer&&) = default;
 
   operator bool() { return this->buffer; }
 
   void mapMemory(void **dest);
   void unmapMemory();
 
-  vk::Buffer getVkBuffer() const;
+  vk::Buffer getHandle() const;
 
   void destroy();
 
@@ -39,8 +41,10 @@ class StagingBuffer : public Buffer {
 public:
   StagingBuffer(size_t size);
   ~StagingBuffer() {}
-  StagingBuffer(const StagingBuffer &other) = default;
+  StagingBuffer(const StagingBuffer &other) = delete;
   StagingBuffer &operator=(const StagingBuffer &other) = default;
+  StagingBuffer(StagingBuffer&&) = default;
+  StagingBuffer &operator=(StagingBuffer&&) = default;
 
   // Copies memory into the staging buffer
   void copyMemory(const void *data, size_t size);

@@ -13,10 +13,10 @@ struct Vertex {
 int main() {
   vkr::Window window("Triangle");
 
-  vkr::Unique<vkr::Shader> shader{{
+  vkr::Unique<vkr::Shader> shader{
       "../shaders/triangle.vert",
       "../shaders/triangle.frag",
-  }};
+  };
 
   vkr::VertexFormat vertexFormat =
       vkr::VertexFormatBuilder()
@@ -26,12 +26,12 @@ int main() {
               1, 0, vkr::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
           .build();
 
-  vkr::Unique<vkr::GraphicsPipeline> pipeline{{
+  vkr::Unique<vkr::GraphicsPipeline> pipeline{
       window,
       *shader,
       vertexFormat,
-      {},
-  }};
+      vkr::SmallVec<vkr::DescriptorSetLayout>{},
+  };
 
   std::array<Vertex, 3> vertices{
       Vertex{{0.5, 0.5}, {0.0, 0.0, 1.0}},
@@ -40,11 +40,12 @@ int main() {
   };
 
   vkr::Unique<vkr::Buffer> vertexBuffer{
-      {sizeof(Vertex) * vertices.size(), // size
-       vkr::BufferUsageFlagBits::eVertexBuffer |
-           vkr::BufferUsageFlagBits::eTransferDst,
-       vkr::MemoryUsageFlagBits::eGpuOnly,
-       vkr::MemoryPropertyFlagBits::eDeviceLocal}};
+      sizeof(Vertex) * vertices.size(), // size
+      vkr::BufferUsageFlagBits::eVertexBuffer |
+          vkr::BufferUsageFlagBits::eTransferDst,
+      vkr::MemoryUsageFlagBits::eGpuOnly,
+      vkr::MemoryPropertyFlagBits::eDeviceLocal,
+  };
 
   {
     vkr::StagingBuffer stagingBuffer{sizeof(Vertex) * vertices.size()};
@@ -66,7 +67,7 @@ int main() {
 
     window.present([&](vkr::CommandBuffer &commandBuffer) {
       commandBuffer.bindGraphicsPipeline(*pipeline);
-      commandBuffer.bindVertexBuffers({*vertexBuffer});
+      commandBuffer.bindVertexBuffers(*vertexBuffer);
 
       commandBuffer.draw(vertices.size(), 1, 0, 0);
     });

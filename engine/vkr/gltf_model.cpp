@@ -17,7 +17,7 @@ void GltfModel::Material::init(const GltfModel &model) {
 
   auto albedoDescriptorInfo = texture.getDescriptorInfo();
 
-  vkr::Context::getDevice().updateDescriptorSets(
+  Context::getDevice().updateDescriptorSets(
       {vk::WriteDescriptorSet{
           this->descriptorSet,                        // dstSet
           0,                                          // dstBinding
@@ -55,7 +55,7 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix)
   this->ubo.model = matrix;
   this->uniformBuffer.mapMemory(&mapped);
   this->bufferInfo = vk::DescriptorBufferInfo{
-      this->uniformBuffer.getVkBuffer(), 0, sizeof(MeshUniform)};
+      this->uniformBuffer.getHandle(), 0, sizeof(MeshUniform)};
 }
 
 void GltfModel::Mesh::updateUniform() {
@@ -192,7 +192,7 @@ GltfModel::~GltfModel() {}
 void GltfModel::draw(
     vkr::CommandBuffer &commandBuffer, vkr::GraphicsPipeline &pipeline) {
   commandBuffer.bindGraphicsPipeline(pipeline);
-  commandBuffer.bindVertexBuffers({vertexBuffer});
+  commandBuffer.bindVertexBuffers(vertexBuffer);
   commandBuffer.bindIndexBuffer(indexBuffer, 0, vkr::IndexType::eUint32);
 
   for (auto &node : nodes) {

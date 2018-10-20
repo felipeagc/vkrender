@@ -248,8 +248,6 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
 }
 
 void Window::updateSize() {
-  Context::getDevice().waitIdle();
-
   this->destroyResizables();
 
   this->createSwapchain(this->getWidth(), this->getHeight());

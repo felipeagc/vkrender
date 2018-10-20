@@ -45,7 +45,7 @@ void Buffer::unmapMemory() {
   vmaUnmapMemory(Context::get().allocator, this->allocation);
 }
 
-vk::Buffer Buffer::getVkBuffer() const {
+vk::Buffer Buffer::getHandle() const {
   return this->buffer;
 }
 
@@ -80,7 +80,7 @@ void StagingBuffer::transfer(Buffer &buffer, size_t size) {
   };
 
   commandBuffer.copyBuffer(
-      this->buffer, buffer.getVkBuffer(), 1, &bufferCopyInfo);
+      this->buffer, buffer.getHandle(), 1, &bufferCopyInfo);
 
   endSingleTimeCommandBuffer(commandBuffer);
 }

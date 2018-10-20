@@ -14,7 +14,7 @@ Camera::Camera(glm::vec3 position)
   uniformBuffer.mapMemory(&this->mapping);
 
   this->bufferInfo = DescriptorBufferInfo{
-      uniformBuffer.getVkBuffer(),
+      uniformBuffer.getHandle(),
       0,
       sizeof(CameraUniform),
   };
@@ -27,7 +27,7 @@ Camera::Camera(glm::vec3 position)
   this->descriptorSet =
       descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
 
-  vkr::Context::getDevice().updateDescriptorSets(
+  Context::getDevice().updateDescriptorSets(
       {vk::WriteDescriptorSet{
           descriptorSet,                       // dstSet
           0,                                   // dstBinding

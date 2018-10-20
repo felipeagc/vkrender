@@ -57,8 +57,10 @@ public:
   DescriptorSetLayout(){};
   DescriptorSetLayout(const SmallVec<DescriptorSetLayoutBinding> &bindings);
   ~DescriptorSetLayout(){};
-  DescriptorSetLayout(const DescriptorSetLayout &other) = default;
-  DescriptorSetLayout &operator=(const DescriptorSetLayout &other) = default;
+  DescriptorSetLayout(const DescriptorSetLayout &) = default;
+  DescriptorSetLayout &operator=(const DescriptorSetLayout &) = default;
+  DescriptorSetLayout(DescriptorSetLayout &&) = default;
+  DescriptorSetLayout &operator=(DescriptorSetLayout &&) = default;
 
   void destroy();
 };
@@ -100,8 +102,10 @@ public:
       const std::vector<uint32_t> &fragmentCode);
 
   ~Shader(){};
-  Shader(const Shader &other) = default;
+  Shader(const Shader &other) = delete;
   Shader &operator=(Shader &other) = delete;
+
+  operator bool() { return this->vertexModule && this->fragmentModule; };
 
   SmallVec<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
@@ -155,8 +159,12 @@ public:
       const VertexFormat &vertexFormat,
       const SmallVec<DescriptorSetLayout> &descriptorSetLayouts = {});
   ~GraphicsPipeline(){};
-  GraphicsPipeline(const GraphicsPipeline &other) = default;
-  GraphicsPipeline &operator=(GraphicsPipeline &other) = delete;
+  GraphicsPipeline(const GraphicsPipeline &) = delete;
+  GraphicsPipeline &operator=(GraphicsPipeline &) = delete;
+  GraphicsPipeline(GraphicsPipeline &&) = default;
+  GraphicsPipeline &operator=(GraphicsPipeline &&) = default;
+
+  operator bool() { return this->pipeline; };
 
   PipelineLayout getLayout() const;
 
