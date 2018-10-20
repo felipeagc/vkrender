@@ -9,6 +9,7 @@
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
 - [ ] Add google test as a git submodule
+- [ ] Add glm as a git submodule
 - [ ] Document as much as possible
 - [x] Make more flexible DescriptorManager with customizable pools and sets
 - [ ] Default descriptor sets for assets that don't have defined properties (like textures)

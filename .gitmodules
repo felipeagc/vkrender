@@ -7,3 +7,6 @@
 [submodule "glslang"]
 	path = thirdparty/glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "glm"]
+	path = thirdparty/glm
+	url = https://github.com/g-truc/glm.git
