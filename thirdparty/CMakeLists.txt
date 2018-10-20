@@ -1,4 +1,4 @@
-set(GLM_TEST_ENABLE OFF)
+set(GLM_TEST_ENABLE OFF CACHE BOOL "Enable building glm tests" FORCE)
 
 add_subdirectory(vma)
 add_subdirectory(stb_image)
@@ -7,3 +7,4 @@ add_subdirectory(fmt)
 add_subdirectory(glslang)
 add_subdirectory(tinygltf)
 add_subdirectory(glm)
+add_subdirectory(googletest)

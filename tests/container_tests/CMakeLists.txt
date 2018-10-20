@@ -6,8 +6,8 @@ add_executable(
 target_link_libraries(
   container_tests
   vkrender
-  GTest::GTest
-  GTest::Main
+  gtest
+  gtest_main
 )
 
 gtest_discover_tests(container_tests)

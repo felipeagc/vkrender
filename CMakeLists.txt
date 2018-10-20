@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(vkrender)
 
-enable_testing()
-
 # Disable submodule tests
 configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 
@@ -13,7 +11,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++1z")
 # Ccache
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
 # Colored error messages
@@ -25,5 +23,14 @@ endif()
 
 add_subdirectory(thirdparty)
 add_subdirectory(engine)
-add_subdirectory(examples)
-add_subdirectory(tests)
+
+option(VKR_BUILD_EXAMPLES "Build the examples" ON)
+if(VKR_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
+
+option(VKR_BUILD_TESTS "Build the tests" ON)
+if(VKR_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()

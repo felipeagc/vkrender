@@ -10,3 +10,6 @@
 [submodule "glm"]
 	path = thirdparty/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "googletest"]
+	path = thirdparty/googletest
+	url = https://github.com/google/googletest.git

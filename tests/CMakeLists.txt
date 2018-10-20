@@ -1,5 +1,3 @@
-find_package(GTest)
+include(GoogleTest)
 
-if(GTEST_FOUND)
-  add_subdirectory(container_tests)
-endif(GTEST_FOUND)
+add_subdirectory(container_tests)

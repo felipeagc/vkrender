@@ -8,7 +8,7 @@
       matrix for GltfModel that multiplies before passing to GPU)
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
-- [ ] Add google test as a git submodule
+- [x] Add google test as a git submodule
 - [ ] Add glm as a git submodule
 - [ ] Document as much as possible
 - [x] Make more flexible DescriptorManager with customizable pools and sets
