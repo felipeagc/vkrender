@@ -202,7 +202,9 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
       static_cast<uint32_t>(REQUIRED_DEVICE_EXTENSIONS.size());
   deviceCreateInfo.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTENSIONS.data();
 
-  deviceCreateInfo.pEnabledFeatures = nullptr;
+  // Enable all features
+  auto features = this->physicalDevice.getFeatures();
+  deviceCreateInfo.pEnabledFeatures = &features;
 
   this->device = this->physicalDevice.createDevice(deviceCreateInfo);
 }
@@ -236,6 +238,47 @@ void Context::createTransientCommandPool() {
 }
 
 // Misc
+
+vk::SampleCountFlagBits Context::getMaxUsableSampleCount() {
+  auto properties = this->physicalDevice.getProperties();
+  vk::SampleCountFlags colorSamples =
+      properties.limits.framebufferColorSampleCounts;
+  vk::SampleCountFlags depthSamples =
+      properties.limits.framebufferDepthSampleCounts;
+
+  vk::SampleCountFlags counts = static_cast<vk::SampleCountFlags>(std::min(
+      static_cast<unsigned int>(colorSamples),
+      static_cast<unsigned int>(depthSamples)));
+
+  if (counts & vk::SampleCountFlagBits::e64) {
+    log::debug("Max samples: {}", 64);
+    return vk::SampleCountFlagBits::e64;
+  }
+  if (counts & vk::SampleCountFlagBits::e32) {
+    log::debug("Max samples: {}", 32);
+    return vk::SampleCountFlagBits::e32;
+  }
+  if (counts & vk::SampleCountFlagBits::e16) {
+    log::debug("Max samples: {}", 16);
+    return vk::SampleCountFlagBits::e16;
+  }
+  if (counts & vk::SampleCountFlagBits::e8) {
+    log::debug("Max samples: {}", 8);
+    return vk::SampleCountFlagBits::e8;
+  }
+  if (counts & vk::SampleCountFlagBits::e4) {
+    log::debug("Max samples: {}", 4);
+    return vk::SampleCountFlagBits::e4;
+  }
+  if (counts & vk::SampleCountFlagBits::e2) {
+    log::debug("Max samples: {}", 2);
+    return vk::SampleCountFlagBits::e2;
+  }
+
+  log::debug("Max samples: {}", 1);
+
+  return vk::SampleCountFlagBits::e1;
+}
 
 std::vector<const char *>
 Context::getRequiredExtensions(std::vector<const char *> sdlExtensions) {

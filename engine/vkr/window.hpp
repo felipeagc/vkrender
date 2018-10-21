@@ -57,13 +57,17 @@ protected:
 
   vk::SurfaceKHR surface;
 
+  vk::SampleCountFlagBits msaaSampleCount{vk::SampleCountFlagBits::e1};
+
   vk::Format depthImageFormat;
 
-  struct FrameResources {
-    vk::Image depthImage;
-    VmaAllocation depthImageAllocation;
-    vk::ImageView depthImageView;
+  struct {
+    vk::Image image;
+    VmaAllocation allocation;
+    vk::ImageView view;
+  } depthStencil;
 
+  struct FrameResources {
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderingFinishedSemaphore;
     vk::Fence fence;
@@ -74,6 +78,20 @@ protected:
   };
 
   std::vector<FrameResources> frameResources{MAX_FRAMES_IN_FLIGHT};
+
+  struct {
+    struct {
+      vk::Image image;
+      VmaAllocation allocation;
+      vk::ImageView view;
+    } depth;
+
+    struct {
+      vk::Image image;
+      VmaAllocation allocation;
+      vk::ImageView view;
+    } color;
+  } multiSampleTargets;
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
   int currentFrame = 0;
@@ -97,14 +115,16 @@ protected:
 
   void allocateGraphicsCommandBuffers();
 
-  void createDepthResources();
+  // Populates the depthStencil member struct
+  void createDepthStencilResources();
+
+  // Populates the multiSampleTargets struct
+  void createMultisampleTargets();
 
   void createRenderPass();
 
   void regenFramebuffer(
-      vk::Framebuffer &framebuffer,
-      vk::ImageView colorImageView,
-      vk::ImageView depthImageView);
+      vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView);
 
   void destroyResizables();
 

@@ -55,7 +55,8 @@ Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
 }
 
 Shader::Shader(
-    const std::vector<uint32_t> &vertexCode, const std::vector<uint32_t> &fragmentCode) {
+    const std::vector<uint32_t> &vertexCode,
+    const std::vector<uint32_t> &fragmentCode) {
   log::debug("Creating shader from SPV code");
   this->vertexCode = vertexCode;
   this->fragmentCode = fragmentCode;
@@ -325,14 +326,17 @@ GraphicsPipeline::GraphicsPipeline(
       1.0f,                             // lineWidth
   };
 
+  vk::Bool32 hasSampleShading =
+      Context::getPhysicalDevice().getFeatures().sampleRateShading;
+
   vk::PipelineMultisampleStateCreateInfo multisampleStateCreateInfo{
-      {},                          // flags
-      vk::SampleCountFlagBits::e1, // rasterizationSamples
-      VK_FALSE,                    // sampleShadingEnable
-      1.0f,                        // minSampleShading
-      nullptr,                     // pSampleMask
-      VK_FALSE,                    // alphaToCoverageEnable
-      VK_FALSE                     // alphaToOneEnable
+      {},                     // flags
+      window.msaaSampleCount, // rasterizationSamples
+      hasSampleShading,       // sampleShadingEnable
+      0.25f,                   // minSampleShading
+      nullptr,                // pSampleMask
+      VK_FALSE,               // alphaToCoverageEnable
+      VK_FALSE                // alphaToOneEnable
   };
 
   vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{

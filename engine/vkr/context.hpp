@@ -40,9 +40,7 @@ public:
     return context;
   }
 
-  static Device &getDevice() {
-    return Context::get().device;
-  }
+  static Device &getDevice() { return Context::get().device; }
 
   static PhysicalDevice &getPhysicalDevice() {
     return Context::get().physicalDevice;
@@ -73,8 +71,6 @@ protected:
   vk::CommandPool graphicsCommandPool;
   vk::CommandPool transientCommandPool;
 
-  vk::Format depthImageFormat;
-
   DescriptorManager descriptorManager;
 
   void createInstance();
@@ -89,10 +85,15 @@ protected:
   void createGraphicsCommandPool();
   void createTransientCommandPool();
 
+  vk::SampleCountFlagBits getMaxUsableSampleCount();
+
   std::vector<const char *>
   getRequiredExtensions(std::vector<const char *> sdlExtensions);
+
   bool checkValidationLayerSupport();
+
   void setupDebugCallback();
+
   bool checkPhysicalDeviceProperties(
       vk::PhysicalDevice physicalDevice,
       vk::SurfaceKHR &surface,

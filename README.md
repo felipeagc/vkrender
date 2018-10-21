@@ -9,11 +9,13 @@
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
 - [x] Add google test as a git submodule
-- [ ] Add glm as a git submodule
+- [x] Add glm as a git submodule
 - [ ] Document as much as possible
 - [x] Make more flexible DescriptorManager with customizable pools and sets
 - [ ] Default descriptor sets for assets that don't have defined properties (like textures)
 - [x] Small vector class (for usage in cases where an allocation would be done each frame)
+- [x] Multisampling
+- [ ] Make multisampling configurable
 - [ ] Figure out a way to pass more parameters to the pipeline on creation
 - [ ] Model buffers whould be on the GPU
 - [x] Figure out Unique with a move constructor
