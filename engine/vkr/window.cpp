@@ -39,7 +39,7 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
         "Selected present queue does not support this window's surface");
   }
 
-  this->msaaSampleCount = Context::get().getMaxUsableSampleCount();
+  this->maxMsaaSamples = Context::get().getMaxUsableSampleCount();
 
   this->createSyncObjects();
 
@@ -147,11 +147,20 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
         barrierFromPresentToDraw);
   }
 
-  std::array<vk::ClearValue, 3> clearValues{
+  std::array<vk::ClearValue, 4> clearValues{
+      vk::ClearValue{},
       vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
-      vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+      vk::ClearValue{},
       vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
   };
+
+  if (this->msaaSamples != SampleCount::e1) {
+    clearValues = {
+        vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+        vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+        vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
+    };
+  }
 
   vk::RenderPassBeginInfo renderPassBeginInfo{
       this->renderPass,                                     // renderPass
@@ -310,6 +319,21 @@ bool Window::getShouldClose() const { return this->shouldClose; }
 
 void Window::setShouldClose(bool shouldClose) {
   this->shouldClose = shouldClose;
+}
+
+SampleCount Window::getMaxMSAASamples() const { return this->maxMsaaSamples; }
+
+SampleCount Window::getMSAASamples() const { return this->msaaSamples; }
+
+void Window::setMSAASamples(SampleCount sampleCount) {
+  if (sampleCount <= this->maxMsaaSamples) {
+    this->msaaSamples = sampleCount;
+
+    // Recreate stuff using new sample count
+    this->updateSize();
+  } else {
+    throw std::runtime_error("Invalid MSAA sample count");
+  }
 }
 
 void Window::initVulkanExtensions() const {
@@ -523,7 +547,7 @@ void Window::createMultisampleTargets() {
         },                                // extent
         1,                                // mipLevels
         1,                                // arrayLayers
-        this->msaaSampleCount,            // samples
+        this->msaaSamples,                // samples
         vk::ImageTiling::eOptimal,        // tiling
         vk::ImageUsageFlagBits::eTransientAttachment |
             vk::ImageUsageFlagBits::eColorAttachment, // usage
@@ -584,7 +608,7 @@ void Window::createMultisampleTargets() {
         },                                // extent
         1,                                // mipLevels
         1,                                // arrayLayers
-        this->msaaSampleCount,            // samples
+        this->msaaSamples,                // samples
         vk::ImageTiling::eOptimal,        // tiling
         vk::ImageUsageFlagBits::eTransientAttachment |
             vk::ImageUsageFlagBits::eDepthStencilAttachment, // usage
@@ -640,7 +664,7 @@ void Window::createRenderPass() {
       vk::AttachmentDescription{
           {},                                       // flags
           this->swapchainImageFormat,               // format
-          this->msaaSampleCount,                    // samples
+          this->msaaSamples,                        // samples
           vk::AttachmentLoadOp::eClear,             // loadOp
           vk::AttachmentStoreOp::eStore,            // storeOp
           vk::AttachmentLoadOp::eDontCare,          // stencilLoadOp
@@ -666,7 +690,7 @@ void Window::createRenderPass() {
       vk::AttachmentDescription{
           {},                                              // flags
           this->depthImageFormat,                          // format
-          this->msaaSampleCount,                           // samples
+          this->msaaSamples,                               // samples
           vk::AttachmentLoadOp::eClear,                    // loadOp
           vk::AttachmentStoreOp::eDontCare,                // storeOp
           vk::AttachmentLoadOp::eDontCare,                 // stencilLoadOp
@@ -724,6 +748,28 @@ void Window::createRenderPass() {
           nullptr,                            // pPreserveAttachments
       },
   };
+
+  if (this->msaaSamples == SampleCount::e1) {
+    // Disable multisampled color clearing
+    attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eDontCare;
+    attachmentDescriptions[0].storeOp = vk::AttachmentStoreOp::eDontCare;
+
+    // Enable resolve color clearing
+    attachmentDescriptions[1].loadOp = vk::AttachmentLoadOp::eClear;
+    attachmentDescriptions[1].storeOp = vk::AttachmentStoreOp::eStore;
+
+    // Disable multisampled depth clearing
+    attachmentDescriptions[2].loadOp = vk::AttachmentLoadOp::eDontCare;
+    attachmentDescriptions[2].storeOp = vk::AttachmentStoreOp::eDontCare;
+
+    // Enable resolve depth clearing
+    attachmentDescriptions[3].loadOp = vk::AttachmentLoadOp::eClear;
+    attachmentDescriptions[3].storeOp = vk::AttachmentStoreOp::eDontCare;
+
+    colorAttachmentReferences[0].attachment = 1;
+    depthAttachmentReferences[0].attachment = 3;
+    subpassDescriptions[0].pResolveAttachments = nullptr;
+  }
 
   std::array<vk::SubpassDependency, 2> dependencies{
       vk::SubpassDependency{

@@ -41,6 +41,8 @@ using DescriptorBufferInfo = vk::DescriptorBufferInfo;
 using DescriptorImageInfo = vk::DescriptorImageInfo;
 using ShaderStageFlagBits = vk::ShaderStageFlagBits;
 
+using SampleCount = vk::SampleCountFlagBits;
+
 // Use this wrapper to call .destroy() on destruction
 template <class T> class Unique {
 public:

@@ -5,6 +5,7 @@
 #include <string>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
+#include "util.hpp"
 
 namespace vkr {
 
@@ -45,6 +46,10 @@ public:
   bool getShouldClose() const;
   void setShouldClose(bool shouldClose);
 
+  SampleCount getMaxMSAASamples() const;
+  SampleCount getMSAASamples() const;
+  void setMSAASamples(SampleCount sampleCount);
+
 protected:
   bool shouldClose = false;
 
@@ -57,7 +62,8 @@ protected:
 
   vk::SurfaceKHR surface;
 
-  vk::SampleCountFlagBits msaaSampleCount{vk::SampleCountFlagBits::e1};
+  vk::SampleCountFlagBits msaaSamples{vk::SampleCountFlagBits::e1};
+  vk::SampleCountFlagBits maxMsaaSamples{vk::SampleCountFlagBits::e1};
 
   vk::Format depthImageFormat;
 

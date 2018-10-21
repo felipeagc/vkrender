@@ -12,6 +12,8 @@
 int main() {
   vkr::Window window("GLTF models");
 
+  window.setMSAASamples(vkr::SampleCount::e4);
+
   vkr::Unique<vkr::Shader> modelShader{
       "../shaders/model.vert",
       "../shaders/model.frag",

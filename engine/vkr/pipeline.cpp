@@ -330,13 +330,13 @@ GraphicsPipeline::GraphicsPipeline(
       Context::getPhysicalDevice().getFeatures().sampleRateShading;
 
   vk::PipelineMultisampleStateCreateInfo multisampleStateCreateInfo{
-      {},                     // flags
-      window.msaaSampleCount, // rasterizationSamples
-      hasSampleShading,       // sampleShadingEnable
+      {},                      // flags
+      window.getMSAASamples(), // rasterizationSamples
+      hasSampleShading,        // sampleShadingEnable
       0.25f,                   // minSampleShading
-      nullptr,                // pSampleMask
-      VK_FALSE,               // alphaToCoverageEnable
-      VK_FALSE                // alphaToOneEnable
+      nullptr,                 // pSampleMask
+      VK_FALSE,                // alphaToCoverageEnable
+      VK_FALSE                 // alphaToOneEnable
   };
 
   vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{
