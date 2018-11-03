@@ -25,7 +25,7 @@ public:
 
   SDL_Event pollEvent();
 
-  void present(std::function<void(CommandBuffer &)> drawFunction);
+  void present(std::function<void()> drawFunction);
   // TODO: remove this function and automate its behaviour
   void updateSize();
 
@@ -49,6 +49,9 @@ public:
   SampleCount getMaxMSAASamples() const;
   SampleCount getMSAASamples() const;
   void setMSAASamples(SampleCount sampleCount);
+
+  int getCurrentFrameIndex() const;
+  CommandBuffer getCurrentCommandBuffer();
 
 protected:
   bool shouldClose = false;

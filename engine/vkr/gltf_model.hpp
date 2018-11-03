@@ -26,10 +26,20 @@ public:
 
   struct Material {
     int albedoTextureIndex = -1;
-    vk::DescriptorSet descriptorSet;
 
-    // Call this after texture index is established
-    void init(const GltfModel &model);
+    struct MaterialUniform {
+      glm::vec4 baseColorFactor;
+    } ubo;
+
+    std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
+    std::array<vk::DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+
+    Material() {}
+    Material(
+        const GltfModel &model,
+        int albedoTextureIndex,
+        glm::vec4 baseColorFactor);
   };
 
   struct Primitive {
@@ -52,18 +62,17 @@ public:
 
   struct Mesh {
     std::vector<Primitive> primitives;
-    Buffer uniformBuffer;
-    void *mapped;
-    vk::DescriptorBufferInfo bufferInfo;
-    vk::DescriptorSet descriptorSet;
+    std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
+    std::array<vk::DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
     struct MeshUniform {
       glm::mat4 model;
     } ubo;
 
-    void updateUniform();
+    void updateUniform(int frameIndex);
 
-    Mesh(){};
+    Mesh() {}
     Mesh(const glm::mat4 &matrix);
   };
 
@@ -81,7 +90,7 @@ public:
     glm::mat4 localMatrix();
     glm::mat4 getMatrix(GltfModel &model);
 
-    void update(GltfModel &model);
+    void update(GltfModel &model, int frameIndex);
   };
 
   struct Dimensions {
@@ -110,12 +119,12 @@ public:
         .build();
   }
 
-  GltfModel(const std::string &path, bool flipUVs = false);
+  GltfModel(Window &window, const std::string &path, bool flipUVs = false);
   ~GltfModel();
   GltfModel(const GltfModel &other) = default;
   GltfModel &operator=(GltfModel &other) = default;
 
-  void draw(vkr::CommandBuffer &commandBuffer, vkr::GraphicsPipeline &pipeline);
+  void draw(Window &window, GraphicsPipeline &pipeline);
 
   void setPosition(glm::vec3 pos);
   glm::vec3 getPosition() const;
@@ -157,9 +166,6 @@ private:
 
   void getSceneDimensions();
 
-  void drawNode(
-      Node &node,
-      vkr::CommandBuffer &commandBuffer,
-      vkr::GraphicsPipeline &pipeline);
+  void drawNode(Node &node, Window &window, GraphicsPipeline &pipeline);
 };
 } // namespace vkr

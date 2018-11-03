@@ -4,31 +4,63 @@
 
 using namespace vkr;
 
-void GltfModel::Material::init(const GltfModel &model) {
+GltfModel::Material::Material(
+    const GltfModel &model, int albedoTextureIndex, glm::vec4 baseColorFactor)
+    : albedoTextureIndex(albedoTextureIndex) {
   auto [descriptorPool, descriptorSetLayout] =
       Context::getDescriptorManager()[DESC_MATERIAL];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
-  this->descriptorSet =
-      descriptorPool->allocateDescriptorSets({*descriptorSetLayout})[0];
+  this->ubo.baseColorFactor = baseColorFactor;
 
-  auto &texture = model.textures[this->albedoTextureIndex];
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    this->descriptorSets[i] =
+        descriptorPool->allocateDescriptorSets({*descriptorSetLayout})[0];
 
-  auto albedoDescriptorInfo = texture.getDescriptorInfo();
+    this->uniformBuffers[i] = Buffer{
+        sizeof(MaterialUniform),
+        vk::BufferUsageFlagBits::eUniformBuffer,
+        vkr::MemoryUsageFlagBits::eCpuToGpu,
+        vkr::MemoryPropertyFlagBits::eHostVisible |
+            vkr::MemoryPropertyFlagBits::eHostCoherent,
+    };
 
-  Context::getDevice().updateDescriptorSets(
-      {vk::WriteDescriptorSet{
-          this->descriptorSet,                        // dstSet
-          0,                                          // dstBinding
-          0,                                          // dstArrayElement
-          1,                                          // descriptorCount
-          vkr::DescriptorType::eCombinedImageSampler, // descriptorType
-          &albedoDescriptorInfo,                      // pImageInfo
-          nullptr,                                    // pBufferInfo
-          nullptr,                                    // pTexelBufferView
-      }},
-      {});
+    // CombinedImageSampler
+    auto &texture = model.textures[this->albedoTextureIndex];
+    auto albedoDescriptorInfo = texture.getDescriptorInfo();
+
+    // UniformBuffer
+    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+    memcpy(this->mappings[i], &this->ubo, sizeof(MaterialUniform));
+    auto bufferInfo = vk::DescriptorBufferInfo{
+        this->uniformBuffers[i].getHandle(), 0, sizeof(MaterialUniform)};
+
+    Context::getDevice().updateDescriptorSets(
+        {
+            vk::WriteDescriptorSet{
+                this->descriptorSets[i],                    // dstSet
+                0,                                          // dstBinding
+                0,                                          // dstArrayElement
+                1,                                          // descriptorCount
+                vkr::DescriptorType::eCombinedImageSampler, // descriptorType
+                &albedoDescriptorInfo,                      // pImageInfo
+                nullptr,                                    // pBufferInfo
+                nullptr,                                    // pTexelBufferView
+            },
+            vk::WriteDescriptorSet{
+                this->descriptorSets[i],             // dstSet
+                1,                                   // dstBinding
+                0,                                   // dstArrayElement
+                1,                                   // descriptorCount
+                vkr::DescriptorType::eUniformBuffer, // descriptorType
+                nullptr,                             // pImageInfo
+                &bufferInfo,                         // pBufferInfo
+                nullptr,                             // pTexelBufferView
+            },
+        },
+        {});
+  }
 }
 
 void GltfModel::Primitive::setDimensions(glm::vec3 min, glm::vec3 max) {
@@ -45,21 +77,50 @@ GltfModel::Primitive::Primitive(
       indexCount(indexCount),
       materialIndex(materialIndex) {}
 
-GltfModel::Mesh::Mesh(const glm::mat4 &matrix)
-    : uniformBuffer(
-          sizeof(MeshUniform),
-          vk::BufferUsageFlagBits::eUniformBuffer,
-          vkr::MemoryUsageFlagBits::eCpuToGpu,
-          vkr::MemoryPropertyFlagBits::eHostVisible |
-              vkr::MemoryPropertyFlagBits::eHostCoherent) {
+GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
   this->ubo.model = matrix;
-  this->uniformBuffer.mapMemory(&mapped);
-  this->bufferInfo = vk::DescriptorBufferInfo{
-      this->uniformBuffer.getHandle(), 0, sizeof(MeshUniform)};
+
+  auto [descriptorPool, descriptorSetLayout] =
+      Context::getDescriptorManager()[DESC_MESH];
+
+  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    this->uniformBuffers[i] = Buffer{
+        sizeof(MeshUniform),
+        vk::BufferUsageFlagBits::eUniformBuffer,
+        vkr::MemoryUsageFlagBits::eCpuToGpu,
+        vkr::MemoryPropertyFlagBits::eHostVisible |
+            vkr::MemoryPropertyFlagBits::eHostCoherent,
+    };
+
+    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+
+    memcpy(this->mappings[i], &this->ubo, sizeof(MeshUniform));
+
+    auto bufferInfo = vk::DescriptorBufferInfo{
+        this->uniformBuffers[i].getHandle(), 0, sizeof(MeshUniform)};
+
+    this->descriptorSets[i] =
+        descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
+
+    vkr::Context::getDevice().updateDescriptorSets(
+        {vk::WriteDescriptorSet{
+            this->descriptorSets[i],             // dstSet
+            0,                                   // dstBinding
+            0,                                   // dstArrayElement
+            1,                                   // descriptorCount
+            vkr::DescriptorType::eUniformBuffer, // descriptorType
+            nullptr,                             // pImageInfo
+            &bufferInfo,                         // pBufferInfo
+            nullptr,                             // pTexelBufferView
+        }},
+        {});
+  }
 }
 
-void GltfModel::Mesh::updateUniform() {
-  memcpy(this->mapped, &this->ubo, sizeof(MeshUniform));
+void GltfModel::Mesh::updateUniform(int frameIndex) {
+  memcpy(this->mappings[frameIndex], &this->ubo, sizeof(MeshUniform));
 }
 
 glm::mat4 GltfModel::Node::localMatrix() {
@@ -91,20 +152,20 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   return m;
 }
 
-void GltfModel::Node::update(GltfModel &model) {
+void GltfModel::Node::update(GltfModel &model, int frameIndex) {
   if (this->meshIndex != -1) {
     glm::mat4 m = this->getMatrix(model);
     auto &mesh = model.meshes[meshIndex];
     mesh.ubo.model = m;
-    mesh.updateUniform();
+    mesh.updateUniform(frameIndex);
   }
 
   for (auto &childIndex : childrenIndices) {
-    model.nodes[childIndex].update(model);
+    model.nodes[childIndex].update(model, frameIndex);
   }
 }
 
-GltfModel::GltfModel(const std::string &path, bool flipUVs) {
+GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   log::debug("Loading glTF model: {}", path);
 
   tinygltf::TinyGLTF loader;
@@ -149,8 +210,8 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   }
 
   for (auto &node : nodes) {
-    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
-      node.update(*this);
+    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffers[0]) {
+      node.update(*this, window.getCurrentFrameIndex());
     }
   }
 
@@ -189,49 +250,38 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
 
 GltfModel::~GltfModel() {}
 
-void GltfModel::draw(
-    vkr::CommandBuffer &commandBuffer, vkr::GraphicsPipeline &pipeline) {
+void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
+  auto commandBuffer = window.getCurrentCommandBuffer();
+
   commandBuffer.bindGraphicsPipeline(pipeline);
   commandBuffer.bindVertexBuffers(vertexBuffer);
   commandBuffer.bindIndexBuffer(indexBuffer, 0, vkr::IndexType::eUint32);
 
   for (auto &node : nodes) {
-    drawNode(node, commandBuffer, pipeline);
+    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffers[0]) {
+      node.update(*this, window.getCurrentFrameIndex());
+    }
+  }
+
+  for (auto &node : nodes) {
+    drawNode(node, window, pipeline);
   }
 }
 
 void GltfModel::setPosition(glm::vec3 pos) {
   this->pos = pos;
-
-  for (auto &node : nodes) {
-    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
-      node.update(*this);
-    }
-  }
 }
 
 glm::vec3 GltfModel::getPosition() const { return this->pos; }
 
 void GltfModel::setRotation(glm::vec3 rotation) {
   this->rotation = rotation;
-
-  for (auto &node : nodes) {
-    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
-      node.update(*this);
-    }
-  }
 }
 
 glm::vec3 GltfModel::getRotation() const { return this->rotation; }
 
 void GltfModel::setScale(glm::vec3 scale) {
   this->scale = scale;
-
-  for (auto &node : nodes) {
-    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffer) {
-      node.update(*this);
-    }
-  }
 }
 
 glm::vec3 GltfModel::getScale() const { return this->scale; }
@@ -241,36 +291,40 @@ void GltfModel::destroy() {
   indexBuffer.destroy();
 
   for (auto &mesh : meshes) {
-    if (mesh.uniformBuffer) {
-      mesh.uniformBuffer.destroy();
+    for (auto &uniformBuffer : mesh.uniformBuffers) {
+      if (uniformBuffer)
+        uniformBuffer.destroy();
     }
 
-    if (mesh.descriptorSet) {
-      auto descriptorPool = Context::getDescriptorManager().getPool(DESC_MESH);
+    auto descriptorPool = Context::getDescriptorManager().getPool(DESC_MESH);
+    assert(descriptorPool != nullptr);
 
-      assert(descriptorPool != nullptr);
-
-      Context::getDevice().freeDescriptorSets(
-          *descriptorPool, mesh.descriptorSet);
+    for (auto &descriptorSet : mesh.descriptorSets) {
+      if (descriptorSet)
+        Context::getDevice().freeDescriptorSets(*descriptorPool, descriptorSet);
     }
   }
 
   for (auto &material : materials) {
-    if (material.descriptorSet) {
-      auto descriptorPool =
-          Context::getDescriptorManager().getPool(DESC_MATERIAL);
+    for (auto &uniformBuffer : material.uniformBuffers) {
+      if (uniformBuffer)
+        uniformBuffer.destroy();
+    }
 
-      assert(descriptorPool != nullptr);
+    auto descriptorPool =
+        Context::getDescriptorManager().getPool(DESC_MATERIAL);
 
-      Context::getDevice().freeDescriptorSets(
-          *descriptorPool, material.descriptorSet);
+    assert(descriptorPool != nullptr);
+
+    for (auto &descriptorSet : material.descriptorSets) {
+      if (descriptorSet)
+        Context::getDevice().freeDescriptorSets(*descriptorPool, descriptorSet);
     }
   }
 
   for (auto &texture : textures) {
-    if (texture) {
+    if (texture)
       texture.destroy();
-    }
   }
 }
 
@@ -279,16 +333,20 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
   for (size_t i = 0; i < model.materials.size(); i++) {
     auto &mat = model.materials[i];
 
-    Material material;
+    int albedoTextureIndex = -1;
+    glm::vec4 baseColorFactor = glm::vec4(1.0, 1.0, 1.0, 1.0);
 
     if (mat.values.find("baseColorTexture") != mat.values.end()) {
-      material.albedoTextureIndex =
+      albedoTextureIndex =
           model.textures[mat.values["baseColorTexture"].TextureIndex()].source;
     }
 
-    material.init(*this);
+    if (mat.values.find("baseColorFactor") != mat.values.end()) {
+      baseColorFactor =
+          glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
+    }
 
-    this->materials[i] = material;
+    this->materials[i] = Material{*this, albedoTextureIndex, baseColorFactor};
   }
 }
 
@@ -484,27 +542,6 @@ void GltfModel::loadNode(
       newMesh.primitives.push_back(newPrimitive);
     }
 
-    auto [descriptorPool, descriptorSetLayout] =
-        Context::getDescriptorManager()[DESC_MESH];
-
-    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-    newMesh.descriptorSet =
-        descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
-
-    vkr::Context::getDevice().updateDescriptorSets(
-        {vk::WriteDescriptorSet{
-            newMesh.descriptorSet,               // dstSet
-            0,                                   // dstBinding
-            0,                                   // dstArrayElement
-            1,                                   // descriptorCount
-            vkr::DescriptorType::eUniformBuffer, // descriptorType
-            nullptr,                             // pImageInfo
-            &newMesh.bufferInfo,                 // pBufferInfo
-            nullptr,                             // pTexelBufferView
-        }},
-        {});
-
     this->meshes[node.mesh] = newMesh;
 
     newNode.meshIndex = node.mesh;
@@ -561,15 +598,17 @@ void GltfModel::getSceneDimensions() {
 }
 
 void GltfModel::drawNode(
-    Node &node,
-    vkr::CommandBuffer &commandBuffer,
-    vkr::GraphicsPipeline &pipeline) {
+    Node &node, Window &window, GraphicsPipeline &pipeline) {
+  auto commandBuffer = window.getCurrentCommandBuffer();
+
+  auto i = window.getCurrentFrameIndex();
+
   if (node.meshIndex != -1) {
     commandBuffer.bindDescriptorSets(
         vkr::PipelineBindPoint::eGraphics,
         pipeline.getLayout(),
         2, // firstSet
-        {this->meshes[node.meshIndex].descriptorSet},
+        this->meshes[node.meshIndex].descriptorSets[i],
         {});
     for (Primitive &primitive : this->meshes[node.meshIndex].primitives) {
       if (primitive.materialIndex != -1 && this->materials.size() > 0) {
@@ -577,7 +616,7 @@ void GltfModel::drawNode(
             vkr::PipelineBindPoint::eGraphics,
             pipeline.getLayout(),
             1, // firstSet
-            {this->materials[primitive.materialIndex].descriptorSet},
+            this->materials[primitive.materialIndex].descriptorSets[i],
             {});
       }
 
@@ -587,6 +626,6 @@ void GltfModel::drawNode(
   }
 
   for (auto &childIndex : node.childrenIndices) {
-    drawNode(this->nodes[childIndex], commandBuffer, pipeline);
+    drawNode(this->nodes[childIndex], window, pipeline);
   }
 }

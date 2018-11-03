@@ -84,7 +84,7 @@ SDL_Event Window::pollEvent() {
   return event;
 }
 
-void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
+void Window::present(std::function<void()> drawFunction) {
   this->lastTicks = SDL_GetTicks();
 
   // Begin
@@ -188,10 +188,7 @@ void Window::present(std::function<void(CommandBuffer &)> drawFunction) {
   commandBuffer.setScissor(0, scissor);
 
   // Draw
-  {
-    vkr::CommandBuffer cmdBuffer{commandBuffer};
-    drawFunction(cmdBuffer);
-  }
+  drawFunction();
 
   // End
   commandBuffer.endRenderPass();
@@ -334,6 +331,12 @@ void Window::setMSAASamples(SampleCount sampleCount) {
   } else {
     throw std::runtime_error("Invalid MSAA sample count");
   }
+}
+
+int Window::getCurrentFrameIndex() const { return this->currentFrame; }
+
+CommandBuffer Window::getCurrentCommandBuffer() {
+  return CommandBuffer{this->frameResources[this->currentFrame].commandBuffer};
 }
 
 void Window::initVulkanExtensions() const {

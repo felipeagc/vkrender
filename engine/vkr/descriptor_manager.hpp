@@ -8,6 +8,7 @@ namespace vkr {
 const std::string DESC_CAMERA = "camera";
 const std::string DESC_MESH = "mesh";
 const std::string DESC_MATERIAL = "material";
+const std::string DESC_LIGHTING = "lighting";
 
 class DescriptorManager {
   friend class Context;

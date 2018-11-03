@@ -1,7 +1,7 @@
 #pragma once
 
-#include "buffer.hpp"
 #include "pipeline.hpp"
+#include "window.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -25,15 +25,14 @@ public:
 
   void lookAt(glm::vec3 point);
 
-  void update(uint32_t width, uint32_t height);
+  void update(Window &window);
 
-  void bind(CommandBuffer &commandBuffer, GraphicsPipeline &pipeline);
+  void bind(Window &window, GraphicsPipeline &pipeline);
 
 protected:
-  void *mapping;
-  Buffer uniformBuffer;
-  DescriptorSet descriptorSet;
-  DescriptorBufferInfo bufferInfo;
+  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
+  std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+  std::array<DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
   CameraUniform cameraUniform;
 

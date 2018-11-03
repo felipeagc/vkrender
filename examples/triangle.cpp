@@ -65,7 +65,9 @@ int main() {
       break;
     }
 
-    window.present([&](vkr::CommandBuffer &commandBuffer) {
+    window.present([&]() {
+      auto commandBuffer = window.getCurrentCommandBuffer();
+
       commandBuffer.bindGraphicsPipeline(*pipeline);
       commandBuffer.bindVertexBuffers(*vertexBuffer);
 

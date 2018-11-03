@@ -36,15 +36,40 @@ vec2 texCoords;
 
 ### Descriptor set 0
 For the camera's stuff
-- Uniform buffer containing the view and projection matrices (binding = 0)
+```glsl
+layout (set = 0, binding = 0) uniform CameraUniform {
+    mat4 view;
+    mat4 proj;
+} camera_ubo;
+```
 
 ### Descriptor set 1
 For the material's stuff
-- Albedo texture (binding = 0)
+```glsl
+layout (set = 1, binding = 0) uniform sampler2D albedo;
+layout (set = 1, binding = 1) uniform MaterialUniform {
+    vec4 baseColorFactor;
+} material;
+```
 
 ### Descriptor set 2
 For the model's mesh stuff
-- Mesh matrix (binding = 0)
+```glsl
+layout (set = 2, binding = 0) uniform ModelUniform {
+  mat4 model;
+} model_ubo;
+```
+
+### Descriptor set 3
+Lighting stuff
+```glsl
+layout(set = 3, binding = 0) uniform LightingUniform {
+    vec4 lightColor; // vec4 because of padding
+} lighting;
+```
 
 ### Descriptor sets 3 and beyond
 For user-defined stuff
+
+
+

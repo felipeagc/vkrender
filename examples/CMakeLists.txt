@@ -5,3 +5,4 @@ endmacro()
 
 add_example(triangle)
 add_example(gltf)
+add_example(gltf_lit)

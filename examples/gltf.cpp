@@ -34,9 +34,9 @@ int main() {
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
 
-  vkr::Unique<vkr::GltfModel> helmet{"../assets/DamagedHelmet.glb", true};
+  vkr::Unique<vkr::GltfModel> helmet{window, "../assets/DamagedHelmet.glb", true};
   helmet->setPosition({0.0, 0.0, 1.0});
-  vkr::Unique<vkr::GltfModel> duck{"../assets/Duck.glb"};
+  vkr::Unique<vkr::GltfModel> duck{window, "../assets/Duck.glb"};
   duck->setPosition({0.0, 0.0, -1.0});
 
   float time = 0.0;
@@ -65,12 +65,12 @@ int main() {
     camera.setPos({camX, radius, camY});
     camera.lookAt((helmet->getPosition() + duck->getPosition()) / 2.0f);
 
-    camera.update(window.getWidth(), window.getHeight());
+    camera.update(window);
 
-    window.present([&](vkr::CommandBuffer &commandBuffer) {
-      camera.bind(commandBuffer, *modelPipeline);
-      helmet->draw(commandBuffer, *modelPipeline);
-      duck->draw(commandBuffer, *modelPipeline);
+    window.present([&]() {
+      camera.bind(window, *modelPipeline);
+      helmet->draw(window, *modelPipeline);
+      duck->draw(window, *modelPipeline);
     });
   }
 

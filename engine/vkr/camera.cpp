@@ -1,55 +1,62 @@
 #include "camera.hpp"
 #include "commandbuffer.hpp"
 #include "context.hpp"
+#include "window.hpp"
 
 using namespace vkr;
 
-Camera::Camera(glm::vec3 position)
-    : uniformBuffer(
-          sizeof(CameraUniform),
-          vkr::BufferUsageFlagBits::eUniformBuffer,
-          vkr::MemoryUsageFlagBits::eCpuToGpu,
-          vkr::MemoryPropertyFlagBits::eHostCoherent),
-      pos(position) {
-  uniformBuffer.mapMemory(&this->mapping);
-
-  this->bufferInfo = DescriptorBufferInfo{
-      uniformBuffer.getHandle(),
-      0,
-      sizeof(CameraUniform),
-  };
-
+Camera::Camera(glm::vec3 position) : pos(position) {
   auto [descriptorPool, descriptorSetLayout] =
       Context::getDescriptorManager()[DESC_CAMERA];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
-  this->descriptorSet =
-      descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    this->uniformBuffers[i] = Buffer{
+        sizeof(CameraUniform),
+        vkr::BufferUsageFlagBits::eUniformBuffer,
+        vkr::MemoryUsageFlagBits::eCpuToGpu,
+        vkr::MemoryPropertyFlagBits::eHostCoherent,
+    };
 
-  Context::getDevice().updateDescriptorSets(
-      {vk::WriteDescriptorSet{
-          descriptorSet,                       // dstSet
-          0,                                   // dstBinding
-          0,                                   // dstArrayElement
-          1,                                   // descriptorCount
-          vkr::DescriptorType::eUniformBuffer, // descriptorType
-          nullptr,                             // pImageInfo
-          &this->bufferInfo,                   // pBufferInfo
-          nullptr,                             // pTexelBufferView
-      }},
-      {});
+    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+
+    DescriptorBufferInfo bufferInfo{
+        this->uniformBuffers[i].getHandle(),
+        0,
+        sizeof(CameraUniform),
+    };
+
+    this->descriptorSets[i] =
+        descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
+
+    Context::getDevice().updateDescriptorSets(
+        {vk::WriteDescriptorSet{
+            this->descriptorSets[i],             // dstSet
+            0,                                   // dstBinding
+            0,                                   // dstArrayElement
+            1,                                   // descriptorCount
+            vkr::DescriptorType::eUniformBuffer, // descriptorType
+            nullptr,                             // pImageInfo
+            &bufferInfo,                         // pBufferInfo
+            nullptr,                             // pTexelBufferView
+        }},
+        {});
+  }
 }
 
 Camera::~Camera() {
-  uniformBuffer.unmapMemory();
-  uniformBuffer.destroy();
+  for (auto &uniformBuffer : uniformBuffers) {
+    uniformBuffer.unmapMemory();
+    uniformBuffer.destroy();
+  }
 
   auto descriptorPool = Context::getDescriptorManager().getPool(DESC_CAMERA);
 
   assert(descriptorPool != nullptr);
 
-  Context::getDevice().freeDescriptorSets(*descriptorPool, this->descriptorSet);
+  Context::getDevice().freeDescriptorSets(
+      *descriptorPool, this->descriptorSets);
 }
 
 void Camera::setPos(glm::vec3 pos) {
@@ -65,25 +72,28 @@ float Camera::getFov() const { return this->fov; }
 
 void Camera::lookAt(glm::vec3 point) {
   cameraUniform.view = glm::lookAt(this->pos, point, {0.0, -1.0, 0.0});
-
-  memcpy(this->mapping, &this->cameraUniform, sizeof(CameraUniform));
 }
 
-void Camera::update(uint32_t width, uint32_t height) {
+void Camera::update(Window &window) {
+  auto i = window.getCurrentFrameIndex();
+
   cameraUniform.proj = glm::perspective(
       glm::radians(this->fov),
-      (float)width / (float)height,
+      static_cast<float>(window.getWidth()) /
+          static_cast<float>(window.getHeight()),
       this->near,
       this->far);
 
-  memcpy(this->mapping, &this->cameraUniform, sizeof(CameraUniform));
+  memcpy(this->mappings[i], &this->cameraUniform, sizeof(CameraUniform));
 }
 
-void Camera::bind(CommandBuffer &commandBuffer, GraphicsPipeline &pipeline) {
-  commandBuffer.bindDescriptorSets(
+void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
+  auto i = window.getCurrentFrameIndex();
+
+  window.getCurrentCommandBuffer().bindDescriptorSets(
       vkr::PipelineBindPoint::eGraphics,
       pipeline.getLayout(),
-      0,                   // firstIndex
-      this->descriptorSet, // pDescriptorSets
+      0,                       // firstIndex
+      this->descriptorSets[i], // pDescriptorSets
       {});
 }

@@ -3,8 +3,9 @@
 using namespace vkr;
 
 const uint32_t CAMERA_MAX_SETS = 20;
-const uint32_t MATERIAL_MAX_SETS = 50;
 const uint32_t MESH_MAX_SETS = 500;
+const uint32_t MATERIAL_MAX_SETS = 50;
+const uint32_t LIGHTING_MAX_SETS = 50;
 
 const SmallVec<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
     0,                                   // binding
@@ -22,13 +23,32 @@ const SmallVec<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
     nullptr,                             // pImmutableSamplers
 }};
 
-const SmallVec<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {{
-    0,                                          // binding
-    vkr::DescriptorType::eCombinedImageSampler, // descriptorType
-    1,                                          // descriptorCount
-    vkr::ShaderStageFlagBits::eFragment,        // stageFlags
-    nullptr,                                    // pImmutableSamplers
-}};
+const SmallVec<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {
+    {
+        0,                                          // binding
+        vkr::DescriptorType::eCombinedImageSampler, // descriptorType
+        1,                                          // descriptorCount
+        vkr::ShaderStageFlagBits::eFragment,        // stageFlags
+        nullptr,                                    // pImmutableSamplers
+    },
+    {
+        1,                                   // binding
+        vkr::DescriptorType::eUniformBuffer, // descriptorType
+        1,                                   // descriptorCount
+        vkr::ShaderStageFlagBits::eFragment, // stageFlags
+        nullptr,                             // pImmutableSamplers
+    },
+};
+
+const SmallVec<DescriptorSetLayoutBinding> LIGHTING_BINDINGS = {
+    {
+        0,                                   // binding
+        vkr::DescriptorType::eUniformBuffer, // descriptorType
+        1,                                   // descriptorCount
+        vkr::ShaderStageFlagBits::eFragment, // stageFlags
+        nullptr,                             // pImmutableSamplers
+    },
+};
 
 std::pair<DescriptorPool *, DescriptorSetLayout *> DescriptorManager::
 operator[](const std::string &key) {
@@ -75,14 +95,17 @@ bool DescriptorManager::addSetLayout(
 }
 
 void DescriptorManager::init() {
-  this->addPool("camera", {CAMERA_MAX_SETS, CAMERA_BINDINGS});
-  this->addSetLayout("camera", {CAMERA_BINDINGS});
+  this->addPool(DESC_CAMERA, {CAMERA_MAX_SETS, CAMERA_BINDINGS});
+  this->addSetLayout(DESC_CAMERA, {CAMERA_BINDINGS});
 
-  this->addPool("material", {MATERIAL_MAX_SETS, MATERIAL_BINDINGS});
-  this->addSetLayout("material", {MATERIAL_BINDINGS});
+  this->addPool(DESC_MATERIAL, {MATERIAL_MAX_SETS, MATERIAL_BINDINGS});
+  this->addSetLayout(DESC_MATERIAL, {MATERIAL_BINDINGS});
 
-  this->addPool("mesh", {MESH_MAX_SETS, MESH_BINDINGS});
-  this->addSetLayout("mesh", {MESH_BINDINGS});
+  this->addPool(DESC_MESH, {MESH_MAX_SETS, MESH_BINDINGS});
+  this->addSetLayout(DESC_MESH, {MESH_BINDINGS});
+
+  this->addPool(DESC_LIGHTING, {LIGHTING_MAX_SETS, LIGHTING_BINDINGS});
+  this->addSetLayout(DESC_LIGHTING, {LIGHTING_BINDINGS});
 }
 
 void DescriptorManager::destroy() {
