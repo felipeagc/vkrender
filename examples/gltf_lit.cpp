@@ -155,8 +155,6 @@ int main() {
     boombox->setRotation({0.0, time * 100.0, 0.0});
 
     window.present([&]() {
-      auto commandBuffer = window.getCurrentCommandBuffer();
-
       lighting.bind(window, *modelPipeline);
 
       camera.bind(window, *modelPipeline);
