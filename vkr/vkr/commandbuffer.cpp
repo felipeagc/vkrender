@@ -2,16 +2,18 @@
 
 #include "buffer.hpp"
 #include "pipeline.hpp"
+#include <fstl/fixed_vector.hpp>
 
 using namespace vkr;
 
-void CommandBuffer::bindVertexBuffers(const ArrayProxy<const Buffer> &buffers) {
-  SmallVec<vk::Buffer> handles;
+void CommandBuffer::bindVertexBuffers(
+    const fstl::array_proxy<const Buffer> &buffers) {
+  fstl::fixed_vector<vk::Buffer> handles;
   handles.resize(buffers.size());
-  SmallVec<vk::DeviceSize> offsets;
+  fstl::fixed_vector<vk::DeviceSize> offsets;
   offsets.resize(buffers.size());
   for (size_t i = 0; i < buffers.size(); i++) {
-    handles[i] = (buffers.begin()+i)->getHandle();
+    handles[i] = (buffers.begin() + i)->getHandle();
     offsets[i] = 0;
   }
 
@@ -28,8 +30,8 @@ void CommandBuffer::bindDescriptorSets(
     PipelineBindPoint pipelineBindPoint,
     PipelineLayout layout,
     uint32_t firstSet,
-    ArrayProxy<const DescriptorSet> descriptorSets,
-    ArrayProxy<const uint32_t> dynamicOffsets) {
+    fstl::array_proxy<const DescriptorSet> descriptorSets,
+    fstl::array_proxy<const uint32_t> dynamicOffsets) {
   this->commandBuffer.bindDescriptorSets(
       pipelineBindPoint,
       layout,

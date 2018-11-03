@@ -1,7 +1,7 @@
 #include "context.hpp"
 #include "commandbuffer.hpp"
-#include "logging.hpp"
 #include "window.hpp"
+#include <fstl/logging.hpp>
 #include <iostream>
 
 using namespace vkr;
@@ -20,7 +20,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const char *layerPrefix,
     const char *msg,
     void *userData) {
-  log::error("Validation layer: {}", msg);
+  fstl::log::error("Validation layer: {}", msg);
 
   return VK_FALSE;
 }
@@ -151,7 +151,7 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
         "Could not select physical device based on chosen properties");
   }
 
-  log::info(
+  fstl::log::info(
       "Using physical device: {}",
       this->physicalDevice.getProperties().deviceName);
 
@@ -251,31 +251,31 @@ vk::SampleCountFlagBits Context::getMaxUsableSampleCount() {
       static_cast<unsigned int>(depthSamples)));
 
   if (counts & vk::SampleCountFlagBits::e64) {
-    log::debug("Max samples: {}", 64);
+    fstl::log::debug("Max samples: {}", 64);
     return vk::SampleCountFlagBits::e64;
   }
   if (counts & vk::SampleCountFlagBits::e32) {
-    log::debug("Max samples: {}", 32);
+    fstl::log::debug("Max samples: {}", 32);
     return vk::SampleCountFlagBits::e32;
   }
   if (counts & vk::SampleCountFlagBits::e16) {
-    log::debug("Max samples: {}", 16);
+    fstl::log::debug("Max samples: {}", 16);
     return vk::SampleCountFlagBits::e16;
   }
   if (counts & vk::SampleCountFlagBits::e8) {
-    log::debug("Max samples: {}", 8);
+    fstl::log::debug("Max samples: {}", 8);
     return vk::SampleCountFlagBits::e8;
   }
   if (counts & vk::SampleCountFlagBits::e4) {
-    log::debug("Max samples: {}", 4);
+    fstl::log::debug("Max samples: {}", 4);
     return vk::SampleCountFlagBits::e4;
   }
   if (counts & vk::SampleCountFlagBits::e2) {
-    log::debug("Max samples: {}", 2);
+    fstl::log::debug("Max samples: {}", 2);
     return vk::SampleCountFlagBits::e2;
   }
 
-  log::debug("Max samples: {}", 1);
+  fstl::log::debug("Max samples: {}", 1);
 
   return vk::SampleCountFlagBits::e1;
 }
@@ -346,7 +346,7 @@ bool Context::checkPhysicalDeviceProperties(
     }
 
     if (!found) {
-      log::warn(
+      fstl::log::warn(
           "Physical device {} doesn't support extension named \"{}\"",
           physicalDevice.getProperties().deviceName,
           requiredExtension);
@@ -362,7 +362,7 @@ bool Context::checkPhysicalDeviceProperties(
   // uint32_t patchVersion = VK_VERSION_PATCH(deviceProperties.apiVersion);
 
   if (majorVersion < 1 && deviceProperties.limits.maxImageDimension2D < 4096) {
-    log::warn(
+    fstl::log::warn(
         "Physical device {} doesn't support required parameters!",
         physicalDevice.getProperties().deviceName);
     return false;
@@ -418,7 +418,7 @@ bool Context::checkPhysicalDeviceProperties(
   if (graphicsQueueFamilyIndex == UINT32_MAX ||
       presentQueueFamilyIndex == UINT32_MAX ||
       transferQueueFamilyIndex == UINT32_MAX) {
-    log::warn(
+    fstl::log::warn(
         "Could not find queue family with requested properties on physical "
         "device {}",
         physicalDevice.getProperties().deviceName);

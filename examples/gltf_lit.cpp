@@ -1,10 +1,12 @@
+#include <fstl/fixed_vector.hpp>
+#include <fstl/logging.hpp>
+#include <fstl/unique.hpp>
 #include <glm/glm.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
 #include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
-#include <vkr/logging.hpp>
 #include <vkr/pipeline.hpp>
 #include <vkr/texture.hpp>
 #include <vkr/window.hpp>
@@ -93,16 +95,16 @@ int main() {
 
   window.setMSAASamples(vkr::SampleCount::e4);
 
-  vkr::Unique<vkr::Shader> modelShader{
+  fstl::unique<vkr::Shader> modelShader{
       "../shaders/model_lit.vert",
       "../shaders/model_lit.frag",
   };
 
-  vkr::Unique<vkr::GraphicsPipeline> modelPipeline{
+  fstl::unique<vkr::GraphicsPipeline> modelPipeline{
       window,
       *modelShader,
       vkr::GltfModel::getVertexFormat(),
-      vkr::SmallVec<vkr::DescriptorSetLayout>{
+      fstl::fixed_vector<vkr::DescriptorSetLayout>{
           *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_CAMERA),
           *vkr::Context::getDescriptorManager().getSetLayout(
               vkr::DESC_MATERIAL),
@@ -117,9 +119,10 @@ int main() {
 
   Lighting lighting(camera, {0.33f, 0.42f, 0.18f}, {3.0, 3.0, 3.0});
 
-  vkr::Unique<vkr::GltfModel> helmet{window, "../assets/DamagedHelmet.glb", true};
+  fstl::unique<vkr::GltfModel> helmet{
+      window, "../assets/DamagedHelmet.glb", true};
   helmet->setPosition({0.0, 0.0, 2.0});
-  vkr::Unique<vkr::GltfModel> boombox{window, "../assets/BoomBox.glb"};
+  fstl::unique<vkr::GltfModel> boombox{window, "../assets/BoomBox.glb"};
   boombox->setPosition({0.0, 0.0, -2.0});
   boombox->setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 
@@ -138,7 +141,7 @@ int main() {
       }
       break;
     case SDL_QUIT:
-      vkr::log::info("Goodbye");
+      fstl::log::info("Goodbye");
       window.setShouldClose(true);
       break;
     }

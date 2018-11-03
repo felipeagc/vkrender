@@ -2,10 +2,10 @@
 
 ## TODO
 ### Template library
-- [ ] Move it to its own folder and namespace (fstl)
-- [x] Small vector class (for usage in cases where an allocation would be done each frame)
-- [x] Figure out Unique with a move constructor
-- [ ] ArrayProxy
+- [x] Move it to its own folder and namespace (fstl)
+- [x] fixed_vector (for usage in cases where an allocation would be done each frame)
+- [x] unique (for optional RAII with a destroy() method)
+- [x] array_proxy (for passing parameters that could be converted to an array)
 
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang

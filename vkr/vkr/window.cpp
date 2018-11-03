@@ -1,8 +1,8 @@
 #include "window.hpp"
 #include "commandbuffer.hpp"
 #include "context.hpp"
-#include "logging.hpp"
 #include <SDL2/SDL_vulkan.h>
+#include <fstl/logging.hpp>
 
 using namespace vkr;
 
@@ -939,7 +939,7 @@ vk::ImageUsageFlags Window::getSwapchainUsageFlags(
            vk::ImageUsageFlagBits::eTransferDst;
   }
 
-  log::fatal(
+  fstl::log::fatal(
       "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by the "
       "swapchain!\n"
       "Supported swapchain image usages include:\n"
@@ -1010,7 +1010,7 @@ vk::PresentModeKHR Window::getSwapchainPresentMode(
     }
   }
 
-  log::fatal("FIFO present mode is not supported by the swapchain!");
+  fstl::log::fatal("FIFO present mode is not supported by the swapchain!");
 
   return static_cast<vk::PresentModeKHR>(-1);
 }

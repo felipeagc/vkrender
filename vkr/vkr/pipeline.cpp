@@ -1,10 +1,10 @@
 #include "pipeline.hpp"
 #include "context.hpp"
-#include "logging.hpp"
 #include "shader_compilation.hpp"
 #include "window.hpp"
 #include <algorithm>
 #include <cassert>
+#include <fstl/logging.hpp>
 #include <functional>
 #include <iostream>
 #include <spirv_reflect.hpp>
@@ -12,8 +12,9 @@
 using namespace vkr;
 
 VertexFormat::VertexFormat(
-    SmallVec<vk::VertexInputBindingDescription> bindingDescriptions,
-    SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions)
+    fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions,
+    fstl::fixed_vector<vk::VertexInputAttributeDescription>
+        attributeDescriptions)
     : bindingDescriptions(bindingDescriptions),
       attributeDescriptions(attributeDescriptions) {}
 
@@ -47,7 +48,7 @@ VertexFormat VertexFormatBuilder::build() {
 }
 
 Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
-  log::debug("Creating shader from GLSL code");
+  fstl::log::debug("Creating shader from GLSL code");
   this->vertexCode = compileShader(vertexPath, ShaderType::eVertex);
   this->fragmentCode = compileShader(fragmentPath, ShaderType::eFragment);
   this->vertexModule = this->createShaderModule(vertexCode);
@@ -57,16 +58,16 @@ Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
 Shader::Shader(
     const std::vector<uint32_t> &vertexCode,
     const std::vector<uint32_t> &fragmentCode) {
-  log::debug("Creating shader from SPV code");
+  fstl::log::debug("Creating shader from SPV code");
   this->vertexCode = vertexCode;
   this->fragmentCode = fragmentCode;
   this->vertexModule = this->createShaderModule(vertexCode);
   this->fragmentModule = this->createShaderModule(fragmentCode);
 }
 
-SmallVec<vk::PipelineShaderStageCreateInfo>
+fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>
 Shader::getPipelineShaderStageCreateInfos() const {
-  return SmallVec<vk::PipelineShaderStageCreateInfo>{
+  return fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>{
       {
           {},                               // flags
           vk::ShaderStageFlagBits::eVertex, // stage
@@ -129,7 +130,8 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   auto resources = vertexComp.get_shader_resources();
 
   // <location, format, size, offset>
-  SmallVec<std::tuple<uint32_t, vk::Format, uint32_t, uint32_t>> locations;
+  fstl::fixed_vector<std::tuple<uint32_t, vk::Format, uint32_t, uint32_t>>
+      locations;
 
   for (auto &input : resources.stage_inputs) {
     auto location = vertexComp.get_decoration(
@@ -203,7 +205,7 @@ Shader::createShaderModule(const std::vector<uint32_t> &code) const {
 }
 
 DescriptorSetLayout::DescriptorSetLayout(
-    const SmallVec<vk::DescriptorSetLayoutBinding> &bindings)
+    const fstl::fixed_vector<vk::DescriptorSetLayoutBinding> &bindings)
     : vk::DescriptorSetLayout(Context::getDevice().createDescriptorSetLayout(
           {{}, static_cast<uint32_t>(bindings.size()), bindings.data()})) {}
 
@@ -214,8 +216,8 @@ void DescriptorSetLayout::destroy() {
 
 DescriptorPool::DescriptorPool(
     uint32_t maxSets,
-    const SmallVec<vk::DescriptorSetLayoutBinding> &bindings) {
-  SmallVec<vk::DescriptorPoolSize> poolSizes;
+    const fstl::fixed_vector<vk::DescriptorSetLayoutBinding> &bindings) {
+  fstl::fixed_vector<vk::DescriptorPoolSize> poolSizes;
 
   for (auto &binding : bindings) {
     vk::DescriptorPoolSize *foundp = nullptr;
@@ -252,25 +254,26 @@ DescriptorPool::DescriptorPool(
 }
 
 DescriptorPool::DescriptorPool(
-    uint32_t maxSets, const SmallVec<vk::DescriptorPoolSize> &poolSizes)
+    uint32_t maxSets,
+    const fstl::fixed_vector<vk::DescriptorPoolSize> &poolSizes)
     : vk::DescriptorPool(Context::getDevice().createDescriptorPool(
           {{},
            maxSets,
            static_cast<uint32_t>(poolSizes.size()),
            poolSizes.data()})) {}
 
-SmallVec<DescriptorSet> DescriptorPool::allocateDescriptorSets(
+fstl::fixed_vector<DescriptorSet> DescriptorPool::allocateDescriptorSets(
     uint32_t setCount, DescriptorSetLayout &layout) {
-  SmallVec<DescriptorSetLayout> layouts(setCount, layout);
+  fstl::fixed_vector<DescriptorSetLayout> layouts(setCount, layout);
   return this->allocateDescriptorSets(layouts);
 }
 
-SmallVec<DescriptorSet> DescriptorPool::allocateDescriptorSets(
-    const SmallVec<DescriptorSetLayout> &layouts) {
+fstl::fixed_vector<DescriptorSet> DescriptorPool::allocateDescriptorSets(
+    const fstl::fixed_vector<DescriptorSetLayout> &layouts) {
   auto sets = Context::getDevice().allocateDescriptorSets(
       {*this, static_cast<uint32_t>(layouts.size()), layouts.data()});
 
-  SmallVec<DescriptorSet> descriptorSets(sets.size());
+  fstl::fixed_vector<DescriptorSet> descriptorSets(sets.size());
 
   for (size_t i = 0; i < sets.size(); i++) {
     descriptorSets[i] = {sets[i]};
@@ -288,8 +291,8 @@ GraphicsPipeline::GraphicsPipeline(
     const Window &window,
     const Shader &shader,
     const VertexFormat &vertexFormat,
-    const SmallVec<DescriptorSetLayout> &descriptorSetLayouts) {
-  log::debug("Creating graphics pipeline");
+    const fstl::fixed_vector<DescriptorSetLayout> &descriptorSetLayouts) {
+  fstl::log::debug("Creating graphics pipeline");
 
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo =
       vertexFormat.getPipelineVertexInputStateCreateInfo();

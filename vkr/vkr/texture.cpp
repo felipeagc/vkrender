@@ -1,19 +1,20 @@
 #include "texture.hpp"
 #include "buffer.hpp"
 #include "context.hpp"
-#include "logging.hpp"
+#include <fstl/logging.hpp>
+#include <fstl/unique.hpp>
 #include <stb_image.h>
 
 using namespace vkr;
 
 Texture::Texture(const std::string_view &path) {
-  log::debug("Loading texture: {}", path);
+  fstl::log::debug("Loading texture: {}", path);
 
   auto pixels = this->loadImage(path);
 
   this->createImage();
 
-  Unique<StagingBuffer> stagingBuffer(pixels.size());
+  fstl::unique<StagingBuffer> stagingBuffer(pixels.size());
   stagingBuffer->copyMemory(pixels.data(), pixels.size());
   stagingBuffer->transfer(this->image, this->width, this->height);
 }
@@ -23,11 +24,11 @@ Texture::Texture(
     const uint32_t width,
     const uint32_t height)
     : width(width), height(height) {
-  log::debug("Loading texture from binary data");
+  fstl::log::debug("Loading texture from binary data");
 
   this->createImage();
 
-  Unique<StagingBuffer> stagingBuffer(data.size());
+  fstl::unique<StagingBuffer> stagingBuffer(data.size());
   stagingBuffer->copyMemory(data.data(), data.size());
   stagingBuffer->transfer(this->image, this->width, this->height);
 }

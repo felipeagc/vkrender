@@ -4,7 +4,7 @@
 #include <fmt/ostream.h>
 #include <iostream>
 
-namespace vkr {
+namespace fstl {
 namespace log {
 
 template <typename... Args>
@@ -35,4 +35,4 @@ void debug(std::string_view str, const Args &... args) {
 }
 
 } // namespace log
-} // namespace vkr
+} // namespace fstl

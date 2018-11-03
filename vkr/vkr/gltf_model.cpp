@@ -1,6 +1,7 @@
 #include "gltf_model.hpp"
 #include "context.hpp"
-#include "logging.hpp"
+#include <fstl/logging.hpp>
+#include <fstl/unique.hpp>
 
 using namespace vkr;
 
@@ -166,7 +167,7 @@ void GltfModel::Node::update(GltfModel &model, int frameIndex) {
 }
 
 GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
-  log::debug("Loading glTF model: {}", path);
+  fstl::log::debug("Loading glTF model: {}", path);
 
   tinygltf::TinyGLTF loader;
   tinygltf::Model model;
@@ -183,11 +184,11 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   }
 
   if (!warn.empty()) {
-    log::warn("GLTF: {}", warn);
+    fstl::log::warn("GLTF: {}", warn);
   }
 
   if (!err.empty()) {
-    log::error("GLTF: {}", err);
+    fstl::log::error("GLTF: {}", err);
   }
 
   if (!ret) {
@@ -222,8 +223,8 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 
   assert((vertexBufferSize > 0) && (indexBufferSize > 0));
 
-  Unique<StagingBuffer> vertexStagingBuffer{{vertexBufferSize}};
-  Unique<StagingBuffer> indexStagingBuffer{{indexBufferSize}};
+  fstl::unique<StagingBuffer> vertexStagingBuffer{{vertexBufferSize}};
+  fstl::unique<StagingBuffer> indexStagingBuffer{{indexBufferSize}};
 
   this->vertexBuffer = Buffer{
       vertexBufferSize,
@@ -268,21 +269,15 @@ void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   }
 }
 
-void GltfModel::setPosition(glm::vec3 pos) {
-  this->pos = pos;
-}
+void GltfModel::setPosition(glm::vec3 pos) { this->pos = pos; }
 
 glm::vec3 GltfModel::getPosition() const { return this->pos; }
 
-void GltfModel::setRotation(glm::vec3 rotation) {
-  this->rotation = rotation;
-}
+void GltfModel::setRotation(glm::vec3 rotation) { this->rotation = rotation; }
 
 glm::vec3 GltfModel::getRotation() const { return this->rotation; }
 
-void GltfModel::setScale(glm::vec3 scale) {
-  this->scale = scale;
-}
+void GltfModel::setScale(glm::vec3 scale) { this->scale = scale; }
 
 glm::vec3 GltfModel::getScale() const { return this->scale; }
 
@@ -530,7 +525,7 @@ void GltfModel::loadNode(
           break;
         }
         default:
-          log::error(
+          fstl::log::error(
               "GLTF: Index component type {} not supported!",
               accessor.componentType);
           return;

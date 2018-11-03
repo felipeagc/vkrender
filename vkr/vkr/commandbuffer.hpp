@@ -1,8 +1,8 @@
 #pragma once
 
-#include "smallvec.hpp"
-#include "util.hpp"
+#include "aliases.hpp"
 #include <vulkan/vulkan.hpp>
+#include <fstl/array_proxy.hpp>
 
 namespace vkr {
 class Buffer;
@@ -14,14 +14,14 @@ public:
       : commandBuffer(commandBuffer){};
   ~CommandBuffer(){};
 
-  void bindVertexBuffers(const ArrayProxy<const Buffer> &buffers);
+  void bindVertexBuffers(const fstl::array_proxy<const Buffer> &buffers);
   void bindIndexBuffer(Buffer &buffer, DeviceSize offset, IndexType indexType);
   void bindDescriptorSets(
       PipelineBindPoint pipelineBindPoint,
       PipelineLayout layout,
       uint32_t firstSet,
-      ArrayProxy<const DescriptorSet> descriptorSets,
-      ArrayProxy<const uint32_t> dynamicOffsets);
+      fstl::array_proxy<const DescriptorSet> descriptorSets,
+      fstl::array_proxy<const uint32_t> dynamicOffsets);
   void bindGraphicsPipeline(GraphicsPipeline &pipeline);
 
   void draw(

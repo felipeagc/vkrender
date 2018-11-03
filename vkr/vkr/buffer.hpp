@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util.hpp"
+#include "aliases.hpp"
 #include <vulkan/vulkan.hpp>
 
 namespace vkr {

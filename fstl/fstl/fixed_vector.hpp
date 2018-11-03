@@ -4,14 +4,14 @@
 #include <cstring>
 #include <exception>
 
-namespace vkr {
-template <typename T, size_t N = 8> class SmallVec {
+namespace fstl {
+template <typename T, size_t N = 8> class fixed_vector {
 public:
-  SmallVec() {}
+  fixed_vector() {}
 
-  SmallVec(size_t count) { this->resize(count); }
+  fixed_vector(size_t count) { this->resize(count); }
 
-  SmallVec(size_t count, const T &value) {
+  fixed_vector(size_t count, const T &value) {
     this->resize(count);
 
     for (size_t i = 0; i < count; i++) {
@@ -19,7 +19,7 @@ public:
     }
   }
 
-  SmallVec(std::initializer_list<T> const &data) {
+  fixed_vector(std::initializer_list<T> const &data) {
     size_t len = data.end() - data.begin();
 
     this->resize(len);
@@ -31,13 +31,13 @@ public:
     }
   }
 
-  ~SmallVec() {
+  ~fixed_vector() {
     if (m_heapVector != m_array.data()) {
       delete[] m_heapVector;
     }
   }
 
-  SmallVec(const SmallVec &other) {
+  fixed_vector(const fixed_vector &other) {
     this->resize(other.m_size);
     this->m_size = other.m_size;
 
@@ -46,7 +46,7 @@ public:
     }
   }
 
-  SmallVec &operator=(const SmallVec &other) {
+  fixed_vector &operator=(const fixed_vector &other) {
     this->resize(other.m_size);
     this->m_size = other.m_size;
 
@@ -60,7 +60,7 @@ public:
   void push_back(const T &value) noexcept {
     if (this->m_size == this->m_capacity) {
       T *newStorage = new T[this->m_capacity * 2];
-      
+
       for (size_t i = 0; i < this->m_capacity; i++) {
         newStorage[i] = this->m_heapVector[i];
       }
@@ -76,7 +76,7 @@ public:
     }
 
     this->m_size++;
-    this->m_heapVector[this->m_size-1] = value;
+    this->m_heapVector[this->m_size - 1] = value;
   }
 
   T &operator[](size_t index) const noexcept { return m_heapVector[index]; }
@@ -139,4 +139,4 @@ protected:
   size_t m_capacity{N};
   T *m_heapVector{m_array.data()};
 };
-} // namespace vkr
+} // namespace fstl

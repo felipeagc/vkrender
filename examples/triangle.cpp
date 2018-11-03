@@ -1,8 +1,10 @@
+#include <fstl/fixed_vector.hpp>
+#include <fstl/unique.hpp>
 #include <glm/glm.hpp>
+#include <vkr/aliases.hpp>
 #include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/pipeline.hpp>
-#include <vkr/util.hpp>
 #include <vkr/window.hpp>
 
 struct Vertex {
@@ -13,7 +15,7 @@ struct Vertex {
 int main() {
   vkr::Window window("Triangle");
 
-  vkr::Unique<vkr::Shader> shader{
+  fstl::unique<vkr::Shader> shader{
       "../shaders/triangle.vert",
       "../shaders/triangle.frag",
   };
@@ -26,11 +28,11 @@ int main() {
               1, 0, vkr::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
           .build();
 
-  vkr::Unique<vkr::GraphicsPipeline> pipeline{
+  fstl::unique<vkr::GraphicsPipeline> pipeline{
       window,
       *shader,
       vertexFormat,
-      vkr::SmallVec<vkr::DescriptorSetLayout>{},
+      fstl::fixed_vector<vkr::DescriptorSetLayout>{},
   };
 
   std::array<Vertex, 3> vertices{
@@ -39,7 +41,7 @@ int main() {
       Vertex{{0.0, -0.5}, {1.0, 0.0, 0.0}},
   };
 
-  vkr::Unique<vkr::Buffer> vertexBuffer{
+  fstl::unique<vkr::Buffer> vertexBuffer{
       sizeof(Vertex) * vertices.size(), // size
       vkr::BufferUsageFlagBits::eVertexBuffer |
           vkr::BufferUsageFlagBits::eTransferDst,

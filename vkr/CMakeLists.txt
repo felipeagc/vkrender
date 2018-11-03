@@ -14,7 +14,7 @@ set(
   vkr/gltf_model.cpp
   vkr/camera.cpp
   vkr/descriptor_manager.cpp
-  )
+)
 
 add_library(vkrender ${VKRENDER_SOURCES})
 
@@ -24,24 +24,26 @@ target_include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}"
   ${SDL2_INCLUDE_DIR}
   ${Vulkan_INCLUDE_DIR}
-  )
+)
 
 target_link_libraries(
   vkrender
   PUBLIC
+
+  fstl
+
   vma
   stb_image
   spirv-cross-core
   spirv-cross-glsl
   spirv-cross-cpp
   spirv-cross-reflect
-  fmt
   glslang
   glslang-default-resource-limits
   SPIRV
   tinygltf
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
-  )
+)
 
 cotire(vkrender)

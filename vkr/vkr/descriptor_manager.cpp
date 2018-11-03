@@ -7,7 +7,7 @@ const uint32_t MESH_MAX_SETS = 500;
 const uint32_t MATERIAL_MAX_SETS = 50;
 const uint32_t LIGHTING_MAX_SETS = 50;
 
-const SmallVec<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
+const fstl::fixed_vector<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
     0,                                   // binding
     vkr::DescriptorType::eUniformBuffer, // descriptorType
     1,                                   // descriptorCount
@@ -15,7 +15,7 @@ const SmallVec<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
     nullptr,                             // pImmutableSamplers
 }};
 
-const SmallVec<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
+const fstl::fixed_vector<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
     0,                                   // binding
     vkr::DescriptorType::eUniformBuffer, // descriptorType
     1,                                   // descriptorCount
@@ -23,7 +23,7 @@ const SmallVec<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
     nullptr,                             // pImmutableSamplers
 }};
 
-const SmallVec<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {
+const fstl::fixed_vector<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {
     {
         0,                                          // binding
         vkr::DescriptorType::eCombinedImageSampler, // descriptorType
@@ -40,7 +40,7 @@ const SmallVec<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {
     },
 };
 
-const SmallVec<DescriptorSetLayoutBinding> LIGHTING_BINDINGS = {
+const fstl::fixed_vector<DescriptorSetLayoutBinding> LIGHTING_BINDINGS = {
     {
         0,                                   // binding
         vkr::DescriptorType::eUniformBuffer, // descriptorType

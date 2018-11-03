@@ -1,7 +1,7 @@
 #pragma once
 
 #include "descriptor_manager.hpp"
-#include "util.hpp"
+#include "aliases.hpp"
 #include <functional>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>

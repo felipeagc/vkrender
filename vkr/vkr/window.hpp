@@ -5,7 +5,7 @@
 #include <string>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
-#include "util.hpp"
+#include "aliases.hpp"
 
 namespace vkr {
 

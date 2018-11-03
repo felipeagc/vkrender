@@ -1,8 +1,8 @@
 #pragma once
 
 #include "buffer.hpp"
-#include "smallvec.hpp"
-#include "util.hpp"
+#include "aliases.hpp"
+#include <fstl/fixed_vector.hpp>
 #include <fstream>
 #include <spirv_reflect.hpp>
 #include <vulkan/vulkan.hpp>
@@ -19,15 +19,16 @@ class VertexFormat {
 public:
   VertexFormat(){};
   VertexFormat(
-      SmallVec<vk::VertexInputBindingDescription> bindingDescriptions,
-      SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions);
+      fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions,
+      fstl::fixed_vector<vk::VertexInputAttributeDescription>
+          attributeDescriptions);
   ~VertexFormat(){};
   VertexFormat(const VertexFormat &other) = default;
   VertexFormat &operator=(VertexFormat &other) = default;
 
 protected:
-  SmallVec<vk::VertexInputBindingDescription> bindingDescriptions;
-  SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions;
+  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions;
+  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions;
 
   vk::PipelineVertexInputStateCreateInfo
   getPipelineVertexInputStateCreateInfo() const;
@@ -48,14 +49,15 @@ public:
   VertexFormat build();
 
 private:
-  SmallVec<vk::VertexInputBindingDescription> bindingDescriptions;
-  SmallVec<vk::VertexInputAttributeDescription> attributeDescriptions;
+  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions;
+  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions;
 };
 
 class DescriptorSetLayout : public vk::DescriptorSetLayout {
 public:
   DescriptorSetLayout(){};
-  DescriptorSetLayout(const SmallVec<DescriptorSetLayoutBinding> &bindings);
+  DescriptorSetLayout(
+      const fstl::fixed_vector<DescriptorSetLayoutBinding> &bindings);
   ~DescriptorSetLayout(){};
   DescriptorSetLayout(const DescriptorSetLayout &) = default;
   DescriptorSetLayout &operator=(const DescriptorSetLayout &) = default;
@@ -70,23 +72,25 @@ public:
   DescriptorPool(){};
   // Create a descriptor pool with sizes derived from the bindings and maxSets
   DescriptorPool(
-      uint32_t maxSets, const SmallVec<DescriptorSetLayoutBinding> &bindings);
+      uint32_t maxSets,
+      const fstl::fixed_vector<DescriptorSetLayoutBinding> &bindings);
 
   // Create a descriptor pool with manually specified poolSizes
   DescriptorPool(
-      uint32_t maxSets, const SmallVec<DescriptorPoolSize> &poolSizes);
+      uint32_t maxSets,
+      const fstl::fixed_vector<DescriptorPoolSize> &poolSizes);
   ~DescriptorPool(){};
 
   DescriptorPool(const DescriptorPool &) = default;
   DescriptorPool &operator=(const DescriptorPool &) = default;
 
   // Allocate many descriptor sets with one layout
-  SmallVec<DescriptorSet>
+  fstl::fixed_vector<DescriptorSet>
   allocateDescriptorSets(uint32_t setCount, DescriptorSetLayout &layout);
 
   // Allocate many descriptor sets with different layouts
-  SmallVec<DescriptorSet>
-  allocateDescriptorSets(const SmallVec<DescriptorSetLayout> &layouts);
+  fstl::fixed_vector<DescriptorSet> allocateDescriptorSets(
+      const fstl::fixed_vector<DescriptorSetLayout> &layouts);
 
   void destroy();
 };
@@ -107,11 +111,12 @@ public:
 
   operator bool() { return this->vertexModule && this->fragmentModule; };
 
-  SmallVec<vk::PipelineShaderStageCreateInfo>
+  fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
   struct ShaderMetadata {
-    SmallVec<vkr::DescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+    fstl::fixed_vector<vkr::DescriptorSetLayoutBinding>
+        descriptorSetLayoutBindings;
     vkr::VertexFormat vertexFormat;
   };
 
@@ -157,7 +162,7 @@ public:
       const Window &window,
       const Shader &shader,
       const VertexFormat &vertexFormat,
-      const SmallVec<DescriptorSetLayout> &descriptorSetLayouts = {});
+      const fstl::fixed_vector<DescriptorSetLayout> &descriptorSetLayouts = {});
   ~GraphicsPipeline(){};
   GraphicsPipeline(const GraphicsPipeline &) = delete;
   GraphicsPipeline &operator=(GraphicsPipeline &) = delete;
