@@ -2,6 +2,7 @@
 #include <fstl/unique.hpp>
 #include <glm/glm.hpp>
 #include <vkr/aliases.hpp>
+#include <vkr/buffer.hpp>
 #include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/pipeline.hpp>

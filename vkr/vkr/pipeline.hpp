@@ -1,10 +1,8 @@
 #pragma once
 
-#include "buffer.hpp"
 #include "aliases.hpp"
 #include <fstl/fixed_vector.hpp>
 #include <fstream>
-#include <spirv_reflect.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace vkr {

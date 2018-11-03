@@ -25,12 +25,7 @@ int main() {
       window,
       *modelShader,
       vkr::GltfModel::getVertexFormat(),
-      fstl::fixed_vector<vkr::DescriptorSetLayout>{
-          *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_CAMERA),
-          *vkr::Context::getDescriptorManager().getSetLayout(
-              vkr::DESC_MATERIAL),
-          *vkr::Context::getDescriptorManager().getSetLayout(vkr::DESC_MESH),
-      },
+      vkr::Context::getDescriptorManager().getDefaultSetLayouts(),
   };
 
   vkr::Camera camera({3.0, 3.0, 3.0});

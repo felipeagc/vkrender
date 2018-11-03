@@ -5,10 +5,10 @@
 #include <vector>
 
 namespace vkr {
-const std::string DESC_CAMERA = "camera";
-const std::string DESC_MESH = "mesh";
-const std::string DESC_MATERIAL = "material";
-const std::string DESC_LIGHTING = "lighting";
+const char* const DESC_CAMERA = "camera";
+const char* const DESC_MESH = "mesh";
+const char* const DESC_MATERIAL = "material";
+const char* const DESC_LIGHTING = "lighting";
 
 class DescriptorManager {
   friend class Context;
@@ -24,6 +24,8 @@ public:
   // Returns false if a key with that name already exists
   bool addPool(const std::string &key, DescriptorPool pool);
   bool addSetLayout(const std::string &key, DescriptorSetLayout setLayout);
+
+  fstl::fixed_vector<DescriptorSetLayout> getDefaultSetLayouts();
 
 protected:
   void init();

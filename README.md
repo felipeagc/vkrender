@@ -17,7 +17,6 @@
 - [ ] First person camera
 
 ### Pipeline
-- [ ] Default descriptor set layouts in pipeline constructor
 - [ ] Figure out a way to pass more parameters to the pipeline on creation
 - [x] Multisampling
 - [x] Make multisampling configurable
@@ -37,6 +36,7 @@ matrix for GltfModel that multiplies before passing to GPU)
 
 ### Lighting
 - [ ] Figure out phong lighting
+- [ ] Multiple lights
 
 ### Libraries
 - [x] Add google test as a git submodule

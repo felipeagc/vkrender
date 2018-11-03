@@ -94,6 +94,16 @@ bool DescriptorManager::addSetLayout(
   return true;
 }
 
+fstl::fixed_vector<DescriptorSetLayout>
+DescriptorManager::getDefaultSetLayouts() {
+  return fstl::fixed_vector<DescriptorSetLayout>{
+      *this->getSetLayout(vkr::DESC_CAMERA),
+      *this->getSetLayout(vkr::DESC_MATERIAL),
+      *this->getSetLayout(vkr::DESC_MESH),
+      *this->getSetLayout(vkr::DESC_LIGHTING),
+  };
+}
+
 void DescriptorManager::init() {
   this->addPool(DESC_CAMERA, {CAMERA_MAX_SETS, CAMERA_BINDINGS});
   this->addSetLayout(DESC_CAMERA, {CAMERA_BINDINGS});

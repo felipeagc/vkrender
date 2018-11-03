@@ -1,5 +1,6 @@
 #pragma once
 
+#include "buffer.hpp"
 #include "pipeline.hpp"
 #include "window.hpp"
 #include <glm/glm.hpp>
