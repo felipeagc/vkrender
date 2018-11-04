@@ -107,16 +107,15 @@ int main() {
       vkr::Context::getDescriptorManager().getDefaultSetLayouts(),
   };
 
-  vkr::Camera camera({3.0, 3.0, 3.0});
-  camera.lookAt({0.0, 0.0, 0.0});
+  vkr::Camera camera({0.0, 0.0, 0.0});
 
   Lighting lighting({0.95, 0.80, 0.52}, {3.0, 3.0, 3.0});
 
   fstl::unique<vkr::GltfModel> helmet{
       window, "../assets/DamagedHelmet.glb", true};
-  helmet->setPosition({0.0, 0.0, 2.0});
+  helmet->setPosition({2.0, 0.0, 0.0});
   fstl::unique<vkr::GltfModel> boombox{window, "../assets/BoomBox.glb"};
-  boombox->setPosition({0.0, 0.0, -2.0});
+  boombox->setPosition({-2.0, 0.0, 0.0});
   boombox->setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 
   float time = 0.0;
@@ -142,7 +141,7 @@ int main() {
     float radius = 3.5f;
     float camX = sin(time) * radius;
     float camY = cos(time) * radius;
-    camera.setPos({camX, radius/1.5, camY});
+    camera.setPos(glm::vec3{camX, radius / 1.5, camY});
     camera.lookAt((helmet->getPosition() + boombox->getPosition()) / 2.0f);
 
     camera.update(window);

@@ -5,7 +5,10 @@
 
 using namespace vkr;
 
-Camera::Camera(glm::vec3 position) : pos(position) {
+Camera::Camera(glm::vec3 position, glm::quat rotation) {
+  this->setPos(position);
+  this->setRot(rotation);
+
   auto [descriptorPool, descriptorSetLayout] =
       Context::getDescriptorManager()[DESC_CAMERA];
 
@@ -60,18 +63,44 @@ Camera::~Camera() {
 }
 
 void Camera::setPos(glm::vec3 pos) {
-  cameraUniform.view = glm::translate(cameraUniform.view, pos - this->pos);
-  this->pos = pos;
+  cameraUniform.view[3][0] = pos.x;
+  cameraUniform.view[3][1] = pos.y;
+  cameraUniform.view[3][2] = pos.z;
 }
 
-glm::vec3 Camera::getPos() const { return this->pos; }
+glm::vec3 Camera::getPos() const {
+  return glm::vec3(
+      cameraUniform.view[3][0],
+      cameraUniform.view[3][1],
+      cameraUniform.view[3][2]);
+}
+
+void Camera::translate(glm::vec3 translation) {
+  cameraUniform.view = glm::translate(cameraUniform.view, translation);
+}
+
+void Camera::setRot(glm::quat rot) {
+  glm::quat currentRot = glm::quat_cast(cameraUniform.view);
+  cameraUniform.view =
+      glm::mat4_cast(glm::inverse(currentRot)) * cameraUniform.view;
+  cameraUniform.view = glm::mat4_cast(rot) * cameraUniform.view;
+}
+
+glm::quat Camera::getRot() const {
+  glm::quat currentRot = glm::quat_cast(cameraUniform.view);
+  return currentRot;
+}
+
+void Camera::rotate(glm::quat rot) {
+  cameraUniform.view = glm::mat4_cast(rot) * cameraUniform.view;
+}
 
 void Camera::setFov(float fov) { this->fov = fov; }
 
 float Camera::getFov() const { return this->fov; }
 
 void Camera::lookAt(glm::vec3 point) {
-  cameraUniform.view = glm::lookAt(this->pos, point, {0.0, -1.0, 0.0});
+  cameraUniform.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
 }
 
 void Camera::update(Window &window) {

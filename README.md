@@ -13,7 +13,7 @@
 
 ### Camera
 - [x] Camera options
-- [ ] Use quaternion for camera
+- [x] Use quaternion for camera
 - [ ] First person camera
 
 ### Pipeline
@@ -45,6 +45,10 @@
 - [ ] Figure out phong lighting
 - [ ] Multiple lights
 
+### Window
+- [ ] Better event system
+- [ ] Input handling
+
 ### Libraries
 - [x] Add google test as a git submodule
 - [x] Add glm as a git submodule
@@ -53,6 +57,7 @@
 ### Misc
 - [ ] Object picking
 - [ ] Selected object outline
+- [ ] Fullscreen post process shader
 - [ ] Document as much as possible
 - [ ] Imgui
 - [ ] Imgui shader uniform menu
