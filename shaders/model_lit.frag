@@ -4,6 +4,11 @@ layout (location = 0) in vec2 texCoords;
 layout (location = 1) in vec3 fragPos;
 layout (location = 2) in vec3 normal;
 
+layout (set = 0, binding = 0) uniform CameraUniform {
+  mat4 view;
+  mat4 proj;
+} camera;
+
 layout (set = 1, binding = 0) uniform sampler2D albedo;
 
 layout (set = 1, binding = 1) uniform MaterialUniform {
@@ -11,7 +16,6 @@ layout (set = 1, binding = 1) uniform MaterialUniform {
 } material;
 
 layout(set = 3, binding = 0) uniform LightingUniform {
-  vec4 viewPos;
   vec4 color;
   vec4 pos;
 } lighting;
@@ -19,6 +23,8 @@ layout(set = 3, binding = 0) uniform LightingUniform {
 layout (location = 0) out vec4 outColor;
 
 void main() {
+  vec3 viewPos = vec3(camera.view[3][0], camera.view[3][1], camera.view[3][2]);
+
   // ambient
   float ambientStrength = 0.1;
   vec3 ambient = ambientStrength * lighting.color.rgb;
@@ -31,11 +37,11 @@ void main() {
 
   // specular
   float specularStrength = 0.5;
-  vec3 viewDir = normalize(lighting.viewPos.xyz - fragPos);
+  vec3 viewDir = normalize(viewPos - fragPos);
   vec3 reflectDir = reflect(-lightDir, norm);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
   vec3 specular = specularStrength * spec * lighting.color.rgb;
 
-  vec3 result = (ambient + diffuse) * material.color.rgb;
+  vec3 result = (ambient + diffuse + specular) * material.color.rgb;
   outColor = vec4(result, 1.0) * texture(albedo, texCoords);
 }

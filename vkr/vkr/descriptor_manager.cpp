@@ -11,8 +11,9 @@ const fstl::fixed_vector<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
     0,                                   // binding
     vkr::DescriptorType::eUniformBuffer, // descriptorType
     1,                                   // descriptorCount
-    vkr::ShaderStageFlagBits::eVertex,   // stageFlags
-    nullptr,                             // pImmutableSamplers
+    vkr::ShaderStageFlagBits::eVertex |
+        vkr::ShaderStageFlagBits::eFragment, // stageFlags
+    nullptr,                                 // pImmutableSamplers
 }};
 
 const fstl::fixed_vector<DescriptorSetLayoutBinding> MESH_BINDINGS = {{

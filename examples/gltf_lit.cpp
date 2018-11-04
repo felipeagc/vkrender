@@ -13,7 +13,7 @@
 
 class Lighting {
 public:
-  Lighting(vkr::Camera &camera, glm::vec3 lightColor, glm::vec3 lightPos)
+  Lighting(glm::vec3 lightColor, glm::vec3 lightPos)
       : uniformBuffer({
             sizeof(LightingUniform),
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -29,7 +29,6 @@ public:
     this->descriptorSet =
         descriptorPool->allocateDescriptorSets({*descriptorSetLayout})[0];
 
-    this->ubo.viewPos = glm::vec4(camera.getPos(), 1.0f);
     this->ubo.lightColor = glm::vec4(lightColor, 1.0f);
     this->ubo.lightPos = glm::vec4(lightPos, 1.0f);
 
@@ -80,7 +79,6 @@ public:
 
 private:
   struct LightingUniform {
-    glm::vec4 viewPos;
     glm::vec4 lightColor;
     glm::vec4 lightPos;
   } ubo;
@@ -110,7 +108,7 @@ int main() {
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
 
-  Lighting lighting(camera, {0.33f, 0.42f, 0.18f}, {3.0, 3.0, 3.0});
+  Lighting lighting({0.33f, 0.42f, 0.18f}, {3.0, 3.0, 3.0});
 
   fstl::unique<vkr::GltfModel> helmet{
       window, "../assets/DamagedHelmet.glb", true};
