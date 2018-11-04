@@ -34,6 +34,12 @@ matrix for GltfModel that multiplies before passing to GPU)
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
 
+### Mesh generation
+- [ ] Mesh class
+
+### Utilities
+- [ ] Noise
+
 ### Lighting
 - [ ] Figure out phong lighting
 - [ ] Multiple lights
@@ -52,26 +58,27 @@ matrix for GltfModel that multiplies before passing to GPU)
 ## Shaders
 ### Vertex format
 ```glsl
-vec3 pos;
-vec3 normal;
-vec2 texCoords;
+layout (location = 0) in vec3 pos;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
 ```
 
 ### Descriptor set 0
 For the camera's stuff
 ```glsl
 layout (set = 0, binding = 0) uniform CameraUniform {
-mat4 view;
-mat4 proj;
-} camera_ubo;
+    mat4 view;
+    mat4 proj;
+} camera;
 ```
 
 ### Descriptor set 1
 For the material's stuff
 ```glsl
 layout (set = 1, binding = 0) uniform sampler2D albedo;
+
 layout (set = 1, binding = 1) uniform MaterialUniform {
-vec4 baseColorFactor;
+    vec4 color;
 } material;
 ```
 
@@ -79,15 +86,16 @@ vec4 baseColorFactor;
 For the model's mesh stuff
 ```glsl
 layout (set = 2, binding = 0) uniform ModelUniform {
-mat4 model;
-} model_ubo;
+    mat4 model;
+} model;
 ```
 
 ### Descriptor set 3
 Lighting stuff
 ```glsl
 layout(set = 3, binding = 0) uniform LightingUniform {
-vec4 lightColor; // vec4 because of padding
+    vec4 color;
+    vec4 pos;
 } lighting;
 ```
 
