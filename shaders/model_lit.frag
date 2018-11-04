@@ -26,7 +26,7 @@ void main() {
   vec3 viewPos = vec3(camera.view[3][0], camera.view[3][1], camera.view[3][2]);
 
   // ambient
-  float ambientStrength = 0.1;
+  float ambientStrength = 0.3;
   vec3 ambient = ambientStrength * lighting.color.rgb;
 
   // diffuse

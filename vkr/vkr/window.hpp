@@ -53,6 +53,8 @@ public:
   int getCurrentFrameIndex() const;
   CommandBuffer getCurrentCommandBuffer();
 
+  glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
+
 protected:
   bool shouldClose = false;
 

@@ -93,6 +93,8 @@ int main() {
 
   window.setMSAASamples(vkr::SampleCount::e4);
 
+  window.clearColor = {0.52, 0.80, 0.92, 1.0};
+
   fstl::unique<vkr::Shader> modelShader{
       "../shaders/model_lit.vert",
       "../shaders/model_lit.frag",
@@ -108,7 +110,7 @@ int main() {
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
 
-  Lighting lighting({0.33f, 0.42f, 0.18f}, {3.0, 3.0, 3.0});
+  Lighting lighting({0.95, 0.80, 0.52}, {3.0, 3.0, 3.0});
 
   fstl::unique<vkr::GltfModel> helmet{
       window, "../assets/DamagedHelmet.glb", true};
@@ -137,10 +139,10 @@ int main() {
       break;
     }
 
-    float radius = 4.0f;
+    float radius = 3.5f;
     float camX = sin(time) * radius;
     float camY = cos(time) * radius;
-    camera.setPos({camX, radius, camY});
+    camera.setPos({camX, radius/1.5, camY});
     camera.lookAt((helmet->getPosition() + boombox->getPosition()) / 2.0f);
 
     camera.update(window);

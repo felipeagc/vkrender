@@ -30,9 +30,10 @@
 
 ### GLTF models
 - [x] Figure out a way to scale a whole model (probably a member
-matrix for GltfModel that multiplies before passing to GPU)
+      matrix for GltfModel that multiplies before passing to GPU)
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
+- [ ] Animation
 
 ### Mesh generation
 - [ ] Mesh class
@@ -50,6 +51,8 @@ matrix for GltfModel that multiplies before passing to GPU)
 - [ ] Figure out how to add vulkan SDK as a submodule
 
 ### Misc
+- [ ] Object picking
+- [ ] Selected object outline
 - [ ] Document as much as possible
 - [ ] Imgui
 - [ ] Imgui shader uniform menu

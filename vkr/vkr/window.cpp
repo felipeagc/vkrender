@@ -147,17 +147,24 @@ void Window::present(std::function<void()> drawFunction) {
         barrierFromPresentToDraw);
   }
 
+  std::array<float, 4> clearColor{
+      this->clearColor.x,
+      this->clearColor.y,
+      this->clearColor.z,
+      this->clearColor.w,
+  };
+
   std::array<vk::ClearValue, 4> clearValues{
       vk::ClearValue{},
-      vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+      vk::ClearValue{clearColor},
       vk::ClearValue{},
       vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
   };
 
   if (this->msaaSamples != SampleCount::e1) {
     clearValues = {
-        vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
-        vk::ClearValue{std::array<float, 4>{1.0f, 0.8f, 0.4f, 0.0f}},
+        vk::ClearValue{clearColor},
+        vk::ClearValue{clearColor},
         vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
     };
   }
