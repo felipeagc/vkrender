@@ -59,7 +59,7 @@ int main() {
     stagingBuffer.destroy();
   }
 
-  while (!window.getShouldClose()) {
+  auto draw = [&]() {
     SDL_Event event = window.pollEvent();
 
     switch (event.type) {
@@ -68,13 +68,15 @@ int main() {
       break;
     }
 
-    window.present([&]() {
-      auto commandBuffer = window.getCurrentCommandBuffer();
+    auto commandBuffer = window.getCurrentCommandBuffer();
 
-      commandBuffer.bindGraphicsPipeline(*pipeline);
-      commandBuffer.bindVertexBuffers(*vertexBuffer);
+    commandBuffer.bindGraphicsPipeline(*pipeline);
+    commandBuffer.bindVertexBuffers(*vertexBuffer);
 
-      commandBuffer.draw(vertices.size(), 1, 0, 0);
-    });
+    commandBuffer.draw(vertices.size(), 1, 0, 0);
+  };
+
+  while (!window.getShouldClose()) {
+    window.present(draw);
   }
 }

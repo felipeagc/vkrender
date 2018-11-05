@@ -39,7 +39,7 @@ int main() {
 
   float time = 0.0;
 
-  while (!window.getShouldClose()) {
+  auto draw = [&]() {
     time += window.getDelta();
 
     SDL_Event event = window.pollEvent();
@@ -65,11 +65,13 @@ int main() {
 
     camera.update(window);
 
-    window.present([&]() {
-      camera.bind(window, *modelPipeline);
-      helmet->draw(window, *modelPipeline);
-      duck->draw(window, *modelPipeline);
-    });
+    camera.bind(window, *modelPipeline);
+    helmet->draw(window, *modelPipeline);
+    duck->draw(window, *modelPipeline);
+  };
+
+  while (!window.getShouldClose()) {
+    window.present(draw);
   }
 
   return 0;

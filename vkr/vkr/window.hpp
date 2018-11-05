@@ -1,11 +1,11 @@
 #pragma once
 
+#include "aliases.hpp"
 #include <SDL2/SDL.h>
 #include <functional>
 #include <string>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
-#include "aliases.hpp"
 
 namespace vkr {
 
@@ -26,6 +26,7 @@ public:
   SDL_Event pollEvent();
 
   void present(std::function<void()> drawFunction);
+
   // TODO: remove this function and automate its behaviour
   void updateSize();
 
@@ -52,6 +53,9 @@ public:
 
   int getCurrentFrameIndex() const;
   CommandBuffer getCurrentCommandBuffer();
+
+  void imguiBeginFrame();
+  void imguiEndFrame();
 
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -84,6 +88,7 @@ protected:
     vk::Fence fence;
 
     vk::Framebuffer framebuffer;
+    vk::Framebuffer imguiFramebuffer;
 
     vk::CommandBuffer commandBuffer;
   };
@@ -116,6 +121,7 @@ protected:
   std::vector<vk::ImageView> swapchainImageViews;
 
   vk::RenderPass renderPass;
+  vk::RenderPass imguiRenderPass;
 
   void initVulkanExtensions() const;
   void createVulkanSurface();
@@ -134,7 +140,14 @@ protected:
 
   void createRenderPass();
 
+  void createImguiRenderPass();
+
+  void initImgui();
+
   void regenFramebuffer(
+      vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView);
+
+  void regenImguiFramebuffer(
       vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView);
 
   void destroyResizables();

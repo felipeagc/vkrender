@@ -3,6 +3,9 @@
 #include "context.hpp"
 #include <SDL2/SDL_vulkan.h>
 #include <fstl/logging.hpp>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_sdl.h>
+#include <imgui/imgui_impl_vulkan.h>
 
 using namespace vkr;
 
@@ -53,10 +56,18 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
   this->createMultisampleTargets();
 
   this->createRenderPass();
+
+  this->createImguiRenderPass();
+
+  this->initImgui();
 }
 
 Window::~Window() {
   Context::getDevice().waitIdle();
+
+  ImGui_ImplVulkan_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
+  ImGui::DestroyContext();
 
   this->destroyResizables();
 
@@ -68,6 +79,7 @@ Window::~Window() {
 
   for (auto &frameResource : this->frameResources) {
     Context::getDevice().destroy(frameResource.framebuffer);
+    Context::getDevice().destroy(frameResource.imguiFramebuffer);
     Context::getDevice().destroy(frameResource.imageAvailableSemaphore);
     Context::getDevice().destroy(frameResource.renderingFinishedSemaphore);
     Context::getDevice().destroy(frameResource.fence);
@@ -81,6 +93,9 @@ Window::~Window() {
 SDL_Event Window::pollEvent() {
   SDL_Event event;
   SDL_PollEvent(&event);
+
+  ImGui_ImplSDL2_ProcessEvent(&event);
+
   return event;
 }
 
@@ -115,6 +130,10 @@ void Window::present(std::function<void()> drawFunction) {
 
   this->regenFramebuffer(
       this->frameResources[this->currentFrame].framebuffer,
+      this->swapchainImageViews[this->currentImageIndex]);
+
+  this->regenImguiFramebuffer(
+      this->frameResources[this->currentFrame].imguiFramebuffer,
       this->swapchainImageViews[this->currentImageIndex]);
 
   vk::CommandBufferBeginInfo beginInfo{
@@ -194,11 +213,47 @@ void Window::present(std::function<void()> drawFunction) {
 
   commandBuffer.setScissor(0, scissor);
 
+  this->imguiBeginFrame();
+
   // Draw
   drawFunction();
 
+  this->imguiEndFrame();
+
   // End
   commandBuffer.endRenderPass();
+
+  {
+    vk::RenderPassBeginInfo imguiRenderPassBeginInfo{
+        this->imguiRenderPass, // renderPass
+        this->frameResources[this->currentFrame]
+            .imguiFramebuffer,           // framebuffer
+        {{0, 0}, this->swapchainExtent}, // renderArea
+        0,                               // clearValueCount
+        nullptr,                         // pClearValues
+    };
+
+    commandBuffer.beginRenderPass(
+        imguiRenderPassBeginInfo, vk::SubpassContents::eInline);
+
+    vk::Viewport viewport{
+        0.0f,                                             // x
+        0.0f,                                             // y
+        static_cast<float>(this->swapchainExtent.width),  // width
+        static_cast<float>(this->swapchainExtent.height), // height
+        0.0f,                                             // minDepth
+        1.0f,                                             // maxDepth
+    };
+
+    vk::Rect2D scissor{{0, 0}, this->swapchainExtent};
+    commandBuffer.setViewport(0, viewport);
+
+    commandBuffer.setScissor(0, scissor);
+
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
+    commandBuffer.endRenderPass();
+  }
 
   if (Context::get().presentQueue != Context::get().graphicsQueue) {
     vk::ImageMemoryBarrier barrierFromDrawToPresent{
@@ -272,6 +327,7 @@ void Window::updateSize() {
   this->createDepthStencilResources();
   this->createMultisampleTargets();
   this->createRenderPass();
+  this->createImguiRenderPass();
   this->allocateGraphicsCommandBuffers();
 }
 
@@ -345,6 +401,14 @@ int Window::getCurrentFrameIndex() const { return this->currentFrame; }
 CommandBuffer Window::getCurrentCommandBuffer() {
   return CommandBuffer{this->frameResources[this->currentFrame].commandBuffer};
 }
+
+void Window::imguiBeginFrame() {
+  ImGui_ImplVulkan_NewFrame();
+  ImGui_ImplSDL2_NewFrame(window);
+  ImGui::NewFrame();
+}
+
+void Window::imguiEndFrame() { ImGui::Render(); }
 
 void Window::initVulkanExtensions() const {
   uint32_t sdlExtensionCount = 0;
@@ -818,6 +882,106 @@ void Window::createRenderPass() {
       Context::getDevice().createRenderPass(renderPassCreateInfo);
 }
 
+void Window::createImguiRenderPass() {
+  vk::AttachmentDescription attachment{};
+  attachment.format = this->swapchainImageFormat;
+  attachment.samples = vk::SampleCountFlagBits::e1;
+  attachment.loadOp = vk::AttachmentLoadOp::eDontCare;
+  attachment.storeOp = vk::AttachmentStoreOp::eStore;
+  attachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+  attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+  attachment.initialLayout = vk::ImageLayout::eUndefined;
+  attachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+
+  vk::AttachmentReference color_attachment{};
+  color_attachment.attachment = 0;
+  color_attachment.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+  vk::SubpassDescription subpass{};
+  subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &color_attachment;
+
+  vk::SubpassDependency dependency{};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+  dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+  dependency.srcAccessMask = {};
+  dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
+  vk::RenderPassCreateInfo renderPassCreateInfo{
+      {},          // flags
+      1,           // attachmentCount
+      &attachment, // pAttachments
+      1,           // subpassCount
+      &subpass,    // pSubpasses
+      1,           // dependencyCount
+      &dependency, // pDependencies
+  };
+
+  this->imguiRenderPass =
+      Context::getDevice().createRenderPass(renderPassCreateInfo);
+}
+
+void Window::initImgui() {
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
+
+  ImGui_ImplSDL2_InitForVulkan(this->window);
+
+  // Setup Vulkan binding
+  ImGui_ImplVulkan_InitInfo init_info = {};
+  init_info.Instance = Context::get().instance;
+  init_info.PhysicalDevice = Context::getPhysicalDevice();
+  init_info.Device = Context::getDevice();
+  init_info.QueueFamily = Context::get().graphicsQueueFamilyIndex;
+  init_info.Queue = Context::get().graphicsQueue;
+  init_info.PipelineCache = VK_NULL_HANDLE;
+  init_info.DescriptorPool =
+      *Context::getDescriptorManager().getPool(DESC_IMGUI);
+  init_info.Allocator = nullptr;
+  init_info.CheckVkResultFn = [](VkResult result) {
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error("Failed to initialize IMGUI!");
+    }
+  };
+  ImGui_ImplVulkan_Init(&init_info, this->imguiRenderPass);
+
+  // Setup style
+  ImGui::StyleColorsDark();
+
+  // Upload Fonts
+  {
+    // Use any command queue
+    vk::CommandPool commandPool = Context::get().graphicsCommandPool;
+    vk::CommandBuffer commandBuffer =
+        this->frameResources[this->currentFrame].commandBuffer;
+
+    Context::getDevice().resetCommandPool(commandPool, {});
+    vk::CommandBufferBeginInfo beginInfo{
+        vk::CommandBufferUsageFlagBits::eOneTimeSubmit, // flags
+    };
+
+    commandBuffer.begin(beginInfo);
+
+    ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+
+    vk::SubmitInfo endInfo{};
+    endInfo.commandBufferCount = 1;
+    endInfo.pCommandBuffers = &commandBuffer;
+
+    commandBuffer.end();
+
+    Context::get().graphicsQueue.submit(endInfo, {});
+
+    Context::getDevice().waitIdle();
+
+    ImGui_ImplVulkan_InvalidateFontUploadObjects();
+  }
+}
+
 void Window::regenFramebuffer(
     vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView) {
   Context::getDevice().destroy(framebuffer);
@@ -832,6 +996,27 @@ void Window::regenFramebuffer(
   vk::FramebufferCreateInfo createInfo = {
       {},                                        // flags
       this->renderPass,                          // renderPass
+      static_cast<uint32_t>(attachments.size()), // attachmentCount
+      attachments.data(),                        // pAttachments
+      this->swapchainExtent.width,               // width
+      this->swapchainExtent.height,              // height
+      1,                                         // layers
+  };
+
+  framebuffer = Context::getDevice().createFramebuffer(createInfo);
+}
+
+void Window::regenImguiFramebuffer(
+    vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView) {
+  Context::getDevice().destroy(framebuffer);
+
+  std::array<vk::ImageView, 1> attachments{
+      swapchainImageView,
+  };
+
+  vk::FramebufferCreateInfo createInfo = {
+      {},                                        // flags
+      this->imguiRenderPass,                     // renderPass
       static_cast<uint32_t>(attachments.size()), // attachmentCount
       attachments.data(),                        // pAttachments
       this->swapchainExtent.width,               // width
@@ -880,6 +1065,7 @@ void Window::destroyResizables() {
     this->multiSampleTargets.depth.allocation = VK_NULL_HANDLE;
   }
 
+  Context::getDevice().destroy(this->imguiRenderPass);
   Context::getDevice().destroy(this->renderPass);
 }
 
@@ -1001,18 +1187,21 @@ vk::PresentModeKHR Window::getSwapchainPresentMode(
     const std::vector<vk::PresentModeKHR> &presentModes) {
   for (const auto &presentMode : presentModes) {
     if (presentMode == vk::PresentModeKHR::eImmediate) {
+      fstl::log::debug("Using Immediate present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
     if (presentMode == vk::PresentModeKHR::eMailbox) {
+      fstl::log::debug("Using mailbox present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
     if (presentMode == vk::PresentModeKHR::eFifo) {
+      fstl::log::debug("Using FIFO present mode");
       return presentMode;
     }
   }

@@ -2,6 +2,7 @@
 #include <fstl/logging.hpp>
 #include <fstl/unique.hpp>
 #include <glm/glm.hpp>
+#include <imgui/imgui.h>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
 #include <vkr/commandbuffer.hpp>
@@ -120,7 +121,7 @@ int main() {
 
   float time = 0.0;
 
-  while (!window.getShouldClose()) {
+  auto draw = [&]() {
     time += window.getDelta();
 
     SDL_Event event = window.pollEvent();
@@ -138,24 +139,37 @@ int main() {
       break;
     }
 
-    float radius = 3.5f;
-    float camX = sin(time) * radius;
-    float camY = cos(time) * radius;
-    camera.setPos(glm::vec3{camX, radius / 1.5, camY});
+    // float radius = 3.5f;
+    // float camX = sin(time) * radius;
+    // float camY = cos(time) * radius;
+    // camera.setPos(glm::vec3{camX, radius / 1.5, camY});
     camera.lookAt((helmet->getPosition() + boombox->getPosition()) / 2.0f);
 
     camera.update(window);
 
     helmet->setRotation({0.0, time * 100.0, 0.0});
     boombox->setRotation({0.0, time * 100.0, 0.0});
+    lighting.bind(window, *modelPipeline);
 
-    window.present([&]() {
-      lighting.bind(window, *modelPipeline);
+    camera.bind(window, *modelPipeline);
+    helmet->draw(window, *modelPipeline);
+    boombox->draw(window, *modelPipeline);
 
-      camera.bind(window, *modelPipeline);
-      helmet->draw(window, *modelPipeline);
-      boombox->draw(window, *modelPipeline);
-    });
+    ImGui::Begin("Camera");
+
+    static float camPos[3] = {
+        camera.getPos().x,
+        camera.getPos().y,
+        camera.getPos().z,
+    };
+    ImGui::SliderFloat3("Camera position", camPos, -10.0f, 10.0f);
+    camera.setPos({camPos[0], camPos[1], camPos[2]});
+
+    ImGui::End();
+  };
+
+  while (!window.getShouldClose()) {
+    window.present(draw);
   }
 
   return 0;

@@ -117,6 +117,24 @@ void DescriptorManager::init() {
 
   this->addPool(DESC_LIGHTING, {LIGHTING_MAX_SETS, LIGHTING_BINDINGS});
   this->addSetLayout(DESC_LIGHTING, {LIGHTING_BINDINGS});
+
+  fstl::fixed_vector<DescriptorPoolSize> imguiPoolSizes{
+      {vk::DescriptorType::eSampler, 1000},
+      {vk::DescriptorType::eCombinedImageSampler, 1000},
+      {vk::DescriptorType::eSampledImage, 1000},
+      {vk::DescriptorType::eStorageImage, 1000},
+      {vk::DescriptorType::eUniformTexelBuffer, 1000},
+      {vk::DescriptorType::eStorageTexelBuffer, 1000},
+      {vk::DescriptorType::eUniformBuffer, 1000},
+      {vk::DescriptorType::eStorageBuffer, 1000},
+      {vk::DescriptorType::eUniformBufferDynamic, 1000},
+      {vk::DescriptorType::eStorageBufferDynamic, 1000},
+      {vk::DescriptorType::eInputAttachment, 1000},
+  };
+
+  this->addPool(
+      DESC_IMGUI,
+      {1000 * static_cast<uint32_t>(imguiPoolSizes.size()), imguiPoolSizes});
 }
 
 void DescriptorManager::destroy() {

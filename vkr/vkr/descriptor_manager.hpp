@@ -9,6 +9,7 @@ const char* const DESC_CAMERA = "camera";
 const char* const DESC_MESH = "mesh";
 const char* const DESC_MATERIAL = "material";
 const char* const DESC_LIGHTING = "lighting";
+const char* const DESC_IMGUI = "imgui";
 
 class DescriptorManager {
   friend class Context;
