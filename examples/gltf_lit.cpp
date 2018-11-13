@@ -1,6 +1,5 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
-#include <fstl/unique.hpp>
 #include <glm/glm.hpp>
 #include <imgui/imgui.h>
 #include <vkr/buffer.hpp>
@@ -97,14 +96,14 @@ int main() {
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};
 
-  fstl::unique<vkr::Shader> modelShader{
+  vkr::Shader modelShader {
       "../shaders/model_lit.vert",
       "../shaders/model_lit.frag",
   };
 
-  fstl::unique<vkr::GraphicsPipeline> modelPipeline{
+  vkr::GraphicsPipeline modelPipeline{
       window,
-      *modelShader,
+      modelShader,
       vkr::GltfModel::getVertexFormat(),
       vkr::Context::getDescriptorManager().getDefaultSetLayouts(),
   };
@@ -113,12 +112,12 @@ int main() {
 
   Lighting lighting({0.95, 0.80, 0.52}, {3.0, 3.0, 3.0});
 
-  fstl::unique<vkr::GltfModel> helmet{
+  vkr::GltfModel helmet{
       window, "../assets/DamagedHelmet.glb", true};
-  helmet->setPosition({2.0, 0.0, 0.0});
-  fstl::unique<vkr::GltfModel> boombox{window, "../assets/BoomBox.glb"};
-  boombox->setPosition({-2.0, 0.0, 0.0});
-  boombox->setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
+  helmet.setPosition({2.0, 0.0, 0.0});
+  vkr::GltfModel boombox{window, "../assets/BoomBox.glb"};
+  boombox.setPosition({-2.0, 0.0, 0.0});
+  boombox.setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 
   float time = 0.0;
 
@@ -144,17 +143,17 @@ int main() {
     // float camX = sin(time) * radius;
     // float camY = cos(time) * radius;
     // camera.setPos(glm::vec3{camX, radius / 1.5, camY});
-    camera.lookAt((helmet->getPosition() + boombox->getPosition()) / 2.0f);
+    camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
 
     camera.update(window);
 
-    helmet->setRotation({0.0, time * 100.0, 0.0});
-    boombox->setRotation({0.0, time * 100.0, 0.0});
-    lighting.bind(window, *modelPipeline);
+    helmet.setRotation({0.0, time * 100.0, 0.0});
+    boombox.setRotation({0.0, time * 100.0, 0.0});
+    lighting.bind(window, modelPipeline);
 
-    camera.bind(window, *modelPipeline);
-    helmet->draw(window, *modelPipeline);
-    boombox->draw(window, *modelPipeline);
+    camera.bind(window, modelPipeline);
+    helmet.draw(window, modelPipeline);
+    boombox.draw(window, modelPipeline);
 
     ImGui::Begin("Camera");
 
@@ -172,6 +171,11 @@ int main() {
   while (!window.getShouldClose()) {
     window.present(draw);
   }
+
+  helmet.destroy();
+  boombox.destroy();
+  modelPipeline.destroy();
+  modelShader.destroy();
 
   return 0;
 }

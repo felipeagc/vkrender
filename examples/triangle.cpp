@@ -1,5 +1,4 @@
 #include <fstl/fixed_vector.hpp>
-#include <fstl/unique.hpp>
 #include <glm/glm.hpp>
 #include <vkr/aliases.hpp>
 #include <vkr/buffer.hpp>
@@ -18,7 +17,7 @@ struct Vertex {
 int main() {
   vkr::Window window("Triangle");
 
-  fstl::unique<vkr::Shader> shader{
+  vkr::Shader shader{
       "../shaders/triangle.vert",
       "../shaders/triangle.frag",
   };
@@ -31,9 +30,9 @@ int main() {
               1, 0, vkr::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
           .build();
 
-  fstl::unique<vkr::GraphicsPipeline> pipeline{
+  vkr::GraphicsPipeline pipeline{
       window,
-      *shader,
+      shader,
       vertexFormat,
       fstl::fixed_vector<vkr::DescriptorSetLayout>{},
   };
@@ -44,7 +43,7 @@ int main() {
       Vertex{{0.0, -0.5}, {1.0, 0.0, 0.0}},
   };
 
-  fstl::unique<vkr::Buffer> vertexBuffer{
+  vkr::Buffer vertexBuffer{
       sizeof(Vertex) * vertices.size(), // size
       vkr::BufferUsageFlagBits::eVertexBuffer |
           vkr::BufferUsageFlagBits::eTransferDst,
@@ -56,7 +55,7 @@ int main() {
     vkr::StagingBuffer stagingBuffer{sizeof(Vertex) * vertices.size()};
 
     stagingBuffer.copyMemory(vertices.data(), sizeof(Vertex) * vertices.size());
-    stagingBuffer.transfer(*vertexBuffer, sizeof(Vertex) * vertices.size());
+    stagingBuffer.transfer(vertexBuffer, sizeof(Vertex) * vertices.size());
 
     stagingBuffer.destroy();
   }
@@ -72,8 +71,8 @@ int main() {
 
     auto commandBuffer = window.getCurrentCommandBuffer();
 
-    commandBuffer.bindGraphicsPipeline(*pipeline);
-    commandBuffer.bindVertexBuffers(*vertexBuffer);
+    commandBuffer.bindGraphicsPipeline(pipeline);
+    commandBuffer.bindVertexBuffers(vertexBuffer);
 
     commandBuffer.draw(vertices.size(), 1, 0, 0);
   };
@@ -81,4 +80,8 @@ int main() {
   while (!window.getShouldClose()) {
     window.present(draw);
   }
+
+  vertexBuffer.destroy();
+  pipeline.destroy();
+  shader.destroy();
 }

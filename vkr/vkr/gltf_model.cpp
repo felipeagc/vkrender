@@ -1,8 +1,8 @@
 #include "gltf_model.hpp"
 #include "context.hpp"
 #include "graphics_pipeline.hpp"
+#include <algorithm>
 #include <fstl/logging.hpp>
-#include <fstl/unique.hpp>
 #include <tiny_gltf.h>
 
 using namespace vkr;
@@ -225,8 +225,7 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 
   assert((vertexBufferSize > 0) && (indexBufferSize > 0));
 
-  fstl::unique<StagingBuffer> vertexStagingBuffer{{vertexBufferSize}};
-  fstl::unique<StagingBuffer> indexStagingBuffer{{indexBufferSize}};
+  StagingBuffer stagingBuffer{std::max(vertexBufferSize, indexBufferSize)};
 
   this->vertexBuffer = Buffer{
       vertexBufferSize,
@@ -244,11 +243,13 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
       vkr::MemoryPropertyFlagBits::eDeviceLocal,
   };
 
-  vertexStagingBuffer->copyMemory(vertices.data(), vertexBufferSize);
-  vertexStagingBuffer->transfer(this->vertexBuffer, vertexBufferSize);
+  stagingBuffer.copyMemory(vertices.data(), vertexBufferSize);
+  stagingBuffer.transfer(this->vertexBuffer, vertexBufferSize);
 
-  indexStagingBuffer->copyMemory(indices.data(), indexBufferSize);
-  indexStagingBuffer->transfer(this->indexBuffer, indexBufferSize);
+  stagingBuffer.copyMemory(indices.data(), indexBufferSize);
+  stagingBuffer.transfer(this->indexBuffer, indexBufferSize);
+
+  stagingBuffer.destroy();
 }
 
 GltfModel::~GltfModel() {}

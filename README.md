@@ -5,7 +5,7 @@
 
 ## TODO
 ### Refactoring
-- [ ] Remove unique
+- [x] Remove unique
 - [ ] Remove array_proxy
 - [ ] Stop using vulkan.hpp
 - [x] Split pipeline.hpp and pipeline.cpp into multiple files

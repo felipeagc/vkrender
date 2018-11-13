@@ -1,6 +1,5 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
-#include <fstl/unique.hpp>
 #include <glm/glm.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
@@ -17,14 +16,14 @@ int main() {
 
   window.setMSAASamples(vkr::SampleCount::e4);
 
-  fstl::unique<vkr::Shader> modelShader{
+  vkr::Shader modelShader{
       "../shaders/model.vert",
       "../shaders/model.frag",
   };
 
-  fstl::unique<vkr::GraphicsPipeline> modelPipeline{
+  vkr::GraphicsPipeline modelPipeline{
       window,
-      *modelShader,
+      modelShader,
       vkr::GltfModel::getVertexFormat(),
       vkr::Context::getDescriptorManager().getDefaultSetLayouts(),
   };
@@ -32,11 +31,10 @@ int main() {
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
 
-  fstl::unique<vkr::GltfModel> helmet{
-      window, "../assets/DamagedHelmet.glb", true};
-  helmet->setPosition({0.0, 0.0, 1.0});
-  fstl::unique<vkr::GltfModel> duck{window, "../assets/Duck.glb"};
-  duck->setPosition({0.0, 0.0, -1.0});
+  vkr::GltfModel helmet{window, "../assets/DamagedHelmet.glb", true};
+  helmet.setPosition({0.0, 0.0, 1.0});
+  vkr::GltfModel duck{window, "../assets/Duck.glb"};
+  duck.setPosition({0.0, 0.0, -1.0});
 
   float time = 0.0;
 
@@ -62,18 +60,23 @@ int main() {
     float camX = sin(time) * radius;
     float camY = cos(time) * radius;
     camera.setPos({camX, radius, camY});
-    camera.lookAt((helmet->getPosition() + duck->getPosition()) / 2.0f);
+    camera.lookAt((helmet.getPosition() + duck.getPosition()) / 2.0f);
 
     camera.update(window);
 
-    camera.bind(window, *modelPipeline);
-    helmet->draw(window, *modelPipeline);
-    duck->draw(window, *modelPipeline);
+    camera.bind(window, modelPipeline);
+    helmet.draw(window, modelPipeline);
+    duck.draw(window, modelPipeline);
   };
 
   while (!window.getShouldClose()) {
     window.present(draw);
   }
+
+  helmet.destroy();
+  duck.destroy();
+  modelPipeline.destroy();
+  modelShader.destroy();
 
   return 0;
 }
