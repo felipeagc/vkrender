@@ -1,6 +1,16 @@
 # VKRender
 
+## Code style
+- Avoid using templates when unnecessary
+
 ## TODO
+### Refactoring
+- [ ] Remove unique
+- [ ] Remove array_proxy
+- [ ] Stop using vulkan.hpp
+- [ ] Split pipeline.hpp and pipeline.cpp into multiple files
+- [ ] Stop using exceptions
+
 ### Template library
 - [x] Move it to its own folder and namespace (fstl)
 - [x] fixed_vector (for usage in cases where an allocation would be done each frame)
