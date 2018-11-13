@@ -16,7 +16,11 @@ set(
   vkr/descriptor_manager.cpp
   )
 
-add_library(vkrender ${VKRENDER_SOURCES})
+add_library(
+  vkrender
+  SHARED
+  ${VKRENDER_SOURCES}
+  )
 
 target_include_directories(
   vkrender
@@ -28,11 +32,15 @@ target_include_directories(
 
 target_link_libraries(
   vkrender
+
   PUBLIC
-
+  imgui
+  ${SDL2_LIBRARY}
+  ${Vulkan_LIBRARIES}
   fstl
-
   vma
+
+  PRIVATE
   stb_image
   spirv-cross-core
   spirv-cross-glsl
@@ -42,9 +50,6 @@ target_link_libraries(
   glslang-default-resource-limits
   SPIRV
   tinygltf
-  imgui
-  ${SDL2_LIBRARY}
-  ${Vulkan_LIBRARIES}
   )
 
 cotire(vkrender)

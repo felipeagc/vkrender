@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(vkrender)
 
+# Enable -fPIC
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Disable submodule tests
 configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 

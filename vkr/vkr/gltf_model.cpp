@@ -2,6 +2,7 @@
 #include "context.hpp"
 #include <fstl/logging.hpp>
 #include <fstl/unique.hpp>
+#include <tiny_gltf.h>
 
 using namespace vkr;
 

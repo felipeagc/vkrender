@@ -12,7 +12,11 @@ set(
   imgui/imgui_widgets.cpp
   )
 
-add_library(imgui ${IMGUI_SOURCES})
+add_library(
+  imgui
+  STATIC
+  ${IMGUI_SOURCES}
+  )
 
 target_link_libraries(
   imgui
