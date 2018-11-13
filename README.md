@@ -10,6 +10,7 @@
 - [ ] Stop using vulkan.hpp
 - [x] Split pipeline.hpp and pipeline.cpp into multiple files
 - [ ] Stop using exceptions
+- [ ] Convert functions to c-style parameter passing, similar to vulkan functions
 
 ### Template library
 - [x] Move it to its own folder and namespace (fstl)
