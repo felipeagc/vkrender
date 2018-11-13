@@ -60,27 +60,27 @@ public:
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
 
 protected:
-  bool shouldClose = false;
+  bool shouldClose_ = false;
 
   static std::vector<const char *> requiredVulkanExtensions;
 
-  SDL_Window *window{nullptr};
+  SDL_Window *window_{nullptr};
 
-  uint32_t lastTicks = 0;
-  uint32_t deltaTicks = 0;
+  uint32_t lastTicks_ = 0;
+  uint32_t deltaTicks_ = 0;
 
-  vk::SurfaceKHR surface;
+  vk::SurfaceKHR surface_;
 
-  vk::SampleCountFlagBits msaaSamples{vk::SampleCountFlagBits::e1};
-  vk::SampleCountFlagBits maxMsaaSamples{vk::SampleCountFlagBits::e1};
+  vk::SampleCountFlagBits msaaSamples_{vk::SampleCountFlagBits::e1};
+  vk::SampleCountFlagBits maxMsaaSamples_{vk::SampleCountFlagBits::e1};
 
-  vk::Format depthImageFormat;
+  vk::Format depthImageFormat_;
 
   struct {
     vk::Image image;
     VmaAllocation allocation;
     vk::ImageView view;
-  } depthStencil;
+  } depthStencil_;
 
   struct FrameResources {
     vk::Semaphore imageAvailableSemaphore;
@@ -93,7 +93,8 @@ protected:
     vk::CommandBuffer commandBuffer;
   };
 
-  std::vector<FrameResources> frameResources{MAX_FRAMES_IN_FLIGHT};
+  // TODO: use fixed_vector
+  std::vector<FrameResources> frameResources_{MAX_FRAMES_IN_FLIGHT};
 
   struct {
     struct {
@@ -107,21 +108,21 @@ protected:
       VmaAllocation allocation;
       vk::ImageView view;
     } color;
-  } multiSampleTargets;
+  } multiSampleTargets_;
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
-  int currentFrame = 0;
+  int currentFrame_ = 0;
   // Index of the current swapchain image
-  uint32_t currentImageIndex;
+  uint32_t currentImageIndex_;
 
-  vk::SwapchainKHR swapchain;
-  vk::Format swapchainImageFormat;
-  vk::Extent2D swapchainExtent;
-  std::vector<vk::Image> swapchainImages;
-  std::vector<vk::ImageView> swapchainImageViews;
+  vk::SwapchainKHR swapchain_;
+  vk::Format swapchainImageFormat_;
+  vk::Extent2D swapchainExtent_;
+  std::vector<vk::Image> swapchainImages_;
+  std::vector<vk::ImageView> swapchainImageViews_;
 
-  vk::RenderPass renderPass;
-  vk::RenderPass imguiRenderPass;
+  vk::RenderPass renderPass_;
+  vk::RenderPass imguiRenderPass_;
 
   void initVulkanExtensions() const;
   void createVulkanSurface();

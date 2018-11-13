@@ -57,7 +57,7 @@ operator[](const std::string &key) {
 }
 
 DescriptorPool *DescriptorManager::getPool(const std::string &key) {
-  for (auto &p : this->pools) {
+  for (auto &p : this->pools_) {
     if (p.first == key) {
       return &p.second;
     }
@@ -67,7 +67,7 @@ DescriptorPool *DescriptorManager::getPool(const std::string &key) {
 }
 
 DescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
-  for (auto &p : this->setLayouts) {
+  for (auto &p : this->setLayouts_) {
     if (p.first == key) {
       return &p.second;
     }
@@ -81,7 +81,7 @@ bool DescriptorManager::addPool(const std::string &key, DescriptorPool pool) {
     return false;
   }
 
-  pools.push_back({key, pool});
+  pools_.push_back({key, pool});
   return true;
 }
 
@@ -91,7 +91,7 @@ bool DescriptorManager::addSetLayout(
     return false;
   }
 
-  setLayouts.push_back({key, setLayout});
+  setLayouts_.push_back({key, setLayout});
   return true;
 }
 
@@ -138,11 +138,11 @@ void DescriptorManager::init() {
 }
 
 void DescriptorManager::destroy() {
-  for (auto &p : this->pools) {
+  for (auto &p : this->pools_) {
     p.second.destroy();
   }
 
-  for (auto &p : this->setLayouts) {
+  for (auto &p : this->setLayouts_) {
     p.second.destroy();
   }
 }

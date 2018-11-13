@@ -8,20 +8,20 @@ using namespace vkr;
 
 Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
   fstl::log::debug("Creating shader from GLSL code");
-  this->vertexCode = compileShader(vertexPath, ShaderType::eVertex);
-  this->fragmentCode = compileShader(fragmentPath, ShaderType::eFragment);
-  this->vertexModule = this->createShaderModule(vertexCode);
-  this->fragmentModule = this->createShaderModule(fragmentCode);
+  this->vertexCode_ = compileShader(vertexPath, ShaderType::eVertex);
+  this->fragmentCode_ = compileShader(fragmentPath, ShaderType::eFragment);
+  this->vertexModule_ = this->createShaderModule(vertexCode_);
+  this->fragmentModule_ = this->createShaderModule(fragmentCode_);
 }
 
 Shader::Shader(
     const std::vector<uint32_t> &vertexCode,
     const std::vector<uint32_t> &fragmentCode) {
   fstl::log::debug("Creating shader from SPV code");
-  this->vertexCode = vertexCode;
-  this->fragmentCode = fragmentCode;
-  this->vertexModule = this->createShaderModule(vertexCode);
-  this->fragmentModule = this->createShaderModule(fragmentCode);
+  this->vertexCode_ = vertexCode;
+  this->fragmentCode_ = fragmentCode;
+  this->vertexModule_ = this->createShaderModule(vertexCode);
+  this->fragmentModule_ = this->createShaderModule(fragmentCode);
 }
 
 fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>
@@ -30,14 +30,14 @@ Shader::getPipelineShaderStageCreateInfos() const {
       {
           {},                               // flags
           vk::ShaderStageFlagBits::eVertex, // stage
-          this->vertexModule,               // module
+          this->vertexModule_,               // module
           "main",                           // pName
           nullptr,                          // pSpecializationInfo
       },
       {
           {},                                 // flags
           vk::ShaderStageFlagBits::eFragment, // stage
-          this->fragmentModule,               // module
+          this->fragmentModule_,               // module
           "main",                             // pName
           nullptr,                            // pSpecializationInfo
       },
@@ -48,10 +48,10 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   Shader::ShaderMetadata metadata{};
 
   spirv_cross::Compiler vertexComp(
-      this->vertexCode.data(), this->vertexCode.size());
+      this->vertexCode_.data(), this->vertexCode_.size());
 
   spirv_cross::Compiler fragmentComp(
-      this->fragmentCode.data(), this->fragmentCode.size());
+      this->fragmentCode_.data(), this->fragmentCode_.size());
 
   // Descriptor stuff ===========================
 
@@ -134,11 +134,11 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
     vertexSize += std::get<2>(p);
   }
 
-  metadata.vertexFormat.bindingDescriptions.push_back(
+  metadata.vertexFormat.bindingDescriptions_.push_back(
       {0, vertexSize, vk::VertexInputRate::eVertex});
 
   for (size_t i = 0; i < locations.size(); i++) {
-    metadata.vertexFormat.attributeDescriptions.push_back(
+    metadata.vertexFormat.attributeDescriptions_.push_back(
         {std::get<0>(locations[i]),
          0,
          std::get<1>(locations[i]),
@@ -150,8 +150,8 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
 
 void Shader::destroy() {
   Context::getDevice().waitIdle();
-  Context::getDevice().destroy(this->vertexModule);
-  Context::getDevice().destroy(this->fragmentModule);
+  Context::getDevice().destroy(this->vertexModule_);
+  Context::getDevice().destroy(this->fragmentModule_);
 }
 
 vk::ShaderModule

@@ -17,7 +17,7 @@ public:
   Texture(const Texture &other) = default;
   Texture &operator=(const Texture &other) = default;
 
-  operator bool() { return this->image; }
+  operator bool() { return this->image_; }
 
   Sampler getSampler() const;
   ImageView getImageView() const;
@@ -27,13 +27,13 @@ public:
   void destroy();
 
 protected:
-  vk::Image image;
-  VmaAllocation allocation;
-  vk::ImageView imageView;
-  vk::Sampler sampler;
+  vk::Image image_;
+  VmaAllocation allocation_;
+  vk::ImageView imageView_;
+  vk::Sampler sampler_;
 
-  uint32_t width;
-  uint32_t height;
+  uint32_t width_;
+  uint32_t height_;
 
   void createImage();
   std::vector<unsigned char> loadImage(const std::string_view &path);

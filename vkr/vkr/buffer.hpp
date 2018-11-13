@@ -23,7 +23,7 @@ public:
   Buffer(Buffer&&) = default;
   Buffer &operator=(Buffer&&) = default;
 
-  operator bool() { return this->buffer; }
+  operator bool() { return this->buffer_; }
 
   void mapMemory(void **dest);
   void unmapMemory();
@@ -33,8 +33,8 @@ public:
   void destroy();
 
 protected:
-  vk::Buffer buffer;
-  VmaAllocation allocation;
+  vk::Buffer buffer_;
+  VmaAllocation allocation_;
 };
 
 class StagingBuffer : public Buffer {

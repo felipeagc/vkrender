@@ -30,7 +30,7 @@ GltfModel::Material::Material(
     };
 
     // CombinedImageSampler
-    auto &texture = model.textures[this->albedoTextureIndex];
+    auto &texture = model.textures_[this->albedoTextureIndex];
     auto albedoDescriptorInfo = texture.getDescriptorInfo();
 
     // UniformBuffer
@@ -135,18 +135,18 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   glm::mat4 m = localMatrix();
   int p = this->parentIndex;
   while (p != -1) {
-    m = model.nodes[this->parentIndex].localMatrix() * m;
-    p = model.nodes[this->parentIndex].parentIndex;
+    m = model.nodes_[this->parentIndex].localMatrix() * m;
+    p = model.nodes_[this->parentIndex].parentIndex;
   }
 
-  auto translation = glm::translate(glm::mat4(1.0f), model.pos);
+  auto translation = glm::translate(glm::mat4(1.0f), model.pos_);
   auto rotation = glm::rotate(
-      glm::mat4(1.0f), glm::radians(model.rotation.x), {1.0, 0.0, 0.0});
+      glm::mat4(1.0f), glm::radians(model.rotation_.x), {1.0, 0.0, 0.0});
   rotation =
-      glm::rotate(rotation, glm::radians(model.rotation.y), {0.0, 1.0, 0.0});
+      glm::rotate(rotation, glm::radians(model.rotation_.y), {0.0, 1.0, 0.0});
   rotation =
-      glm::rotate(rotation, glm::radians(model.rotation.z), {0.0, 0.0, 1.0});
-  auto scaling = glm::scale(glm::mat4(1.0f), model.scale);
+      glm::rotate(rotation, glm::radians(model.rotation_.z), {0.0, 0.0, 1.0});
+  auto scaling = glm::scale(glm::mat4(1.0f), model.scale_);
 
   auto modelMatrix = translation * rotation * scaling;
 
@@ -158,13 +158,13 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
 void GltfModel::Node::update(GltfModel &model, int frameIndex) {
   if (this->meshIndex != -1) {
     glm::mat4 m = this->getMatrix(model);
-    auto &mesh = model.meshes[meshIndex];
+    auto &mesh = model.meshes_[meshIndex];
     mesh.ubo.model = m;
     mesh.updateUniform(frameIndex);
   }
 
   for (auto &childIndex : childrenIndices) {
-    model.nodes[childIndex].update(model, frameIndex);
+    model.nodes_[childIndex].update(model, frameIndex);
   }
 }
 
@@ -205,15 +205,15 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 
   tinygltf::Scene &scene = model.scenes[model.defaultScene];
 
-  this->nodes.resize(model.nodes.size());
-  this->meshes.resize(model.meshes.size());
+  this->nodes_.resize(model.nodes.size());
+  this->meshes_.resize(model.meshes.size());
 
   for (size_t i = 0; i < scene.nodes.size(); i++) {
     this->loadNode(-1, scene.nodes[i], model, indices, vertices, flipUVs);
   }
 
-  for (auto &node : nodes) {
-    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffers[0]) {
+  for (auto &node : nodes_) {
+    if (node.meshIndex != -1 && meshes_[node.meshIndex].uniformBuffers[0]) {
       node.update(*this, window.getCurrentFrameIndex());
     }
   }
@@ -227,7 +227,7 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 
   StagingBuffer stagingBuffer{std::max(vertexBufferSize, indexBufferSize)};
 
-  this->vertexBuffer = Buffer{
+  this->vertexBuffer_ = Buffer{
       vertexBufferSize,
       vkr::BufferUsageFlagBits::eVertexBuffer |
           vkr::BufferUsageFlagBits::eTransferDst,
@@ -235,7 +235,7 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
       vkr::MemoryPropertyFlagBits::eDeviceLocal,
   };
 
-  this->indexBuffer = Buffer{
+  this->indexBuffer_ = Buffer{
       indexBufferSize,
       vkr::BufferUsageFlagBits::eIndexBuffer |
           vkr::BufferUsageFlagBits::eTransferDst,
@@ -244,10 +244,10 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   };
 
   stagingBuffer.copyMemory(vertices.data(), vertexBufferSize);
-  stagingBuffer.transfer(this->vertexBuffer, vertexBufferSize);
+  stagingBuffer.transfer(this->vertexBuffer_, vertexBufferSize);
 
   stagingBuffer.copyMemory(indices.data(), indexBufferSize);
-  stagingBuffer.transfer(this->indexBuffer, indexBufferSize);
+  stagingBuffer.transfer(this->indexBuffer_, indexBufferSize);
 
   stagingBuffer.destroy();
 }
@@ -258,37 +258,37 @@ void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   commandBuffer.bindGraphicsPipeline(pipeline);
-  commandBuffer.bindVertexBuffers(vertexBuffer);
-  commandBuffer.bindIndexBuffer(indexBuffer, 0, vkr::IndexType::eUint32);
+  commandBuffer.bindVertexBuffers(vertexBuffer_);
+  commandBuffer.bindIndexBuffer(indexBuffer_, 0, vkr::IndexType::eUint32);
 
-  for (auto &node : nodes) {
-    if (node.meshIndex != -1 && meshes[node.meshIndex].uniformBuffers[0]) {
+  for (auto &node : nodes_) {
+    if (node.meshIndex != -1 && meshes_[node.meshIndex].uniformBuffers[0]) {
       node.update(*this, window.getCurrentFrameIndex());
     }
   }
 
-  for (auto &node : nodes) {
+  for (auto &node : nodes_) {
     drawNode(node, window, pipeline);
   }
 }
 
-void GltfModel::setPosition(glm::vec3 pos) { this->pos = pos; }
+void GltfModel::setPosition(glm::vec3 pos) { this->pos_ = pos; }
 
-glm::vec3 GltfModel::getPosition() const { return this->pos; }
+glm::vec3 GltfModel::getPosition() const { return this->pos_; }
 
-void GltfModel::setRotation(glm::vec3 rotation) { this->rotation = rotation; }
+void GltfModel::setRotation(glm::vec3 rotation) { this->rotation_ = rotation; }
 
-glm::vec3 GltfModel::getRotation() const { return this->rotation; }
+glm::vec3 GltfModel::getRotation() const { return this->rotation_; }
 
-void GltfModel::setScale(glm::vec3 scale) { this->scale = scale; }
+void GltfModel::setScale(glm::vec3 scale) { this->scale_ = scale; }
 
-glm::vec3 GltfModel::getScale() const { return this->scale; }
+glm::vec3 GltfModel::getScale() const { return this->scale_; }
 
 void GltfModel::destroy() {
-  vertexBuffer.destroy();
-  indexBuffer.destroy();
+  vertexBuffer_.destroy();
+  indexBuffer_.destroy();
 
-  for (auto &mesh : meshes) {
+  for (auto &mesh : meshes_) {
     for (auto &uniformBuffer : mesh.uniformBuffers) {
       if (uniformBuffer)
         uniformBuffer.destroy();
@@ -303,7 +303,7 @@ void GltfModel::destroy() {
     }
   }
 
-  for (auto &material : materials) {
+  for (auto &material : materials_) {
     for (auto &uniformBuffer : material.uniformBuffers) {
       if (uniformBuffer)
         uniformBuffer.destroy();
@@ -320,14 +320,14 @@ void GltfModel::destroy() {
     }
   }
 
-  for (auto &texture : textures) {
+  for (auto &texture : textures_) {
     if (texture)
       texture.destroy();
   }
 }
 
 void GltfModel::loadMaterials(tinygltf::Model &model) {
-  this->materials.resize(model.materials.size());
+  this->materials_.resize(model.materials.size());
   for (size_t i = 0; i < model.materials.size(); i++) {
     auto &mat = model.materials[i];
 
@@ -344,19 +344,19 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
           glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
     }
 
-    this->materials[i] = Material{*this, albedoTextureIndex, baseColorFactor};
+    this->materials_[i] = Material{*this, albedoTextureIndex, baseColorFactor};
   }
 }
 
 void GltfModel::loadTextures(tinygltf::Model &model) {
-  this->textures.resize(model.images.size());
+  this->textures_.resize(model.images.size());
   for (size_t i = 0; i < model.images.size(); i++) {
     if (model.images[i].component != 4) {
       // TODO: support RGB images
       throw std::runtime_error("Only 4-component images are supported.");
     }
 
-    this->textures[i] = {model.images[i].image,
+    this->textures_[i] = {model.images[i].image,
                          static_cast<uint32_t>(model.images[i].width),
                          static_cast<uint32_t>(model.images[i].height)};
   }
@@ -540,21 +540,21 @@ void GltfModel::loadNode(
       newMesh.primitives.push_back(newPrimitive);
     }
 
-    this->meshes[node.mesh] = newMesh;
+    this->meshes_[node.mesh] = newMesh;
 
     newNode.meshIndex = node.mesh;
   }
 
   if (parentIndex != -1) {
-    nodes[parentIndex].childrenIndices.push_back(nodeIndex);
+    nodes_[parentIndex].childrenIndices.push_back(nodeIndex);
   }
 
-  nodes[nodeIndex] = newNode;
+  nodes_[nodeIndex] = newNode;
 }
 
 void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
   if (node.meshIndex != -1) {
-    for (Primitive &primitive : this->meshes[node.meshIndex].primitives) {
+    for (Primitive &primitive : this->meshes_[node.meshIndex].primitives) {
       glm::vec4 locMin =
           glm::vec4(primitive.dimensions.min, 1.0f) * node.getMatrix(*this);
       glm::vec4 locMax =
@@ -580,14 +580,14 @@ void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
     }
   }
   for (auto childIndex : node.childrenIndices) {
-    getNodeDimensions(this->nodes[childIndex], min, max);
+    getNodeDimensions(this->nodes_[childIndex], min, max);
   }
 }
 
 void GltfModel::getSceneDimensions() {
   dimensions.min = glm::vec3(FLT_MAX);
   dimensions.max = glm::vec3(-FLT_MAX);
-  for (auto node : nodes) {
+  for (auto node : nodes_) {
     getNodeDimensions(node, dimensions.min, dimensions.max);
   }
   dimensions.size = dimensions.max - dimensions.min;
@@ -606,15 +606,15 @@ void GltfModel::drawNode(
         vkr::PipelineBindPoint::eGraphics,
         pipeline.getLayout(),
         2, // firstSet
-        this->meshes[node.meshIndex].descriptorSets[i],
+        this->meshes_[node.meshIndex].descriptorSets[i],
         {});
-    for (Primitive &primitive : this->meshes[node.meshIndex].primitives) {
-      if (primitive.materialIndex != -1 && this->materials.size() > 0) {
+    for (Primitive &primitive : this->meshes_[node.meshIndex].primitives) {
+      if (primitive.materialIndex != -1 && this->materials_.size() > 0) {
         commandBuffer.bindDescriptorSets(
             vkr::PipelineBindPoint::eGraphics,
             pipeline.getLayout(),
             1, // firstSet
-            this->materials[primitive.materialIndex].descriptorSets[i],
+            this->materials_[primitive.materialIndex].descriptorSets[i],
             {});
       }
 
@@ -624,6 +624,6 @@ void GltfModel::drawNode(
   }
 
   for (auto &childIndex : node.childrenIndices) {
-    drawNode(this->nodes[childIndex], window, pipeline);
+    drawNode(this->nodes_[childIndex], window, pipeline);
   }
 }

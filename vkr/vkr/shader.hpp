@@ -20,7 +20,7 @@ public:
   Shader(const Shader &other) = delete;
   Shader &operator=(Shader &other) = delete;
 
-  operator bool() { return this->vertexModule && this->fragmentModule; };
+  operator bool() { return this->vertexModule_ && this->fragmentModule_; };
 
   fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
@@ -57,10 +57,10 @@ public:
   }
 
 private:
-  std::vector<uint32_t> vertexCode;
-  std::vector<uint32_t> fragmentCode;
-  vk::ShaderModule vertexModule;
-  vk::ShaderModule fragmentModule;
+  std::vector<uint32_t> vertexCode_;
+  std::vector<uint32_t> fragmentCode_;
+  vk::ShaderModule vertexModule_;
+  vk::ShaderModule fragmentModule_;
 
   vk::ShaderModule createShaderModule(const std::vector<uint32_t> &code) const;
 };

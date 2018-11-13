@@ -2,8 +2,8 @@
 
 #include "buffer.hpp"
 #include "commandbuffer.hpp"
-#include "vertex_format.hpp"
 #include "texture.hpp"
+#include "vertex_format.hpp"
 #include "window.hpp"
 #include <string>
 #include <vector>
@@ -141,17 +141,17 @@ public:
   void destroy();
 
 private:
-  std::vector<Node> nodes;
-  std::vector<Mesh> meshes;
-  std::vector<Texture> textures;
-  std::vector<Material> materials;
+  std::vector<Node> nodes_;
+  std::vector<Mesh> meshes_;
+  std::vector<Texture> textures_;
+  std::vector<Material> materials_;
 
-  glm::vec3 pos = {0.0, 0.0, 0.0};
-  glm::vec3 scale = {1.0, 1.0, 1.0};
-  glm::vec3 rotation = {0.0, 0.0, 0.0};
+  glm::vec3 pos_ = {0.0, 0.0, 0.0};
+  glm::vec3 scale_ = {1.0, 1.0, 1.0};
+  glm::vec3 rotation_ = {0.0, 0.0, 0.0};
 
-  Buffer vertexBuffer;
-  Buffer indexBuffer;
+  Buffer vertexBuffer_;
+  Buffer indexBuffer_;
 
   void loadMaterials(tinygltf::Model &model);
 

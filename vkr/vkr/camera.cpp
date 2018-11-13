@@ -15,27 +15,27 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    this->uniformBuffers[i] = Buffer{
+    this->uniformBuffers_[i] = Buffer{
         sizeof(CameraUniform),
         vkr::BufferUsageFlagBits::eUniformBuffer,
         vkr::MemoryUsageFlagBits::eCpuToGpu,
         vkr::MemoryPropertyFlagBits::eHostCoherent,
     };
 
-    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+    this->uniformBuffers_[i].mapMemory(&this->mappings_[i]);
 
     DescriptorBufferInfo bufferInfo{
-        this->uniformBuffers[i].getHandle(),
+        this->uniformBuffers_[i].getHandle(),
         0,
         sizeof(CameraUniform),
     };
 
-    this->descriptorSets[i] =
+    this->descriptorSets_[i] =
         descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
 
     Context::getDevice().updateDescriptorSets(
         {vk::WriteDescriptorSet{
-            this->descriptorSets[i],             // dstSet
+            this->descriptorSets_[i],             // dstSet
             0,                                   // dstBinding
             0,                                   // dstArrayElement
             1,                                   // descriptorCount
@@ -49,7 +49,7 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
 }
 
 Camera::~Camera() {
-  for (auto &uniformBuffer : uniformBuffers) {
+  for (auto &uniformBuffer : uniformBuffers_) {
     uniformBuffer.unmapMemory();
     uniformBuffer.destroy();
   }
@@ -59,61 +59,61 @@ Camera::~Camera() {
   assert(descriptorPool != nullptr);
 
   Context::getDevice().freeDescriptorSets(
-      *descriptorPool, this->descriptorSets);
+      *descriptorPool, this->descriptorSets_);
 }
 
 void Camera::setPos(glm::vec3 pos) {
-  cameraUniform.view[3][0] = pos.x;
-  cameraUniform.view[3][1] = pos.y;
-  cameraUniform.view[3][2] = pos.z;
+  cameraUniform_.view[3][0] = pos.x;
+  cameraUniform_.view[3][1] = pos.y;
+  cameraUniform_.view[3][2] = pos.z;
 }
 
 glm::vec3 Camera::getPos() const {
   return glm::vec3(
-      cameraUniform.view[3][0],
-      cameraUniform.view[3][1],
-      cameraUniform.view[3][2]);
+      cameraUniform_.view[3][0],
+      cameraUniform_.view[3][1],
+      cameraUniform_.view[3][2]);
 }
 
 void Camera::translate(glm::vec3 translation) {
-  cameraUniform.view = glm::translate(cameraUniform.view, translation);
+  cameraUniform_.view = glm::translate(cameraUniform_.view, translation);
 }
 
 void Camera::setRot(glm::quat rot) {
-  glm::quat currentRot = glm::quat_cast(cameraUniform.view);
-  cameraUniform.view =
-      glm::mat4_cast(glm::inverse(currentRot)) * cameraUniform.view;
-  cameraUniform.view = glm::mat4_cast(rot) * cameraUniform.view;
+  glm::quat currentRot = glm::quat_cast(cameraUniform_.view);
+  cameraUniform_.view =
+      glm::mat4_cast(glm::inverse(currentRot)) * cameraUniform_.view;
+  cameraUniform_.view = glm::mat4_cast(rot) * cameraUniform_.view;
 }
 
 glm::quat Camera::getRot() const {
-  glm::quat currentRot = glm::quat_cast(cameraUniform.view);
+  glm::quat currentRot = glm::quat_cast(cameraUniform_.view);
   return currentRot;
 }
 
 void Camera::rotate(glm::quat rot) {
-  cameraUniform.view = glm::mat4_cast(rot) * cameraUniform.view;
+  cameraUniform_.view = glm::mat4_cast(rot) * cameraUniform_.view;
 }
 
-void Camera::setFov(float fov) { this->fov = fov; }
+void Camera::setFov(float fov) { this->fov_ = fov; }
 
-float Camera::getFov() const { return this->fov; }
+float Camera::getFov() const { return this->fov_; }
 
 void Camera::lookAt(glm::vec3 point) {
-  cameraUniform.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
+  cameraUniform_.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
 }
 
 void Camera::update(Window &window) {
   auto i = window.getCurrentFrameIndex();
 
-  cameraUniform.proj = glm::perspective(
-      glm::radians(this->fov),
+  cameraUniform_.proj = glm::perspective(
+      glm::radians(this->fov_),
       static_cast<float>(window.getWidth()) /
           static_cast<float>(window.getHeight()),
-      this->near,
-      this->far);
+      this->near_,
+      this->far_);
 
-  memcpy(this->mappings[i], &this->cameraUniform, sizeof(CameraUniform));
+  memcpy(this->mappings_[i], &this->cameraUniform_, sizeof(CameraUniform));
 }
 
 void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
@@ -123,6 +123,6 @@ void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
       vkr::PipelineBindPoint::eGraphics,
       pipeline.getLayout(),
       0,                       // firstIndex
-      this->descriptorSets[i], // pDescriptorSets
+      this->descriptorSets_[i], // pDescriptorSets
       {});
 }

@@ -106,7 +106,7 @@ GraphicsPipeline::GraphicsPipeline(
       dynamicStates.data()                         // pDyanmicStates
   };
 
-  this->pipelineLayout = Context::getDevice().createPipelineLayout({
+  this->pipelineLayout_ = Context::getDevice().createPipelineLayout({
       {},                                                 // flags
       static_cast<uint32_t>(descriptorSetLayouts.size()), // setLayoutCount
       descriptorSetLayouts.data(),                        // pSetLayouts
@@ -127,23 +127,23 @@ GraphicsPipeline::GraphicsPipeline(
       &depthStencilStateCreateInfo,  // pDepthStencilState
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
-      pipelineLayout,                // pipelineLayout
-      window.renderPass,             // renderPass
+      pipelineLayout_,                // pipelineLayout
+      window.renderPass_,             // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex
   };
 
   Context::getDevice().createGraphicsPipelines(
-      {}, 1, &pipelineCreateInfo, nullptr, &this->pipeline);
+      {}, 1, &pipelineCreateInfo, nullptr, &this->pipeline_);
 }
 
 PipelineLayout GraphicsPipeline::getLayout() const {
-  return this->pipelineLayout;
+  return this->pipelineLayout_;
 }
 
 void GraphicsPipeline::destroy() {
   Context::getDevice().waitIdle();
-  Context::getDevice().destroy(this->pipeline);
-  Context::getDevice().destroy(this->pipelineLayout);
+  Context::getDevice().destroy(this->pipeline_);
+  Context::getDevice().destroy(this->pipelineLayout_);
 }

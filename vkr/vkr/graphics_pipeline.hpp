@@ -24,14 +24,14 @@ public:
   GraphicsPipeline(GraphicsPipeline &&) = default;
   GraphicsPipeline &operator=(GraphicsPipeline &&) = default;
 
-  operator bool() { return this->pipeline; };
+  operator bool() { return this->pipeline_; };
 
   PipelineLayout getLayout() const;
 
   void destroy();
 
 private:
-  vk::Pipeline pipeline;
-  PipelineLayout pipelineLayout;
+  vk::Pipeline pipeline_;
+  PipelineLayout pipelineLayout_;
 };
 } // namespace vkr

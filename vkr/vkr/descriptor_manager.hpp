@@ -32,7 +32,7 @@ protected:
   void init();
   void destroy();
 
-  std::vector<std::pair<std::string, DescriptorPool>> pools;
-  std::vector<std::pair<std::string, DescriptorSetLayout>> setLayouts;
+  std::vector<std::pair<std::string, DescriptorPool>> pools_;
+  std::vector<std::pair<std::string, DescriptorSetLayout>> setLayouts_;
 };
 } // namespace vkr

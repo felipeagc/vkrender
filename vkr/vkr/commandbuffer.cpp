@@ -17,13 +17,13 @@ void CommandBuffer::bindVertexBuffers(
     offsets[i] = 0;
   }
 
-  this->commandBuffer.bindVertexBuffers(
+  this->commandBuffer_.bindVertexBuffers(
       0, handles.size(), handles.data(), offsets.data());
 }
 
 void CommandBuffer::bindIndexBuffer(
     Buffer &buffer, DeviceSize offset, IndexType indexType) {
-  this->commandBuffer.bindIndexBuffer(buffer.getHandle(), offset, indexType);
+  this->commandBuffer_.bindIndexBuffer(buffer.getHandle(), offset, indexType);
 }
 
 void CommandBuffer::bindDescriptorSets(
@@ -32,7 +32,7 @@ void CommandBuffer::bindDescriptorSets(
     uint32_t firstSet,
     fstl::array_proxy<const DescriptorSet> descriptorSets,
     fstl::array_proxy<const uint32_t> dynamicOffsets) {
-  this->commandBuffer.bindDescriptorSets(
+  this->commandBuffer_.bindDescriptorSets(
       pipelineBindPoint,
       layout,
       firstSet,
@@ -43,8 +43,8 @@ void CommandBuffer::bindDescriptorSets(
 }
 
 void CommandBuffer::bindGraphicsPipeline(vkr::GraphicsPipeline &pipeline) {
-  this->commandBuffer.bindPipeline(
-      vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
+  this->commandBuffer_.bindPipeline(
+      vk::PipelineBindPoint::eGraphics, pipeline.pipeline_);
 }
 
 void CommandBuffer::draw(
@@ -52,7 +52,7 @@ void CommandBuffer::draw(
     uint32_t instanceCount,
     uint32_t firstVertex,
     uint32_t firstInstance) {
-  this->commandBuffer.draw(
+  this->commandBuffer_.draw(
       vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
@@ -62,6 +62,6 @@ void CommandBuffer::drawIndexed(
     uint32_t firstIndex,
     int32_t vertexOffset,
     uint32_t firstInstance) {
-  this->commandBuffer.drawIndexed(
+  this->commandBuffer_.drawIndexed(
       indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }

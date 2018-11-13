@@ -59,24 +59,24 @@ Context::Context() {
 }
 
 Context::~Context() {
-  this->device.waitIdle();
+  this->device_.waitIdle();
 
-  this->descriptorManager.destroy();
+  this->descriptorManager_.destroy();
 
-  this->device.destroy(transientCommandPool);
-  this->device.destroy(graphicsCommandPool);
+  this->device_.destroy(transientCommandPool_);
+  this->device_.destroy(graphicsCommandPool_);
 
-  if (this->allocator != VK_NULL_HANDLE) {
-    vmaDestroyAllocator(this->allocator);
+  if (this->allocator_ != VK_NULL_HANDLE) {
+    vmaDestroyAllocator(this->allocator_);
   }
 
-  this->device.destroy();
+  this->device_.destroy();
 
-  if (this->callback) {
-    DestroyDebugReportCallbackEXT(this->instance, this->callback, nullptr);
+  if (this->callback_) {
+    DestroyDebugReportCallbackEXT(this->instance_, this->callback_, nullptr);
   }
 
-  instance.destroy();
+  instance_.destroy();
 
   SDL_Quit();
 }
@@ -111,11 +111,11 @@ void Context::createInstance() {
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames = extensions.data();
 
-  this->instance = vk::createInstance(createInfo);
+  this->instance_ = vk::createInstance(createInfo);
 }
 
 void Context::lazyInit(vk::SurfaceKHR &surface) {
-  if (this->device) {
+  if (this->device_) {
     return;
   }
 
@@ -128,56 +128,56 @@ void Context::lazyInit(vk::SurfaceKHR &surface) {
   this->createGraphicsCommandPool();
   this->createTransientCommandPool();
 
-  this->descriptorManager.init();
+  this->descriptorManager_.init();
 }
 
 void Context::createDevice(vk::SurfaceKHR &surface) {
-  auto physicalDevices = this->instance.enumeratePhysicalDevices();
+  auto physicalDevices = this->instance_.enumeratePhysicalDevices();
 
   for (auto physicalDevice : physicalDevices) {
     if (checkPhysicalDeviceProperties(
             physicalDevice,
             surface,
-            &graphicsQueueFamilyIndex,
-            &presentQueueFamilyIndex,
-            &transferQueueFamilyIndex)) {
-      this->physicalDevice = physicalDevice;
+            &graphicsQueueFamilyIndex_,
+            &presentQueueFamilyIndex_,
+            &transferQueueFamilyIndex_)) {
+      this->physicalDevice_ = physicalDevice;
       break;
     }
   }
 
-  if (!this->physicalDevice) {
+  if (!this->physicalDevice_) {
     throw std::runtime_error(
         "Could not select physical device based on chosen properties");
   }
 
   fstl::log::info(
       "Using physical device: {}",
-      this->physicalDevice.getProperties().deviceName);
+      this->physicalDevice_.getProperties().deviceName);
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
   std::array<float, 1> queuePriorities = {1.0f};
 
   queueCreateInfos.push_back({
       {},
-      graphicsQueueFamilyIndex,
+      graphicsQueueFamilyIndex_,
       static_cast<uint32_t>(queuePriorities.size()),
       queuePriorities.data(),
   });
 
-  if (presentQueueFamilyIndex != graphicsQueueFamilyIndex) {
+  if (presentQueueFamilyIndex_ != graphicsQueueFamilyIndex_) {
     queueCreateInfos.push_back({
         {},
-        presentQueueFamilyIndex,
+        presentQueueFamilyIndex_,
         static_cast<uint32_t>(queuePriorities.size()),
         queuePriorities.data(),
     });
   }
 
-  if (transferQueueFamilyIndex != graphicsQueueFamilyIndex) {
+  if (transferQueueFamilyIndex_ != graphicsQueueFamilyIndex_) {
     queueCreateInfos.push_back({
         {},
-        transferQueueFamilyIndex,
+        transferQueueFamilyIndex_,
         static_cast<uint32_t>(queuePriorities.size()),
         queuePriorities.data(),
     });
@@ -203,44 +203,44 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
   deviceCreateInfo.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTENSIONS.data();
 
   // Enable all features
-  auto features = this->physicalDevice.getFeatures();
+  auto features = this->physicalDevice_.getFeatures();
   deviceCreateInfo.pEnabledFeatures = &features;
 
-  this->device = this->physicalDevice.createDevice(deviceCreateInfo);
+  this->device_ = this->physicalDevice_.createDevice(deviceCreateInfo);
 }
 
 void Context::getDeviceQueues() {
-  this->device.getQueue(
-      this->graphicsQueueFamilyIndex, 0, &this->graphicsQueue);
-  this->device.getQueue(this->presentQueueFamilyIndex, 0, &this->presentQueue);
-  this->device.getQueue(
-      this->transferQueueFamilyIndex, 0, &this->transferQueue);
+  this->device_.getQueue(
+      this->graphicsQueueFamilyIndex_, 0, &this->graphicsQueue_);
+  this->device_.getQueue(this->presentQueueFamilyIndex_, 0, &this->presentQueue_);
+  this->device_.getQueue(
+      this->transferQueueFamilyIndex_, 0, &this->transferQueue_);
 }
 
 void Context::setupMemoryAllocator() {
   VmaAllocatorCreateInfo allocatorInfo = {};
-  allocatorInfo.physicalDevice = this->physicalDevice;
-  allocatorInfo.device = this->device;
+  allocatorInfo.physicalDevice = this->physicalDevice_;
+  allocatorInfo.device = this->device_;
 
-  vmaCreateAllocator(&allocatorInfo, &this->allocator);
+  vmaCreateAllocator(&allocatorInfo, &this->allocator_);
 }
 
 void Context::createGraphicsCommandPool() {
-  this->graphicsCommandPool = this->device.createCommandPool(
+  this->graphicsCommandPool_ = this->device_.createCommandPool(
       {vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-       this->graphicsQueueFamilyIndex});
+       this->graphicsQueueFamilyIndex_});
 }
 
 void Context::createTransientCommandPool() {
-  this->transientCommandPool =
-      this->device.createCommandPool({vk::CommandPoolCreateFlagBits::eTransient,
-                                      this->graphicsQueueFamilyIndex});
+  this->transientCommandPool_ =
+      this->device_.createCommandPool({vk::CommandPoolCreateFlagBits::eTransient,
+                                      this->graphicsQueueFamilyIndex_});
 }
 
 // Misc
 
 vk::SampleCountFlagBits Context::getMaxUsableSampleCount() {
-  auto properties = this->physicalDevice.getProperties();
+  auto properties = this->physicalDevice_.getProperties();
   vk::SampleCountFlags colorSamples =
       properties.limits.framebufferColorSampleCounts;
   vk::SampleCountFlags depthSamples =
@@ -318,10 +318,10 @@ void Context::setupDebugCallback() {
       debugCallback};
 
   if (CreateDebugReportCallbackEXT(
-          this->instance,
+          this->instance_,
           reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&createInfo),
           nullptr,
-          reinterpret_cast<VkDebugReportCallbackEXT *>(&this->callback)) !=
+          reinterpret_cast<VkDebugReportCallbackEXT *>(&this->callback_)) !=
       VK_SUCCESS) {
 
     throw std::runtime_error("Failed to setup debug callback");

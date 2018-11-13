@@ -15,7 +15,7 @@ Texture::Texture(const std::string_view &path) {
 
   StagingBuffer stagingBuffer(pixels.size());
   stagingBuffer.copyMemory(pixels.data(), pixels.size());
-  stagingBuffer.transfer(this->image, this->width, this->height);
+  stagingBuffer.transfer(this->image_, this->width_, this->height_);
   stagingBuffer.destroy();
 }
 
@@ -23,31 +23,31 @@ Texture::Texture(
     const std::vector<unsigned char> &data,
     const uint32_t width,
     const uint32_t height)
-    : width(width), height(height) {
+    : width_(width), height_(height) {
   fstl::log::debug("Loading texture from binary data");
 
   this->createImage();
 
   StagingBuffer stagingBuffer(data.size());
   stagingBuffer.copyMemory(data.data(), data.size());
-  stagingBuffer.transfer(this->image, this->width, this->height);
+  stagingBuffer.transfer(this->image_, this->width_, this->height_);
   stagingBuffer.destroy();
 }
 
-vk::Sampler Texture::getSampler() const { return this->sampler; }
+vk::Sampler Texture::getSampler() const { return this->sampler_; }
 
-vk::ImageView Texture::getImageView() const { return this->imageView; }
+vk::ImageView Texture::getImageView() const { return this->imageView_; }
 
 DescriptorImageInfo Texture::getDescriptorInfo() const {
   return {
-      this->sampler, this->imageView, vk::ImageLayout::eShaderReadOnlyOptimal};
+      this->sampler_, this->imageView_, vk::ImageLayout::eShaderReadOnlyOptimal};
 }
 
 void Texture::destroy() {
   Context::getDevice().waitIdle();
-  Context::getDevice().destroy(this->imageView);
-  Context::getDevice().destroy(this->sampler);
-  vmaDestroyImage(Context::get().allocator, this->image, this->allocation);
+  Context::getDevice().destroy(this->imageView_);
+  Context::getDevice().destroy(this->sampler_);
+  vmaDestroyImage(Context::get().allocator_, this->image_, this->allocation_);
 }
 
 void Texture::createImage() {
@@ -56,8 +56,8 @@ void Texture::createImage() {
       vk::ImageType::e2D,         // imageType
       vk::Format::eR8G8B8A8Unorm, // format
       {
-          this->width,             // width
-          this->height,            // height
+          this->width_,             // width
+          this->height_,            // height
           1,                       // depth
       },                           // extent
       1,                           // mipLevels
@@ -76,16 +76,16 @@ void Texture::createImage() {
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   vmaCreateImage(
-      Context::get().allocator,
+      Context::get().allocator_,
       reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
       &imageAllocCreateInfo,
-      reinterpret_cast<VkImage *>(&this->image),
-      &this->allocation,
+      reinterpret_cast<VkImage *>(&this->image_),
+      &this->allocation_,
       nullptr);
 
   vk::ImageViewCreateInfo imageViewCreateInfo{
       {},                         // flags
-      this->image,                // image
+      this->image_,                // image
       vk::ImageViewType::e2D,     // viewType
       vk::Format::eR8G8B8A8Unorm, // format
       {
@@ -103,7 +103,7 @@ void Texture::createImage() {
       },                                   // subresourceRange
   };
 
-  this->imageView = Context::getDevice().createImageView(imageViewCreateInfo);
+  this->imageView_ = Context::getDevice().createImageView(imageViewCreateInfo);
 
   vk::SamplerCreateInfo samplerCreateInfo{
       {},                                      // flags
@@ -124,7 +124,7 @@ void Texture::createImage() {
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  this->sampler = Context::getDevice().createSampler(samplerCreateInfo);
+  this->sampler_ = Context::getDevice().createSampler(samplerCreateInfo);
 }
 
 std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {
@@ -134,8 +134,8 @@ std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {
 
   vk::DeviceSize imageSize = width * height * 4;
 
-  this->width = static_cast<uint32_t>(width);
-  this->height = static_cast<uint32_t>(height);
+  this->width_ = static_cast<uint32_t>(width);
+  this->height_ = static_cast<uint32_t>(height);
 
   if (!pixels) {
     throw std::runtime_error("Failed to load image from disk");

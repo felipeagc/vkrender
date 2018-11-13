@@ -18,8 +18,8 @@ public:
   VertexFormat &operator=(VertexFormat &other) = default;
 
 protected:
-  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions;
-  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions;
+  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions_;
+  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions_;
 
   vk::PipelineVertexInputStateCreateInfo
   getPipelineVertexInputStateCreateInfo() const;
@@ -40,8 +40,8 @@ public:
   VertexFormat build();
 
 private:
-  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions;
-  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions;
+  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions_;
+  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions_;
 };
 
 } // namespace vkr

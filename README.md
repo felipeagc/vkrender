@@ -2,6 +2,7 @@
 
 ## Code style
 - Avoid using templates when unnecessary
+- Use _ suffix for member variables
 
 ## TODO
 ### Refactoring

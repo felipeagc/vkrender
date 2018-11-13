@@ -17,7 +17,7 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
     SDL_Init(subsystems);
   }
 
-  this->window = SDL_CreateWindow(
+  this->window_ = SDL_CreateWindow(
       title,
       SDL_WINDOWPOS_CENTERED,
       SDL_WINDOWPOS_CENTERED,
@@ -25,7 +25,7 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
       height,
       SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
 
-  if (this->window == nullptr) {
+  if (this->window_ == nullptr) {
     throw std::runtime_error("Failed to create SDL window");
   }
 
@@ -34,15 +34,15 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
   this->createVulkanSurface();
 
   // Lazily create vulkan context stuff
-  Context::get().lazyInit(this->surface);
+  Context::get().lazyInit(this->surface_);
 
-  if (!Context::get().physicalDevice.getSurfaceSupportKHR(
-          Context::get().presentQueueFamilyIndex, this->surface)) {
+  if (!Context::get().physicalDevice_.getSurfaceSupportKHR(
+          Context::get().presentQueueFamilyIndex_, this->surface_)) {
     throw std::runtime_error(
         "Selected present queue does not support this window's surface");
   }
 
-  this->maxMsaaSamples = Context::get().getMaxUsableSampleCount();
+  this->maxMsaaSamples_ = Context::get().getMaxUsableSampleCount();
 
   this->createSyncObjects();
 
@@ -71,13 +71,13 @@ Window::~Window() {
 
   this->destroyResizables();
 
-  for (auto &swapchainImageView : this->swapchainImageViews) {
+  for (auto &swapchainImageView : this->swapchainImageViews_) {
     Context::getDevice().destroy(swapchainImageView);
   }
 
-  Context::getDevice().destroy(this->swapchain);
+  Context::getDevice().destroy(this->swapchain_);
 
-  for (auto &frameResource : this->frameResources) {
+  for (auto &frameResource : this->frameResources_) {
     Context::getDevice().destroy(frameResource.framebuffer);
     Context::getDevice().destroy(frameResource.imguiFramebuffer);
     Context::getDevice().destroy(frameResource.imageAvailableSemaphore);
@@ -85,9 +85,9 @@ Window::~Window() {
     Context::getDevice().destroy(frameResource.fence);
   }
 
-  Context::get().instance.destroy(this->surface);
+  Context::get().instance_.destroy(this->surface_);
 
-  SDL_DestroyWindow(this->window);
+  SDL_DestroyWindow(this->window_);
 }
 
 SDL_Event Window::pollEvent() {
@@ -100,22 +100,22 @@ SDL_Event Window::pollEvent() {
 }
 
 void Window::present(std::function<void()> drawFunction) {
-  this->lastTicks = SDL_GetTicks();
+  this->lastTicks_ = SDL_GetTicks();
 
   // Begin
   Context::getDevice().waitForFences(
-      this->frameResources[this->currentFrame].fence, VK_TRUE, UINT64_MAX);
+      this->frameResources_[this->currentFrame_].fence, VK_TRUE, UINT64_MAX);
 
   Context::getDevice().resetFences(
-      this->frameResources[this->currentFrame].fence);
+      this->frameResources_[this->currentFrame_].fence);
 
   try {
     Context::getDevice().acquireNextImageKHR(
-        this->swapchain,
+        this->swapchain_,
         UINT64_MAX,
-        this->frameResources[this->currentFrame].imageAvailableSemaphore,
+        this->frameResources_[this->currentFrame_].imageAvailableSemaphore,
         {},
-        &this->currentImageIndex);
+        &this->currentImageIndex_);
   } catch (const vk::OutOfDateKHRError &e) {
     this->updateSize();
   }
@@ -129,31 +129,31 @@ void Window::present(std::function<void()> drawFunction) {
   };
 
   this->regenFramebuffer(
-      this->frameResources[this->currentFrame].framebuffer,
-      this->swapchainImageViews[this->currentImageIndex]);
+      this->frameResources_[this->currentFrame_].framebuffer,
+      this->swapchainImageViews_[this->currentImageIndex_]);
 
   this->regenImguiFramebuffer(
-      this->frameResources[this->currentFrame].imguiFramebuffer,
-      this->swapchainImageViews[this->currentImageIndex]);
+      this->frameResources_[this->currentFrame_].imguiFramebuffer,
+      this->swapchainImageViews_[this->currentImageIndex_]);
 
   vk::CommandBufferBeginInfo beginInfo{
       vk::CommandBufferUsageFlagBits::eSimultaneousUse, // flags
       nullptr,                                          // pInheritanceInfo
   };
 
-  auto &commandBuffer = this->frameResources[this->currentFrame].commandBuffer;
+  auto &commandBuffer = this->frameResources_[this->currentFrame_].commandBuffer;
 
   commandBuffer.begin(beginInfo);
 
-  if (Context::get().presentQueue != Context::get().graphicsQueue) {
+  if (Context::get().presentQueue_ != Context::get().graphicsQueue_) {
     vk::ImageMemoryBarrier barrierFromPresentToDraw = {
         vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
         vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
         vk::ImageLayout::eUndefined,                    // oldLayout
         vk::ImageLayout::eColorAttachmentOptimal,       // newLayout
-        Context::get().presentQueueFamilyIndex,         // srcQueueFamilyIndex
-        Context::get().graphicsQueueFamilyIndex,        // dstQueueFamilyIndex
-        this->swapchainImages[this->currentImageIndex], // image
+        Context::get().presentQueueFamilyIndex_,         // srcQueueFamilyIndex
+        Context::get().graphicsQueueFamilyIndex_,        // dstQueueFamilyIndex
+        this->swapchainImages_[this->currentImageIndex_], // image
         imageSubresourceRange,                          // subresourceRange
     };
 
@@ -180,7 +180,7 @@ void Window::present(std::function<void()> drawFunction) {
       vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
   };
 
-  if (this->msaaSamples != SampleCount::e1) {
+  if (this->msaaSamples_ != SampleCount::e1) {
     clearValues = {
         vk::ClearValue{clearColor},
         vk::ClearValue{clearColor},
@@ -189,9 +189,9 @@ void Window::present(std::function<void()> drawFunction) {
   }
 
   vk::RenderPassBeginInfo renderPassBeginInfo{
-      this->renderPass,                                     // renderPass
-      this->frameResources[this->currentFrame].framebuffer, // framebuffer
-      {{0, 0}, this->swapchainExtent},                      // renderArea
+      this->renderPass_,                                     // renderPass
+      this->frameResources_[this->currentFrame_].framebuffer, // framebuffer
+      {{0, 0}, this->swapchainExtent_},                      // renderArea
       static_cast<uint32_t>(clearValues.size()),            // clearValueCount
       clearValues.data(),                                   // pClearValues
   };
@@ -202,13 +202,13 @@ void Window::present(std::function<void()> drawFunction) {
   vk::Viewport viewport{
       0.0f,                                             // x
       0.0f,                                             // y
-      static_cast<float>(this->swapchainExtent.width),  // width
-      static_cast<float>(this->swapchainExtent.height), // height
+      static_cast<float>(this->swapchainExtent_.width),  // width
+      static_cast<float>(this->swapchainExtent_.height), // height
       0.0f,                                             // minDepth
       1.0f,                                             // maxDepth
   };
 
-  vk::Rect2D scissor{{0, 0}, this->swapchainExtent};
+  vk::Rect2D scissor{{0, 0}, this->swapchainExtent_};
   commandBuffer.setViewport(0, viewport);
 
   commandBuffer.setScissor(0, scissor);
@@ -225,10 +225,10 @@ void Window::present(std::function<void()> drawFunction) {
 
   {
     vk::RenderPassBeginInfo imguiRenderPassBeginInfo{
-        this->imguiRenderPass, // renderPass
-        this->frameResources[this->currentFrame]
+        this->imguiRenderPass_, // renderPass
+        this->frameResources_[this->currentFrame_]
             .imguiFramebuffer,           // framebuffer
-        {{0, 0}, this->swapchainExtent}, // renderArea
+        {{0, 0}, this->swapchainExtent_}, // renderArea
         0,                               // clearValueCount
         nullptr,                         // pClearValues
     };
@@ -239,13 +239,13 @@ void Window::present(std::function<void()> drawFunction) {
     vk::Viewport viewport{
         0.0f,                                             // x
         0.0f,                                             // y
-        static_cast<float>(this->swapchainExtent.width),  // width
-        static_cast<float>(this->swapchainExtent.height), // height
+        static_cast<float>(this->swapchainExtent_.width),  // width
+        static_cast<float>(this->swapchainExtent_.height), // height
         0.0f,                                             // minDepth
         1.0f,                                             // maxDepth
     };
 
-    vk::Rect2D scissor{{0, 0}, this->swapchainExtent};
+    vk::Rect2D scissor{{0, 0}, this->swapchainExtent_};
     commandBuffer.setViewport(0, viewport);
 
     commandBuffer.setScissor(0, scissor);
@@ -255,15 +255,15 @@ void Window::present(std::function<void()> drawFunction) {
     commandBuffer.endRenderPass();
   }
 
-  if (Context::get().presentQueue != Context::get().graphicsQueue) {
+  if (Context::get().presentQueue_ != Context::get().graphicsQueue_) {
     vk::ImageMemoryBarrier barrierFromDrawToPresent{
         vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
         vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
         vk::ImageLayout::eColorAttachmentOptimal,       // oldLayout
         vk::ImageLayout::ePresentSrcKHR,                // newLayout
-        Context::get().graphicsQueueFamilyIndex,        // srcQueueFamilyIndex
-        Context::get().presentQueueFamilyIndex,         // dstQueueFamilyIndex
-        this->swapchainImages[this->currentImageIndex], // image
+        Context::get().graphicsQueueFamilyIndex_,        // srcQueueFamilyIndex
+        Context::get().presentQueueFamilyIndex_,         // dstQueueFamilyIndex
+        this->swapchainImages_[this->currentImageIndex_], // image
         imageSubresourceRange,                          // subresourceRange
     };
 
@@ -285,38 +285,38 @@ void Window::present(std::function<void()> drawFunction) {
 
   vk::SubmitInfo submitInfo = {
       1, // waitSemaphoreCount
-      &this->frameResources[this->currentFrame]
+      &this->frameResources_[this->currentFrame_]
            .imageAvailableSemaphore, // pWaitSemaphores
       &waitDstStageMask,             // pWaitDstStageMask
       1,                             // commandBufferCount
       &commandBuffer,                // pCommandBuffers
       1,                             // signalSemaphoreCount
-      &this->frameResources[this->currentFrame]
+      &this->frameResources_[this->currentFrame_]
            .renderingFinishedSemaphore, // pSignalSemaphores
   };
 
-  Context::get().graphicsQueue.submit(
-      submitInfo, this->frameResources[this->currentFrame].fence);
+  Context::get().graphicsQueue_.submit(
+      submitInfo, this->frameResources_[this->currentFrame_].fence);
 
   vk::PresentInfoKHR presentInfo{
       1, // waitSemaphoreCount
-      &this->frameResources[this->currentFrame]
+      &this->frameResources_[this->currentFrame_]
            .renderingFinishedSemaphore, // pWaitSemaphores
       1,                                // swapchainCount
-      &this->swapchain,                 // pSwapchains
-      &this->currentImageIndex,         // pImageIndices
+      &this->swapchain_,                 // pSwapchains
+      &this->currentImageIndex_,         // pImageIndices
       nullptr,                          // pResults
   };
 
   try {
-    Context::get().presentQueue.presentKHR(presentInfo);
+    Context::get().presentQueue_.presentKHR(presentInfo);
   } catch (const vk::OutOfDateKHRError &e) {
     this->updateSize();
   }
 
-  this->currentFrame = (this->currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+  this->currentFrame_ = (this->currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
 
-  this->deltaTicks = SDL_GetTicks() - this->lastTicks;
+  this->deltaTicks_ = SDL_GetTicks() - this->lastTicks_;
 }
 
 void Window::updateSize() {
@@ -333,13 +333,13 @@ void Window::updateSize() {
 
 uint32_t Window::getWidth() const {
   int width;
-  SDL_GetWindowSize(this->window, &width, nullptr);
+  SDL_GetWindowSize(this->window_, &width, nullptr);
   return static_cast<uint32_t>(width);
 }
 
 uint32_t Window::getHeight() const {
   int height;
-  SDL_GetWindowSize(this->window, nullptr, &height);
+  SDL_GetWindowSize(this->window_, nullptr, &height);
   return static_cast<uint32_t>(height);
 }
 
@@ -373,21 +373,21 @@ int Window::getRelativeMouseY() const {
   return y;
 }
 
-float Window::getDelta() const { return (float)this->deltaTicks / 1000.0f; }
+float Window::getDelta() const { return (float)this->deltaTicks_ / 1000.0f; }
 
-bool Window::getShouldClose() const { return this->shouldClose; }
+bool Window::getShouldClose() const { return this->shouldClose_; }
 
 void Window::setShouldClose(bool shouldClose) {
-  this->shouldClose = shouldClose;
+  this->shouldClose_ = shouldClose;
 }
 
-SampleCount Window::getMaxMSAASamples() const { return this->maxMsaaSamples; }
+SampleCount Window::getMaxMSAASamples() const { return this->maxMsaaSamples_; }
 
-SampleCount Window::getMSAASamples() const { return this->msaaSamples; }
+SampleCount Window::getMSAASamples() const { return this->msaaSamples_; }
 
 void Window::setMSAASamples(SampleCount sampleCount) {
-  if (sampleCount <= this->maxMsaaSamples) {
-    this->msaaSamples = sampleCount;
+  if (sampleCount <= this->maxMsaaSamples_) {
+    this->msaaSamples_ = sampleCount;
 
     // Recreate stuff using new sample count
     this->updateSize();
@@ -396,15 +396,15 @@ void Window::setMSAASamples(SampleCount sampleCount) {
   }
 }
 
-int Window::getCurrentFrameIndex() const { return this->currentFrame; }
+int Window::getCurrentFrameIndex() const { return this->currentFrame_; }
 
 CommandBuffer Window::getCurrentCommandBuffer() {
-  return CommandBuffer{this->frameResources[this->currentFrame].commandBuffer};
+  return CommandBuffer{this->frameResources_[this->currentFrame_].commandBuffer};
 }
 
 void Window::imguiBeginFrame() {
   ImGui_ImplVulkan_NewFrame();
-  ImGui_ImplSDL2_NewFrame(window);
+  ImGui_ImplSDL2_NewFrame(window_);
   ImGui::NewFrame();
 }
 
@@ -412,25 +412,25 @@ void Window::imguiEndFrame() { ImGui::Render(); }
 
 void Window::initVulkanExtensions() const {
   uint32_t sdlExtensionCount = 0;
-  SDL_Vulkan_GetInstanceExtensions(this->window, &sdlExtensionCount, nullptr);
+  SDL_Vulkan_GetInstanceExtensions(this->window_, &sdlExtensionCount, nullptr);
   std::vector<const char *> sdlExtensions(sdlExtensionCount);
   SDL_Vulkan_GetInstanceExtensions(
-      this->window, &sdlExtensionCount, sdlExtensions.data());
+      this->window_, &sdlExtensionCount, sdlExtensions.data());
   Window::requiredVulkanExtensions = sdlExtensions;
 }
 
 void Window::createVulkanSurface() {
   if (!SDL_Vulkan_CreateSurface(
-          this->window,
-          static_cast<VkInstance>(Context::get().instance),
-          reinterpret_cast<VkSurfaceKHR *>(&this->surface))) {
+          this->window_,
+          static_cast<VkInstance>(Context::get().instance_),
+          reinterpret_cast<VkSurfaceKHR *>(&this->surface_))) {
     throw std::runtime_error(
         "Failed to create window surface: " + std::string(SDL_GetError()));
   }
 }
 
 void Window::createSyncObjects() {
-  for (auto &resources : this->frameResources) {
+  for (auto &resources : this->frameResources_) {
     resources.imageAvailableSemaphore =
         Context::getDevice().createSemaphore({});
     resources.renderingFinishedSemaphore =
@@ -441,19 +441,19 @@ void Window::createSyncObjects() {
 }
 
 void Window::createSwapchain(uint32_t width, uint32_t height) {
-  for (const auto &imageView : this->swapchainImageViews) {
+  for (const auto &imageView : this->swapchainImageViews_) {
     if (imageView) {
       Context::getDevice().destroy(imageView);
     }
   }
-  this->swapchainImageViews.clear();
+  this->swapchainImageViews_.clear();
 
   auto surfaceCapabilities =
-      Context::get().physicalDevice.getSurfaceCapabilitiesKHR(this->surface);
+      Context::get().physicalDevice_.getSurfaceCapabilitiesKHR(this->surface_);
   auto surfaceFormats =
-      Context::get().physicalDevice.getSurfaceFormatsKHR(this->surface);
+      Context::get().physicalDevice_.getSurfaceFormatsKHR(this->surface_);
   auto presentModes =
-      Context::get().physicalDevice.getSurfacePresentModesKHR(this->surface);
+      Context::get().physicalDevice_.getSurfacePresentModesKHR(this->surface_);
 
   auto desiredNumImages = getSwapchainNumImages(surfaceCapabilities);
   auto desiredFormat = getSwapchainFormat(surfaceFormats);
@@ -462,11 +462,11 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
   auto desiredTransform = getSwapchainTransform(surfaceCapabilities);
   auto desiredPresentMode = getSwapchainPresentMode(presentModes);
 
-  vk::SwapchainKHR oldSwapchain = this->swapchain;
+  vk::SwapchainKHR oldSwapchain = this->swapchain_;
 
   vk::SwapchainCreateInfoKHR createInfo{
       {}, // flags
-      this->surface,
+      this->surface_,
       desiredNumImages,                       // minImageCount
       desiredFormat.format,                   // imageFormat
       desiredFormat.colorSpace,               // imageColorSpace
@@ -483,28 +483,28 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
       oldSwapchain                            // oldSwapchain
   };
 
-  this->swapchain = Context::getDevice().createSwapchainKHR(createInfo);
+  this->swapchain_ = Context::getDevice().createSwapchainKHR(createInfo);
 
   if (oldSwapchain) {
     Context::getDevice().destroy(oldSwapchain);
   }
 
-  this->swapchainImageFormat = desiredFormat.format;
-  this->swapchainExtent = desiredExtent;
+  this->swapchainImageFormat_ = desiredFormat.format;
+  this->swapchainExtent_ = desiredExtent;
 
-  this->swapchainImages =
-      Context::getDevice().getSwapchainImagesKHR(this->swapchain);
+  this->swapchainImages_ =
+      Context::getDevice().getSwapchainImagesKHR(this->swapchain_);
 }
 
 void Window::createSwapchainImageViews() {
-  this->swapchainImageViews.resize(this->swapchainImages.size());
+  this->swapchainImageViews_.resize(this->swapchainImages_.size());
 
-  for (size_t i = 0; i < swapchainImages.size(); i++) {
+  for (size_t i = 0; i < swapchainImages_.size(); i++) {
     vk::ImageViewCreateInfo createInfo{
         {},
-        this->swapchainImages[i],
+        this->swapchainImages_[i],
         vk::ImageViewType::e2D,
-        this->swapchainImageFormat,
+        this->swapchainImageFormat_,
         {
             vk::ComponentSwizzle::eIdentity, // r
             vk::ComponentSwizzle::eIdentity, // g
@@ -513,19 +513,19 @@ void Window::createSwapchainImageViews() {
         },
         {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
 
-    this->swapchainImageViews[i] =
+    this->swapchainImageViews_[i] =
         Context::getDevice().createImageView(createInfo);
   }
 }
 
 void Window::allocateGraphicsCommandBuffers() {
   auto commandBuffers = Context::getDevice().allocateCommandBuffers(
-      {Context::get().graphicsCommandPool,
+      {Context::get().graphicsCommandPool_,
        vk::CommandBufferLevel::ePrimary,
        MAX_FRAMES_IN_FLIGHT});
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    this->frameResources[i].commandBuffer = commandBuffers[i];
+    this->frameResources_[i].commandBuffer = commandBuffers[i];
   }
 }
 
@@ -541,7 +541,7 @@ void Window::createDepthStencilResources() {
         Context::getPhysicalDevice().getFormatProperties(format);
     if (formatProps.optimalTilingFeatures &
         vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
-      this->depthImageFormat = format;
+      this->depthImageFormat_ = format;
       validDepthFormat = true;
       break;
     }
@@ -551,10 +551,10 @@ void Window::createDepthStencilResources() {
   vk::ImageCreateInfo imageCreateInfo{
       {},
       vk::ImageType::e2D,
-      this->depthImageFormat,
+      this->depthImageFormat_,
       {
-          this->swapchainExtent.width,
-          this->swapchainExtent.height,
+          this->swapchainExtent_.width,
+          this->swapchainExtent_.height,
           1,
       },
       1,
@@ -573,20 +573,20 @@ void Window::createDepthStencilResources() {
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   if (vmaCreateImage(
-          Context::get().allocator,
+          Context::get().allocator_,
           reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
           &allocInfo,
-          reinterpret_cast<VkImage *>(&this->depthStencil.image),
-          &this->depthStencil.allocation,
+          reinterpret_cast<VkImage *>(&this->depthStencil_.image),
+          &this->depthStencil_.allocation,
           nullptr) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create the depth stencil image");
   }
 
   vk::ImageViewCreateInfo imageViewCreateInfo{
       {},
-      this->depthStencil.image,
+      this->depthStencil_.image,
       vk::ImageViewType::e2D,
-      this->depthImageFormat,
+      this->depthImageFormat_,
       {
           vk::ComponentSwizzle::eIdentity, // r
           vk::ComponentSwizzle::eIdentity, // g
@@ -603,7 +603,7 @@ void Window::createDepthStencilResources() {
       },                                         // subresourceRange
   };
 
-  this->depthStencil.view =
+  this->depthStencil_.view =
       Context::getDevice().createImageView(imageViewCreateInfo);
 }
 
@@ -613,15 +613,15 @@ void Window::createMultisampleTargets() {
     vk::ImageCreateInfo imageCreateInfo{
         {},                         // flags
         vk::ImageType::e2D,         // imageType
-        this->swapchainImageFormat, // format
+        this->swapchainImageFormat_, // format
         {
-            this->swapchainExtent.width,  // width
-            this->swapchainExtent.height, // height
+            this->swapchainExtent_.width,  // width
+            this->swapchainExtent_.height, // height
             1,                            // depth
         },                                // extent
         1,                                // mipLevels
         1,                                // arrayLayers
-        this->msaaSamples,                // samples
+        this->msaaSamples_,                // samples
         vk::ImageTiling::eOptimal,        // tiling
         vk::ImageUsageFlagBits::eTransientAttachment |
             vk::ImageUsageFlagBits::eColorAttachment, // usage
@@ -635,11 +635,11 @@ void Window::createMultisampleTargets() {
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     if (vmaCreateImage(
-            Context::get().allocator,
+            Context::get().allocator_,
             reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
             &allocInfo,
-            reinterpret_cast<VkImage *>(&this->multiSampleTargets.color.image),
-            &this->multiSampleTargets.color.allocation,
+            reinterpret_cast<VkImage *>(&this->multiSampleTargets_.color.image),
+            &this->multiSampleTargets_.color.allocation,
             nullptr) != VK_SUCCESS) {
       throw std::runtime_error(
           "Failed to create the multisample target color image");
@@ -647,9 +647,9 @@ void Window::createMultisampleTargets() {
 
     vk::ImageViewCreateInfo imageViewCreateInfo{
         {},                                   // flags
-        this->multiSampleTargets.color.image, // image
+        this->multiSampleTargets_.color.image, // image
         vk::ImageViewType::e2D,               // viewType
-        this->swapchainImageFormat,           // format
+        this->swapchainImageFormat_,           // format
         {
             vk::ComponentSwizzle::eR, // r
             vk::ComponentSwizzle::eG, // g
@@ -665,7 +665,7 @@ void Window::createMultisampleTargets() {
         },                                   // subresourceRange
     };
 
-    this->multiSampleTargets.color.view =
+    this->multiSampleTargets_.color.view =
         Context::getDevice().createImageView(imageViewCreateInfo);
   }
 
@@ -674,15 +674,15 @@ void Window::createMultisampleTargets() {
     vk::ImageCreateInfo imageCreateInfo{
         {},                     // flags
         vk::ImageType::e2D,     // imageType
-        this->depthImageFormat, // format
+        this->depthImageFormat_, // format
         {
-            this->swapchainExtent.width,  // width
-            this->swapchainExtent.height, // height
+            this->swapchainExtent_.width,  // width
+            this->swapchainExtent_.height, // height
             1,                            // depth
         },                                // extent
         1,                                // mipLevels
         1,                                // arrayLayers
-        this->msaaSamples,                // samples
+        this->msaaSamples_,                // samples
         vk::ImageTiling::eOptimal,        // tiling
         vk::ImageUsageFlagBits::eTransientAttachment |
             vk::ImageUsageFlagBits::eDepthStencilAttachment, // usage
@@ -696,11 +696,11 @@ void Window::createMultisampleTargets() {
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     if (vmaCreateImage(
-            Context::get().allocator,
+            Context::get().allocator_,
             reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
             &allocInfo,
-            reinterpret_cast<VkImage *>(&this->multiSampleTargets.depth.image),
-            &this->multiSampleTargets.depth.allocation,
+            reinterpret_cast<VkImage *>(&this->multiSampleTargets_.depth.image),
+            &this->multiSampleTargets_.depth.allocation,
             nullptr) != VK_SUCCESS) {
       throw std::runtime_error(
           "Failed to create the multisample target depth image");
@@ -708,9 +708,9 @@ void Window::createMultisampleTargets() {
 
     vk::ImageViewCreateInfo imageViewCreateInfo{
         {},                                   // flags
-        this->multiSampleTargets.depth.image, // image
+        this->multiSampleTargets_.depth.image, // image
         vk::ImageViewType::e2D,               // viewType
-        this->depthImageFormat,               // format
+        this->depthImageFormat_,               // format
         {
             vk::ComponentSwizzle::eR, // r
             vk::ComponentSwizzle::eG, // g
@@ -727,7 +727,7 @@ void Window::createMultisampleTargets() {
         },                                         // subresourceRange
     };
 
-    this->multiSampleTargets.depth.view =
+    this->multiSampleTargets_.depth.view =
         Context::getDevice().createImageView(imageViewCreateInfo);
   }
 }
@@ -737,8 +737,8 @@ void Window::createRenderPass() {
       // Multisampled color attachment
       vk::AttachmentDescription{
           {},                                       // flags
-          this->swapchainImageFormat,               // format
-          this->msaaSamples,                        // samples
+          this->swapchainImageFormat_,               // format
+          this->msaaSamples_,                        // samples
           vk::AttachmentLoadOp::eClear,             // loadOp
           vk::AttachmentStoreOp::eStore,            // storeOp
           vk::AttachmentLoadOp::eDontCare,          // stencilLoadOp
@@ -750,7 +750,7 @@ void Window::createRenderPass() {
       // Resolved color attachment
       vk::AttachmentDescription{
           {},                               // flags
-          this->swapchainImageFormat,       // format
+          this->swapchainImageFormat_,       // format
           vk::SampleCountFlagBits::e1,      // samples
           vk::AttachmentLoadOp::eDontCare,  // loadOp
           vk::AttachmentStoreOp::eStore,    // storeOp
@@ -763,8 +763,8 @@ void Window::createRenderPass() {
       // Multisampled depth attachment
       vk::AttachmentDescription{
           {},                                              // flags
-          this->depthImageFormat,                          // format
-          this->msaaSamples,                               // samples
+          this->depthImageFormat_,                          // format
+          this->msaaSamples_,                               // samples
           vk::AttachmentLoadOp::eClear,                    // loadOp
           vk::AttachmentStoreOp::eDontCare,                // storeOp
           vk::AttachmentLoadOp::eDontCare,                 // stencilLoadOp
@@ -776,7 +776,7 @@ void Window::createRenderPass() {
       // Resolved depth attachment
       vk::AttachmentDescription{
           {},                                              // flags
-          this->depthImageFormat,                          // format
+          this->depthImageFormat_,                          // format
           vk::SampleCountFlagBits::e1,                     // samples
           vk::AttachmentLoadOp::eDontCare,                 // loadOp
           vk::AttachmentStoreOp::eStore,                   // storeOp
@@ -823,7 +823,7 @@ void Window::createRenderPass() {
       },
   };
 
-  if (this->msaaSamples == SampleCount::e1) {
+  if (this->msaaSamples_ == SampleCount::e1) {
     // Disable multisampled color clearing
     attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eDontCare;
     attachmentDescriptions[0].storeOp = vk::AttachmentStoreOp::eDontCare;
@@ -878,13 +878,13 @@ void Window::createRenderPass() {
       dependencies.data(),                                  // pDependencies
   };
 
-  this->renderPass =
+  this->renderPass_ =
       Context::getDevice().createRenderPass(renderPassCreateInfo);
 }
 
 void Window::createImguiRenderPass() {
   vk::AttachmentDescription attachment{};
-  attachment.format = this->swapchainImageFormat;
+  attachment.format = this->swapchainImageFormat_;
   attachment.samples = vk::SampleCountFlagBits::e1;
   attachment.loadOp = vk::AttachmentLoadOp::eDontCare;
   attachment.storeOp = vk::AttachmentStoreOp::eStore;
@@ -920,7 +920,7 @@ void Window::createImguiRenderPass() {
       &dependency, // pDependencies
   };
 
-  this->imguiRenderPass =
+  this->imguiRenderPass_ =
       Context::getDevice().createRenderPass(renderPassCreateInfo);
 }
 
@@ -929,15 +929,15 @@ void Window::initImgui() {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
 
-  ImGui_ImplSDL2_InitForVulkan(this->window);
+  ImGui_ImplSDL2_InitForVulkan(this->window_);
 
   // Setup Vulkan binding
   ImGui_ImplVulkan_InitInfo init_info = {};
-  init_info.Instance = Context::get().instance;
+  init_info.Instance = Context::get().instance_;
   init_info.PhysicalDevice = Context::getPhysicalDevice();
   init_info.Device = Context::getDevice();
-  init_info.QueueFamily = Context::get().graphicsQueueFamilyIndex;
-  init_info.Queue = Context::get().graphicsQueue;
+  init_info.QueueFamily = Context::get().graphicsQueueFamilyIndex_;
+  init_info.Queue = Context::get().graphicsQueue_;
   init_info.PipelineCache = VK_NULL_HANDLE;
   init_info.DescriptorPool =
       *Context::getDescriptorManager().getPool(DESC_IMGUI);
@@ -947,7 +947,7 @@ void Window::initImgui() {
       throw std::runtime_error("Failed to initialize IMGUI!");
     }
   };
-  ImGui_ImplVulkan_Init(&init_info, this->imguiRenderPass);
+  ImGui_ImplVulkan_Init(&init_info, this->imguiRenderPass_);
 
   // Setup style
   ImGui::StyleColorsDark();
@@ -955,9 +955,9 @@ void Window::initImgui() {
   // Upload Fonts
   {
     // Use any command queue
-    vk::CommandPool commandPool = Context::get().graphicsCommandPool;
+    vk::CommandPool commandPool = Context::get().graphicsCommandPool_;
     vk::CommandBuffer commandBuffer =
-        this->frameResources[this->currentFrame].commandBuffer;
+        this->frameResources_[this->currentFrame_].commandBuffer;
 
     Context::getDevice().resetCommandPool(commandPool, {});
     vk::CommandBufferBeginInfo beginInfo{
@@ -974,7 +974,7 @@ void Window::initImgui() {
 
     commandBuffer.end();
 
-    Context::get().graphicsQueue.submit(endInfo, {});
+    Context::get().graphicsQueue_.submit(endInfo, {});
 
     Context::getDevice().waitIdle();
 
@@ -987,19 +987,19 @@ void Window::regenFramebuffer(
   Context::getDevice().destroy(framebuffer);
 
   std::array<vk::ImageView, 4> attachments{
-      this->multiSampleTargets.color.view,
+      this->multiSampleTargets_.color.view,
       swapchainImageView,
-      this->multiSampleTargets.depth.view,
-      this->depthStencil.view,
+      this->multiSampleTargets_.depth.view,
+      this->depthStencil_.view,
   };
 
   vk::FramebufferCreateInfo createInfo = {
       {},                                        // flags
-      this->renderPass,                          // renderPass
+      this->renderPass_,                          // renderPass
       static_cast<uint32_t>(attachments.size()), // attachmentCount
       attachments.data(),                        // pAttachments
-      this->swapchainExtent.width,               // width
-      this->swapchainExtent.height,              // height
+      this->swapchainExtent_.width,               // width
+      this->swapchainExtent_.height,              // height
       1,                                         // layers
   };
 
@@ -1016,11 +1016,11 @@ void Window::regenImguiFramebuffer(
 
   vk::FramebufferCreateInfo createInfo = {
       {},                                        // flags
-      this->imguiRenderPass,                     // renderPass
+      this->imguiRenderPass_,                     // renderPass
       static_cast<uint32_t>(attachments.size()), // attachmentCount
       attachments.data(),                        // pAttachments
-      this->swapchainExtent.width,               // width
-      this->swapchainExtent.height,              // height
+      this->swapchainExtent_.width,               // width
+      this->swapchainExtent_.height,              // height
       1,                                         // layers
   };
 
@@ -1030,43 +1030,43 @@ void Window::regenImguiFramebuffer(
 void Window::destroyResizables() {
   Context::getDevice().waitIdle();
 
-  for (auto &resources : this->frameResources) {
+  for (auto &resources : this->frameResources_) {
     Context::getDevice().freeCommandBuffers(
-        Context::get().graphicsCommandPool, resources.commandBuffer);
+        Context::get().graphicsCommandPool_, resources.commandBuffer);
   }
 
-  if (this->depthStencil.image) {
-    Context::getDevice().destroy(this->depthStencil.view);
+  if (this->depthStencil_.image) {
+    Context::getDevice().destroy(this->depthStencil_.view);
     vmaDestroyImage(
-        Context::get().allocator,
-        this->depthStencil.image,
-        this->depthStencil.allocation);
-    this->depthStencil.image = nullptr;
-    this->depthStencil.allocation = VK_NULL_HANDLE;
+        Context::get().allocator_,
+        this->depthStencil_.image,
+        this->depthStencil_.allocation);
+    this->depthStencil_.image = nullptr;
+    this->depthStencil_.allocation = VK_NULL_HANDLE;
   }
 
-  if (this->multiSampleTargets.color.image) {
-    Context::getDevice().destroy(this->multiSampleTargets.color.view);
+  if (this->multiSampleTargets_.color.image) {
+    Context::getDevice().destroy(this->multiSampleTargets_.color.view);
     vmaDestroyImage(
-        Context::get().allocator,
-        this->multiSampleTargets.color.image,
-        this->multiSampleTargets.color.allocation);
-    this->multiSampleTargets.color.image = nullptr;
-    this->multiSampleTargets.color.allocation = VK_NULL_HANDLE;
+        Context::get().allocator_,
+        this->multiSampleTargets_.color.image,
+        this->multiSampleTargets_.color.allocation);
+    this->multiSampleTargets_.color.image = nullptr;
+    this->multiSampleTargets_.color.allocation = VK_NULL_HANDLE;
   }
 
-  if (this->multiSampleTargets.depth.image) {
-    Context::getDevice().destroy(this->multiSampleTargets.depth.view);
+  if (this->multiSampleTargets_.depth.image) {
+    Context::getDevice().destroy(this->multiSampleTargets_.depth.view);
     vmaDestroyImage(
-        Context::get().allocator,
-        this->multiSampleTargets.depth.image,
-        this->multiSampleTargets.depth.allocation);
-    this->multiSampleTargets.depth.image = nullptr;
-    this->multiSampleTargets.depth.allocation = VK_NULL_HANDLE;
+        Context::get().allocator_,
+        this->multiSampleTargets_.depth.image,
+        this->multiSampleTargets_.depth.allocation);
+    this->multiSampleTargets_.depth.image = nullptr;
+    this->multiSampleTargets_.depth.allocation = VK_NULL_HANDLE;
   }
 
-  Context::getDevice().destroy(this->imguiRenderPass);
-  Context::getDevice().destroy(this->renderPass);
+  Context::getDevice().destroy(this->imguiRenderPass_);
+  Context::getDevice().destroy(this->renderPass_);
 }
 
 uint32_t Window::getSwapchainNumImages(

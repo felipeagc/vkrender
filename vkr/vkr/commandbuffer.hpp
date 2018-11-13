@@ -11,7 +11,7 @@ class GraphicsPipeline;
 class CommandBuffer {
 public:
   CommandBuffer(vk::CommandBuffer commandBuffer)
-      : commandBuffer(commandBuffer){};
+      : commandBuffer_(commandBuffer){};
   ~CommandBuffer(){};
 
   void bindVertexBuffers(const fstl::array_proxy<const Buffer> &buffers);
@@ -37,6 +37,6 @@ public:
       uint32_t firstInstance);
 
 private:
-  vk::CommandBuffer commandBuffer;
+  vk::CommandBuffer commandBuffer_;
 };
 } // namespace vkr

@@ -39,15 +39,15 @@ public:
   void bind(Window &window, GraphicsPipeline &pipeline);
 
 protected:
-  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
-  std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-  std::array<DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
+  std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers_;
+  std::array<DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
 
-  CameraUniform cameraUniform;
+  CameraUniform cameraUniform_;
 
-  float fov = 70.0f;
+  float fov_ = 70.0f;
 
-  float near = 0.001f;
-  float far = 300.0f;
+  float near_ = 0.001f;
+  float far_ = 300.0f;
 };
 } // namespace vkr

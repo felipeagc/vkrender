@@ -24,34 +24,34 @@ Buffer::Buffer(
   allocInfo.requiredFlags = static_cast<VkMemoryPropertyFlags>(requiredFlags);
 
   if (vmaCreateBuffer(
-          Context::get().allocator,
+          Context::get().allocator_,
           reinterpret_cast<VkBufferCreateInfo *>(&bufferCreateInfo),
           &allocInfo,
-          reinterpret_cast<VkBuffer *>(&this->buffer),
-          &this->allocation,
+          reinterpret_cast<VkBuffer *>(&this->buffer_),
+          &this->allocation_,
           nullptr) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create buffer");
   }
 }
 
 void Buffer::mapMemory(void **dest) {
-  if (vmaMapMemory(Context::get().allocator, this->allocation, dest) !=
+  if (vmaMapMemory(Context::get().allocator_, this->allocation_, dest) !=
       VK_SUCCESS) {
     throw std::runtime_error("Failed to map image memory");
   }
 }
 
 void Buffer::unmapMemory() {
-  vmaUnmapMemory(Context::get().allocator, this->allocation);
+  vmaUnmapMemory(Context::get().allocator_, this->allocation_);
 }
 
 vk::Buffer Buffer::getHandle() const {
-  return this->buffer;
+  return this->buffer_;
 }
 
 void Buffer::destroy() {
   Context::getDevice().waitIdle();
-  vmaDestroyBuffer(Context::get().allocator, this->buffer, this->allocation);
+  vmaDestroyBuffer(Context::get().allocator_, this->buffer_, this->allocation_);
 }
 
 // StagingBuffer
@@ -80,7 +80,7 @@ void StagingBuffer::transfer(Buffer &buffer, size_t size) {
   };
 
   commandBuffer.copyBuffer(
-      this->buffer, buffer.getHandle(), 1, &bufferCopyInfo);
+      this->buffer_, buffer.getHandle(), 1, &bufferCopyInfo);
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
@@ -150,7 +150,7 @@ void StagingBuffer::transfer(Image &image, uint32_t width, uint32_t height) {
   };
 
   commandBuffer.copyBufferToImage(
-      this->buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
+      this->buffer_, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
 
   transitionImageLayout(
       vk::ImageLayout::eTransferDstOptimal,
@@ -161,7 +161,7 @@ void StagingBuffer::transfer(Image &image, uint32_t width, uint32_t height) {
 
 vk::CommandBuffer StagingBuffer::beginSingleTimeCommandBuffer() {
   vk::CommandBufferAllocateInfo allocateInfo{
-      Context::get().transientCommandPool, // commandPool
+      Context::get().transientCommandPool_, // commandPool
       vk::CommandBufferLevel::ePrimary,    // level
       1,                                   // commandBufferCount
   };
@@ -194,10 +194,10 @@ void StagingBuffer::endSingleTimeCommandBuffer(
       nullptr,        // pSignalSemaphores
   };
 
-  Context::get().transferQueue.submit(submitInfo, {});
+  Context::get().transferQueue_.submit(submitInfo, {});
 
-  Context::get().transferQueue.waitIdle();
+  Context::get().transferQueue_.waitIdle();
 
   Context::getDevice().freeCommandBuffers(
-      Context::get().transientCommandPool, commandBuffer);
+      Context::get().transientCommandPool_, commandBuffer);
 }

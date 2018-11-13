@@ -1,7 +1,7 @@
 #pragma once
 
-#include "descriptor_manager.hpp"
 #include "aliases.hpp"
+#include "descriptor_manager.hpp"
 #include <functional>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
@@ -40,38 +40,38 @@ public:
     return context;
   }
 
-  static Device &getDevice() { return Context::get().device; }
+  static Device &getDevice() { return Context::get().device_; }
 
   static PhysicalDevice &getPhysicalDevice() {
-    return Context::get().physicalDevice;
+    return Context::get().physicalDevice_;
   }
 
   static DescriptorManager &getDescriptorManager() {
-    return Context::get().descriptorManager;
+    return Context::get().descriptorManager_;
   }
 
 protected:
-  vk::Instance instance;
+  vk::Instance instance_;
 
-  vk::DebugReportCallbackEXT callback;
+  vk::DebugReportCallbackEXT callback_;
 
-  vk::PhysicalDevice physicalDevice;
-  vk::Device device;
+  vk::PhysicalDevice physicalDevice_;
+  vk::Device device_;
 
-  uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
-  uint32_t presentQueueFamilyIndex = UINT32_MAX;
-  uint32_t transferQueueFamilyIndex = UINT32_MAX;
+  uint32_t graphicsQueueFamilyIndex_ = UINT32_MAX;
+  uint32_t presentQueueFamilyIndex_ = UINT32_MAX;
+  uint32_t transferQueueFamilyIndex_ = UINT32_MAX;
 
-  vk::Queue graphicsQueue;
-  vk::Queue presentQueue;
-  vk::Queue transferQueue;
+  vk::Queue graphicsQueue_;
+  vk::Queue presentQueue_;
+  vk::Queue transferQueue_;
 
-  VmaAllocator allocator;
+  VmaAllocator allocator_;
 
-  vk::CommandPool graphicsCommandPool;
-  vk::CommandPool transientCommandPool;
+  vk::CommandPool graphicsCommandPool_;
+  vk::CommandPool transientCommandPool_;
 
-  DescriptorManager descriptorManager;
+  DescriptorManager descriptorManager_;
 
   void createInstance();
 
