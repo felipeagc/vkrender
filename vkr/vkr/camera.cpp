@@ -1,7 +1,7 @@
 #include "camera.hpp"
 #include "commandbuffer.hpp"
 #include "context.hpp"
-#include "window.hpp"
+#include "graphics_pipeline.hpp"
 
 using namespace vkr;
 

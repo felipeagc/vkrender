@@ -5,7 +5,9 @@
 #include <vkr/buffer.hpp>
 #include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
-#include <vkr/pipeline.hpp>
+#include <vkr/graphics_pipeline.hpp>
+#include <vkr/shader.hpp>
+#include <vkr/vertex_format.hpp>
 #include <vkr/window.hpp>
 
 struct Vertex {

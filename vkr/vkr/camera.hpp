@@ -1,13 +1,13 @@
 #pragma once
 
 #include "buffer.hpp"
-#include "pipeline.hpp"
 #include "window.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 namespace vkr {
+class GraphicsPipeline;
 
 class Camera {
 public:

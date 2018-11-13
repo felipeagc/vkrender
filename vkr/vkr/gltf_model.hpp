@@ -2,7 +2,7 @@
 
 #include "buffer.hpp"
 #include "commandbuffer.hpp"
-#include "pipeline.hpp"
+#include "vertex_format.hpp"
 #include "texture.hpp"
 #include "window.hpp"
 #include <string>

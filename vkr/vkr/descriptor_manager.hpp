@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pipeline.hpp"
+#include "descriptor.hpp"
 #include <utility>
 #include <vector>
 

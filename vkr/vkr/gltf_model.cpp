@@ -1,5 +1,6 @@
 #include "gltf_model.hpp"
 #include "context.hpp"
+#include "graphics_pipeline.hpp"
 #include <fstl/logging.hpp>
 #include <fstl/unique.hpp>
 #include <tiny_gltf.h>

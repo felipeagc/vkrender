@@ -8,7 +8,8 @@
 #include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
-#include <vkr/pipeline.hpp>
+#include <vkr/graphics_pipeline.hpp>
+#include <vkr/shader.hpp>
 #include <vkr/texture.hpp>
 #include <vkr/window.hpp>
 

@@ -1,7 +1,7 @@
 #include "commandbuffer.hpp"
 
 #include "buffer.hpp"
-#include "pipeline.hpp"
+#include "graphics_pipeline.hpp"
 #include <fstl/fixed_vector.hpp>
 
 using namespace vkr;

@@ -6,7 +6,6 @@ set(
   VKRENDER_SOURCES
   vkr/context.cpp
   vkr/window.cpp
-  vkr/pipeline.cpp
   vkr/buffer.cpp
   vkr/commandbuffer.cpp
   vkr/texture.cpp
@@ -14,6 +13,10 @@ set(
   vkr/gltf_model.cpp
   vkr/camera.cpp
   vkr/descriptor_manager.cpp
+  vkr/graphics_pipeline.cpp
+  vkr/vertex_format.cpp
+  vkr/shader.cpp
+  vkr/descriptor.cpp
   )
 
 add_library(
