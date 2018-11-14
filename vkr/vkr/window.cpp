@@ -26,8 +26,7 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
       SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
 
   if (this->window_ == nullptr) {
-    fstl::log::fatal("Failed to create SDL window");
-    exit(1);
+    throw std::runtime_error("Failed to create SDL window");
   }
 
   SDL_SetWindowResizable(this->window_, SDL_TRUE);
@@ -46,9 +45,7 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
       this->surface_,
       &supported);
   if (!supported) {
-    fstl::log::fatal(
-        "Selected present queue does not support this window's surface");
-    exit(1);
+    throw std::runtime_error("Selected present queue does not support this window's surface");
   }
 
   this->maxMsaaSamples_ = Context::get().getMaxUsableSampleCount();

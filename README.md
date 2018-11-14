@@ -2,7 +2,9 @@
 
 ## Code style
 - Avoid using templates when unnecessary
-- Use _ suffix for member variables
+- Use _ suffix for class member variables
+- No inheritance
+- No virtual member functions
 
 ## TODO
 ### Refactoring
@@ -10,7 +12,6 @@
 - [ ] Remove array_proxy
 - [x] Stop using vulkan.hpp
 - [x] Split pipeline.hpp and pipeline.cpp into multiple files
-- [ ] Stop using exceptions
 - [ ] Convert functions to c-style parameter passing, similar to vulkan functions
 - [ ] Re-do context
 - [ ] Convert some Window members to SoA format instead of AoS

@@ -127,8 +127,7 @@ void StagingBuffer::transfer(VkImage &image, uint32_t width, uint32_t height) {
       srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
       dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     } else {
-      fstl::log::fatal("Unsupported layout transition!");
-      exit(1);
+      throw std::runtime_error("Unsupported layout transition!");
     }
 
     vkCmdPipelineBarrier(
