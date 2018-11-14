@@ -66,7 +66,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(
   };
 
   VK_CHECK(vkCreateDescriptorSetLayout(
-      Context::getDevice(), &createInfo, nullptr, &setLayout));
+      ctx::device, &createInfo, nullptr, &setLayout));
 
   return setLayout;
 }
@@ -113,7 +113,7 @@ VkDescriptorPool createDescriptorPool(
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      Context::getDevice(), &createInfo, nullptr, &descriptorPool));
+      ctx::device, &createInfo, nullptr, &descriptorPool));
 
   return descriptorPool;
 }
@@ -235,7 +235,7 @@ void DescriptorManager::init() {
     };
 
     VK_CHECK(vkCreateDescriptorPool(
-        Context::getDevice(), &createInfo, nullptr, &imguiDescriptorPool));
+        ctx::device, &createInfo, nullptr, &imguiDescriptorPool));
 
     this->addPool(DESC_IMGUI, imguiDescriptorPool);
   }
@@ -243,10 +243,10 @@ void DescriptorManager::init() {
 
 void DescriptorManager::destroy() {
   for (auto &p : this->pools_) {
-    vkDestroyDescriptorPool(Context::getDevice(), p.second, nullptr);
+    vkDestroyDescriptorPool(ctx::device, p.second, nullptr);
   }
 
   for (auto &p : this->setLayouts_) {
-    vkDestroyDescriptorSetLayout(Context::getDevice(), p.second, nullptr);
+    vkDestroyDescriptorSetLayout(ctx::device, p.second, nullptr);
   }
 }

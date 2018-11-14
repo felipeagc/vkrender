@@ -9,7 +9,7 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
   this->setRot(rotation);
 
   auto [descriptorPool, descriptorSetLayout] =
-      Context::getDescriptorManager()[DESC_CAMERA];
+      ctx::descriptorManager[DESC_CAMERA];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -32,7 +32,7 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
     };
 
     vkAllocateDescriptorSets(
-        Context::getDevice(), &allocateInfo, &this->descriptorSets_[i]);
+        ctx::device, &allocateInfo, &this->descriptorSets_[i]);
 
     VkDescriptorBufferInfo bufferInfo{
         this->uniformBuffers_[i].getHandle(),
@@ -53,23 +53,22 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
         nullptr,                           // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(
-        Context::getDevice(), 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(ctx::device, 1, &descriptorWrite, 0, nullptr);
   }
 }
 
-Camera::~Camera() {
+void Camera::destroy() {
   for (auto &uniformBuffer : uniformBuffers_) {
     uniformBuffer.unmapMemory();
     uniformBuffer.destroy();
   }
 
-  auto descriptorPool = Context::getDescriptorManager().getPool(DESC_CAMERA);
+  auto descriptorPool = ctx::descriptorManager.getPool(DESC_CAMERA);
 
   assert(descriptorPool != nullptr);
 
   vkFreeDescriptorSets(
-      Context::getDevice(),
+      ctx::device,
       *descriptorPool,
       this->descriptorSets_.size(),
       this->descriptorSets_.data());

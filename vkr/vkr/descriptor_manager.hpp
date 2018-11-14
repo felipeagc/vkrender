@@ -28,10 +28,10 @@ public:
 
   fstl::fixed_vector<VkDescriptorSetLayout> getDefaultSetLayouts();
 
-protected:
   void init();
   void destroy();
 
+protected:
   std::vector<std::pair<std::string, VkDescriptorPool>> pools_;
   std::vector<std::pair<std::string, VkDescriptorSetLayout>> setLayouts_;
 };

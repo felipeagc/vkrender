@@ -22,7 +22,7 @@ public:
                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         }) {
     auto [descriptorPool, descriptorSetLayout] =
-        vkr::Context::getDescriptorManager()[vkr::DESC_LIGHTING];
+        vkr::ctx::descriptorManager[vkr::DESC_LIGHTING];
 
     assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -35,7 +35,7 @@ public:
     };
 
     vkAllocateDescriptorSets(
-        vkr::Context::getDevice(), &allocateInfo, &this->descriptorSet);
+        vkr::ctx::device, &allocateInfo, &this->descriptorSet);
 
     this->ubo.lightColor = glm::vec4(lightColor, 1.0f);
     this->ubo.lightPos = glm::vec4(lightPos, 1.0f);
@@ -60,21 +60,20 @@ public:
         nullptr,                           // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(
-        vkr::Context::getDevice(), 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(vkr::ctx::device, 1, &descriptorWrite, 0, nullptr);
   }
 
-  ~Lighting() {
+  void destroy() {
     if (this->uniformBuffer) {
       this->uniformBuffer.destroy();
     }
     auto descriptorPool =
-        vkr::Context::getDescriptorManager().getPool(vkr::DESC_LIGHTING);
+        vkr::ctx::descriptorManager.getPool(vkr::DESC_LIGHTING);
 
     assert(descriptorPool != nullptr);
 
     vkFreeDescriptorSets(
-        vkr::Context::getDevice(), *descriptorPool, 1, &this->descriptorSet);
+        vkr::ctx::device, *descriptorPool, 1, &this->descriptorSet);
   }
 
   void bind(vkr::Window &window, vkr::GraphicsPipeline &pipeline) {
@@ -117,7 +116,7 @@ int main() {
       window,
       modelShader,
       vkr::GltfModel::getVertexFormat(),
-      vkr::Context::getDescriptorManager().getDefaultSetLayouts(),
+      vkr::ctx::descriptorManager.getDefaultSetLayouts(),
   };
 
   vkr::Camera camera({0.0, 0.0, 0.0});
@@ -183,10 +182,14 @@ int main() {
     window.present(draw);
   }
 
+  lighting.destroy();
+  camera.destroy();
   helmet.destroy();
   boombox.destroy();
   modelPipeline.destroy();
   modelShader.destroy();
+  window.destroy();
+  vkr::ctx::destroy();
 
   return 0;
 }

@@ -24,7 +24,7 @@ int main() {
       window,
       modelShader,
       vkr::GltfModel::getVertexFormat(),
-      vkr::Context::getDescriptorManager().getDefaultSetLayouts(),
+      vkr::ctx::descriptorManager.getDefaultSetLayouts(),
   };
 
   vkr::Camera camera({3.0, 3.0, 3.0});
@@ -72,10 +72,13 @@ int main() {
     window.present(draw);
   }
 
+  camera.destroy();
   helmet.destroy();
   duck.destroy();
   modelPipeline.destroy();
   modelShader.destroy();
+  window.destroy();
+  vkr::ctx::destroy();
 
   return 0;
 }

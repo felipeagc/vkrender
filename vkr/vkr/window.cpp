@@ -9,8 +9,6 @@
 
 using namespace vkr;
 
-std::vector<const char *> Window::requiredVulkanExtensions;
-
 Window::Window(const char *title, uint32_t width, uint32_t height) {
   auto subsystems = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER;
   if (subsystems == SDL_WasInit(0)) {
@@ -31,24 +29,33 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
 
   SDL_SetWindowResizable(this->window_, SDL_TRUE);
 
-  this->initVulkanExtensions();
+  uint32_t sdlExtensionCount = 0;
+  SDL_Vulkan_GetInstanceExtensions(this->window_, &sdlExtensionCount, nullptr);
+  std::vector<const char *> sdlExtensions(sdlExtensionCount);
+  SDL_Vulkan_GetInstanceExtensions(
+      this->window_, &sdlExtensionCount, sdlExtensions.data());
+
+  // These context initialization functions only run if the context is
+  // uninitialized
+  ctx::preInitialize(sdlExtensions);
 
   this->createVulkanSurface();
 
   // Lazily create vulkan context stuff
-  Context::get().lazyInit(this->surface_);
+  ctx::lateInitialize(this->surface_);
 
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(
-      Context::get().physicalDevice_,
-      Context::get().presentQueueFamilyIndex_,
+      ctx::physicalDevice,
+      ctx::presentQueueFamilyIndex,
       this->surface_,
       &supported);
   if (!supported) {
-    throw std::runtime_error("Selected present queue does not support this window's surface");
+    throw std::runtime_error(
+        "Selected present queue does not support this window's surface");
   }
 
-  this->maxMsaaSamples_ = Context::get().getMaxUsableSampleCount();
+  this->maxMsaaSamples_ = ctx::getMaxUsableSampleCount();
 
   this->createSyncObjects();
 
@@ -68,8 +75,8 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
   this->initImgui();
 }
 
-Window::~Window() {
-  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
+void Window::destroy() {
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
 
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplSDL2_Shutdown();
@@ -78,26 +85,22 @@ Window::~Window() {
   this->destroyResizables();
 
   for (auto &swapchainImageView : this->swapchainImageViews_) {
-    vkDestroyImageView(Context::getDevice(), swapchainImageView, nullptr);
+    vkDestroyImageView(ctx::device, swapchainImageView, nullptr);
   }
 
-  vkDestroySwapchainKHR(Context::getDevice(), this->swapchain_, nullptr);
+  vkDestroySwapchainKHR(ctx::device, this->swapchain_, nullptr);
 
   for (auto &frameResource : this->frameResources_) {
-    vkDestroyFramebuffer(
-        Context::getDevice(), frameResource.framebuffer, nullptr);
-    vkDestroyFramebuffer(
-        Context::getDevice(), frameResource.imguiFramebuffer, nullptr);
+    vkDestroyFramebuffer(ctx::device, frameResource.framebuffer, nullptr);
+    vkDestroyFramebuffer(ctx::device, frameResource.imguiFramebuffer, nullptr);
     vkDestroySemaphore(
-        Context::getDevice(), frameResource.imageAvailableSemaphore, nullptr);
+        ctx::device, frameResource.imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(
-        Context::getDevice(),
-        frameResource.renderingFinishedSemaphore,
-        nullptr);
-    vkDestroyFence(Context::getDevice(), frameResource.fence, nullptr);
+        ctx::device, frameResource.renderingFinishedSemaphore, nullptr);
+    vkDestroyFence(ctx::device, frameResource.fence, nullptr);
   }
 
-  vkDestroySurfaceKHR(Context::get().instance_, this->surface_, nullptr);
+  vkDestroySurfaceKHR(ctx::instance, this->surface_, nullptr);
 
   SDL_DestroyWindow(this->window_);
 }
@@ -116,19 +119,17 @@ void Window::present(std::function<void()> drawFunction) {
 
   // Begin
   vkWaitForFences(
-      Context::getDevice(),
+      ctx::device,
       1,
       &this->frameResources_[this->currentFrame_].fence,
       VK_TRUE,
       UINT64_MAX);
 
   vkResetFences(
-      Context::getDevice(),
-      1,
-      &this->frameResources_[this->currentFrame_].fence);
+      ctx::device, 1, &this->frameResources_[this->currentFrame_].fence);
 
   if (vkAcquireNextImageKHR(
-          Context::getDevice(),
+          ctx::device,
           this->swapchain_,
           UINT64_MAX,
           this->frameResources_[this->currentFrame_].imageAvailableSemaphore,
@@ -163,7 +164,7 @@ void Window::present(std::function<void()> drawFunction) {
 
   VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
-  if (Context::get().presentQueue_ != Context::get().graphicsQueue_) {
+  if (ctx::presentQueue != ctx::graphicsQueue) {
     VkImageMemoryBarrier barrierFromPresentToDraw = {
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,           // sType
         nullptr,                                          // pNext
@@ -171,8 +172,8 @@ void Window::present(std::function<void()> drawFunction) {
         VK_ACCESS_MEMORY_READ_BIT,                        // dstAccessMask
         VK_IMAGE_LAYOUT_UNDEFINED,                        // oldLayout
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,         // newLayout
-        Context::get().presentQueueFamilyIndex_,          // srcQueueFamilyIndex
-        Context::get().graphicsQueueFamilyIndex_,         // dstQueueFamilyIndex
+        ctx::presentQueueFamilyIndex,                     // srcQueueFamilyIndex
+        ctx::graphicsQueueFamilyIndex,                    // dstQueueFamilyIndex
         this->swapchainImages_[this->currentImageIndex_], // image
         imageSubresourceRange,                            // subresourceRange
     };
@@ -284,7 +285,7 @@ void Window::present(std::function<void()> drawFunction) {
     vkCmdEndRenderPass(commandBuffer);
   }
 
-  if (Context::get().presentQueue_ != Context::get().graphicsQueue_) {
+  if (ctx::presentQueue != ctx::graphicsQueue) {
     VkImageMemoryBarrier barrierFromDrawToPresent{
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,           // sType
         nullptr,                                          // pNext
@@ -292,8 +293,8 @@ void Window::present(std::function<void()> drawFunction) {
         VK_ACCESS_MEMORY_READ_BIT,                        // dstAccessMask
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,         // oldLayout
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,                  // newLayout
-        Context::get().graphicsQueueFamilyIndex_,         // srcQueueFamilyIndex
-        Context::get().presentQueueFamilyIndex_,          // dstQueueFamilyIndex
+        ctx::graphicsQueueFamilyIndex,                    // srcQueueFamilyIndex
+        ctx::presentQueueFamilyIndex,                     // dstQueueFamilyIndex
         this->swapchainImages_[this->currentImageIndex_], // image
         imageSubresourceRange,                            // subresourceRange
     };
@@ -332,7 +333,7 @@ void Window::present(std::function<void()> drawFunction) {
   };
 
   vkQueueSubmit(
-      Context::get().graphicsQueue_,
+      ctx::graphicsQueue,
       1,
       &submitInfo,
       this->frameResources_[this->currentFrame_].fence);
@@ -349,8 +350,7 @@ void Window::present(std::function<void()> drawFunction) {
       nullptr,                          // pResults
   };
 
-  VkResult result =
-      vkQueuePresentKHR(Context::get().presentQueue_, &presentInfo);
+  VkResult result = vkQueuePresentKHR(ctx::presentQueue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     this->updateSize();
   } else {
@@ -457,20 +457,9 @@ void Window::imguiBeginFrame() {
 
 void Window::imguiEndFrame() { ImGui::Render(); }
 
-void Window::initVulkanExtensions() const {
-  uint32_t sdlExtensionCount = 0;
-  SDL_Vulkan_GetInstanceExtensions(this->window_, &sdlExtensionCount, nullptr);
-  std::vector<const char *> sdlExtensions(sdlExtensionCount);
-  SDL_Vulkan_GetInstanceExtensions(
-      this->window_, &sdlExtensionCount, sdlExtensions.data());
-  Window::requiredVulkanExtensions = sdlExtensions;
-}
-
 void Window::createVulkanSurface() {
   if (!SDL_Vulkan_CreateSurface(
-          this->window_,
-          Context::get().instance_,
-          &this->surface_)) {
+          this->window_, ctx::instance, &this->surface_)) {
     throw std::runtime_error(
         "Failed to create window surface: " + std::string(SDL_GetError()));
   }
@@ -485,13 +474,13 @@ void Window::createSyncObjects() {
     semaphoreCreateInfo.flags = 0;
 
     VK_CHECK(vkCreateSemaphore(
-        Context::getDevice(),
+        ctx::device,
         &semaphoreCreateInfo,
         nullptr,
         &resources.imageAvailableSemaphore));
 
     VK_CHECK(vkCreateSemaphore(
-        Context::getDevice(),
+        ctx::device,
         &semaphoreCreateInfo,
         nullptr,
         &resources.renderingFinishedSemaphore));
@@ -502,41 +491,35 @@ void Window::createSyncObjects() {
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     VK_CHECK(vkCreateFence(
-        Context::getDevice(), &fenceCreateInfo, nullptr, &resources.fence));
+        ctx::device, &fenceCreateInfo, nullptr, &resources.fence));
   }
 }
 
 void Window::createSwapchain(uint32_t width, uint32_t height) {
   for (const auto &imageView : this->swapchainImageViews_) {
     if (imageView) {
-      vkDestroyImageView(Context::getDevice(), imageView, nullptr);
+      vkDestroyImageView(ctx::device, imageView, nullptr);
     }
   }
   this->swapchainImageViews_.clear();
 
   VkSurfaceCapabilitiesKHR surfaceCapabilities;
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-      Context::get().physicalDevice_, this->surface_, &surfaceCapabilities);
+      ctx::physicalDevice, this->surface_, &surfaceCapabilities);
 
   uint32_t count;
 
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      Context::get().physicalDevice_, this->surface_, &count, nullptr);
+      ctx::physicalDevice, this->surface_, &count, nullptr);
   fstl::fixed_vector<VkSurfaceFormatKHR> surfaceFormats(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      Context::get().physicalDevice_,
-      this->surface_,
-      &count,
-      surfaceFormats.data());
+      ctx::physicalDevice, this->surface_, &count, surfaceFormats.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      Context::get().physicalDevice_, this->surface_, &count, nullptr);
+      ctx::physicalDevice, this->surface_, &count, nullptr);
   fstl::fixed_vector<VkPresentModeKHR> presentModes(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      Context::get().physicalDevice_,
-      this->surface_,
-      &count,
-      presentModes.data());
+      ctx::physicalDevice, this->surface_, &count, presentModes.data());
 
   auto desiredNumImages = getSwapchainNumImages(surfaceCapabilities);
   auto desiredFormat = getSwapchainFormat(surfaceFormats);
@@ -568,24 +551,20 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
       oldSwapchain                       // oldSwapchain
   };
 
-  vkCreateSwapchainKHR(
-      Context::getDevice(), &createInfo, nullptr, &this->swapchain_);
+  vkCreateSwapchainKHR(ctx::device, &createInfo, nullptr, &this->swapchain_);
 
   if (oldSwapchain) {
-    vkDestroySwapchainKHR(Context::getDevice(), oldSwapchain, nullptr);
+    vkDestroySwapchainKHR(ctx::device, oldSwapchain, nullptr);
   }
 
   this->swapchainImageFormat_ = desiredFormat.format;
   this->swapchainExtent_ = desiredExtent;
 
-  VK_CHECK(vkGetSwapchainImagesKHR(
-      Context::getDevice(), this->swapchain_, &count, nullptr));
+  VK_CHECK(
+      vkGetSwapchainImagesKHR(ctx::device, this->swapchain_, &count, nullptr));
   this->swapchainImages_.resize(count);
   VK_CHECK(vkGetSwapchainImagesKHR(
-      Context::getDevice(),
-      this->swapchain_,
-      &count,
-      this->swapchainImages_.data()));
+      ctx::device, this->swapchain_, &count, this->swapchainImages_.data()));
 }
 
 void Window::createSwapchainImageViews() {
@@ -608,10 +587,7 @@ void Window::createSwapchainImageViews() {
         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
     VK_CHECK(vkCreateImageView(
-        Context::getDevice(),
-        &createInfo,
-        nullptr,
-        &this->swapchainImageViews_[i]));
+        ctx::device, &createInfo, nullptr, &this->swapchainImageViews_[i]));
   }
 }
 
@@ -619,14 +595,13 @@ void Window::allocateGraphicsCommandBuffers() {
   VkCommandBufferAllocateInfo allocateInfo = {};
   allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocateInfo.pNext = nullptr;
-  allocateInfo.commandPool = Context::get().graphicsCommandPool_;
+  allocateInfo.commandPool = ctx::graphicsCommandPool;
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
   fstl::fixed_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
 
-  vkAllocateCommandBuffers(
-      Context::getDevice(), &allocateInfo, commandBuffers.data());
+  vkAllocateCommandBuffers(ctx::device, &allocateInfo, commandBuffers.data());
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     this->frameResources_[i].commandBuffer = commandBuffers[i];
@@ -644,7 +619,7 @@ void Window::createDepthStencilResources() {
   for (auto &format : depthFormats) {
     VkFormatProperties formatProps;
     vkGetPhysicalDeviceFormatProperties(
-        Context::getPhysicalDevice(), format, &formatProps);
+        ctx::physicalDevice, format, &formatProps);
 
     if (formatProps.optimalTilingFeatures &
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
@@ -682,7 +657,7 @@ void Window::createDepthStencilResources() {
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      Context::get().allocator_,
+      ctx::allocator,
       &imageCreateInfo,
       &allocInfo,
       &this->depthStencil_.image,
@@ -712,10 +687,7 @@ void Window::createDepthStencilResources() {
   };
 
   VK_CHECK(vkCreateImageView(
-      Context::getDevice(),
-      &imageViewCreateInfo,
-      nullptr,
-      &this->depthStencil_.view));
+      ctx::device, &imageViewCreateInfo, nullptr, &this->depthStencil_.view));
 }
 
 void Window::createMultisampleTargets() {
@@ -748,7 +720,7 @@ void Window::createMultisampleTargets() {
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
-        Context::get().allocator_,
+        ctx::allocator,
         &imageCreateInfo,
         &allocInfo,
         &this->multiSampleTargets_.color.image,
@@ -778,7 +750,7 @@ void Window::createMultisampleTargets() {
     };
 
     VK_CHECK(vkCreateImageView(
-        Context::getDevice(),
+        ctx::device,
         &imageViewCreateInfo,
         nullptr,
         &this->multiSampleTargets_.color.view));
@@ -813,7 +785,7 @@ void Window::createMultisampleTargets() {
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
-        Context::get().allocator_,
+        ctx::allocator,
         &imageCreateInfo,
         &allocInfo,
         &this->multiSampleTargets_.depth.image,
@@ -844,7 +816,7 @@ void Window::createMultisampleTargets() {
     };
 
     VK_CHECK(vkCreateImageView(
-        Context::getDevice(),
+        ctx::device,
         &imageViewCreateInfo,
         nullptr,
         &this->multiSampleTargets_.depth.view));
@@ -993,10 +965,7 @@ void Window::createRenderPass() {
   };
 
   VK_CHECK(vkCreateRenderPass(
-      Context::getDevice(),
-      &renderPassCreateInfo,
-      nullptr,
-      &this->renderPass_));
+      ctx::device, &renderPassCreateInfo, nullptr, &this->renderPass_));
 }
 
 void Window::createImguiRenderPass() {
@@ -1040,10 +1009,7 @@ void Window::createImguiRenderPass() {
   };
 
   VK_CHECK(vkCreateRenderPass(
-      Context::getDevice(),
-      &renderPassCreateInfo,
-      nullptr,
-      &this->imguiRenderPass_));
+      ctx::device, &renderPassCreateInfo, nullptr, &this->imguiRenderPass_));
 }
 
 void Window::initImgui() {
@@ -1055,14 +1021,13 @@ void Window::initImgui() {
 
   // Setup Vulkan binding
   ImGui_ImplVulkan_InitInfo init_info = {};
-  init_info.Instance = Context::get().instance_;
-  init_info.PhysicalDevice = Context::getPhysicalDevice();
-  init_info.Device = Context::getDevice();
-  init_info.QueueFamily = Context::get().graphicsQueueFamilyIndex_;
-  init_info.Queue = Context::get().graphicsQueue_;
+  init_info.Instance = ctx::instance;
+  init_info.PhysicalDevice = ctx::physicalDevice;
+  init_info.Device = ctx::device;
+  init_info.QueueFamily = ctx::graphicsQueueFamilyIndex;
+  init_info.Queue = ctx::graphicsQueue;
   init_info.PipelineCache = VK_NULL_HANDLE;
-  init_info.DescriptorPool =
-      *Context::getDescriptorManager().getPool(DESC_IMGUI);
+  init_info.DescriptorPool = *ctx::descriptorManager.getPool(DESC_IMGUI);
   init_info.Allocator = nullptr;
   init_info.CheckVkResultFn = [](VkResult result) {
     if (result != VK_SUCCESS) {
@@ -1077,11 +1042,11 @@ void Window::initImgui() {
   // Upload Fonts
   {
     // Use any command queue
-    VkCommandPool commandPool = Context::get().graphicsCommandPool_;
+    VkCommandPool commandPool = ctx::graphicsCommandPool;
     VkCommandBuffer commandBuffer =
         this->frameResources_[this->currentFrame_].commandBuffer;
 
-    VK_CHECK(vkResetCommandPool(Context::getDevice(), commandPool, 0));
+    VK_CHECK(vkResetCommandPool(ctx::device, commandPool, 0));
     VkCommandBufferBeginInfo beginInfo = {
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
         nullptr,                                     // pNext
@@ -1100,10 +1065,9 @@ void Window::initImgui() {
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
-    VK_CHECK(vkQueueSubmit(
-        Context::get().graphicsQueue_, 1, &endInfo, VK_NULL_HANDLE));
+    VK_CHECK(vkQueueSubmit(ctx::graphicsQueue, 1, &endInfo, VK_NULL_HANDLE));
 
-    VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
+    VK_CHECK(vkDeviceWaitIdle(ctx::device));
 
     ImGui_ImplVulkan_InvalidateFontUploadObjects();
   }
@@ -1111,7 +1075,7 @@ void Window::initImgui() {
 
 void Window::regenFramebuffer(
     VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
-  vkDestroyFramebuffer(Context::getDevice(), framebuffer, nullptr);
+  vkDestroyFramebuffer(ctx::device, framebuffer, nullptr);
 
   VkImageView attachments[4]{
       this->multiSampleTargets_.color.view,
@@ -1132,13 +1096,13 @@ void Window::regenFramebuffer(
       1,                                             // layers
   };
 
-  VK_CHECK(vkCreateFramebuffer(
-      Context::getDevice(), &createInfo, nullptr, &framebuffer));
+  VK_CHECK(
+      vkCreateFramebuffer(ctx::device, &createInfo, nullptr, &framebuffer));
 }
 
 void Window::regenImguiFramebuffer(
     VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
-  vkDestroyFramebuffer(Context::getDevice(), framebuffer, nullptr);
+  vkDestroyFramebuffer(ctx::device, framebuffer, nullptr);
 
   VkFramebufferCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
@@ -1152,25 +1116,22 @@ void Window::regenImguiFramebuffer(
       1,                                         // layers
   };
 
-  VK_CHECK(vkCreateFramebuffer(
-      Context::getDevice(), &createInfo, nullptr, &framebuffer));
+  VK_CHECK(
+      vkCreateFramebuffer(ctx::device, &createInfo, nullptr, &framebuffer));
 }
 
 void Window::destroyResizables() {
-  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
 
   for (auto &resources : this->frameResources_) {
     vkFreeCommandBuffers(
-        Context::getDevice(),
-        Context::get().graphicsCommandPool_,
-        1,
-        &resources.commandBuffer);
+        ctx::device, ctx::graphicsCommandPool, 1, &resources.commandBuffer);
   }
 
   if (this->depthStencil_.image) {
-    vkDestroyImageView(Context::getDevice(), this->depthStencil_.view, nullptr);
+    vkDestroyImageView(ctx::device, this->depthStencil_.view, nullptr);
     vmaDestroyImage(
-        Context::get().allocator_,
+        ctx::allocator,
         this->depthStencil_.image,
         this->depthStencil_.allocation);
     this->depthStencil_.image = nullptr;
@@ -1179,9 +1140,9 @@ void Window::destroyResizables() {
 
   if (this->multiSampleTargets_.color.image) {
     vkDestroyImageView(
-        Context::getDevice(), this->multiSampleTargets_.color.view, nullptr);
+        ctx::device, this->multiSampleTargets_.color.view, nullptr);
     vmaDestroyImage(
-        Context::get().allocator_,
+        ctx::allocator,
         this->multiSampleTargets_.color.image,
         this->multiSampleTargets_.color.allocation);
     this->multiSampleTargets_.color.image = nullptr;
@@ -1190,17 +1151,17 @@ void Window::destroyResizables() {
 
   if (this->multiSampleTargets_.depth.image) {
     vkDestroyImageView(
-        Context::getDevice(), this->multiSampleTargets_.depth.view, nullptr);
+        ctx::device, this->multiSampleTargets_.depth.view, nullptr);
     vmaDestroyImage(
-        Context::get().allocator_,
+        ctx::allocator,
         this->multiSampleTargets_.depth.image,
         this->multiSampleTargets_.depth.allocation);
     this->multiSampleTargets_.depth.image = nullptr;
     this->multiSampleTargets_.depth.allocation = VK_NULL_HANDLE;
   }
 
-  vkDestroyRenderPass(Context::getDevice(), this->imguiRenderPass_, nullptr);
-  vkDestroyRenderPass(Context::getDevice(), this->renderPass_, nullptr);
+  vkDestroyRenderPass(ctx::device, this->imguiRenderPass_, nullptr);
+  vkDestroyRenderPass(ctx::device, this->renderPass_, nullptr);
 }
 
 uint32_t Window::getSwapchainNumImages(

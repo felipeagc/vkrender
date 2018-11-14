@@ -12,14 +12,15 @@ namespace vkr {
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Window {
-  friend class Context;
   friend class GraphicsPipeline;
 
 public:
   Window(const char *title, uint32_t width = 800, uint32_t height = 600);
-  ~Window();
+  ~Window() {};
   Window(const Window &other) = delete;
   Window &operator=(Window other) = delete;
+
+  void destroy();
 
   SDL_Event pollEvent();
 
@@ -59,8 +60,6 @@ public:
 
 protected:
   bool shouldClose_ = false;
-
-  static std::vector<const char *> requiredVulkanExtensions;
 
   SDL_Window *window_{nullptr};
 
@@ -122,7 +121,6 @@ protected:
   VkRenderPass renderPass_{VK_NULL_HANDLE};
   VkRenderPass imguiRenderPass_{VK_NULL_HANDLE};
 
-  void initVulkanExtensions() const;
   void createVulkanSurface();
 
   void createSyncObjects();

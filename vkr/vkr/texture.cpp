@@ -46,10 +46,10 @@ VkDescriptorImageInfo Texture::getDescriptorInfo() const {
 }
 
 void Texture::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
-  vkDestroyImageView(Context::getDevice(), this->imageView_, nullptr);
-  vkDestroySampler(Context::getDevice(), this->sampler_, nullptr);
-  vmaDestroyImage(Context::get().allocator_, this->image_, this->allocation_);
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
+  vkDestroyImageView(ctx::device, this->imageView_, nullptr);
+  vkDestroySampler(ctx::device, this->sampler_, nullptr);
+  vmaDestroyImage(ctx::allocator, this->image_, this->allocation_);
 }
 
 void Texture::createImage() {
@@ -79,7 +79,7 @@ void Texture::createImage() {
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      Context::get().allocator_,
+      ctx::allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
       &this->image_,
@@ -109,7 +109,7 @@ void Texture::createImage() {
   };
 
   VK_CHECK(vkCreateImageView(
-      Context::getDevice(), &imageViewCreateInfo, nullptr, &this->imageView_));
+      ctx::device, &imageViewCreateInfo, nullptr, &this->imageView_));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -133,7 +133,7 @@ void Texture::createImage() {
   };
 
   VK_CHECK(vkCreateSampler(
-      Context::getDevice(), &samplerCreateInfo, nullptr, &this->sampler_));
+      ctx::device, &samplerCreateInfo, nullptr, &this->sampler_));
 }
 
 std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {

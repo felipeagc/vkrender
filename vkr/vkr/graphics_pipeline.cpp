@@ -57,7 +57,7 @@ GraphicsPipeline::GraphicsPipeline(
   };
 
   VkPhysicalDeviceFeatures deviceFeatures;
-  vkGetPhysicalDeviceFeatures(Context::getPhysicalDevice(), &deviceFeatures);
+  vkGetPhysicalDeviceFeatures(ctx::physicalDevice, &deviceFeatures);
   VkBool32 hasSampleShading = deviceFeatures.sampleRateShading;
 
   VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{
@@ -130,7 +130,7 @@ GraphicsPipeline::GraphicsPipeline(
   };
 
   VK_CHECK(vkCreatePipelineLayout(
-      Context::getDevice(),
+      ctx::device,
       &pipelineLayoutCreateInfo,
       nullptr,
       &this->pipelineLayout_));
@@ -158,7 +158,7 @@ GraphicsPipeline::GraphicsPipeline(
   };
 
   VK_CHECK(vkCreateGraphicsPipelines(
-      Context::getDevice(),
+      ctx::device,
       VK_NULL_HANDLE,
       1,
       &pipelineCreateInfo,
@@ -173,7 +173,7 @@ VkPipelineLayout GraphicsPipeline::getLayout() const {
 VkPipeline GraphicsPipeline::getPipeline() const { return this->pipeline_; }
 
 void GraphicsPipeline::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
-  vkDestroyPipeline(Context::getDevice(), this->pipeline_, nullptr);
-  vkDestroyPipelineLayout(Context::getDevice(), this->pipelineLayout_, nullptr);
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
+  vkDestroyPipeline(ctx::device, this->pipeline_, nullptr);
+  vkDestroyPipelineLayout(ctx::device, this->pipelineLayout_, nullptr);
 }

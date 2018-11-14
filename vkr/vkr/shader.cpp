@@ -156,10 +156,10 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
 }
 
 void Shader::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
 
-  vkDestroyShaderModule(Context::getDevice(), this->vertexModule_, nullptr);
-  vkDestroyShaderModule(Context::getDevice(), this->fragmentModule_, nullptr);
+  vkDestroyShaderModule(ctx::device, this->vertexModule_, nullptr);
+  vkDestroyShaderModule(ctx::device, this->fragmentModule_, nullptr);
 }
 
 VkShaderModule
@@ -174,6 +174,6 @@ Shader::createShaderModule(const std::vector<uint32_t> &code) const {
       code.data()};
 
   VK_CHECK(vkCreateShaderModule(
-      Context::getDevice(), &createInfo, nullptr, &shaderModule));
+      ctx::device, &createInfo, nullptr, &shaderModule));
   return shaderModule;
 }

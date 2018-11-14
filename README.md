@@ -13,7 +13,7 @@
 - [x] Stop using vulkan.hpp
 - [x] Split pipeline.hpp and pipeline.cpp into multiple files
 - [ ] Convert functions to c-style parameter passing, similar to vulkan functions
-- [ ] Re-do context
+- [x] Re-do context
 - [ ] Convert some Window members to SoA format instead of AoS
 - [ ] Remove Buffer classes and add helper functions for buffer creation
 - [ ] Add Buffers class that stores an array of buffers and an array of allocations

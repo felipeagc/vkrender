@@ -28,7 +28,7 @@ Buffer::Buffer(
   allocInfo.requiredFlags = memoryProperty;
 
   VK_CHECK(vmaCreateBuffer(
-      Context::get().allocator_,
+      ctx::allocator,
       &bufferCreateInfo,
       &allocInfo,
       &this->buffer_,
@@ -37,21 +37,20 @@ Buffer::Buffer(
 }
 
 void Buffer::mapMemory(void **dest) {
-  if (vmaMapMemory(Context::get().allocator_, this->allocation_, dest) !=
-      VK_SUCCESS) {
+  if (vmaMapMemory(ctx::allocator, this->allocation_, dest) != VK_SUCCESS) {
     throw std::runtime_error("Failed to map image memory");
   }
 }
 
 void Buffer::unmapMemory() {
-  vmaUnmapMemory(Context::get().allocator_, this->allocation_);
+  vmaUnmapMemory(ctx::allocator, this->allocation_);
 }
 
 VkBuffer Buffer::getHandle() const { return this->buffer_; }
 
 void Buffer::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
-  vmaDestroyBuffer(Context::get().allocator_, this->buffer_, this->allocation_);
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
+  vmaDestroyBuffer(ctx::allocator, this->buffer_, this->allocation_);
 }
 
 // StagingBuffer
@@ -179,15 +178,15 @@ VkCommandBuffer StagingBuffer::beginSingleTimeCommandBuffer() {
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
-      Context::get().transientCommandPool_, // commandPool
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY,      // level
-      1,                                    // commandBufferCount
+      ctx::transientCommandPool,       // commandPool
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
+      1,                               // commandBufferCount
   };
 
   VkCommandBuffer commandBuffer;
 
-  VK_CHECK(vkAllocateCommandBuffers(
-      Context::getDevice(), &allocateInfo, &commandBuffer));
+  VK_CHECK(
+      vkAllocateCommandBuffers(ctx::device, &allocateInfo, &commandBuffer));
 
   VkCommandBufferBeginInfo commandBufferBeginInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -216,14 +215,10 @@ void StagingBuffer::endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
       nullptr,        // pSignalSemaphores
   };
 
-  VK_CHECK(vkQueueSubmit(
-      Context::get().transferQueue_, 1, &submitInfo, VK_NULL_HANDLE));
+  VK_CHECK(vkQueueSubmit(ctx::transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
 
-  VK_CHECK(vkQueueWaitIdle(Context::get().transferQueue_));
+  VK_CHECK(vkQueueWaitIdle(ctx::transferQueue));
 
   vkFreeCommandBuffers(
-      Context::getDevice(),
-      Context::get().transientCommandPool_,
-      1,
-      &commandBuffer);
+      ctx::device, ctx::transientCommandPool, 1, &commandBuffer);
 }

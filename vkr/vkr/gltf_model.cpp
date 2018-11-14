@@ -12,7 +12,7 @@ GltfModel::Material::Material(
     const GltfModel &model, int albedoTextureIndex, glm::vec4 baseColorFactor)
     : albedoTextureIndex(albedoTextureIndex) {
   auto [descriptorPool, descriptorSetLayout] =
-      Context::getDescriptorManager()[DESC_MATERIAL];
+      ctx::descriptorManager[DESC_MATERIAL];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -28,7 +28,7 @@ GltfModel::Material::Material(
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     VK_CHECK(vkAllocateDescriptorSets(
-        Context::getDevice(), &allocateInfo, &this->descriptorSets[i]));
+        ctx::device, &allocateInfo, &this->descriptorSets[i]));
 
     this->uniformBuffers[i] = Buffer{
         sizeof(MaterialUniform),
@@ -77,7 +77,7 @@ GltfModel::Material::Material(
     };
 
     vkUpdateDescriptorSets(
-        Context::getDevice(),
+        ctx::device,
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
@@ -103,7 +103,7 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
   this->ubo.model = matrix;
 
   auto [descriptorPool, descriptorSetLayout] =
-      Context::getDescriptorManager()[DESC_MESH];
+      ctx::descriptorManager[DESC_MESH];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -131,7 +131,7 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
         this->uniformBuffers[i].getHandle(), 0, sizeof(MeshUniform)};
 
     VK_CHECK(vkAllocateDescriptorSets(
-        Context::getDevice(), &allocateInfo, &this->descriptorSets[i]));
+        ctx::device, &allocateInfo, &this->descriptorSets[i]));
 
     VkWriteDescriptorSet descriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -147,7 +147,7 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
     };
 
     vkUpdateDescriptorSets(
-        Context::getDevice(), 1, &descriptorWrite, 0, nullptr);
+        ctx::device, 1, &descriptorWrite, 0, nullptr);
   }
 }
 
@@ -279,8 +279,6 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   stagingBuffer.destroy();
 }
 
-GltfModel::~GltfModel() {}
-
 void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
@@ -327,11 +325,11 @@ void GltfModel::destroy() {
         uniformBuffer.destroy();
     }
 
-    auto descriptorPool = Context::getDescriptorManager().getPool(DESC_MESH);
+    auto descriptorPool = ctx::descriptorManager.getPool(DESC_MESH);
     assert(descriptorPool != nullptr);
 
     vkFreeDescriptorSets(
-        Context::getDevice(),
+        ctx::device,
         *descriptorPool,
         mesh.descriptorSets.size(),
         mesh.descriptorSets.data());
@@ -344,12 +342,12 @@ void GltfModel::destroy() {
     }
 
     auto descriptorPool =
-        Context::getDescriptorManager().getPool(DESC_MATERIAL);
+        ctx::descriptorManager.getPool(DESC_MATERIAL);
 
     assert(descriptorPool != nullptr);
 
     vkFreeDescriptorSets(
-        Context::getDevice(),
+        ctx::device,
         *descriptorPool,
         material.descriptorSets.size(),
         material.descriptorSets.data());

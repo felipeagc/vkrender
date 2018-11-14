@@ -7,8 +7,7 @@
 #include <vulkan/vulkan.h>
 
 namespace vkr {
-class Window;
-class CommandBuffer;
+namespace ctx {
 
 #ifdef NDEBUG
 const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {};
@@ -22,83 +21,34 @@ const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
-class Context {
-  friend class Window;
-  friend class Buffer;
-  friend class StagingBuffer;
-  friend class Texture;
+extern VkInstance instance;
+extern VkDevice device;
+extern VkPhysicalDevice physicalDevice;
 
-public:
-  Context();
-  ~Context();
-  Context(Context const &) = delete;
-  Context &operator=(Context const &) = delete;
+extern VkDebugReportCallbackEXT callback;
 
-  static Context &get() {
-    static Context context;
-    return context;
-  }
+extern uint32_t graphicsQueueFamilyIndex;
+extern uint32_t presentQueueFamilyIndex;
+extern uint32_t transferQueueFamilyIndex;
 
-  static VkDevice &getDevice() { return Context::get().device_; }
+extern VkQueue graphicsQueue;
+extern VkQueue presentQueue;
+extern VkQueue transferQueue;
 
-  static VkPhysicalDevice &getPhysicalDevice() {
-    return Context::get().physicalDevice_;
-  }
+extern VmaAllocator allocator;
 
-  static DescriptorManager &getDescriptorManager() {
-    return Context::get().descriptorManager_;
-  }
+extern VkCommandPool graphicsCommandPool;
+extern VkCommandPool transientCommandPool;
 
-protected:
-  VkInstance instance_{VK_NULL_HANDLE};
+extern DescriptorManager descriptorManager;
 
-  VkDebugReportCallbackEXT callback_{VK_NULL_HANDLE};
+void preInitialize(
+    const std::vector<const char *> &requiredWindowVulkanExtensions);
+void lateInitialize(VkSurfaceKHR &surface);
+void destroy();
 
-  VkPhysicalDevice physicalDevice_{VK_NULL_HANDLE};
-  VkDevice device_{VK_NULL_HANDLE};
+VkSampleCountFlagBits getMaxUsableSampleCount();
 
-  uint32_t graphicsQueueFamilyIndex_ = UINT32_MAX;
-  uint32_t presentQueueFamilyIndex_ = UINT32_MAX;
-  uint32_t transferQueueFamilyIndex_ = UINT32_MAX;
-
-  VkQueue graphicsQueue_{VK_NULL_HANDLE};
-  VkQueue presentQueue_{VK_NULL_HANDLE};
-  VkQueue transferQueue_{VK_NULL_HANDLE};
-
-  VmaAllocator allocator_{VK_NULL_HANDLE};
-
-  VkCommandPool graphicsCommandPool_{VK_NULL_HANDLE};
-  VkCommandPool transientCommandPool_{VK_NULL_HANDLE};
-
-  DescriptorManager descriptorManager_;
-
-  void createInstance();
-
-  void lazyInit(VkSurfaceKHR &surface);
-
-  void createDevice(VkSurfaceKHR &surface);
-  void getDeviceQueues();
-
-  void setupMemoryAllocator();
-
-  void createGraphicsCommandPool();
-  void createTransientCommandPool();
-
-  VkSampleCountFlagBits getMaxUsableSampleCount();
-
-  std::vector<const char *>
-  getRequiredExtensions(std::vector<const char *> sdlExtensions);
-
-  bool checkValidationLayerSupport();
-
-  void setupDebugCallback();
-
-  bool checkPhysicalDeviceProperties(
-      VkPhysicalDevice physicalDevice,
-      VkSurfaceKHR &surface,
-      uint32_t *graphicsQueue,
-      uint32_t *presentQueue,
-      uint32_t *transferQueue);
-};
+} // namespace ctx
 
 } // namespace vkr

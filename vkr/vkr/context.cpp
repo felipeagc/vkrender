@@ -51,278 +51,30 @@ void DestroyDebugReportCallbackEXT(
   }
 }
 
-Context::Context() {
-  this->createInstance();
-#ifndef NDEBUG
-  this->setupDebugCallback();
-#endif
-}
+namespace vkr {
+namespace ctx {
+VkInstance instance = VK_NULL_HANDLE;
+VkDevice device = VK_NULL_HANDLE;
+VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
-Context::~Context() {
-  VK_CHECK(vkDeviceWaitIdle(this->device_));
+VkDebugReportCallbackEXT callback = VK_NULL_HANDLE;
 
-  this->descriptorManager_.destroy();
+uint32_t graphicsQueueFamilyIndex = VK_NULL_HANDLE;
+uint32_t presentQueueFamilyIndex = VK_NULL_HANDLE;
+uint32_t transferQueueFamilyIndex = VK_NULL_HANDLE;
 
-  vkDestroyCommandPool(this->device_, this->transientCommandPool_, nullptr);
-  vkDestroyCommandPool(this->device_, this->graphicsCommandPool_, nullptr);
+VkQueue graphicsQueue = VK_NULL_HANDLE;
+VkQueue presentQueue = VK_NULL_HANDLE;
+VkQueue transferQueue = VK_NULL_HANDLE;
 
-  if (this->allocator_ != VK_NULL_HANDLE) {
-    vmaDestroyAllocator(this->allocator_);
-  }
+VmaAllocator allocator = VK_NULL_HANDLE;
 
-  vkDestroyDevice(this->device_, nullptr);
+VkCommandPool graphicsCommandPool = VK_NULL_HANDLE;
+VkCommandPool transientCommandPool = VK_NULL_HANDLE;
 
-  if (this->callback_) {
-    DestroyDebugReportCallbackEXT(this->instance_, this->callback_, nullptr);
-  }
+DescriptorManager descriptorManager;
 
-  vkDestroyInstance(this->instance_, nullptr);
-
-  SDL_Quit();
-}
-
-void Context::createInstance() {
-#ifndef NDEBUG
-  if (!checkValidationLayerSupport()) {
-    throw std::runtime_error("Validation layers requested, but not available");
-  }
-#endif
-
-  VkApplicationInfo appInfo = {};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pNext = nullptr;
-  appInfo.pApplicationName = "App";
-  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.pEngineName = "No engine";
-  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.apiVersion = VK_API_VERSION_1_0;
-
-  VkInstanceCreateInfo createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  createInfo.flags = 0;
-  createInfo.pApplicationInfo = &appInfo;
-
-#ifdef NDEBUG
-  createInfo.enabledLayerCount = 0;
-  createInfo.ppEnabledLayerNames = nullptr;
-#else
-  createInfo.enabledLayerCount =
-      static_cast<uint32_t>(REQUIRED_VALIDATION_LAYERS.size());
-  createInfo.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data();
-#endif
-
-  // Set required instance extensions
-  auto extensions =
-      this->getRequiredExtensions(Window::requiredVulkanExtensions);
-  createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-  createInfo.ppEnabledExtensionNames = extensions.data();
-
-  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &this->instance_));
-}
-
-void Context::lazyInit(VkSurfaceKHR &surface) {
-  if (this->device_) {
-    return;
-  }
-
-  this->createDevice(surface);
-
-  this->getDeviceQueues();
-
-  this->setupMemoryAllocator();
-
-  this->createGraphicsCommandPool();
-  this->createTransientCommandPool();
-
-  this->descriptorManager_.init();
-}
-
-void Context::createDevice(VkSurfaceKHR &surface) {
-  uint32_t count;
-  vkEnumeratePhysicalDevices(this->instance_, &count, nullptr);
-  fstl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
-  vkEnumeratePhysicalDevices(this->instance_, &count, physicalDevices.data());
-
-  for (auto physicalDevice : physicalDevices) {
-    if (checkPhysicalDeviceProperties(
-            physicalDevice,
-            surface,
-            &graphicsQueueFamilyIndex_,
-            &presentQueueFamilyIndex_,
-            &transferQueueFamilyIndex_)) {
-      this->physicalDevice_ = physicalDevice;
-      break;
-    }
-  }
-
-  if (!this->physicalDevice_) {
-    throw std::runtime_error(
-        "Could not select physical device based on chosen properties");
-  }
-
-  VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(this->physicalDevice_, &properties);
-
-  fstl::log::info("Using physical device: {}", properties.deviceName);
-
-  fstl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::array<float, 1> queuePriorities = {1.0f};
-
-  queueCreateInfos.push_back({
-      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-      nullptr,
-      0,
-      graphicsQueueFamilyIndex_,
-      static_cast<uint32_t>(queuePriorities.size()),
-      queuePriorities.data(),
-  });
-
-  if (presentQueueFamilyIndex_ != graphicsQueueFamilyIndex_) {
-    queueCreateInfos.push_back({
-        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        nullptr,
-        0,
-        presentQueueFamilyIndex_,
-        static_cast<uint32_t>(queuePriorities.size()),
-        queuePriorities.data(),
-    });
-  }
-
-  if (transferQueueFamilyIndex_ != graphicsQueueFamilyIndex_) {
-    queueCreateInfos.push_back({
-        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        nullptr,
-        0,
-        transferQueueFamilyIndex_,
-        static_cast<uint32_t>(queuePriorities.size()),
-        queuePriorities.data(),
-    });
-  }
-
-  VkDeviceCreateInfo deviceCreateInfo = {};
-  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  deviceCreateInfo.flags = 0;
-  deviceCreateInfo.queueCreateInfoCount =
-      static_cast<uint32_t>(queueCreateInfos.size());
-  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-
-  // Validation layer stuff
-#ifdef NDEBUG
-  deviceCreateInfo.enabledLayerCount = 0;
-  deviceCreateInfo.ppEnabledLayerNames = nullptr;
-#else
-  deviceCreateInfo.enabledLayerCount =
-      static_cast<uint32_t>(REQUIRED_VALIDATION_LAYERS.size());
-  deviceCreateInfo.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data();
-#endif
-
-  deviceCreateInfo.enabledExtensionCount =
-      static_cast<uint32_t>(REQUIRED_DEVICE_EXTENSIONS.size());
-  deviceCreateInfo.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTENSIONS.data();
-
-  // Enable all features
-  VkPhysicalDeviceFeatures features;
-  vkGetPhysicalDeviceFeatures(this->physicalDevice_, &features);
-  deviceCreateInfo.pEnabledFeatures = &features;
-
-  VK_CHECK(vkCreateDevice(
-      this->physicalDevice_, &deviceCreateInfo, nullptr, &this->device_));
-}
-
-void Context::getDeviceQueues() {
-  vkGetDeviceQueue(
-      this->device_, this->graphicsQueueFamilyIndex_, 0, &this->graphicsQueue_);
-  vkGetDeviceQueue(
-      this->device_, this->presentQueueFamilyIndex_, 0, &this->presentQueue_);
-  vkGetDeviceQueue(
-      this->device_, this->transferQueueFamilyIndex_, 0, &this->transferQueue_);
-}
-
-void Context::setupMemoryAllocator() {
-  VmaAllocatorCreateInfo allocatorInfo = {};
-  allocatorInfo.physicalDevice = this->physicalDevice_;
-  allocatorInfo.device = this->device_;
-
-  VK_CHECK(vmaCreateAllocator(&allocatorInfo, &this->allocator_));
-}
-
-void Context::createGraphicsCommandPool() {
-  VkCommandPoolCreateInfo createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  createInfo.pNext = 0;
-  createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  createInfo.queueFamilyIndex = this->graphicsQueueFamilyIndex_;
-
-  VK_CHECK(vkCreateCommandPool(
-      this->device_, &createInfo, nullptr, &this->graphicsCommandPool_));
-}
-
-void Context::createTransientCommandPool() {
-  VkCommandPoolCreateInfo createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  createInfo.pNext = 0;
-  createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  createInfo.queueFamilyIndex = this->graphicsQueueFamilyIndex_;
-
-  VK_CHECK(vkCreateCommandPool(
-      this->device_, &createInfo, nullptr, &this->transientCommandPool_));
-}
-
-// Misc
-
-VkSampleCountFlagBits Context::getMaxUsableSampleCount() {
-  VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(this->physicalDevice_, &properties);
-
-  VkSampleCountFlags colorSamples =
-      properties.limits.framebufferColorSampleCounts;
-  VkSampleCountFlags depthSamples =
-      properties.limits.framebufferDepthSampleCounts;
-
-  VkSampleCountFlags counts = std::min(colorSamples, depthSamples);
-
-  if (counts & VK_SAMPLE_COUNT_64_BIT) {
-    fstl::log::debug("Max samples: {}", 64);
-    return VK_SAMPLE_COUNT_64_BIT;
-  }
-  if (counts & VK_SAMPLE_COUNT_32_BIT) {
-    fstl::log::debug("Max samples: {}", 32);
-    return VK_SAMPLE_COUNT_32_BIT;
-  }
-  if (counts & VK_SAMPLE_COUNT_16_BIT) {
-    fstl::log::debug("Max samples: {}", 16);
-    return VK_SAMPLE_COUNT_16_BIT;
-  }
-  if (counts & VK_SAMPLE_COUNT_8_BIT) {
-    fstl::log::debug("Max samples: {}", 8);
-    return VK_SAMPLE_COUNT_8_BIT;
-  }
-  if (counts & VK_SAMPLE_COUNT_4_BIT) {
-    fstl::log::debug("Max samples: {}", 4);
-    return VK_SAMPLE_COUNT_4_BIT;
-  }
-  if (counts & VK_SAMPLE_COUNT_2_BIT) {
-    fstl::log::debug("Max samples: {}", 2);
-    return VK_SAMPLE_COUNT_2_BIT;
-  }
-
-  fstl::log::debug("Max samples: {}", 1);
-
-  return VK_SAMPLE_COUNT_1_BIT;
-}
-
-std::vector<const char *>
-Context::getRequiredExtensions(std::vector<const char *> sdlExtensions) {
-  std::vector<const char *> extensions{sdlExtensions};
-
-#ifndef NDEBUG
-  extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-#endif
-
-  return extensions;
-}
-
-bool Context::checkValidationLayerSupport() {
+static bool checkValidationLayerSupport() {
   uint32_t count;
   vkEnumerateInstanceLayerProperties(&count, nullptr);
   fstl::fixed_vector<VkLayerProperties> availableLayers(count);
@@ -346,21 +98,18 @@ bool Context::checkValidationLayerSupport() {
   return true;
 }
 
-void Context::setupDebugCallback() {
-  VkDebugReportCallbackCreateInfoEXT createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-  createInfo.flags =
-      VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-  createInfo.pfnCallback = debugCallback;
+static std::vector<const char *>
+getRequiredExtensions(std::vector<const char *> sdlExtensions) {
+  std::vector<const char *> extensions{sdlExtensions};
 
-  VK_CHECK(CreateDebugReportCallbackEXT(
-      this->instance_,
-      &createInfo,
-      nullptr,
-      &this->callback_));
+#ifndef NDEBUG
+  extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
+
+  return extensions;
 }
 
-bool Context::checkPhysicalDeviceProperties(
+static bool checkPhysicalDeviceProperties(
     VkPhysicalDevice physicalDevice,
     VkSurfaceKHR &surface,
     uint32_t *graphicsQueueFamily,
@@ -476,3 +225,290 @@ bool Context::checkPhysicalDeviceProperties(
 
   return true;
 }
+
+static void createInstance(
+    const std::vector<const char *> &requiredWindowVulkanExtensions) {
+  fstl::log::debug("Creating vulkan instance");
+#ifndef NDEBUG
+  fstl::log::debug("Using validation layers");
+  if (!checkValidationLayerSupport()) {
+    throw std::runtime_error("Validation layers requested, but not available");
+  }
+#else
+  fstl::log::debug("Not using validation layers");
+#endif
+
+  VkApplicationInfo appInfo = {};
+  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  appInfo.pNext = nullptr;
+  appInfo.pApplicationName = "App";
+  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.pEngineName = "No engine";
+  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.apiVersion = VK_API_VERSION_1_0;
+
+  VkInstanceCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  createInfo.flags = 0;
+  createInfo.pApplicationInfo = &appInfo;
+
+#ifdef NDEBUG
+  createInfo.enabledLayerCount = 0;
+  createInfo.ppEnabledLayerNames = nullptr;
+#else
+  createInfo.enabledLayerCount =
+      static_cast<uint32_t>(REQUIRED_VALIDATION_LAYERS.size());
+  createInfo.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data();
+#endif
+
+  // Set required instance extensions
+  auto extensions = getRequiredExtensions(requiredWindowVulkanExtensions);
+  createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+  createInfo.ppEnabledExtensionNames = extensions.data();
+
+  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
+}
+
+static void setupDebugCallback() {
+  VkDebugReportCallbackCreateInfoEXT createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+  createInfo.flags =
+      VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+  createInfo.pfnCallback = debugCallback;
+
+  VK_CHECK(
+      CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
+}
+
+static void createDevice(VkSurfaceKHR &surface) {
+  uint32_t count;
+  vkEnumeratePhysicalDevices(instance, &count, nullptr);
+  fstl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
+  vkEnumeratePhysicalDevices(instance, &count, physicalDevices.data());
+
+  for (auto physicalDevice_ : physicalDevices) {
+    if (checkPhysicalDeviceProperties(
+            physicalDevice_,
+            surface,
+            &graphicsQueueFamilyIndex,
+            &presentQueueFamilyIndex,
+            &transferQueueFamilyIndex)) {
+      physicalDevice = physicalDevice_;
+      break;
+    }
+  }
+
+  if (!physicalDevice) {
+    throw std::runtime_error(
+        "Could not select physical device based on chosen properties");
+  }
+
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+  fstl::log::debug("Using physical device: {}", properties.deviceName);
+
+  fstl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+  std::array<float, 1> queuePriorities = {1.0f};
+
+  queueCreateInfos.push_back({
+      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+      nullptr,
+      0,
+      graphicsQueueFamilyIndex,
+      static_cast<uint32_t>(queuePriorities.size()),
+      queuePriorities.data(),
+  });
+
+  if (presentQueueFamilyIndex != graphicsQueueFamilyIndex) {
+    queueCreateInfos.push_back({
+        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        nullptr,
+        0,
+        presentQueueFamilyIndex,
+        static_cast<uint32_t>(queuePriorities.size()),
+        queuePriorities.data(),
+    });
+  }
+
+  if (transferQueueFamilyIndex != graphicsQueueFamilyIndex) {
+    queueCreateInfos.push_back({
+        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        nullptr,
+        0,
+        transferQueueFamilyIndex,
+        static_cast<uint32_t>(queuePriorities.size()),
+        queuePriorities.data(),
+    });
+  }
+
+  VkDeviceCreateInfo deviceCreateInfo = {};
+  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  deviceCreateInfo.flags = 0;
+  deviceCreateInfo.queueCreateInfoCount =
+      static_cast<uint32_t>(queueCreateInfos.size());
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+
+  // Validation layer stuff
+#ifdef NDEBUG
+  deviceCreateInfo.enabledLayerCount = 0;
+  deviceCreateInfo.ppEnabledLayerNames = nullptr;
+#else
+  deviceCreateInfo.enabledLayerCount =
+      static_cast<uint32_t>(REQUIRED_VALIDATION_LAYERS.size());
+  deviceCreateInfo.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data();
+#endif
+
+  deviceCreateInfo.enabledExtensionCount =
+      static_cast<uint32_t>(REQUIRED_DEVICE_EXTENSIONS.size());
+  deviceCreateInfo.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTENSIONS.data();
+
+  // Enable all features
+  VkPhysicalDeviceFeatures features;
+  vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+  deviceCreateInfo.pEnabledFeatures = &features;
+
+  VK_CHECK(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
+}
+
+static void getDeviceQueues() {
+  vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
+  vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, &presentQueue);
+  vkGetDeviceQueue(device, transferQueueFamilyIndex, 0, &transferQueue);
+}
+
+static void setupMemoryAllocator() {
+  VmaAllocatorCreateInfo allocatorInfo = {};
+  allocatorInfo.physicalDevice = physicalDevice;
+  allocatorInfo.device = device;
+
+  VK_CHECK(vmaCreateAllocator(&allocatorInfo, &allocator));
+}
+
+static void createGraphicsCommandPool() {
+  VkCommandPoolCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  createInfo.pNext = 0;
+  createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  createInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
+
+  VK_CHECK(
+      vkCreateCommandPool(device, &createInfo, nullptr, &graphicsCommandPool));
+}
+
+static void createTransientCommandPool() {
+  VkCommandPoolCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  createInfo.pNext = 0;
+  createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  createInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
+
+  VK_CHECK(
+      vkCreateCommandPool(device, &createInfo, nullptr, &transientCommandPool));
+}
+
+void preInitialize(
+    const std::vector<const char *> &requiredWindowVulkanExtensions) {
+  if (instance != VK_NULL_HANDLE) {
+    return;
+  }
+
+  createInstance(requiredWindowVulkanExtensions);
+#ifndef NDEBUG
+  setupDebugCallback();
+#endif
+}
+
+void lateInitialize(VkSurfaceKHR &surface) {
+  if (device != VK_NULL_HANDLE) {
+    return;
+  }
+
+  createDevice(surface);
+
+  getDeviceQueues();
+
+  setupMemoryAllocator();
+
+  createGraphicsCommandPool();
+  createTransientCommandPool();
+
+  descriptorManager.init();
+}
+
+void destroy() {
+  fstl::log::debug("Vulkan context shutting down...");
+
+  VK_CHECK(vkDeviceWaitIdle(device));
+
+  descriptorManager.destroy();
+
+  if (transientCommandPool) {
+    vkDestroyCommandPool(device, transientCommandPool, nullptr);
+  }
+
+  if (graphicsCommandPool) {
+    vkDestroyCommandPool(device, graphicsCommandPool, nullptr);
+  }
+
+  if (allocator != VK_NULL_HANDLE) {
+    vmaDestroyAllocator(allocator);
+  }
+
+  if (device != VK_NULL_HANDLE) {
+    vkDestroyDevice(device, nullptr);
+  }
+
+  if (callback != VK_NULL_HANDLE) {
+    DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+  }
+
+  if (instance != VK_NULL_HANDLE) {
+    vkDestroyInstance(instance, nullptr);
+  }
+
+  SDL_Quit();
+}
+
+VkSampleCountFlagBits getMaxUsableSampleCount() {
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+  VkSampleCountFlags colorSamples =
+      properties.limits.framebufferColorSampleCounts;
+  VkSampleCountFlags depthSamples =
+      properties.limits.framebufferDepthSampleCounts;
+
+  VkSampleCountFlags counts = std::min(colorSamples, depthSamples);
+
+  if (counts & VK_SAMPLE_COUNT_64_BIT) {
+    fstl::log::debug("Max samples: {}", 64);
+    return VK_SAMPLE_COUNT_64_BIT;
+  }
+  if (counts & VK_SAMPLE_COUNT_32_BIT) {
+    fstl::log::debug("Max samples: {}", 32);
+    return VK_SAMPLE_COUNT_32_BIT;
+  }
+  if (counts & VK_SAMPLE_COUNT_16_BIT) {
+    fstl::log::debug("Max samples: {}", 16);
+    return VK_SAMPLE_COUNT_16_BIT;
+  }
+  if (counts & VK_SAMPLE_COUNT_8_BIT) {
+    fstl::log::debug("Max samples: {}", 8);
+    return VK_SAMPLE_COUNT_8_BIT;
+  }
+  if (counts & VK_SAMPLE_COUNT_4_BIT) {
+    fstl::log::debug("Max samples: {}", 4);
+    return VK_SAMPLE_COUNT_4_BIT;
+  }
+  if (counts & VK_SAMPLE_COUNT_2_BIT) {
+    fstl::log::debug("Max samples: {}", 2);
+    return VK_SAMPLE_COUNT_2_BIT;
+  }
+
+  fstl::log::debug("Max samples: {}", 1);
+
+  return VK_SAMPLE_COUNT_1_BIT;
+}
+} // namespace ctx
+} // namespace vkr

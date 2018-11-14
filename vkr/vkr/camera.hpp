@@ -19,7 +19,9 @@ public:
   Camera(
       glm::vec3 position = glm::vec3(0.0f),
       glm::quat rotation = glm::quat(glm::vec3(0.0f, M_PI, M_PI)));
-  ~Camera();
+  ~Camera(){};
+
+  void destroy();
 
   void setPos(glm::vec3 pos);
   glm::vec3 getPos() const;

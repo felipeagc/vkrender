@@ -122,7 +122,7 @@ public:
   }
 
   GltfModel(Window &window, const std::string &path, bool flipUVs = false);
-  ~GltfModel();
+  ~GltfModel() {};
   GltfModel(const GltfModel &other) = default;
   GltfModel &operator=(GltfModel &other) = default;
 

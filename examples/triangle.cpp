@@ -86,4 +86,8 @@ int main() {
   vertexBuffer.destroy();
   pipeline.destroy();
   shader.destroy();
+  window.destroy();
+  vkr::ctx::destroy();
+
+  return 0;
 }
