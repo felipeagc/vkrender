@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
-#include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
 #include <vkr/graphics_pipeline.hpp>
@@ -14,7 +13,7 @@
 int main() {
   vkr::Window window("GLTF models");
 
-  window.setMSAASamples(vkr::SampleCount::e4);
+  window.setMSAASamples(VK_SAMPLE_COUNT_4_BIT);
 
   vkr::Shader modelShader{
       "../shaders/model.vert",

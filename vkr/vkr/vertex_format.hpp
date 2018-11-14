@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstl/fixed_vector.hpp>
+#include <vulkan/vulkan.h>
 
 namespace vkr {
 class VertexFormat {
@@ -10,18 +11,18 @@ class VertexFormat {
 public:
   VertexFormat(){};
   VertexFormat(
-      fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions,
-      fstl::fixed_vector<vk::VertexInputAttributeDescription>
+      fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions,
+      fstl::fixed_vector<VkVertexInputAttributeDescription>
           attributeDescriptions);
   ~VertexFormat(){};
   VertexFormat(const VertexFormat &other) = default;
   VertexFormat &operator=(VertexFormat &other) = default;
 
 protected:
-  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions_;
-  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions_;
+  fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions_;
+  fstl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions_;
 
-  vk::PipelineVertexInputStateCreateInfo
+  VkPipelineVertexInputStateCreateInfo
   getPipelineVertexInputStateCreateInfo() const;
 };
 
@@ -33,15 +34,15 @@ public:
   VertexFormatBuilder &operator=(VertexFormatBuilder &other) = default;
 
   VertexFormatBuilder
-  addBinding(uint32_t binding, uint32_t stride, vk::VertexInputRate inputRate);
+  addBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate);
   VertexFormatBuilder addAttribute(
-      uint32_t location, uint32_t binding, vk::Format format, uint32_t offset);
+      uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
 
   VertexFormat build();
 
 private:
-  fstl::fixed_vector<vk::VertexInputBindingDescription> bindingDescriptions_;
-  fstl::fixed_vector<vk::VertexInputAttributeDescription> attributeDescriptions_;
+  fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions_;
+  fstl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions_;
 };
 
 } // namespace vkr

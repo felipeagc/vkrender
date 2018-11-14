@@ -1,6 +1,6 @@
 #include "window.hpp"
-#include "commandbuffer.hpp"
 #include "context.hpp"
+#include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
@@ -26,8 +26,11 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
       SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
 
   if (this->window_ == nullptr) {
-    throw std::runtime_error("Failed to create SDL window");
+    fstl::log::fatal("Failed to create SDL window");
+    exit(1);
   }
+
+  SDL_SetWindowResizable(this->window_, SDL_TRUE);
 
   this->initVulkanExtensions();
 
@@ -36,10 +39,16 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
   // Lazily create vulkan context stuff
   Context::get().lazyInit(this->surface_);
 
-  if (!Context::get().physicalDevice_.getSurfaceSupportKHR(
-          Context::get().presentQueueFamilyIndex_, this->surface_)) {
-    throw std::runtime_error(
+  VkBool32 supported;
+  vkGetPhysicalDeviceSurfaceSupportKHR(
+      Context::get().physicalDevice_,
+      Context::get().presentQueueFamilyIndex_,
+      this->surface_,
+      &supported);
+  if (!supported) {
+    fstl::log::fatal(
         "Selected present queue does not support this window's surface");
+    exit(1);
   }
 
   this->maxMsaaSamples_ = Context::get().getMaxUsableSampleCount();
@@ -63,7 +72,7 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
 }
 
 Window::~Window() {
-  Context::getDevice().waitIdle();
+  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
 
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplSDL2_Shutdown();
@@ -72,20 +81,26 @@ Window::~Window() {
   this->destroyResizables();
 
   for (auto &swapchainImageView : this->swapchainImageViews_) {
-    Context::getDevice().destroy(swapchainImageView);
+    vkDestroyImageView(Context::getDevice(), swapchainImageView, nullptr);
   }
 
-  Context::getDevice().destroy(this->swapchain_);
+  vkDestroySwapchainKHR(Context::getDevice(), this->swapchain_, nullptr);
 
   for (auto &frameResource : this->frameResources_) {
-    Context::getDevice().destroy(frameResource.framebuffer);
-    Context::getDevice().destroy(frameResource.imguiFramebuffer);
-    Context::getDevice().destroy(frameResource.imageAvailableSemaphore);
-    Context::getDevice().destroy(frameResource.renderingFinishedSemaphore);
-    Context::getDevice().destroy(frameResource.fence);
+    vkDestroyFramebuffer(
+        Context::getDevice(), frameResource.framebuffer, nullptr);
+    vkDestroyFramebuffer(
+        Context::getDevice(), frameResource.imguiFramebuffer, nullptr);
+    vkDestroySemaphore(
+        Context::getDevice(), frameResource.imageAvailableSemaphore, nullptr);
+    vkDestroySemaphore(
+        Context::getDevice(),
+        frameResource.renderingFinishedSemaphore,
+        nullptr);
+    vkDestroyFence(Context::getDevice(), frameResource.fence, nullptr);
   }
 
-  Context::get().instance_.destroy(this->surface_);
+  vkDestroySurfaceKHR(Context::get().instance_, this->surface_, nullptr);
 
   SDL_DestroyWindow(this->window_);
 }
@@ -103,29 +118,34 @@ void Window::present(std::function<void()> drawFunction) {
   this->lastTicks_ = SDL_GetTicks();
 
   // Begin
-  Context::getDevice().waitForFences(
-      this->frameResources_[this->currentFrame_].fence, VK_TRUE, UINT64_MAX);
+  vkWaitForFences(
+      Context::getDevice(),
+      1,
+      &this->frameResources_[this->currentFrame_].fence,
+      VK_TRUE,
+      UINT64_MAX);
 
-  Context::getDevice().resetFences(
-      this->frameResources_[this->currentFrame_].fence);
+  vkResetFences(
+      Context::getDevice(),
+      1,
+      &this->frameResources_[this->currentFrame_].fence);
 
-  try {
-    Context::getDevice().acquireNextImageKHR(
-        this->swapchain_,
-        UINT64_MAX,
-        this->frameResources_[this->currentFrame_].imageAvailableSemaphore,
-        {},
-        &this->currentImageIndex_);
-  } catch (const vk::OutOfDateKHRError &e) {
+  if (vkAcquireNextImageKHR(
+          Context::getDevice(),
+          this->swapchain_,
+          UINT64_MAX,
+          this->frameResources_[this->currentFrame_].imageAvailableSemaphore,
+          VK_NULL_HANDLE,
+          &this->currentImageIndex_) == VK_ERROR_OUT_OF_DATE_KHR) {
     this->updateSize();
   }
 
-  vk::ImageSubresourceRange imageSubresourceRange{
-      vk::ImageAspectFlagBits::eColor, // aspectMask
-      0,                               // baseMipLevel
-      1,                               // levelCount
-      0,                               // baseArrayLayer
-      1,                               // layerCount
+  VkImageSubresourceRange imageSubresourceRange{
+      VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+      0,                         // baseMipLevel
+      1,                         // levelCount
+      0,                         // baseArrayLayer
+      1,                         // layerCount
   };
 
   this->regenFramebuffer(
@@ -136,82 +156,92 @@ void Window::present(std::function<void()> drawFunction) {
       this->frameResources_[this->currentFrame_].imguiFramebuffer,
       this->swapchainImageViews_[this->currentImageIndex_]);
 
-  vk::CommandBufferBeginInfo beginInfo{
-      vk::CommandBufferUsageFlagBits::eSimultaneousUse, // flags
-      nullptr,                                          // pInheritanceInfo
-  };
+  VkCommandBufferBeginInfo beginInfo = {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+  beginInfo.pInheritanceInfo = nullptr;
 
-  auto &commandBuffer = this->frameResources_[this->currentFrame_].commandBuffer;
+  auto &commandBuffer =
+      this->frameResources_[this->currentFrame_].commandBuffer;
 
-  commandBuffer.begin(beginInfo);
+  VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
   if (Context::get().presentQueue_ != Context::get().graphicsQueue_) {
-    vk::ImageMemoryBarrier barrierFromPresentToDraw = {
-        vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
-        vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
-        vk::ImageLayout::eUndefined,                    // oldLayout
-        vk::ImageLayout::eColorAttachmentOptimal,       // newLayout
-        Context::get().presentQueueFamilyIndex_,         // srcQueueFamilyIndex
-        Context::get().graphicsQueueFamilyIndex_,        // dstQueueFamilyIndex
+    VkImageMemoryBarrier barrierFromPresentToDraw = {
+        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,           // sType
+        nullptr,                                          // pNext
+        VK_ACCESS_MEMORY_READ_BIT,                        // srcAccessMask
+        VK_ACCESS_MEMORY_READ_BIT,                        // dstAccessMask
+        VK_IMAGE_LAYOUT_UNDEFINED,                        // oldLayout
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,         // newLayout
+        Context::get().presentQueueFamilyIndex_,          // srcQueueFamilyIndex
+        Context::get().graphicsQueueFamilyIndex_,         // dstQueueFamilyIndex
         this->swapchainImages_[this->currentImageIndex_], // image
-        imageSubresourceRange,                          // subresourceRange
+        imageSubresourceRange,                            // subresourceRange
     };
 
-    commandBuffer.pipelineBarrier(
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        {},
-        {},
-        {},
-        barrierFromPresentToDraw);
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &barrierFromPresentToDraw);
   }
 
-  std::array<float, 4> clearColor{
+  VkClearValue clearColor = {{{
       this->clearColor.x,
       this->clearColor.y,
       this->clearColor.z,
       this->clearColor.w,
+  }}};
+
+  std::array<VkClearValue, 4> clearValues{
+      VkClearValue{},
+      clearColor,
+      VkClearValue{},
+      VkClearValue{{{1.0f, 0}}},
   };
 
-  std::array<vk::ClearValue, 4> clearValues{
-      vk::ClearValue{},
-      vk::ClearValue{clearColor},
-      vk::ClearValue{},
-      vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
-  };
-
-  if (this->msaaSamples_ != SampleCount::e1) {
+  if (this->msaaSamples_ != VK_SAMPLE_COUNT_1_BIT) {
     clearValues = {
-        vk::ClearValue{clearColor},
-        vk::ClearValue{clearColor},
-        vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
+        clearColor,
+        clearColor,
+        VkClearValue{{{1.0f, 0}}},
     };
   }
 
-  vk::RenderPassBeginInfo renderPassBeginInfo{
-      this->renderPass_,                                     // renderPass
+  VkRenderPassBeginInfo renderPassBeginInfo = {
+      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,               // sType
+      nullptr,                                                // pNext
+      this->renderPass_,                                      // renderPass
       this->frameResources_[this->currentFrame_].framebuffer, // framebuffer
-      {{0, 0}, this->swapchainExtent_},                      // renderArea
-      static_cast<uint32_t>(clearValues.size()),            // clearValueCount
-      clearValues.data(),                                   // pClearValues
+      {{0, 0}, this->swapchainExtent_},                       // renderArea
+      static_cast<uint32_t>(clearValues.size()),              // clearValueCount
+      clearValues.data(),                                     // pClearValues
   };
 
-  commandBuffer.beginRenderPass(
-      renderPassBeginInfo, vk::SubpassContents::eInline);
+  vkCmdBeginRenderPass(
+      commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-  vk::Viewport viewport{
-      0.0f,                                             // x
-      0.0f,                                             // y
+  VkViewport viewport{
+      0.0f,                                              // x
+      0.0f,                                              // y
       static_cast<float>(this->swapchainExtent_.width),  // width
       static_cast<float>(this->swapchainExtent_.height), // height
-      0.0f,                                             // minDepth
-      1.0f,                                             // maxDepth
+      0.0f,                                              // minDepth
+      1.0f,                                              // maxDepth
   };
 
-  vk::Rect2D scissor{{0, 0}, this->swapchainExtent_};
-  commandBuffer.setViewport(0, viewport);
+  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-  commandBuffer.setScissor(0, scissor);
+  VkRect2D scissor{{0, 0}, this->swapchainExtent_};
+
+  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   this->imguiBeginFrame();
 
@@ -221,70 +251,79 @@ void Window::present(std::function<void()> drawFunction) {
   this->imguiEndFrame();
 
   // End
-  commandBuffer.endRenderPass();
+  vkCmdEndRenderPass(commandBuffer);
 
   {
-    vk::RenderPassBeginInfo imguiRenderPassBeginInfo{
-        this->imguiRenderPass_, // renderPass
+    VkRenderPassBeginInfo imguiRenderPassBeginInfo = {
+        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, // sType
+        nullptr,                                  // pNext
+        this->imguiRenderPass_,                   // renderPass
         this->frameResources_[this->currentFrame_]
-            .imguiFramebuffer,           // framebuffer
+            .imguiFramebuffer,            // framebuffer
         {{0, 0}, this->swapchainExtent_}, // renderArea
-        0,                               // clearValueCount
-        nullptr,                         // pClearValues
+        0,                                // clearValueCount
+        nullptr,                          // pClearValues
     };
 
-    commandBuffer.beginRenderPass(
-        imguiRenderPassBeginInfo, vk::SubpassContents::eInline);
+    vkCmdBeginRenderPass(
+        commandBuffer, &imguiRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vk::Viewport viewport{
-        0.0f,                                             // x
-        0.0f,                                             // y
+    VkViewport viewport{
+        0.0f,                                              // x
+        0.0f,                                              // y
         static_cast<float>(this->swapchainExtent_.width),  // width
         static_cast<float>(this->swapchainExtent_.height), // height
-        0.0f,                                             // minDepth
-        1.0f,                                             // maxDepth
+        0.0f,                                              // minDepth
+        1.0f,                                              // maxDepth
     };
 
-    vk::Rect2D scissor{{0, 0}, this->swapchainExtent_};
-    commandBuffer.setViewport(0, viewport);
+    VkRect2D scissor{{0, 0}, this->swapchainExtent_};
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    commandBuffer.setScissor(0, scissor);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
-    commandBuffer.endRenderPass();
+    vkCmdEndRenderPass(commandBuffer);
   }
 
   if (Context::get().presentQueue_ != Context::get().graphicsQueue_) {
-    vk::ImageMemoryBarrier barrierFromDrawToPresent{
-        vk::AccessFlagBits::eMemoryRead,                // srcAccessMask
-        vk::AccessFlagBits::eMemoryRead,                // dstAccessMask
-        vk::ImageLayout::eColorAttachmentOptimal,       // oldLayout
-        vk::ImageLayout::ePresentSrcKHR,                // newLayout
-        Context::get().graphicsQueueFamilyIndex_,        // srcQueueFamilyIndex
-        Context::get().presentQueueFamilyIndex_,         // dstQueueFamilyIndex
+    VkImageMemoryBarrier barrierFromDrawToPresent{
+        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,           // sType
+        nullptr,                                          // pNext
+        VK_ACCESS_MEMORY_READ_BIT,                        // srcAccessMask
+        VK_ACCESS_MEMORY_READ_BIT,                        // dstAccessMask
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,         // oldLayout
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,                  // newLayout
+        Context::get().graphicsQueueFamilyIndex_,         // srcQueueFamilyIndex
+        Context::get().presentQueueFamilyIndex_,          // dstQueueFamilyIndex
         this->swapchainImages_[this->currentImageIndex_], // image
-        imageSubresourceRange,                          // subresourceRange
+        imageSubresourceRange,                            // subresourceRange
     };
 
-    commandBuffer.pipelineBarrier(
-        vk::PipelineStageFlagBits::eColorAttachmentOutput, // srcStageMask
-        vk::PipelineStageFlagBits::eBottomOfPipe,          // dstStageMask
-        {},                                                // dependencyFlags
-        nullptr,                                           // memoryBarriers
-        nullptr,                 // bufferMemoryBarriers
-        barrierFromDrawToPresent // imageMemoryBarriers
-    );
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &barrierFromDrawToPresent);
   }
 
-  commandBuffer.end();
+  VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
   // Present
-  vk::PipelineStageFlags waitDstStageMask =
-      vk::PipelineStageFlagBits::eColorAttachmentOutput;
+  VkPipelineStageFlags waitDstStageMask =
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-  vk::SubmitInfo submitInfo = {
-      1, // waitSemaphoreCount
+  VkSubmitInfo submitInfo = {
+      VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
+      nullptr,                       // pNext
+      1,                             // waitSemaphoreCount
       &this->frameResources_[this->currentFrame_]
            .imageAvailableSemaphore, // pWaitSemaphores
       &waitDstStageMask,             // pWaitDstStageMask
@@ -295,23 +334,30 @@ void Window::present(std::function<void()> drawFunction) {
            .renderingFinishedSemaphore, // pSignalSemaphores
   };
 
-  Context::get().graphicsQueue_.submit(
-      submitInfo, this->frameResources_[this->currentFrame_].fence);
+  vkQueueSubmit(
+      Context::get().graphicsQueue_,
+      1,
+      &submitInfo,
+      this->frameResources_[this->currentFrame_].fence);
 
-  vk::PresentInfoKHR presentInfo{
-      1, // waitSemaphoreCount
+  VkPresentInfoKHR presentInfo = {
+      VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+      nullptr, // pNext
+      1,       // waitSemaphoreCount
       &this->frameResources_[this->currentFrame_]
            .renderingFinishedSemaphore, // pWaitSemaphores
       1,                                // swapchainCount
-      &this->swapchain_,                 // pSwapchains
-      &this->currentImageIndex_,         // pImageIndices
+      &this->swapchain_,                // pSwapchains
+      &this->currentImageIndex_,        // pImageIndices
       nullptr,                          // pResults
   };
 
-  try {
-    Context::get().presentQueue_.presentKHR(presentInfo);
-  } catch (const vk::OutOfDateKHRError &e) {
+  VkResult result =
+      vkQueuePresentKHR(Context::get().presentQueue_, &presentInfo);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     this->updateSize();
+  } else {
+    assert(result == VK_SUCCESS);
   }
 
   this->currentFrame_ = (this->currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -381,11 +427,15 @@ void Window::setShouldClose(bool shouldClose) {
   this->shouldClose_ = shouldClose;
 }
 
-SampleCount Window::getMaxMSAASamples() const { return this->maxMsaaSamples_; }
+VkSampleCountFlagBits Window::getMaxMSAASamples() const {
+  return this->maxMsaaSamples_;
+}
 
-SampleCount Window::getMSAASamples() const { return this->msaaSamples_; }
+VkSampleCountFlagBits Window::getMSAASamples() const {
+  return this->msaaSamples_;
+}
 
-void Window::setMSAASamples(SampleCount sampleCount) {
+void Window::setMSAASamples(VkSampleCountFlagBits sampleCount) {
   if (sampleCount <= this->maxMsaaSamples_) {
     this->msaaSamples_ = sampleCount;
 
@@ -398,8 +448,8 @@ void Window::setMSAASamples(SampleCount sampleCount) {
 
 int Window::getCurrentFrameIndex() const { return this->currentFrame_; }
 
-CommandBuffer Window::getCurrentCommandBuffer() {
-  return CommandBuffer{this->frameResources_[this->currentFrame_].commandBuffer};
+VkCommandBuffer Window::getCurrentCommandBuffer() {
+  return this->frameResources_[this->currentFrame_].commandBuffer;
 }
 
 void Window::imguiBeginFrame() {
@@ -422,8 +472,8 @@ void Window::initVulkanExtensions() const {
 void Window::createVulkanSurface() {
   if (!SDL_Vulkan_CreateSurface(
           this->window_,
-          static_cast<VkInstance>(Context::get().instance_),
-          reinterpret_cast<VkSurfaceKHR *>(&this->surface_))) {
+          Context::get().instance_,
+          &this->surface_)) {
     throw std::runtime_error(
         "Failed to create window surface: " + std::string(SDL_GetError()));
   }
@@ -431,29 +481,65 @@ void Window::createVulkanSurface() {
 
 void Window::createSyncObjects() {
   for (auto &resources : this->frameResources_) {
-    resources.imageAvailableSemaphore =
-        Context::getDevice().createSemaphore({});
-    resources.renderingFinishedSemaphore =
-        Context::getDevice().createSemaphore({});
-    resources.fence =
-        Context::getDevice().createFence({vk::FenceCreateFlagBits::eSignaled});
+
+    VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphoreCreateInfo.pNext = nullptr;
+    semaphoreCreateInfo.flags = 0;
+
+    VK_CHECK(vkCreateSemaphore(
+        Context::getDevice(),
+        &semaphoreCreateInfo,
+        nullptr,
+        &resources.imageAvailableSemaphore));
+
+    VK_CHECK(vkCreateSemaphore(
+        Context::getDevice(),
+        &semaphoreCreateInfo,
+        nullptr,
+        &resources.renderingFinishedSemaphore));
+
+    VkFenceCreateInfo fenceCreateInfo = {};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.pNext = nullptr;
+    fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    VK_CHECK(vkCreateFence(
+        Context::getDevice(), &fenceCreateInfo, nullptr, &resources.fence));
   }
 }
 
 void Window::createSwapchain(uint32_t width, uint32_t height) {
   for (const auto &imageView : this->swapchainImageViews_) {
     if (imageView) {
-      Context::getDevice().destroy(imageView);
+      vkDestroyImageView(Context::getDevice(), imageView, nullptr);
     }
   }
   this->swapchainImageViews_.clear();
 
-  auto surfaceCapabilities =
-      Context::get().physicalDevice_.getSurfaceCapabilitiesKHR(this->surface_);
-  auto surfaceFormats =
-      Context::get().physicalDevice_.getSurfaceFormatsKHR(this->surface_);
-  auto presentModes =
-      Context::get().physicalDevice_.getSurfacePresentModesKHR(this->surface_);
+  VkSurfaceCapabilitiesKHR surfaceCapabilities;
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+      Context::get().physicalDevice_, this->surface_, &surfaceCapabilities);
+
+  uint32_t count;
+
+  vkGetPhysicalDeviceSurfaceFormatsKHR(
+      Context::get().physicalDevice_, this->surface_, &count, nullptr);
+  fstl::fixed_vector<VkSurfaceFormatKHR> surfaceFormats(count);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(
+      Context::get().physicalDevice_,
+      this->surface_,
+      &count,
+      surfaceFormats.data());
+
+  vkGetPhysicalDeviceSurfacePresentModesKHR(
+      Context::get().physicalDevice_, this->surface_, &count, nullptr);
+  fstl::fixed_vector<VkPresentModeKHR> presentModes(count);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(
+      Context::get().physicalDevice_,
+      this->surface_,
+      &count,
+      presentModes.data());
 
   auto desiredNumImages = getSwapchainNumImages(surfaceCapabilities);
   auto desiredFormat = getSwapchainFormat(surfaceFormats);
@@ -462,67 +548,88 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
   auto desiredTransform = getSwapchainTransform(surfaceCapabilities);
   auto desiredPresentMode = getSwapchainPresentMode(presentModes);
 
-  vk::SwapchainKHR oldSwapchain = this->swapchain_;
+  VkSwapchainKHR oldSwapchain = this->swapchain_;
 
-  vk::SwapchainCreateInfoKHR createInfo{
-      {}, // flags
+  VkSwapchainCreateInfoKHR createInfo{
+      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
+      nullptr,                                     // pNext
+      0,                                           // flags
       this->surface_,
-      desiredNumImages,                       // minImageCount
-      desiredFormat.format,                   // imageFormat
-      desiredFormat.colorSpace,               // imageColorSpace
-      desiredExtent,                          // imageExtent
-      1,                                      // imageArrayLayers
-      desiredUsage,                           // imageUsage
-      vk::SharingMode::eExclusive,            // imageSharingMode
-      0,                                      // queueFamilyIndexCount
-      nullptr,                                // pQueueFamiylIndices
-      desiredTransform,                       // preTransform
-      vk::CompositeAlphaFlagBitsKHR::eOpaque, // compositeAlpha
-      desiredPresentMode,                     // presentMode
-      VK_TRUE,                                // clipped
-      oldSwapchain                            // oldSwapchain
+      desiredNumImages,                  // minImageCount
+      desiredFormat.format,              // imageFormat
+      desiredFormat.colorSpace,          // imageColorSpace
+      desiredExtent,                     // imageExtent
+      1,                                 // imageArrayLayers
+      desiredUsage,                      // imageUsage
+      VK_SHARING_MODE_EXCLUSIVE,         // imageSharingMode
+      0,                                 // queueFamilyIndexCount
+      nullptr,                           // pQueueFamiylIndices
+      desiredTransform,                  // preTransform
+      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, // compositeAlpha
+      desiredPresentMode,                // presentMode
+      VK_TRUE,                           // clipped
+      oldSwapchain                       // oldSwapchain
   };
 
-  this->swapchain_ = Context::getDevice().createSwapchainKHR(createInfo);
+  vkCreateSwapchainKHR(
+      Context::getDevice(), &createInfo, nullptr, &this->swapchain_);
 
   if (oldSwapchain) {
-    Context::getDevice().destroy(oldSwapchain);
+    vkDestroySwapchainKHR(Context::getDevice(), oldSwapchain, nullptr);
   }
 
   this->swapchainImageFormat_ = desiredFormat.format;
   this->swapchainExtent_ = desiredExtent;
 
-  this->swapchainImages_ =
-      Context::getDevice().getSwapchainImagesKHR(this->swapchain_);
+  VK_CHECK(vkGetSwapchainImagesKHR(
+      Context::getDevice(), this->swapchain_, &count, nullptr));
+  this->swapchainImages_.resize(count);
+  VK_CHECK(vkGetSwapchainImagesKHR(
+      Context::getDevice(),
+      this->swapchain_,
+      &count,
+      this->swapchainImages_.data()));
 }
 
 void Window::createSwapchainImageViews() {
   this->swapchainImageViews_.resize(this->swapchainImages_.size());
 
   for (size_t i = 0; i < swapchainImages_.size(); i++) {
-    vk::ImageViewCreateInfo createInfo{
-        {},
+    VkImageViewCreateInfo createInfo{
+        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+        nullptr,                                  // pNext
+        0,                                        // flags
         this->swapchainImages_[i],
-        vk::ImageViewType::e2D,
+        VK_IMAGE_VIEW_TYPE_2D,
         this->swapchainImageFormat_,
         {
-            vk::ComponentSwizzle::eIdentity, // r
-            vk::ComponentSwizzle::eIdentity, // g
-            vk::ComponentSwizzle::eIdentity, // b
-            vk::ComponentSwizzle::eIdentity, // a
+            VK_COMPONENT_SWIZZLE_IDENTITY, // r
+            VK_COMPONENT_SWIZZLE_IDENTITY, // g
+            VK_COMPONENT_SWIZZLE_IDENTITY, // b
+            VK_COMPONENT_SWIZZLE_IDENTITY, // a
         },
-        {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+        {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
-    this->swapchainImageViews_[i] =
-        Context::getDevice().createImageView(createInfo);
+    VK_CHECK(vkCreateImageView(
+        Context::getDevice(),
+        &createInfo,
+        nullptr,
+        &this->swapchainImageViews_[i]));
   }
 }
 
 void Window::allocateGraphicsCommandBuffers() {
-  auto commandBuffers = Context::getDevice().allocateCommandBuffers(
-      {Context::get().graphicsCommandPool_,
-       vk::CommandBufferLevel::ePrimary,
-       MAX_FRAMES_IN_FLIGHT});
+  VkCommandBufferAllocateInfo allocateInfo = {};
+  allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocateInfo.pNext = nullptr;
+  allocateInfo.commandPool = Context::get().graphicsCommandPool_;
+  allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
+
+  fstl::fixed_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
+
+  vkAllocateCommandBuffers(
+      Context::getDevice(), &allocateInfo, commandBuffers.data());
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     this->frameResources_[i].commandBuffer = commandBuffers[i];
@@ -530,17 +637,20 @@ void Window::allocateGraphicsCommandBuffers() {
 }
 
 void Window::createDepthStencilResources() {
-  std::array<vk::Format, 5> depthFormats = {vk::Format::eD32SfloatS8Uint,
-                                            vk::Format::eD32Sfloat,
-                                            vk::Format::eD24UnormS8Uint,
-                                            vk::Format::eD16UnormS8Uint,
-                                            vk::Format::eD16Unorm};
+  VkFormat depthFormats[5] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
+                              VK_FORMAT_D32_SFLOAT,
+                              VK_FORMAT_D24_UNORM_S8_UINT,
+                              VK_FORMAT_D16_UNORM_S8_UINT,
+                              VK_FORMAT_D16_UNORM};
+
   bool validDepthFormat = false;
   for (auto &format : depthFormats) {
-    vk::FormatProperties formatProps =
-        Context::getPhysicalDevice().getFormatProperties(format);
+    VkFormatProperties formatProps;
+    vkGetPhysicalDeviceFormatProperties(
+        Context::getPhysicalDevice(), format, &formatProps);
+
     if (formatProps.optimalTilingFeatures &
-        vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
       this->depthImageFormat_ = format;
       validDepthFormat = true;
       break;
@@ -548,9 +658,11 @@ void Window::createDepthStencilResources() {
   }
   assert(validDepthFormat);
 
-  vk::ImageCreateInfo imageCreateInfo{
-      {},
-      vk::ImageType::e2D,
+  VkImageCreateInfo imageCreateInfo = {
+      VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
+      nullptr,                             // pNext
+      0,                                   // flags
+      VK_IMAGE_TYPE_2D,
       this->depthImageFormat_,
       {
           this->swapchainExtent_.width,
@@ -559,105 +671,174 @@ void Window::createDepthStencilResources() {
       },
       1,
       1,
-      vk::SampleCountFlagBits::e1,
-      vk::ImageTiling::eOptimal,
-      vk::ImageUsageFlagBits::eDepthStencilAttachment |
-          vk::ImageUsageFlagBits::eSampled,
-      vk::SharingMode::eExclusive,
+      VK_SAMPLE_COUNT_1_BIT,
+      VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+      VK_SHARING_MODE_EXCLUSIVE,
       0,
       nullptr,
-      vk::ImageLayout::eUndefined,
+      VK_IMAGE_LAYOUT_UNDEFINED,
+
   };
 
   VmaAllocationCreateInfo allocInfo{};
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-  if (vmaCreateImage(
-          Context::get().allocator_,
-          reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
-          &allocInfo,
-          reinterpret_cast<VkImage *>(&this->depthStencil_.image),
-          &this->depthStencil_.allocation,
-          nullptr) != VK_SUCCESS) {
-    throw std::runtime_error("Failed to create the depth stencil image");
-  }
+  VK_CHECK(vmaCreateImage(
+      Context::get().allocator_,
+      &imageCreateInfo,
+      &allocInfo,
+      &this->depthStencil_.image,
+      &this->depthStencil_.allocation,
+      nullptr));
 
-  vk::ImageViewCreateInfo imageViewCreateInfo{
-      {},
+  VkImageViewCreateInfo imageViewCreateInfo = {
+      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+      nullptr,                                  // pNext
+      0,                                        // flags
       this->depthStencil_.image,
-      vk::ImageViewType::e2D,
+      VK_IMAGE_VIEW_TYPE_2D,
       this->depthImageFormat_,
       {
-          vk::ComponentSwizzle::eIdentity, // r
-          vk::ComponentSwizzle::eIdentity, // g
-          vk::ComponentSwizzle::eIdentity, // b
-          vk::ComponentSwizzle::eIdentity, // a
-      },                                   // components
+          VK_COMPONENT_SWIZZLE_IDENTITY, // r
+          VK_COMPONENT_SWIZZLE_IDENTITY, // g
+          VK_COMPONENT_SWIZZLE_IDENTITY, // b
+          VK_COMPONENT_SWIZZLE_IDENTITY, // a
+      },                                 // components
       {
-          vk::ImageAspectFlagBits::eDepth |
-              vk::ImageAspectFlagBits::eStencil, // aspectMask
-          0,                                     // baseMipLevel
-          1,                                     // levelCount
-          0,                                     // baseArrayLayer
-          1,                                     // layerCount
-      },                                         // subresourceRange
+          VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
+          0, // baseMipLevel
+          1, // levelCount
+          0, // baseArrayLayer
+          1, // layerCount
+      },     // subresourceRange
   };
 
-  this->depthStencil_.view =
-      Context::getDevice().createImageView(imageViewCreateInfo);
+  VK_CHECK(vkCreateImageView(
+      Context::getDevice(),
+      &imageViewCreateInfo,
+      nullptr,
+      &this->depthStencil_.view));
 }
 
 void Window::createMultisampleTargets() {
   // Color target
   {
-    vk::ImageCreateInfo imageCreateInfo{
-        {},                         // flags
-        vk::ImageType::e2D,         // imageType
-        this->swapchainImageFormat_, // format
+    VkImageCreateInfo imageCreateInfo = {
+        VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
+        nullptr,                             // pNext
+        0,                                   // flags
+        VK_IMAGE_TYPE_2D,                    // imageType
+        this->swapchainImageFormat_,         // format
         {
             this->swapchainExtent_.width,  // width
             this->swapchainExtent_.height, // height
-            1,                            // depth
-        },                                // extent
-        1,                                // mipLevels
-        1,                                // arrayLayers
+            1,                             // depth
+        },                                 // extent
+        1,                                 // mipLevels
+        1,                                 // arrayLayers
         this->msaaSamples_,                // samples
-        vk::ImageTiling::eOptimal,        // tiling
-        vk::ImageUsageFlagBits::eTransientAttachment |
-            vk::ImageUsageFlagBits::eColorAttachment, // usage
-        vk::SharingMode::eExclusive,                  // sharingMode
-        0,                                            // queueFamilyIndexCount
-        nullptr,                                      // pQueueFamilyIndices
-        vk::ImageLayout::eUndefined,                  // initialLayout
+        VK_IMAGE_TILING_OPTIMAL,           // tiling
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
+        VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
+        0,                                       // queueFamilyIndexCount
+        nullptr,                                 // pQueueFamilyIndices
+        VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
     };
 
-    VmaAllocationCreateInfo allocInfo{};
+    VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    if (vmaCreateImage(
-            Context::get().allocator_,
-            reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
-            &allocInfo,
-            reinterpret_cast<VkImage *>(&this->multiSampleTargets_.color.image),
-            &this->multiSampleTargets_.color.allocation,
-            nullptr) != VK_SUCCESS) {
-      throw std::runtime_error(
-          "Failed to create the multisample target color image");
-    }
+    VK_CHECK(vmaCreateImage(
+        Context::get().allocator_,
+        &imageCreateInfo,
+        &allocInfo,
+        &this->multiSampleTargets_.color.image,
+        &this->multiSampleTargets_.color.allocation,
+        nullptr));
 
-    vk::ImageViewCreateInfo imageViewCreateInfo{
-        {},                                   // flags
-        this->multiSampleTargets_.color.image, // image
-        vk::ImageViewType::e2D,               // viewType
-        this->swapchainImageFormat_,           // format
+    VkImageViewCreateInfo imageViewCreateInfo = {
+        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+        nullptr,                                  // pNext
+        0,                                        // flags
+        this->multiSampleTargets_.color.image,    // image
+        VK_IMAGE_VIEW_TYPE_2D,                    // viewType
+        this->swapchainImageFormat_,              // format
         {
-            vk::ComponentSwizzle::eR, // r
-            vk::ComponentSwizzle::eG, // g
-            vk::ComponentSwizzle::eB, // b
-            vk::ComponentSwizzle::eA, // a
-        },                            // components
+            VK_COMPONENT_SWIZZLE_R, // r
+            VK_COMPONENT_SWIZZLE_G, // g
+            VK_COMPONENT_SWIZZLE_B, // b
+            VK_COMPONENT_SWIZZLE_A, // a
+        },                          // components
         {
-            vk::ImageAspectFlagBits::eColor, // aspectMask
+            VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+            {},                        // baseMipLevel
+            1,                         // levelCount
+            {},                        // baseArrayLayer
+            1,                         // layerCount
+        },                             // subresourceRange
+    };
+
+    VK_CHECK(vkCreateImageView(
+        Context::getDevice(),
+        &imageViewCreateInfo,
+        nullptr,
+        &this->multiSampleTargets_.color.view));
+  }
+
+  // Depth Target
+  {
+    VkImageCreateInfo imageCreateInfo = {
+        VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
+        nullptr,                             // pNext
+        0,                                   // flags
+        VK_IMAGE_TYPE_2D,                    // imageType
+        this->depthImageFormat_,             // format
+        {
+            this->swapchainExtent_.width,  // width
+            this->swapchainExtent_.height, // height
+            1,                             // depth
+        },                                 // extent
+        1,                                 // mipLevels
+        1,                                 // arrayLayers
+        this->msaaSamples_,                // samples
+        VK_IMAGE_TILING_OPTIMAL,           // tiling
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, // usage
+        VK_SHARING_MODE_EXCLUSIVE,                       // sharingMode
+        0,                         // queueFamilyIndexCount
+        nullptr,                   // pQueueFamilyIndices
+        VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
+    };
+
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    VK_CHECK(vmaCreateImage(
+        Context::get().allocator_,
+        &imageCreateInfo,
+        &allocInfo,
+        &this->multiSampleTargets_.depth.image,
+        &this->multiSampleTargets_.depth.allocation,
+        nullptr));
+
+    VkImageViewCreateInfo imageViewCreateInfo = {
+        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+        nullptr,                                  // pNext
+        0,                                        // flags
+        this->multiSampleTargets_.depth.image,    // image
+        VK_IMAGE_VIEW_TYPE_2D,                    // viewType
+        this->depthImageFormat_,                  // format
+        {
+            VK_COMPONENT_SWIZZLE_R, // r
+            VK_COMPONENT_SWIZZLE_G, // g
+            VK_COMPONENT_SWIZZLE_B, // b
+            VK_COMPONENT_SWIZZLE_A, // a
+        },                          // components
+        {
+            VK_IMAGE_ASPECT_DEPTH_BIT |
+                VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
             {},                              // baseMipLevel
             1,                               // levelCount
             {},                              // baseArrayLayer
@@ -665,253 +846,194 @@ void Window::createMultisampleTargets() {
         },                                   // subresourceRange
     };
 
-    this->multiSampleTargets_.color.view =
-        Context::getDevice().createImageView(imageViewCreateInfo);
-  }
-
-  // Depth Target
-  {
-    vk::ImageCreateInfo imageCreateInfo{
-        {},                     // flags
-        vk::ImageType::e2D,     // imageType
-        this->depthImageFormat_, // format
-        {
-            this->swapchainExtent_.width,  // width
-            this->swapchainExtent_.height, // height
-            1,                            // depth
-        },                                // extent
-        1,                                // mipLevels
-        1,                                // arrayLayers
-        this->msaaSamples_,                // samples
-        vk::ImageTiling::eOptimal,        // tiling
-        vk::ImageUsageFlagBits::eTransientAttachment |
-            vk::ImageUsageFlagBits::eDepthStencilAttachment, // usage
-        vk::SharingMode::eExclusive,                         // sharingMode
-        0,                           // queueFamilyIndexCount
-        nullptr,                     // pQueueFamilyIndices
-        vk::ImageLayout::eUndefined, // initialLayout
-    };
-
-    VmaAllocationCreateInfo allocInfo{};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    if (vmaCreateImage(
-            Context::get().allocator_,
-            reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
-            &allocInfo,
-            reinterpret_cast<VkImage *>(&this->multiSampleTargets_.depth.image),
-            &this->multiSampleTargets_.depth.allocation,
-            nullptr) != VK_SUCCESS) {
-      throw std::runtime_error(
-          "Failed to create the multisample target depth image");
-    }
-
-    vk::ImageViewCreateInfo imageViewCreateInfo{
-        {},                                   // flags
-        this->multiSampleTargets_.depth.image, // image
-        vk::ImageViewType::e2D,               // viewType
-        this->depthImageFormat_,               // format
-        {
-            vk::ComponentSwizzle::eR, // r
-            vk::ComponentSwizzle::eG, // g
-            vk::ComponentSwizzle::eB, // b
-            vk::ComponentSwizzle::eA, // a
-        },                            // components
-        {
-            vk::ImageAspectFlagBits::eDepth |
-                vk::ImageAspectFlagBits::eStencil, // aspectMask
-            {},                                    // baseMipLevel
-            1,                                     // levelCount
-            {},                                    // baseArrayLayer
-            1,                                     // layerCount
-        },                                         // subresourceRange
-    };
-
-    this->multiSampleTargets_.depth.view =
-        Context::getDevice().createImageView(imageViewCreateInfo);
+    VK_CHECK(vkCreateImageView(
+        Context::getDevice(),
+        &imageViewCreateInfo,
+        nullptr,
+        &this->multiSampleTargets_.depth.view));
   }
 }
 
 void Window::createRenderPass() {
-  std::array<vk::AttachmentDescription, 4> attachmentDescriptions{
+  VkAttachmentDescription attachmentDescriptions[4] = {
       // Multisampled color attachment
-      vk::AttachmentDescription{
-          {},                                       // flags
-          this->swapchainImageFormat_,               // format
-          this->msaaSamples_,                        // samples
-          vk::AttachmentLoadOp::eClear,             // loadOp
-          vk::AttachmentStoreOp::eStore,            // storeOp
-          vk::AttachmentLoadOp::eDontCare,          // stencilLoadOp
-          vk::AttachmentStoreOp::eDontCare,         // stencilStoreOp
-          vk::ImageLayout::eUndefined,              // initialLayout
-          vk::ImageLayout::eColorAttachmentOptimal, // finalLayout
+      VkAttachmentDescription{
+          0,                                        // flags
+          this->swapchainImageFormat_,              // format
+          this->msaaSamples_,                       // samples
+          VK_ATTACHMENT_LOAD_OP_CLEAR,              // loadOp
+          VK_ATTACHMENT_STORE_OP_STORE,             // storeOp
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,          // stencilLoadOp
+          VK_ATTACHMENT_STORE_OP_DONT_CARE,         // stencilStoreOp
+          VK_IMAGE_LAYOUT_UNDEFINED,                // initialLayout
+          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // finalLayout
       },
 
       // Resolved color attachment
-      vk::AttachmentDescription{
-          {},                               // flags
-          this->swapchainImageFormat_,       // format
-          vk::SampleCountFlagBits::e1,      // samples
-          vk::AttachmentLoadOp::eDontCare,  // loadOp
-          vk::AttachmentStoreOp::eStore,    // storeOp
-          vk::AttachmentLoadOp::eDontCare,  // stencilLoadOp
-          vk::AttachmentStoreOp::eDontCare, // stencilStoreOp
-          vk::ImageLayout::eUndefined,      // initialLayout
-          vk::ImageLayout::ePresentSrcKHR,  // finalLayout
+      VkAttachmentDescription{
+          0,                                // flags
+          this->swapchainImageFormat_,      // format
+          VK_SAMPLE_COUNT_1_BIT,            // samples
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // loadOp
+          VK_ATTACHMENT_STORE_OP_STORE,     // storeOp
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // stencilLoadOp
+          VK_ATTACHMENT_STORE_OP_DONT_CARE, // stencilStoreOp
+          VK_IMAGE_LAYOUT_UNDEFINED,        // initialLayout
+          VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,  // finalLayout
       },
 
       // Multisampled depth attachment
-      vk::AttachmentDescription{
-          {},                                              // flags
+      VkAttachmentDescription{
+          0,                                                // flags
           this->depthImageFormat_,                          // format
           this->msaaSamples_,                               // samples
-          vk::AttachmentLoadOp::eClear,                    // loadOp
-          vk::AttachmentStoreOp::eDontCare,                // storeOp
-          vk::AttachmentLoadOp::eDontCare,                 // stencilLoadOp
-          vk::AttachmentStoreOp::eDontCare,                // stencilStoreOp
-          vk::ImageLayout::eUndefined,                     // initialLayout
-          vk::ImageLayout::eDepthStencilAttachmentOptimal, // finalLayout
+          VK_ATTACHMENT_LOAD_OP_CLEAR,                      // loadOp
+          VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // storeOp
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
+          VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // stencilStoreOp
+          VK_IMAGE_LAYOUT_UNDEFINED,                        // initialLayout
+          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // finalLayout
       },
 
       // Resolved depth attachment
-      vk::AttachmentDescription{
-          {},                                              // flags
+      VkAttachmentDescription{
+          0,                                                // flags
           this->depthImageFormat_,                          // format
-          vk::SampleCountFlagBits::e1,                     // samples
-          vk::AttachmentLoadOp::eDontCare,                 // loadOp
-          vk::AttachmentStoreOp::eStore,                   // storeOp
-          vk::AttachmentLoadOp::eDontCare,                 // stencilLoadOp
-          vk::AttachmentStoreOp::eDontCare,                // stencilStoreOp
-          vk::ImageLayout::eUndefined,                     // initialLayout
-          vk::ImageLayout::eDepthStencilAttachmentOptimal, // finalLayout
+          VK_SAMPLE_COUNT_1_BIT,                            // samples
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // loadOp
+          VK_ATTACHMENT_STORE_OP_STORE,                     // storeOp
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
+          VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // stencilStoreOp
+          VK_IMAGE_LAYOUT_UNDEFINED,                        // initialLayout
+          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // finalLayout
       },
   };
 
-  std::array<vk::AttachmentReference, 1> colorAttachmentReferences{
-      vk::AttachmentReference{
-          0,                                        // attachment
-          vk::ImageLayout::eColorAttachmentOptimal, // layout
-      },
+  VkAttachmentReference colorAttachmentReference = {
+      0,                                        // attachment
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
   };
 
-  std::array<vk::AttachmentReference, 1> depthAttachmentReferences{
-      vk::AttachmentReference{
-          2,                                               // attachment
-          vk::ImageLayout::eDepthStencilAttachmentOptimal, // layout
-      },
+  VkAttachmentReference depthAttachmentReference = {
+      2,                                                // attachment
+      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // layout
   };
 
-  std::array<vk::AttachmentReference, 1> resolveAttachmentReferences{
-      vk::AttachmentReference{
-          1,                                        // attachment
-          vk::ImageLayout::eColorAttachmentOptimal, // layout
-      },
+  VkAttachmentReference resolveAttachmentReference = {
+      1,                                        // attachment
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
   };
 
-  std::array<vk::SubpassDescription, 1> subpassDescriptions{
-      vk::SubpassDescription{
-          {},                                 // flags
-          vk::PipelineBindPoint::eGraphics,   // pipelineBindPoint
-          0,                                  // inputAttachmentCount
-          nullptr,                            // pInputAttachments
-          1,                                  // colorAttachmentCount
-          colorAttachmentReferences.data(),   // pColorAttachments
-          resolveAttachmentReferences.data(), // pResolveAttachments
-          depthAttachmentReferences.data(),   // pDepthStencilAttachment
-          0,                                  // preserveAttachmentCount
-          nullptr,                            // pPreserveAttachments
-      },
+  VkSubpassDescription subpassDescription = {
+      {},                              // flags
+      VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
+      0,                               // inputAttachmentCount
+      nullptr,                         // pInputAttachments
+      1,                               // colorAttachmentCount
+      &colorAttachmentReference,       // pColorAttachments
+      &resolveAttachmentReference,     // pResolveAttachments
+      &depthAttachmentReference,       // pDepthStencilAttachment
+      0,                               // preserveAttachmentCount
+      nullptr,                         // pPreserveAttachments
   };
 
-  if (this->msaaSamples_ == SampleCount::e1) {
+  if (this->msaaSamples_ == VK_SAMPLE_COUNT_1_BIT) {
     // Disable multisampled color clearing
-    attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eDontCare;
-    attachmentDescriptions[0].storeOp = vk::AttachmentStoreOp::eDontCare;
+    attachmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
     // Enable resolve color clearing
-    attachmentDescriptions[1].loadOp = vk::AttachmentLoadOp::eClear;
-    attachmentDescriptions[1].storeOp = vk::AttachmentStoreOp::eStore;
+    attachmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
     // Disable multisampled depth clearing
-    attachmentDescriptions[2].loadOp = vk::AttachmentLoadOp::eDontCare;
-    attachmentDescriptions[2].storeOp = vk::AttachmentStoreOp::eDontCare;
+    attachmentDescriptions[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachmentDescriptions[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
     // Enable resolve depth clearing
-    attachmentDescriptions[3].loadOp = vk::AttachmentLoadOp::eClear;
-    attachmentDescriptions[3].storeOp = vk::AttachmentStoreOp::eDontCare;
+    attachmentDescriptions[3].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachmentDescriptions[3].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-    colorAttachmentReferences[0].attachment = 1;
-    depthAttachmentReferences[0].attachment = 3;
-    subpassDescriptions[0].pResolveAttachments = nullptr;
+    colorAttachmentReference.attachment = 1;
+    depthAttachmentReference.attachment = 3;
+    subpassDescription.pResolveAttachments = nullptr;
   }
 
-  std::array<vk::SubpassDependency, 2> dependencies{
-      vk::SubpassDependency{
-          VK_SUBPASS_EXTERNAL,                               // srcSubpass
-          0,                                                 // dstSubpass
-          vk::PipelineStageFlagBits::eBottomOfPipe,          // srcStageMask
-          vk::PipelineStageFlagBits::eColorAttachmentOutput, // dstStageMask
-          vk::AccessFlagBits::eMemoryRead,                   // srcAccessMask
-          vk::AccessFlagBits::eColorAttachmentRead |
-              vk::AccessFlagBits::eColorAttachmentWrite, // dstAccessMask
-          vk::DependencyFlagBits::eByRegion,             // dependencyFlags
+  VkSubpassDependency dependencies[2] = {
+      VkSubpassDependency{
+          VK_SUBPASS_EXTERNAL,                           // srcSubpass
+          0,                                             // dstSubpass
+          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // srcStageMask
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
+          VK_ACCESS_MEMORY_READ_BIT,                     // srcAccessMask
+          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // dstAccessMask
+          VK_DEPENDENCY_BY_REGION_BIT,              // dependencyFlags
       },
-      vk::SubpassDependency{
-          0,                                                 // srcSubpass
-          VK_SUBPASS_EXTERNAL,                               // dstSubpass
-          vk::PipelineStageFlagBits::eColorAttachmentOutput, // srcStageMask
-          vk::PipelineStageFlagBits::eBottomOfPipe,          // dstStageMask
-          vk::AccessFlagBits::eColorAttachmentRead |
-              vk::AccessFlagBits::eColorAttachmentWrite, // srcAccessMask
-          vk::AccessFlagBits::eMemoryRead,               // dstAccessMask
-          vk::DependencyFlagBits::eByRegion,             // dependencyFlags
+      VkSubpassDependency{
+          0,                                             // srcSubpass
+          VK_SUBPASS_EXTERNAL,                           // dstSubpass
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
+          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
+          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // srcAccessMask
+          VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
+          VK_DEPENDENCY_BY_REGION_BIT,              // dependencyFlags
       },
   };
 
-  vk::RenderPassCreateInfo renderPassCreateInfo{
-      {},                                                   // flags
-      static_cast<uint32_t>(attachmentDescriptions.size()), // attachmentCount
-      attachmentDescriptions.data(),                        // pAttachments
-      1,                                                    // subpassCount
-      subpassDescriptions.data(),                           // pSubpasses
-      static_cast<uint32_t>(dependencies.size()),           // dependencyCount
-      dependencies.data(),                                  // pDependencies
+  VkRenderPassCreateInfo renderPassCreateInfo = {
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
+      nullptr,                                   // pNext
+      0,                                         // flags
+      static_cast<uint32_t>(
+          ARRAYSIZE(attachmentDescriptions)),         // attachmentCount
+      attachmentDescriptions,                         // pAttachments
+      1,                                              // subpassCount
+      &subpassDescription,                            // pSubpasses
+      static_cast<uint32_t>(ARRAYSIZE(dependencies)), // dependencyCount
+      dependencies,                                   // pDependencies
   };
 
-  this->renderPass_ =
-      Context::getDevice().createRenderPass(renderPassCreateInfo);
+  VK_CHECK(vkCreateRenderPass(
+      Context::getDevice(),
+      &renderPassCreateInfo,
+      nullptr,
+      &this->renderPass_));
 }
 
 void Window::createImguiRenderPass() {
-  vk::AttachmentDescription attachment{};
+  VkAttachmentDescription attachment = {};
   attachment.format = this->swapchainImageFormat_;
-  attachment.samples = vk::SampleCountFlagBits::e1;
-  attachment.loadOp = vk::AttachmentLoadOp::eDontCare;
-  attachment.storeOp = vk::AttachmentStoreOp::eStore;
-  attachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-  attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-  attachment.initialLayout = vk::ImageLayout::eUndefined;
-  attachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+  attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-  vk::AttachmentReference color_attachment{};
+  VkAttachmentReference color_attachment = {};
   color_attachment.attachment = 0;
-  color_attachment.layout = vk::ImageLayout::eColorAttachmentOptimal;
+  color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  vk::SubpassDescription subpass{};
-  subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+  VkSubpassDescription subpass = {};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &color_attachment;
 
-  vk::SubpassDependency dependency{};
+  VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;
-  dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-  dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-  dependency.srcAccessMask = {};
-  dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  vk::RenderPassCreateInfo renderPassCreateInfo{
-      {},          // flags
+  VkRenderPassCreateInfo renderPassCreateInfo = {
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+      nullptr,     // pNext
+      0,           // flags
       1,           // attachmentCount
       &attachment, // pAttachments
       1,           // subpassCount
@@ -920,8 +1042,11 @@ void Window::createImguiRenderPass() {
       &dependency, // pDependencies
   };
 
-  this->imguiRenderPass_ =
-      Context::getDevice().createRenderPass(renderPassCreateInfo);
+  VK_CHECK(vkCreateRenderPass(
+      Context::getDevice(),
+      &renderPassCreateInfo,
+      nullptr,
+      &this->imguiRenderPass_));
 }
 
 void Window::initImgui() {
@@ -955,88 +1080,98 @@ void Window::initImgui() {
   // Upload Fonts
   {
     // Use any command queue
-    vk::CommandPool commandPool = Context::get().graphicsCommandPool_;
-    vk::CommandBuffer commandBuffer =
+    VkCommandPool commandPool = Context::get().graphicsCommandPool_;
+    VkCommandBuffer commandBuffer =
         this->frameResources_[this->currentFrame_].commandBuffer;
 
-    Context::getDevice().resetCommandPool(commandPool, {});
-    vk::CommandBufferBeginInfo beginInfo{
-        vk::CommandBufferUsageFlagBits::eOneTimeSubmit, // flags
+    VK_CHECK(vkResetCommandPool(Context::getDevice(), commandPool, 0));
+    VkCommandBufferBeginInfo beginInfo = {
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
+        nullptr,                                     // pNext
+        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
+        nullptr,                                     // pInheritanceInfo
     };
 
-    commandBuffer.begin(beginInfo);
+    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 
-    vk::SubmitInfo endInfo{};
+    VkSubmitInfo endInfo = {};
+    endInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     endInfo.commandBufferCount = 1;
     endInfo.pCommandBuffers = &commandBuffer;
 
-    commandBuffer.end();
+    VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
-    Context::get().graphicsQueue_.submit(endInfo, {});
+    VK_CHECK(vkQueueSubmit(
+        Context::get().graphicsQueue_, 1, &endInfo, VK_NULL_HANDLE));
 
-    Context::getDevice().waitIdle();
+    VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
 
     ImGui_ImplVulkan_InvalidateFontUploadObjects();
   }
 }
 
 void Window::regenFramebuffer(
-    vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView) {
-  Context::getDevice().destroy(framebuffer);
+    VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
+  vkDestroyFramebuffer(Context::getDevice(), framebuffer, nullptr);
 
-  std::array<vk::ImageView, 4> attachments{
+  VkImageView attachments[4]{
       this->multiSampleTargets_.color.view,
       swapchainImageView,
       this->multiSampleTargets_.depth.view,
       this->depthStencil_.view,
   };
 
-  vk::FramebufferCreateInfo createInfo = {
-      {},                                        // flags
-      this->renderPass_,                          // renderPass
-      static_cast<uint32_t>(attachments.size()), // attachmentCount
-      attachments.data(),                        // pAttachments
-      this->swapchainExtent_.width,               // width
-      this->swapchainExtent_.height,              // height
-      1,                                         // layers
+  VkFramebufferCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
+      nullptr,                                       // pNext
+      0,                                             // flags
+      this->renderPass_,                             // renderPass
+      static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
+      attachments,                                   // pAttachments
+      this->swapchainExtent_.width,                  // width
+      this->swapchainExtent_.height,                 // height
+      1,                                             // layers
   };
 
-  framebuffer = Context::getDevice().createFramebuffer(createInfo);
+  VK_CHECK(vkCreateFramebuffer(
+      Context::getDevice(), &createInfo, nullptr, &framebuffer));
 }
 
 void Window::regenImguiFramebuffer(
-    vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView) {
-  Context::getDevice().destroy(framebuffer);
+    VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
+  vkDestroyFramebuffer(Context::getDevice(), framebuffer, nullptr);
 
-  std::array<vk::ImageView, 1> attachments{
-      swapchainImageView,
-  };
-
-  vk::FramebufferCreateInfo createInfo = {
-      {},                                        // flags
-      this->imguiRenderPass_,                     // renderPass
-      static_cast<uint32_t>(attachments.size()), // attachmentCount
-      attachments.data(),                        // pAttachments
-      this->swapchainExtent_.width,               // width
-      this->swapchainExtent_.height,              // height
+  VkFramebufferCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
+      nullptr,                                   // pNext
+      0,                                         // flags
+      this->imguiRenderPass_,                    // renderPass
+      1,                                         // attachmentCount
+      &swapchainImageView,                       // pAttachments
+      this->swapchainExtent_.width,              // width
+      this->swapchainExtent_.height,             // height
       1,                                         // layers
   };
 
-  framebuffer = Context::getDevice().createFramebuffer(createInfo);
+  VK_CHECK(vkCreateFramebuffer(
+      Context::getDevice(), &createInfo, nullptr, &framebuffer));
 }
 
 void Window::destroyResizables() {
-  Context::getDevice().waitIdle();
+  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
 
   for (auto &resources : this->frameResources_) {
-    Context::getDevice().freeCommandBuffers(
-        Context::get().graphicsCommandPool_, resources.commandBuffer);
+    vkFreeCommandBuffers(
+        Context::getDevice(),
+        Context::get().graphicsCommandPool_,
+        1,
+        &resources.commandBuffer);
   }
 
   if (this->depthStencil_.image) {
-    Context::getDevice().destroy(this->depthStencil_.view);
+    vkDestroyImageView(Context::getDevice(), this->depthStencil_.view, nullptr);
     vmaDestroyImage(
         Context::get().allocator_,
         this->depthStencil_.image,
@@ -1046,7 +1181,8 @@ void Window::destroyResizables() {
   }
 
   if (this->multiSampleTargets_.color.image) {
-    Context::getDevice().destroy(this->multiSampleTargets_.color.view);
+    vkDestroyImageView(
+        Context::getDevice(), this->multiSampleTargets_.color.view, nullptr);
     vmaDestroyImage(
         Context::get().allocator_,
         this->multiSampleTargets_.color.image,
@@ -1056,7 +1192,8 @@ void Window::destroyResizables() {
   }
 
   if (this->multiSampleTargets_.depth.image) {
-    Context::getDevice().destroy(this->multiSampleTargets_.depth.view);
+    vkDestroyImageView(
+        Context::getDevice(), this->multiSampleTargets_.depth.view, nullptr);
     vmaDestroyImage(
         Context::get().allocator_,
         this->multiSampleTargets_.depth.image,
@@ -1065,12 +1202,12 @@ void Window::destroyResizables() {
     this->multiSampleTargets_.depth.allocation = VK_NULL_HANDLE;
   }
 
-  Context::getDevice().destroy(this->imguiRenderPass_);
-  Context::getDevice().destroy(this->renderPass_);
+  vkDestroyRenderPass(Context::getDevice(), this->imguiRenderPass_, nullptr);
+  vkDestroyRenderPass(Context::getDevice(), this->renderPass_, nullptr);
 }
 
 uint32_t Window::getSwapchainNumImages(
-    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+    const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
   uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
 
   if (surfaceCapabilities.maxImageCount > 0 &&
@@ -1081,14 +1218,14 @@ uint32_t Window::getSwapchainNumImages(
   return imageCount;
 }
 
-vk::SurfaceFormatKHR
-Window::getSwapchainFormat(const std::vector<vk::SurfaceFormatKHR> &formats) {
-  if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined) {
-    return {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear};
+VkSurfaceFormatKHR Window::getSwapchainFormat(
+    const fstl::fixed_vector<VkSurfaceFormatKHR> &formats) {
+  if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
+    return {VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR};
   }
 
   for (const auto &format : formats) {
-    if (format.format == vk::Format::eR8G8B8A8Unorm) {
+    if (format.format == VK_FORMAT_R8G8B8A8_UNORM) {
       return format;
     }
   }
@@ -1096,10 +1233,10 @@ Window::getSwapchainFormat(const std::vector<vk::SurfaceFormatKHR> &formats) {
   return formats[0];
 }
 
-vk::Extent2D Window::getSwapchainExtent(
+VkExtent2D Window::getSwapchainExtent(
     uint32_t width,
     uint32_t height,
-    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+    const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
   if (surfaceCapabilities.currentExtent.width == static_cast<uint32_t>(-1)) {
     VkExtent2D swapchainExtent = {width, height};
     if (swapchainExtent.width < surfaceCapabilities.minImageExtent.width) {
@@ -1124,12 +1261,12 @@ vk::Extent2D Window::getSwapchainExtent(
   return surfaceCapabilities.currentExtent;
 }
 
-vk::ImageUsageFlags Window::getSwapchainUsageFlags(
-    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+VkImageUsageFlags Window::getSwapchainUsageFlags(
+    const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
   if (surfaceCapabilities.supportedUsageFlags &
-      vk::ImageUsageFlagBits::eTransferDst) {
-    return vk::ImageUsageFlagBits::eColorAttachment |
-           vk::ImageUsageFlagBits::eTransferDst;
+      VK_IMAGE_USAGE_TRANSFER_DST_BIT) {
+    return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+           VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
 
   fstl::log::fatal(
@@ -1137,70 +1274,66 @@ vk::ImageUsageFlags Window::getSwapchainUsageFlags(
       "swapchain!\n"
       "Supported swapchain image usages include:\n"
       "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n",
-      (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eTransferSrc
-           ? "    vk::ImageUsageFlagBits::TRANSFER_SRC\n"
+      (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+           ? "    VK_IMAGE_USAGE_TRANSFER_SRC\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT
+           ? "    VK_IMAGE_USAGE_TRANSFER_DST\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT
+           ? "    VK_IMAGE_USAGE_SAMPLED\n"
+           : ""),
+      (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT
+           ? "    VK_IMAGE_USAGE_STORAGE\n"
            : ""),
       (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eTransferDst
-           ? "    vk::ImageUsageFlagBits::TRANSFER_DST\n"
+               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+           ? "    VK_IMAGE_USAGE_COLOR_ATTACHMENT\n"
            : ""),
       (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eSampled
-           ? "    vk::ImageUsageFlagBits::SAMPLED\n"
+               VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+           ? "    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT\n"
            : ""),
       (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eStorage
-           ? "    vk::ImageUsageFlagBits::STORAGE\n"
+               VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
+           ? "    VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT\n"
            : ""),
       (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eColorAttachment
-           ? "    vk::ImageUsageFlagBits::COLOR_ATTACHMENT\n"
-           : ""),
-      (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eDepthStencilAttachment
-           ? "    vk::ImageUsageFlagBits::DEPTH_STENCIL_ATTACHMENT\n"
-           : ""),
-      (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eTransientAttachment
-           ? "    vk::ImageUsageFlagBits::TRANSIENT_ATTACHMENT\n"
-           : ""),
-      (surfaceCapabilities.supportedUsageFlags &
-               vk::ImageUsageFlagBits::eInputAttachment
-           ? "    vk::ImageUsageFlagBits::INPUT_ATTACHMENT"
+               VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT
+           ? "    VK_IMAGE_USAGE_INPUT_ATTACHMENT"
            : ""));
 
-  return static_cast<vk::ImageUsageFlags>(-1);
+  return static_cast<VkImageUsageFlags>(-1);
 }
 
-vk::SurfaceTransformFlagBitsKHR Window::getSwapchainTransform(
-    const vk::SurfaceCapabilitiesKHR &surfaceCapabilities) {
+VkSurfaceTransformFlagBitsKHR Window::getSwapchainTransform(
+    const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
   if (surfaceCapabilities.supportedTransforms &
-      vk::SurfaceTransformFlagBitsKHR::eIdentity) {
-    return vk::SurfaceTransformFlagBitsKHR::eIdentity;
+      VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+    return VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
   } else {
     return surfaceCapabilities.currentTransform;
   }
 }
 
-vk::PresentModeKHR Window::getSwapchainPresentMode(
-    const std::vector<vk::PresentModeKHR> &presentModes) {
+VkPresentModeKHR Window::getSwapchainPresentMode(
+    const fstl::fixed_vector<VkPresentModeKHR> &presentModes) {
   for (const auto &presentMode : presentModes) {
-    if (presentMode == vk::PresentModeKHR::eImmediate) {
+    if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
       fstl::log::debug("Using Immediate present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
-    if (presentMode == vk::PresentModeKHR::eMailbox) {
+    if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
       fstl::log::debug("Using mailbox present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
-    if (presentMode == vk::PresentModeKHR::eFifo) {
+    if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
       fstl::log::debug("Using FIFO present mode");
       return presentMode;
     }
@@ -1208,5 +1341,5 @@ vk::PresentModeKHR Window::getSwapchainPresentMode(
 
   fstl::log::fatal("FIFO present mode is not supported by the swapchain!");
 
-  return static_cast<vk::PresentModeKHR>(-1);
+  return static_cast<VkPresentModeKHR>(-1);
 }

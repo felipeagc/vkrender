@@ -1,5 +1,5 @@
 #include "context.hpp"
-#include "commandbuffer.hpp"
+#include "util.hpp"
 #include "window.hpp"
 #include <fstl/logging.hpp>
 #include <iostream>
@@ -59,24 +59,24 @@ Context::Context() {
 }
 
 Context::~Context() {
-  this->device_.waitIdle();
+  VK_CHECK(vkDeviceWaitIdle(this->device_));
 
   this->descriptorManager_.destroy();
 
-  this->device_.destroy(transientCommandPool_);
-  this->device_.destroy(graphicsCommandPool_);
+  vkDestroyCommandPool(this->device_, this->transientCommandPool_, nullptr);
+  vkDestroyCommandPool(this->device_, this->graphicsCommandPool_, nullptr);
 
   if (this->allocator_ != VK_NULL_HANDLE) {
     vmaDestroyAllocator(this->allocator_);
   }
 
-  this->device_.destroy();
+  vkDestroyDevice(this->device_, nullptr);
 
   if (this->callback_) {
     DestroyDebugReportCallbackEXT(this->instance_, this->callback_, nullptr);
   }
 
-  instance_.destroy();
+  vkDestroyInstance(this->instance_, nullptr);
 
   SDL_Quit();
 }
@@ -88,13 +88,19 @@ void Context::createInstance() {
   }
 #endif
 
-  vk::ApplicationInfo appInfo{"App",
-                              VK_MAKE_VERSION(1, 0, 0),
-                              "No engine",
-                              VK_MAKE_VERSION(1, 0, 0),
-                              VK_API_VERSION_1_0};
+  VkApplicationInfo appInfo = {};
+  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  appInfo.pNext = nullptr;
+  appInfo.pApplicationName = "App";
+  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.pEngineName = "No engine";
+  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.apiVersion = VK_API_VERSION_1_0;
 
-  vk::InstanceCreateInfo createInfo{{}, &appInfo};
+  VkInstanceCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  createInfo.flags = 0;
+  createInfo.pApplicationInfo = &appInfo;
 
 #ifdef NDEBUG
   createInfo.enabledLayerCount = 0;
@@ -111,10 +117,10 @@ void Context::createInstance() {
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames = extensions.data();
 
-  this->instance_ = vk::createInstance(createInfo);
+  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &this->instance_));
 }
 
-void Context::lazyInit(vk::SurfaceKHR &surface) {
+void Context::lazyInit(VkSurfaceKHR &surface) {
   if (this->device_) {
     return;
   }
@@ -131,8 +137,11 @@ void Context::lazyInit(vk::SurfaceKHR &surface) {
   this->descriptorManager_.init();
 }
 
-void Context::createDevice(vk::SurfaceKHR &surface) {
-  auto physicalDevices = this->instance_.enumeratePhysicalDevices();
+void Context::createDevice(VkSurfaceKHR &surface) {
+  uint32_t count;
+  vkEnumeratePhysicalDevices(this->instance_, &count, nullptr);
+  fstl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
+  vkEnumeratePhysicalDevices(this->instance_, &count, physicalDevices.data());
 
   for (auto physicalDevice : physicalDevices) {
     if (checkPhysicalDeviceProperties(
@@ -151,15 +160,18 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
         "Could not select physical device based on chosen properties");
   }
 
-  fstl::log::info(
-      "Using physical device: {}",
-      this->physicalDevice_.getProperties().deviceName);
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(this->physicalDevice_, &properties);
 
-  std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+  fstl::log::info("Using physical device: {}", properties.deviceName);
+
+  fstl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   std::array<float, 1> queuePriorities = {1.0f};
 
   queueCreateInfos.push_back({
-      {},
+      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+      nullptr,
+      0,
       graphicsQueueFamilyIndex_,
       static_cast<uint32_t>(queuePriorities.size()),
       queuePriorities.data(),
@@ -167,7 +179,9 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
 
   if (presentQueueFamilyIndex_ != graphicsQueueFamilyIndex_) {
     queueCreateInfos.push_back({
-        {},
+        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        nullptr,
+        0,
         presentQueueFamilyIndex_,
         static_cast<uint32_t>(queuePriorities.size()),
         queuePriorities.data(),
@@ -176,17 +190,21 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
 
   if (transferQueueFamilyIndex_ != graphicsQueueFamilyIndex_) {
     queueCreateInfos.push_back({
-        {},
+        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        nullptr,
+        0,
         transferQueueFamilyIndex_,
         static_cast<uint32_t>(queuePriorities.size()),
         queuePriorities.data(),
     });
   }
 
-  vk::DeviceCreateInfo deviceCreateInfo{
-      {},
-      static_cast<uint32_t>(queueCreateInfos.size()),
-      queueCreateInfos.data()};
+  VkDeviceCreateInfo deviceCreateInfo = {};
+  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  deviceCreateInfo.flags = 0;
+  deviceCreateInfo.queueCreateInfoCount =
+      static_cast<uint32_t>(queueCreateInfos.size());
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
   // Validation layer stuff
 #ifdef NDEBUG
@@ -203,18 +221,21 @@ void Context::createDevice(vk::SurfaceKHR &surface) {
   deviceCreateInfo.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTENSIONS.data();
 
   // Enable all features
-  auto features = this->physicalDevice_.getFeatures();
+  VkPhysicalDeviceFeatures features;
+  vkGetPhysicalDeviceFeatures(this->physicalDevice_, &features);
   deviceCreateInfo.pEnabledFeatures = &features;
 
-  this->device_ = this->physicalDevice_.createDevice(deviceCreateInfo);
+  VK_CHECK(vkCreateDevice(
+      this->physicalDevice_, &deviceCreateInfo, nullptr, &this->device_));
 }
 
 void Context::getDeviceQueues() {
-  this->device_.getQueue(
-      this->graphicsQueueFamilyIndex_, 0, &this->graphicsQueue_);
-  this->device_.getQueue(this->presentQueueFamilyIndex_, 0, &this->presentQueue_);
-  this->device_.getQueue(
-      this->transferQueueFamilyIndex_, 0, &this->transferQueue_);
+  vkGetDeviceQueue(
+      this->device_, this->graphicsQueueFamilyIndex_, 0, &this->graphicsQueue_);
+  vkGetDeviceQueue(
+      this->device_, this->presentQueueFamilyIndex_, 0, &this->presentQueue_);
+  vkGetDeviceQueue(
+      this->device_, this->transferQueueFamilyIndex_, 0, &this->transferQueue_);
 }
 
 void Context::setupMemoryAllocator() {
@@ -222,62 +243,72 @@ void Context::setupMemoryAllocator() {
   allocatorInfo.physicalDevice = this->physicalDevice_;
   allocatorInfo.device = this->device_;
 
-  vmaCreateAllocator(&allocatorInfo, &this->allocator_);
+  VK_CHECK(vmaCreateAllocator(&allocatorInfo, &this->allocator_));
 }
 
 void Context::createGraphicsCommandPool() {
-  this->graphicsCommandPool_ = this->device_.createCommandPool(
-      {vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-       this->graphicsQueueFamilyIndex_});
+  VkCommandPoolCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  createInfo.pNext = 0;
+  createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  createInfo.queueFamilyIndex = this->graphicsQueueFamilyIndex_;
+
+  VK_CHECK(vkCreateCommandPool(
+      this->device_, &createInfo, nullptr, &this->graphicsCommandPool_));
 }
 
 void Context::createTransientCommandPool() {
-  this->transientCommandPool_ =
-      this->device_.createCommandPool({vk::CommandPoolCreateFlagBits::eTransient,
-                                      this->graphicsQueueFamilyIndex_});
+  VkCommandPoolCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  createInfo.pNext = 0;
+  createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  createInfo.queueFamilyIndex = this->graphicsQueueFamilyIndex_;
+
+  VK_CHECK(vkCreateCommandPool(
+      this->device_, &createInfo, nullptr, &this->transientCommandPool_));
 }
 
 // Misc
 
-vk::SampleCountFlagBits Context::getMaxUsableSampleCount() {
-  auto properties = this->physicalDevice_.getProperties();
-  vk::SampleCountFlags colorSamples =
+VkSampleCountFlagBits Context::getMaxUsableSampleCount() {
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(this->physicalDevice_, &properties);
+
+  VkSampleCountFlags colorSamples =
       properties.limits.framebufferColorSampleCounts;
-  vk::SampleCountFlags depthSamples =
+  VkSampleCountFlags depthSamples =
       properties.limits.framebufferDepthSampleCounts;
 
-  vk::SampleCountFlags counts = static_cast<vk::SampleCountFlags>(std::min(
-      static_cast<unsigned int>(colorSamples),
-      static_cast<unsigned int>(depthSamples)));
+  VkSampleCountFlags counts = std::min(colorSamples, depthSamples);
 
-  if (counts & vk::SampleCountFlagBits::e64) {
+  if (counts & VK_SAMPLE_COUNT_64_BIT) {
     fstl::log::debug("Max samples: {}", 64);
-    return vk::SampleCountFlagBits::e64;
+    return VK_SAMPLE_COUNT_64_BIT;
   }
-  if (counts & vk::SampleCountFlagBits::e32) {
+  if (counts & VK_SAMPLE_COUNT_32_BIT) {
     fstl::log::debug("Max samples: {}", 32);
-    return vk::SampleCountFlagBits::e32;
+    return VK_SAMPLE_COUNT_32_BIT;
   }
-  if (counts & vk::SampleCountFlagBits::e16) {
+  if (counts & VK_SAMPLE_COUNT_16_BIT) {
     fstl::log::debug("Max samples: {}", 16);
-    return vk::SampleCountFlagBits::e16;
+    return VK_SAMPLE_COUNT_16_BIT;
   }
-  if (counts & vk::SampleCountFlagBits::e8) {
+  if (counts & VK_SAMPLE_COUNT_8_BIT) {
     fstl::log::debug("Max samples: {}", 8);
-    return vk::SampleCountFlagBits::e8;
+    return VK_SAMPLE_COUNT_8_BIT;
   }
-  if (counts & vk::SampleCountFlagBits::e4) {
+  if (counts & VK_SAMPLE_COUNT_4_BIT) {
     fstl::log::debug("Max samples: {}", 4);
-    return vk::SampleCountFlagBits::e4;
+    return VK_SAMPLE_COUNT_4_BIT;
   }
-  if (counts & vk::SampleCountFlagBits::e2) {
+  if (counts & VK_SAMPLE_COUNT_2_BIT) {
     fstl::log::debug("Max samples: {}", 2);
-    return vk::SampleCountFlagBits::e2;
+    return VK_SAMPLE_COUNT_2_BIT;
   }
 
   fstl::log::debug("Max samples: {}", 1);
 
-  return vk::SampleCountFlagBits::e1;
+  return VK_SAMPLE_COUNT_1_BIT;
 }
 
 std::vector<const char *>
@@ -292,7 +323,10 @@ Context::getRequiredExtensions(std::vector<const char *> sdlExtensions) {
 }
 
 bool Context::checkValidationLayerSupport() {
-  auto availableLayers = vk::enumerateInstanceLayerProperties();
+  uint32_t count;
+  vkEnumerateInstanceLayerProperties(&count, nullptr);
+  fstl::fixed_vector<VkLayerProperties> availableLayers(count);
+  vkEnumerateInstanceLayerProperties(&count, availableLayers.data());
 
   for (const char *layerName : REQUIRED_VALIDATION_LAYERS) {
     bool layerFound = false;
@@ -313,29 +347,34 @@ bool Context::checkValidationLayerSupport() {
 }
 
 void Context::setupDebugCallback() {
-  vk::DebugReportCallbackCreateInfoEXT createInfo{
-      vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning,
-      debugCallback};
+  VkDebugReportCallbackCreateInfoEXT createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+  createInfo.flags =
+      VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+  createInfo.pfnCallback = debugCallback;
 
-  if (CreateDebugReportCallbackEXT(
-          this->instance_,
-          reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&createInfo),
-          nullptr,
-          reinterpret_cast<VkDebugReportCallbackEXT *>(&this->callback_)) !=
-      VK_SUCCESS) {
-
-    throw std::runtime_error("Failed to setup debug callback");
-  }
+  VK_CHECK(CreateDebugReportCallbackEXT(
+      this->instance_,
+      &createInfo,
+      nullptr,
+      &this->callback_));
 }
 
 bool Context::checkPhysicalDeviceProperties(
-    vk::PhysicalDevice physicalDevice,
-    vk::SurfaceKHR &surface,
+    VkPhysicalDevice physicalDevice,
+    VkSurfaceKHR &surface,
     uint32_t *graphicsQueueFamily,
     uint32_t *presentQueueFamily,
     uint32_t *transferQueueFamily) {
-  auto availableExtensions =
-      physicalDevice.enumerateDeviceExtensionProperties();
+  uint32_t count;
+  vkEnumerateDeviceExtensionProperties(
+      physicalDevice, nullptr, &count, nullptr);
+  fstl::fixed_vector<VkExtensionProperties> availableExtensions(count);
+  vkEnumerateDeviceExtensionProperties(
+      physicalDevice, nullptr, &count, availableExtensions.data());
+
+  VkPhysicalDeviceProperties deviceProperties;
+  vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
   for (const auto &requiredExtension : REQUIRED_DEVICE_EXTENSIONS) {
     bool found = false;
@@ -348,14 +387,11 @@ bool Context::checkPhysicalDeviceProperties(
     if (!found) {
       fstl::log::warn(
           "Physical device {} doesn't support extension named \"{}\"",
-          physicalDevice.getProperties().deviceName,
+          deviceProperties.deviceName,
           requiredExtension);
       return false;
     }
   }
-
-  auto deviceProperties = physicalDevice.getProperties();
-  // auto deviceFeatures = physicalDevice.getFeatures();
 
   uint32_t majorVersion = VK_VERSION_MAJOR(deviceProperties.apiVersion);
   // uint32_t minorVersion = VK_VERSION_MINOR(deviceProperties.apiVersion);
@@ -364,11 +400,15 @@ bool Context::checkPhysicalDeviceProperties(
   if (majorVersion < 1 && deviceProperties.limits.maxImageDimension2D < 4096) {
     fstl::log::warn(
         "Physical device {} doesn't support required parameters!",
-        physicalDevice.getProperties().deviceName);
+        deviceProperties.deviceName);
     return false;
   }
 
-  auto queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
+  fstl::fixed_vector<VkQueueFamilyProperties> queueFamilyProperties(count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physicalDevice, &count, queueFamilyProperties.data());
+
   std::vector<VkBool32> queuePresentSupport(queueFamilyProperties.size());
   std::vector<VkBool32> queueTransferSupport(queueFamilyProperties.size());
 
@@ -379,16 +419,17 @@ bool Context::checkPhysicalDeviceProperties(
   // TODO: figure out better logic to single out a transfer queue
 
   for (uint32_t i = 0; i < queueFamilyProperties.size(); i++) {
-    queuePresentSupport[i] = physicalDevice.getSurfaceSupportKHR(i, surface);
+    VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
+        physicalDevice, i, surface, &queuePresentSupport[i]));
 
     if (queueFamilyProperties[i].queueCount > 0 &&
-        queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eTransfer &&
-        !(queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
+        queueFamilyProperties[i].queueFlags & VK_QUEUE_TRANSFER_BIT &&
+        !(queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
       transferQueueFamilyIndex = i;
     }
 
     if (queueFamilyProperties[i].queueCount > 0 &&
-        queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+        queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
       if (graphicsQueueFamilyIndex == UINT32_MAX) {
         graphicsQueueFamilyIndex = i;
       }
@@ -415,13 +456,17 @@ bool Context::checkPhysicalDeviceProperties(
     }
   }
 
+  fstl::log::info("Graphics: {}", graphicsQueueFamilyIndex);
+  fstl::log::info("Present: {}", presentQueueFamilyIndex);
+  fstl::log::info("Transfer: {}", transferQueueFamilyIndex);
+
   if (graphicsQueueFamilyIndex == UINT32_MAX ||
       presentQueueFamilyIndex == UINT32_MAX ||
       transferQueueFamilyIndex == UINT32_MAX) {
     fstl::log::warn(
         "Could not find queue family with requested properties on physical "
         "device {}",
-        physicalDevice.getProperties().deviceName);
+        deviceProperties.deviceName);
     return false;
   }
 

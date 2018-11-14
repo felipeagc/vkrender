@@ -1,15 +1,13 @@
 #pragma once
 
-#include "aliases.hpp"
 #include <SDL2/SDL.h>
+#include <fstl/fixed_vector.hpp>
 #include <functional>
 #include <string>
 #include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 namespace vkr {
-
-class CommandBuffer;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -47,12 +45,12 @@ public:
   bool getShouldClose() const;
   void setShouldClose(bool shouldClose);
 
-  SampleCount getMaxMSAASamples() const;
-  SampleCount getMSAASamples() const;
-  void setMSAASamples(SampleCount sampleCount);
+  VkSampleCountFlagBits getMaxMSAASamples() const;
+  VkSampleCountFlagBits getMSAASamples() const;
+  void setMSAASamples(VkSampleCountFlagBits sampleCount);
 
   int getCurrentFrameIndex() const;
-  CommandBuffer getCurrentCommandBuffer();
+  VkCommandBuffer getCurrentCommandBuffer();
 
   void imguiBeginFrame();
   void imguiEndFrame();
@@ -69,28 +67,28 @@ protected:
   uint32_t lastTicks_ = 0;
   uint32_t deltaTicks_ = 0;
 
-  vk::SurfaceKHR surface_;
+  VkSurfaceKHR surface_{VK_NULL_HANDLE};
 
-  vk::SampleCountFlagBits msaaSamples_{vk::SampleCountFlagBits::e1};
-  vk::SampleCountFlagBits maxMsaaSamples_{vk::SampleCountFlagBits::e1};
+  VkSampleCountFlagBits msaaSamples_{VK_SAMPLE_COUNT_1_BIT};
+  VkSampleCountFlagBits maxMsaaSamples_{VK_SAMPLE_COUNT_1_BIT};
 
-  vk::Format depthImageFormat_;
+  VkFormat depthImageFormat_;
 
   struct {
-    vk::Image image;
-    VmaAllocation allocation;
-    vk::ImageView view;
+    VkImage image{VK_NULL_HANDLE};
+    VmaAllocation allocation{VK_NULL_HANDLE};
+    VkImageView view{VK_NULL_HANDLE};
   } depthStencil_;
 
   struct FrameResources {
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderingFinishedSemaphore;
-    vk::Fence fence;
+    VkSemaphore imageAvailableSemaphore{VK_NULL_HANDLE};
+    VkSemaphore renderingFinishedSemaphore{VK_NULL_HANDLE};
+    VkFence fence{VK_NULL_HANDLE};
 
-    vk::Framebuffer framebuffer;
-    vk::Framebuffer imguiFramebuffer;
+    VkFramebuffer framebuffer{VK_NULL_HANDLE};
+    VkFramebuffer imguiFramebuffer{VK_NULL_HANDLE};
 
-    vk::CommandBuffer commandBuffer;
+    VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
   };
 
   // TODO: use fixed_vector
@@ -98,15 +96,15 @@ protected:
 
   struct {
     struct {
-      vk::Image image;
-      VmaAllocation allocation;
-      vk::ImageView view;
+      VkImage image{VK_NULL_HANDLE};
+      VmaAllocation allocation{VK_NULL_HANDLE};
+      VkImageView view{VK_NULL_HANDLE};
     } depth;
 
     struct {
-      vk::Image image;
-      VmaAllocation allocation;
-      vk::ImageView view;
+      VkImage image{VK_NULL_HANDLE};
+      VmaAllocation allocation{VK_NULL_HANDLE};
+      VkImageView view{VK_NULL_HANDLE};
     } color;
   } multiSampleTargets_;
 
@@ -115,14 +113,14 @@ protected:
   // Index of the current swapchain image
   uint32_t currentImageIndex_;
 
-  vk::SwapchainKHR swapchain_;
-  vk::Format swapchainImageFormat_;
-  vk::Extent2D swapchainExtent_;
-  std::vector<vk::Image> swapchainImages_;
-  std::vector<vk::ImageView> swapchainImageViews_;
+  VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
+  VkFormat swapchainImageFormat_;
+  VkExtent2D swapchainExtent_;
+  std::vector<VkImage> swapchainImages_;
+  std::vector<VkImageView> swapchainImageViews_;
 
-  vk::RenderPass renderPass_;
-  vk::RenderPass imguiRenderPass_;
+  VkRenderPass renderPass_{VK_NULL_HANDLE};
+  VkRenderPass imguiRenderPass_{VK_NULL_HANDLE};
 
   void initVulkanExtensions() const;
   void createVulkanSurface();
@@ -145,27 +143,27 @@ protected:
 
   void initImgui();
 
-  void regenFramebuffer(
-      vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView);
+  void
+  regenFramebuffer(VkFramebuffer &framebuffer, VkImageView &swapchainImageView);
 
   void regenImguiFramebuffer(
-      vk::Framebuffer &framebuffer, vk::ImageView &swapchainImageView);
+      VkFramebuffer &framebuffer, VkImageView &swapchainImageView);
 
   void destroyResizables();
 
   uint32_t
-  getSwapchainNumImages(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::SurfaceFormatKHR
-  getSwapchainFormat(const std::vector<vk::SurfaceFormatKHR> &formats);
-  vk::Extent2D getSwapchainExtent(
+  getSwapchainNumImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
+  VkSurfaceFormatKHR
+  getSwapchainFormat(const fstl::fixed_vector<VkSurfaceFormatKHR> &formats);
+  VkExtent2D getSwapchainExtent(
       uint32_t width,
       uint32_t height,
-      const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::ImageUsageFlags
-  getSwapchainUsageFlags(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::SurfaceTransformFlagBitsKHR
-  getSwapchainTransform(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
-  vk::PresentModeKHR
-  getSwapchainPresentMode(const std::vector<vk::PresentModeKHR> &presentModes);
+      const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
+  VkImageUsageFlags
+  getSwapchainUsageFlags(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
+  VkSurfaceTransformFlagBitsKHR
+  getSwapchainTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
+  VkPresentModeKHR getSwapchainPresentMode(
+      const fstl::fixed_vector<VkPresentModeKHR> &presentModes);
 };
 } // namespace vkr

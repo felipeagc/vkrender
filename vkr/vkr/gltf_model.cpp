@@ -1,6 +1,7 @@
 #include "gltf_model.hpp"
 #include "context.hpp"
 #include "graphics_pipeline.hpp"
+#include "util.hpp"
 #include <algorithm>
 #include <fstl/logging.hpp>
 #include <tiny_gltf.h>
@@ -17,16 +18,24 @@ GltfModel::Material::Material(
 
   this->ubo.baseColorFactor = baseColorFactor;
 
+  VkDescriptorSetAllocateInfo allocateInfo = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      nullptr,
+      *descriptorPool,
+      1,
+      descriptorSetLayout,
+  };
+
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    this->descriptorSets[i] =
-        descriptorPool->allocateDescriptorSets({*descriptorSetLayout})[0];
+    VK_CHECK(vkAllocateDescriptorSets(
+        Context::getDevice(), &allocateInfo, &this->descriptorSets[i]));
 
     this->uniformBuffers[i] = Buffer{
         sizeof(MaterialUniform),
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vkr::MemoryUsageFlagBits::eCpuToGpu,
-        vkr::MemoryPropertyFlagBits::eHostVisible |
-            vkr::MemoryPropertyFlagBits::eHostCoherent,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
     };
 
     // CombinedImageSampler
@@ -36,33 +45,43 @@ GltfModel::Material::Material(
     // UniformBuffer
     this->uniformBuffers[i].mapMemory(&this->mappings[i]);
     memcpy(this->mappings[i], &this->ubo, sizeof(MaterialUniform));
-    auto bufferInfo = vk::DescriptorBufferInfo{
+
+    VkDescriptorBufferInfo bufferInfo = {
         this->uniformBuffers[i].getHandle(), 0, sizeof(MaterialUniform)};
 
-    Context::getDevice().updateDescriptorSets(
-        {
-            vk::WriteDescriptorSet{
-                this->descriptorSets[i],                    // dstSet
-                0,                                          // dstBinding
-                0,                                          // dstArrayElement
-                1,                                          // descriptorCount
-                vkr::DescriptorType::eCombinedImageSampler, // descriptorType
-                &albedoDescriptorInfo,                      // pImageInfo
-                nullptr,                                    // pBufferInfo
-                nullptr,                                    // pTexelBufferView
-            },
-            vk::WriteDescriptorSet{
-                this->descriptorSets[i],             // dstSet
-                1,                                   // dstBinding
-                0,                                   // dstArrayElement
-                1,                                   // descriptorCount
-                vkr::DescriptorType::eUniformBuffer, // descriptorType
-                nullptr,                             // pImageInfo
-                &bufferInfo,                         // pBufferInfo
-                nullptr,                             // pTexelBufferView
-            },
+    VkWriteDescriptorSet descriptorWrites[] = {
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
+            this->descriptorSets[i],                   // dstSet
+            0,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &albedoDescriptorInfo,                     // pImageInfo
+            nullptr,                                   // pBufferInfo
+            nullptr,                                   // pTexelBufferView
         },
-        {});
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
+            this->descriptorSets[i],           // dstSet
+            1,                                 // dstBinding
+            0,                                 // dstArrayElement
+            1,                                 // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            nullptr,                           // pImageInfo
+            &bufferInfo,                       // pBufferInfo
+            nullptr,                           // pTexelBufferView
+        },
+    };
+
+    vkUpdateDescriptorSets(
+        Context::getDevice(),
+        ARRAYSIZE(descriptorWrites),
+        descriptorWrites,
+        0,
+        nullptr);
   }
 }
 
@@ -88,37 +107,47 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
+  VkDescriptorSetAllocateInfo allocateInfo = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      nullptr,
+      *descriptorPool,
+      1,
+      descriptorSetLayout,
+  };
+
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     this->uniformBuffers[i] = Buffer{
         sizeof(MeshUniform),
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vkr::MemoryUsageFlagBits::eCpuToGpu,
-        vkr::MemoryPropertyFlagBits::eHostVisible |
-            vkr::MemoryPropertyFlagBits::eHostCoherent,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
     };
 
     this->uniformBuffers[i].mapMemory(&this->mappings[i]);
-
     memcpy(this->mappings[i], &this->ubo, sizeof(MeshUniform));
 
-    auto bufferInfo = vk::DescriptorBufferInfo{
+    VkDescriptorBufferInfo bufferInfo = {
         this->uniformBuffers[i].getHandle(), 0, sizeof(MeshUniform)};
 
-    this->descriptorSets[i] =
-        descriptorPool->allocateDescriptorSets(1, *descriptorSetLayout)[0];
+    VK_CHECK(vkAllocateDescriptorSets(
+        Context::getDevice(), &allocateInfo, &this->descriptorSets[i]));
 
-    vkr::Context::getDevice().updateDescriptorSets(
-        {vk::WriteDescriptorSet{
-            this->descriptorSets[i],             // dstSet
-            0,                                   // dstBinding
-            0,                                   // dstArrayElement
-            1,                                   // descriptorCount
-            vkr::DescriptorType::eUniformBuffer, // descriptorType
-            nullptr,                             // pImageInfo
-            &bufferInfo,                         // pBufferInfo
-            nullptr,                             // pTexelBufferView
-        }},
-        {});
+    VkWriteDescriptorSet descriptorWrite = {
+        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        nullptr,
+        this->descriptorSets[i],           // dstSet
+        0,                                 // dstBinding
+        0,                                 // dstArrayElement
+        1,                                 // descriptorCount
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        nullptr,                           // pImageInfo
+        &bufferInfo,                       // pBufferInfo
+        nullptr,                           // pTexelBufferView
+    };
+
+    vkUpdateDescriptorSets(
+        Context::getDevice(), 1, &descriptorWrite, 0, nullptr);
   }
 }
 
@@ -229,18 +258,16 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 
   this->vertexBuffer_ = Buffer{
       vertexBufferSize,
-      vkr::BufferUsageFlagBits::eVertexBuffer |
-          vkr::BufferUsageFlagBits::eTransferDst,
-      vkr::MemoryUsageFlagBits::eGpuOnly,
-      vkr::MemoryPropertyFlagBits::eDeviceLocal,
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
   };
 
   this->indexBuffer_ = Buffer{
       indexBufferSize,
-      vkr::BufferUsageFlagBits::eIndexBuffer |
-          vkr::BufferUsageFlagBits::eTransferDst,
-      vkr::MemoryUsageFlagBits::eGpuOnly,
-      vkr::MemoryPropertyFlagBits::eDeviceLocal,
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
   };
 
   stagingBuffer.copyMemory(vertices.data(), vertexBufferSize);
@@ -257,9 +284,15 @@ GltfModel::~GltfModel() {}
 void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
-  commandBuffer.bindGraphicsPipeline(pipeline);
-  commandBuffer.bindVertexBuffers(vertexBuffer_);
-  commandBuffer.bindIndexBuffer(indexBuffer_, 0, vkr::IndexType::eUint32);
+  vkCmdBindPipeline(
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
+
+  VkBuffer vertexBuffer = vertexBuffer_.getHandle();
+  VkDeviceSize offset = 0;
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+
+  vkCmdBindIndexBuffer(
+      commandBuffer, indexBuffer_.getHandle(), 0, VK_INDEX_TYPE_UINT32);
 
   for (auto &node : nodes_) {
     if (node.meshIndex != -1 && meshes_[node.meshIndex].uniformBuffers[0]) {
@@ -297,10 +330,11 @@ void GltfModel::destroy() {
     auto descriptorPool = Context::getDescriptorManager().getPool(DESC_MESH);
     assert(descriptorPool != nullptr);
 
-    for (auto &descriptorSet : mesh.descriptorSets) {
-      if (descriptorSet)
-        Context::getDevice().freeDescriptorSets(*descriptorPool, descriptorSet);
-    }
+    vkFreeDescriptorSets(
+        Context::getDevice(),
+        *descriptorPool,
+        mesh.descriptorSets.size(),
+        mesh.descriptorSets.data());
   }
 
   for (auto &material : materials_) {
@@ -314,10 +348,11 @@ void GltfModel::destroy() {
 
     assert(descriptorPool != nullptr);
 
-    for (auto &descriptorSet : material.descriptorSets) {
-      if (descriptorSet)
-        Context::getDevice().freeDescriptorSets(*descriptorPool, descriptorSet);
-    }
+    vkFreeDescriptorSets(
+        Context::getDevice(),
+        *descriptorPool,
+        material.descriptorSets.size(),
+        material.descriptorSets.data());
   }
 
   for (auto &texture : textures_) {
@@ -357,8 +392,8 @@ void GltfModel::loadTextures(tinygltf::Model &model) {
     }
 
     this->textures_[i] = {model.images[i].image,
-                         static_cast<uint32_t>(model.images[i].width),
-                         static_cast<uint32_t>(model.images[i].height)};
+                          static_cast<uint32_t>(model.images[i].width),
+                          static_cast<uint32_t>(model.images[i].height)};
   }
 }
 
@@ -597,29 +632,35 @@ void GltfModel::getSceneDimensions() {
 
 void GltfModel::drawNode(
     Node &node, Window &window, GraphicsPipeline &pipeline) {
-  auto commandBuffer = window.getCurrentCommandBuffer();
+  VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();
 
   if (node.meshIndex != -1) {
-    commandBuffer.bindDescriptorSets(
-        vkr::PipelineBindPoint::eGraphics,
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipeline.getLayout(),
         2, // firstSet
-        this->meshes_[node.meshIndex].descriptorSets[i],
-        {});
+        1,
+        &this->meshes_[node.meshIndex].descriptorSets[i],
+        0,
+        nullptr);
     for (Primitive &primitive : this->meshes_[node.meshIndex].primitives) {
       if (primitive.materialIndex != -1 && this->materials_.size() > 0) {
-        commandBuffer.bindDescriptorSets(
-            vkr::PipelineBindPoint::eGraphics,
+        vkCmdBindDescriptorSets(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.getLayout(),
             1, // firstSet
-            this->materials_[primitive.materialIndex].descriptorSets[i],
-            {});
+            1,
+            &this->materials_[primitive.materialIndex].descriptorSets[i],
+            0,
+            nullptr);
       }
 
-      commandBuffer.drawIndexed(
-          primitive.indexCount, 1, primitive.firstIndex, 0, 0);
+      vkCmdDrawIndexed(
+          commandBuffer, primitive.indexCount, 1, primitive.firstIndex, 0, 0);
     }
   }
 

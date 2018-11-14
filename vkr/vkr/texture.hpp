@@ -1,8 +1,7 @@
 #pragma once
 
-#include "aliases.hpp"
 #include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 namespace vkr {
 class Texture {
@@ -19,18 +18,18 @@ public:
 
   operator bool() { return this->image_; }
 
-  Sampler getSampler() const;
-  ImageView getImageView() const;
+  VkSampler getSampler() const;
+  VkImageView getImageView() const;
 
-  DescriptorImageInfo getDescriptorInfo() const;
+  VkDescriptorImageInfo getDescriptorInfo() const;
 
   void destroy();
 
 protected:
-  vk::Image image_;
+  VkImage image_;
   VmaAllocation allocation_;
-  vk::ImageView imageView_;
-  vk::Sampler sampler_;
+  VkImageView imageView_;
+  VkSampler sampler_;
 
   uint32_t width_;
   uint32_t height_;

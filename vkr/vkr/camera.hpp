@@ -41,7 +41,7 @@ public:
 protected:
   std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
   std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers_;
-  std::array<DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
+  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
 
   CameraUniform cameraUniform_;
 

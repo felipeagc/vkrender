@@ -1,8 +1,9 @@
 #include "shader.hpp"
 #include "context.hpp"
 #include "shader_compilation.hpp"
-#include <spirv_reflect.hpp>
+#include "util.hpp"
 #include <fstl/logging.hpp>
+#include <spirv_reflect.hpp>
 
 using namespace vkr;
 
@@ -24,22 +25,26 @@ Shader::Shader(
   this->fragmentModule_ = this->createShaderModule(fragmentCode);
 }
 
-fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>
+fstl::fixed_vector<VkPipelineShaderStageCreateInfo>
 Shader::getPipelineShaderStageCreateInfos() const {
-  return fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>{
+  return fstl::fixed_vector<VkPipelineShaderStageCreateInfo>{
       {
-          {},                               // flags
-          vk::ShaderStageFlagBits::eVertex, // stage
-          this->vertexModule_,               // module
-          "main",                           // pName
-          nullptr,                          // pSpecializationInfo
+          VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
+          nullptr,                                             // pNext
+          0,                                                   // flags
+          VK_SHADER_STAGE_VERTEX_BIT,                          // stage
+          this->vertexModule_,                                 // module
+          "main",                                              // pName
+          nullptr, // pSpecializationInfo
       },
       {
-          {},                                 // flags
-          vk::ShaderStageFlagBits::eFragment, // stage
-          this->fragmentModule_,               // module
-          "main",                             // pName
-          nullptr,                            // pSpecializationInfo
+          VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
+          nullptr,                                             // pNext
+          0,                                                   // flags
+          VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
+          this->fragmentModule_,                               // module
+          "main",                                              // pName
+          nullptr, // pSpecializationInfo
       },
   };
 }
@@ -56,40 +61,42 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   // Descriptor stuff ===========================
 
   auto addBindings = [&](const spirv_cross::Compiler &comp,
-                         vk::ShaderStageFlags shaderStage) {
+                         VkShaderStageFlags shaderStage) {
     auto resources = comp.get_shader_resources();
 
-    auto addBinding = [&](auto resources, auto type) {
+    auto addBinding = [&](const std::vector<spirv_cross::Resource> &resources,
+                          VkDescriptorType type) {
       for (auto &res : resources) {
-        metadata.descriptorSetLayoutBindings.push_back({
-            comp.get_decoration(
-                res.id, spv::Decoration::DecorationBinding), // binding
-            type,                                            // descriptorType
-            1,                                               // descriptorCount
-            shaderStage,                                     // stageFlags
-            nullptr, // pImmutableSamplers
-        });
+        metadata.descriptorSetLayoutBindings.push_back(
+            VkDescriptorSetLayoutBinding{
+                comp.get_decoration(
+                    res.id, spv::Decoration::DecorationBinding), // binding
+                type,        // descriptorType
+                1,           // descriptorCount
+                shaderStage, // stageFlags
+                nullptr,     // pImmutableSamplers
+            });
       }
     };
 
-    addBinding(resources.separate_samplers, vk::DescriptorType::eSampler);
+    addBinding(resources.separate_samplers, VK_DESCRIPTOR_TYPE_SAMPLER);
     addBinding(
-        resources.sampled_images, vk::DescriptorType::eCombinedImageSampler);
-    addBinding(resources.separate_images, vk::DescriptorType::eSampledImage);
-    addBinding(resources.storage_images, vk::DescriptorType::eStorageImage);
-    addBinding(resources.uniform_buffers, vk::DescriptorType::eUniformBuffer);
-    addBinding(resources.storage_buffers, vk::DescriptorType::eStorageBuffer);
+        resources.sampled_images, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    addBinding(resources.separate_images, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+    addBinding(resources.storage_images, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+    addBinding(resources.uniform_buffers, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    addBinding(resources.storage_buffers, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
   };
 
-  addBindings(vertexComp, vk::ShaderStageFlagBits::eVertex);
-  addBindings(fragmentComp, vk::ShaderStageFlagBits::eFragment);
+  addBindings(vertexComp, VK_SHADER_STAGE_VERTEX_BIT);
+  addBindings(fragmentComp, VK_SHADER_STAGE_FRAGMENT_BIT);
 
   // Vertex inputs ===========================
 
   auto resources = vertexComp.get_shader_resources();
 
   // <location, format, size, offset>
-  fstl::fixed_vector<std::tuple<uint32_t, vk::Format, uint32_t, uint32_t>>
+  fstl::fixed_vector<std::tuple<uint32_t, VkFormat, uint32_t, uint32_t>>
       locations;
 
   for (auto &input : resources.stage_inputs) {
@@ -99,10 +106,10 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
 
     auto byteSize = (type.width * type.vecsize) / 8;
 
-    std::array<vk::Format, 4> possibleFormats{vk::Format::eR32Sfloat,
-                                              vk::Format::eR32G32Sfloat,
-                                              vk::Format::eR32G32B32Sfloat,
-                                              vk::Format::eR32G32B32A32Sfloat};
+    VkFormat possibleFormats[4] = {VK_FORMAT_R32_SFLOAT,
+                                   VK_FORMAT_R32G32_SFLOAT,
+                                   VK_FORMAT_R32G32B32_SFLOAT,
+                                   VK_FORMAT_R32G32B32A32_SFLOAT};
 
     locations.push_back(
         {location, possibleFormats[type.vecsize - 1], byteSize, 0});
@@ -135,7 +142,7 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   }
 
   metadata.vertexFormat.bindingDescriptions_.push_back(
-      {0, vertexSize, vk::VertexInputRate::eVertex});
+      {0, vertexSize, VK_VERTEX_INPUT_RATE_VERTEX});
 
   for (size_t i = 0; i < locations.size(); i++) {
     metadata.vertexFormat.attributeDescriptions_.push_back(
@@ -149,16 +156,24 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
 }
 
 void Shader::destroy() {
-  Context::getDevice().waitIdle();
-  Context::getDevice().destroy(this->vertexModule_);
-  Context::getDevice().destroy(this->fragmentModule_);
+  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
+
+  vkDestroyShaderModule(Context::getDevice(), this->vertexModule_, nullptr);
+  vkDestroyShaderModule(Context::getDevice(), this->fragmentModule_, nullptr);
 }
 
-vk::ShaderModule
+VkShaderModule
 Shader::createShaderModule(const std::vector<uint32_t> &code) const {
-  return Context::getDevice().createShaderModule({
-      {},                             // flags
-      code.size() * sizeof(uint32_t), // codeSize
-      code.data(),                    // pCode
-  });
+  VkShaderModule shaderModule;
+
+  VkShaderModuleCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+      nullptr,
+      0,
+      code.size() * sizeof(uint32_t),
+      code.data()};
+
+  VK_CHECK(vkCreateShaderModule(
+      Context::getDevice(), &createInfo, nullptr, &shaderModule));
+  return shaderModule;
 }

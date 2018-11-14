@@ -3,7 +3,6 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstream>
 #include "vertex_format.hpp"
-#include "descriptor.hpp"
 
 namespace vkr {
 class Shader {
@@ -22,11 +21,11 @@ public:
 
   operator bool() { return this->vertexModule_ && this->fragmentModule_; };
 
-  fstl::fixed_vector<vk::PipelineShaderStageCreateInfo>
+  fstl::fixed_vector<VkPipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
   struct ShaderMetadata {
-    fstl::fixed_vector<vkr::DescriptorSetLayoutBinding>
+    fstl::fixed_vector<VkDescriptorSetLayoutBinding>
         descriptorSetLayoutBindings;
     vkr::VertexFormat vertexFormat;
   };
@@ -59,9 +58,9 @@ public:
 private:
   std::vector<uint32_t> vertexCode_;
   std::vector<uint32_t> fragmentCode_;
-  vk::ShaderModule vertexModule_;
-  vk::ShaderModule fragmentModule_;
+  VkShaderModule vertexModule_;
+  VkShaderModule fragmentModule_;
 
-  vk::ShaderModule createShaderModule(const std::vector<uint32_t> &code) const;
+  VkShaderModule createShaderModule(const std::vector<uint32_t> &code) const;
 };
 }

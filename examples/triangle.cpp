@@ -1,8 +1,7 @@
 #include <fstl/fixed_vector.hpp>
+#include <fstl/logging.hpp>
 #include <glm/glm.hpp>
-#include <vkr/aliases.hpp>
 #include <vkr/buffer.hpp>
-#include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/graphics_pipeline.hpp>
 #include <vkr/shader.hpp>
@@ -24,17 +23,17 @@ int main() {
 
   vkr::VertexFormat vertexFormat =
       vkr::VertexFormatBuilder()
-          .addBinding(0, sizeof(Vertex), vkr::VertexInputRate::eVertex)
-          .addAttribute(0, 0, vkr::Format::eR32G32Sfloat, offsetof(Vertex, pos))
+          .addBinding(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX)
+          .addAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos))
           .addAttribute(
-              1, 0, vkr::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
+              1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))
           .build();
 
   vkr::GraphicsPipeline pipeline{
       window,
       shader,
       vertexFormat,
-      fstl::fixed_vector<vkr::DescriptorSetLayout>{},
+      fstl::fixed_vector<VkDescriptorSetLayout>{},
   };
 
   std::array<Vertex, 3> vertices{
@@ -45,10 +44,9 @@ int main() {
 
   vkr::Buffer vertexBuffer{
       sizeof(Vertex) * vertices.size(), // size
-      vkr::BufferUsageFlagBits::eVertexBuffer |
-          vkr::BufferUsageFlagBits::eTransferDst,
-      vkr::MemoryUsageFlagBits::eGpuOnly,
-      vkr::MemoryPropertyFlagBits::eDeviceLocal,
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
   };
 
   {
@@ -69,12 +67,16 @@ int main() {
       break;
     }
 
-    auto commandBuffer = window.getCurrentCommandBuffer();
+    VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
-    commandBuffer.bindGraphicsPipeline(pipeline);
-    commandBuffer.bindVertexBuffers(vertexBuffer);
+    vkCmdBindPipeline(
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
 
-    commandBuffer.draw(vertices.size(), 1, 0, 0);
+    VkBuffer bufferHandle = vertexBuffer.getHandle();
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &bufferHandle, &offset);
+
+    vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
   };
 
   while (!window.getShouldClose()) {

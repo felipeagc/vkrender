@@ -7,7 +7,6 @@ set(
   vkr/context.cpp
   vkr/window.cpp
   vkr/buffer.cpp
-  vkr/commandbuffer.cpp
   vkr/texture.cpp
   vkr/shader_compilation.cpp
   vkr/gltf_model.cpp
@@ -16,7 +15,6 @@ set(
   vkr/graphics_pipeline.cpp
   vkr/vertex_format.cpp
   vkr/shader.cpp
-  vkr/descriptor.cpp
   )
 
 add_library(

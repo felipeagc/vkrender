@@ -1,6 +1,7 @@
 #include "texture.hpp"
 #include "buffer.hpp"
 #include "context.hpp"
+#include "util.hpp"
 #include <fstl/logging.hpp>
 #include <stb_image.h>
 
@@ -34,97 +35,105 @@ Texture::Texture(
   stagingBuffer.destroy();
 }
 
-vk::Sampler Texture::getSampler() const { return this->sampler_; }
+VkSampler Texture::getSampler() const { return this->sampler_; }
 
-vk::ImageView Texture::getImageView() const { return this->imageView_; }
+VkImageView Texture::getImageView() const { return this->imageView_; }
 
-DescriptorImageInfo Texture::getDescriptorInfo() const {
-  return {
-      this->sampler_, this->imageView_, vk::ImageLayout::eShaderReadOnlyOptimal};
+VkDescriptorImageInfo Texture::getDescriptorInfo() const {
+  return {this->sampler_,
+          this->imageView_,
+          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 }
 
 void Texture::destroy() {
-  Context::getDevice().waitIdle();
-  Context::getDevice().destroy(this->imageView_);
-  Context::getDevice().destroy(this->sampler_);
+  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
+  vkDestroyImageView(Context::getDevice(), this->imageView_, nullptr);
+  vkDestroySampler(Context::getDevice(), this->sampler_, nullptr);
   vmaDestroyImage(Context::get().allocator_, this->image_, this->allocation_);
 }
 
 void Texture::createImage() {
-  vk::ImageCreateInfo imageCreateInfo{
-      {},                         // flags
-      vk::ImageType::e2D,         // imageType
-      vk::Format::eR8G8B8A8Unorm, // format
+  VkImageCreateInfo imageCreateInfo = {
+      VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      nullptr,
+      0,                        // flags
+      VK_IMAGE_TYPE_2D,         // imageType
+      VK_FORMAT_R8G8B8A8_UNORM, // format
       {
-          this->width_,             // width
-          this->height_,            // height
-          1,                       // depth
-      },                           // extent
-      1,                           // mipLevels
-      1,                           // arrayLayers
-      vk::SampleCountFlagBits::e1, // samples
-      vk::ImageTiling::eOptimal,   // tiling
-      vk::ImageUsageFlagBits::eTransferDst |
-          vk::ImageUsageFlagBits::eSampled, // usage
-      vk::SharingMode::eExclusive,          // sharingMode
-      0,                                    // queueFamilyIndexCount
-      nullptr,                              // pQueueFamilyIndices
-      vk::ImageLayout::eUndefined,          // initialLayout
+          this->width_,        // width
+          this->height_,       // height
+          1,                   // depth
+      },                       // extent
+      1,                       // mipLevels
+      1,                       // arrayLayers
+      VK_SAMPLE_COUNT_1_BIT,   // samples
+      VK_IMAGE_TILING_OPTIMAL, // tiling
+      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // usage
+      VK_SHARING_MODE_EXCLUSIVE, // sharingMode
+      0,                         // queueFamilyIndexCount
+      nullptr,                   // pQueueFamilyIndices
+      VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
   VmaAllocationCreateInfo imageAllocCreateInfo = {};
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-  vmaCreateImage(
+  VK_CHECK(vmaCreateImage(
       Context::get().allocator_,
-      reinterpret_cast<VkImageCreateInfo *>(&imageCreateInfo),
+      &imageCreateInfo,
       &imageAllocCreateInfo,
-      reinterpret_cast<VkImage *>(&this->image_),
+      &this->image_,
       &this->allocation_,
-      nullptr);
+      nullptr));
 
-  vk::ImageViewCreateInfo imageViewCreateInfo{
-      {},                         // flags
-      this->image_,                // image
-      vk::ImageViewType::e2D,     // viewType
-      vk::Format::eR8G8B8A8Unorm, // format
+  VkImageViewCreateInfo imageViewCreateInfo = {
+      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      nullptr,
+      0,                        // flags
+      this->image_,             // image
+      VK_IMAGE_VIEW_TYPE_2D,    // viewType
+      VK_FORMAT_R8G8B8A8_UNORM, // format
       {
-          vk::ComponentSwizzle::eIdentity, // r
-          vk::ComponentSwizzle::eIdentity, // g
-          vk::ComponentSwizzle::eIdentity, // b
-          vk::ComponentSwizzle::eIdentity, // a
-      },                                   // components
+          VK_COMPONENT_SWIZZLE_IDENTITY, // r
+          VK_COMPONENT_SWIZZLE_IDENTITY, // g
+          VK_COMPONENT_SWIZZLE_IDENTITY, // b
+          VK_COMPONENT_SWIZZLE_IDENTITY, // a
+      },                                 // components
       {
-          vk::ImageAspectFlagBits::eColor, // aspectMask
-          0,                               // baseMipLevel
-          1,                               // levelCount
-          0,                               // baseArrayLayer
-          1,                               // layerCount
-      },                                   // subresourceRange
+          VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+          0,                         // baseMipLevel
+          1,                         // levelCount
+          0,                         // baseArrayLayer
+          1,                         // layerCount
+      },                             // subresourceRange
   };
 
-  this->imageView_ = Context::getDevice().createImageView(imageViewCreateInfo);
+  VK_CHECK(vkCreateImageView(
+      Context::getDevice(), &imageViewCreateInfo, nullptr, &this->imageView_));
 
-  vk::SamplerCreateInfo samplerCreateInfo{
-      {},                                      // flags
-      vk::Filter::eLinear,                     // magFilter
-      vk::Filter::eLinear,                     // minFilter
-      vk::SamplerMipmapMode::eLinear,          // mipmapMode
-      vk::SamplerAddressMode::eMirroredRepeat, // addressModeU
-      vk::SamplerAddressMode::eMirroredRepeat, // addressModeV
-      vk::SamplerAddressMode::eMirroredRepeat, // addressModeW
+  VkSamplerCreateInfo samplerCreateInfo = {
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,                                       // flags
+      VK_FILTER_LINEAR,                        // magFilter
+      VK_FILTER_LINEAR,                        // minFilter
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,           // mipmapMode
+      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeU
+      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeV
+      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeW
       0.0f,                                    // mipLodBias
       VK_FALSE,                                // anisotropyEnable
       1.0f,                                    // maxAnisotropy
       VK_FALSE,                                // compareEnable
-      vk::CompareOp::eNever,                   // compareOp
+      VK_COMPARE_OP_NEVER,                     // compareOp
       0.0f,                                    // minLod
       0.0f,                                    // maxLod
-      vk::BorderColor::eFloatTransparentBlack, // borderColor
+      VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, // borderColor
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  this->sampler_ = Context::getDevice().createSampler(samplerCreateInfo);
+  VK_CHECK(vkCreateSampler(
+      Context::getDevice(), &samplerCreateInfo, nullptr, &this->sampler_));
 }
 
 std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {
@@ -132,7 +141,7 @@ std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {
   stbi_uc *pixels =
       stbi_load(path.data(), &width, &height, &channels, STBI_rgb_alpha);
 
-  vk::DeviceSize imageSize = width * height * 4;
+  VkDeviceSize imageSize = width * height * 4;
 
   this->width_ = static_cast<uint32_t>(width);
   this->height_ = static_cast<uint32_t>(height);

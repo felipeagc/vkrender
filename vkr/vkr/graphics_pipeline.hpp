@@ -1,8 +1,6 @@
 #pragma once
 
 #include <fstl/fixed_vector.hpp>
-#include "aliases.hpp"
-#include "descriptor.hpp"
 
 namespace vkr {
 class Window;
@@ -17,7 +15,8 @@ public:
       const Window &window,
       const Shader &shader,
       const VertexFormat &vertexFormat,
-      const fstl::fixed_vector<vkr::DescriptorSetLayout> &descriptorSetLayouts = {});
+      const fstl::fixed_vector<VkDescriptorSetLayout> &descriptorSetLayouts =
+          {});
   ~GraphicsPipeline(){};
   GraphicsPipeline(const GraphicsPipeline &) = delete;
   GraphicsPipeline &operator=(GraphicsPipeline &) = delete;
@@ -26,12 +25,13 @@ public:
 
   operator bool() { return this->pipeline_; };
 
-  PipelineLayout getLayout() const;
+  VkPipelineLayout getLayout() const;
+  VkPipeline getPipeline() const;
 
   void destroy();
 
 private:
-  vk::Pipeline pipeline_;
-  PipelineLayout pipelineLayout_;
+  VkPipeline pipeline_;
+  VkPipelineLayout pipelineLayout_;
 };
 } // namespace vkr

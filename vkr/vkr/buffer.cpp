@@ -1,5 +1,7 @@
 #include "buffer.hpp"
 #include "context.hpp"
+#include "util.hpp"
+#include <fstl/logging.hpp>
 #include <iostream>
 
 using namespace vkr;
@@ -7,31 +9,31 @@ using namespace vkr;
 // Buffer
 Buffer::Buffer(
     size_t size,
-    BufferUsageFlags bufferUsage,
-    MemoryUsageFlags memoryUsage,
-    MemoryPropertyFlags requiredFlags) {
-  vk::BufferCreateInfo bufferCreateInfo = {
-      {},                          // flags
-      size,                        // size
-      bufferUsage,                 // usage
-      vk::SharingMode::eExclusive, // sharingMode
-      0,                           // queueFamilyIndexCount
-      nullptr                      // pQueueFamilyIndices
+    VkBufferUsageFlags bufferUsage,
+    VmaMemoryUsage memoryUsage,
+    VkMemoryPropertyFlags memoryProperty) {
+  VkBufferCreateInfo bufferCreateInfo = {
+      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      nullptr,
+      0,                         // flags
+      size,                      // size
+      bufferUsage,               // usage
+      VK_SHARING_MODE_EXCLUSIVE, // sharingMode
+      0,                         // queueFamilyIndexCount
+      nullptr                    // pQueueFamilyIndices
   };
 
   VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = static_cast<VmaMemoryUsage>(memoryUsage);
-  allocInfo.requiredFlags = static_cast<VkMemoryPropertyFlags>(requiredFlags);
+  allocInfo.usage = memoryUsage;
+  allocInfo.requiredFlags = memoryProperty;
 
-  if (vmaCreateBuffer(
-          Context::get().allocator_,
-          reinterpret_cast<VkBufferCreateInfo *>(&bufferCreateInfo),
-          &allocInfo,
-          reinterpret_cast<VkBuffer *>(&this->buffer_),
-          &this->allocation_,
-          nullptr) != VK_SUCCESS) {
-    throw std::runtime_error("Failed to create buffer");
-  }
+  VK_CHECK(vmaCreateBuffer(
+      Context::get().allocator_,
+      &bufferCreateInfo,
+      &allocInfo,
+      &this->buffer_,
+      &this->allocation_,
+      nullptr));
 }
 
 void Buffer::mapMemory(void **dest) {
@@ -45,12 +47,10 @@ void Buffer::unmapMemory() {
   vmaUnmapMemory(Context::get().allocator_, this->allocation_);
 }
 
-vk::Buffer Buffer::getHandle() const {
-  return this->buffer_;
-}
+VkBuffer Buffer::getHandle() const { return this->buffer_; }
 
 void Buffer::destroy() {
-  Context::getDevice().waitIdle();
+  VK_CHECK(vkDeviceWaitIdle(Context::getDevice()));
   vmaDestroyBuffer(Context::get().allocator_, this->buffer_, this->allocation_);
 }
 
@@ -58,10 +58,9 @@ void Buffer::destroy() {
 StagingBuffer::StagingBuffer(size_t size)
     : Buffer(
           size,
-          BufferUsageFlagBits::eTransferSrc,
-          MemoryUsageFlagBits::eCpuOnly,
-          MemoryPropertyFlagBits::eHostCoherent) {
-}
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+          VMA_MEMORY_USAGE_CPU_ONLY,
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {}
 
 void StagingBuffer::copyMemory(const void *data, size_t size) {
   void *stagingMemoryPointer;
@@ -71,26 +70,28 @@ void StagingBuffer::copyMemory(const void *data, size_t size) {
 }
 
 void StagingBuffer::transfer(Buffer &buffer, size_t size) {
-  vk::CommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
+  VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
 
-  vk::BufferCopy bufferCopyInfo = {
+  VkBufferCopy bufferCopyInfo = {
       0,    // srcOffset
       0,    // dstOffset
       size, // size
   };
 
-  commandBuffer.copyBuffer(
-      this->buffer_, buffer.getHandle(), 1, &bufferCopyInfo);
+  vkCmdCopyBuffer(
+      commandBuffer, this->buffer_, buffer.getHandle(), 1, &bufferCopyInfo);
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
 
-void StagingBuffer::transfer(Image &image, uint32_t width, uint32_t height) {
-  vk::CommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
+void StagingBuffer::transfer(VkImage &image, uint32_t width, uint32_t height) {
+  VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
 
-  auto transitionImageLayout = [&](vk::ImageLayout oldLayout,
-                                   vk::ImageLayout newLayout) {
-    vk::ImageMemoryBarrier barrier{
+  auto transitionImageLayout = [&](VkImageLayout oldLayout,
+                                   VkImageLayout newLayout) {
+    VkImageMemoryBarrier barrier{
+        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        nullptr,
         {},                      // srcAccessMask (we'll set this later)
         {},                      // dstAccessMask (we'll set this later)
         oldLayout,               // oldLayout
@@ -99,92 +100,114 @@ void StagingBuffer::transfer(Image &image, uint32_t width, uint32_t height) {
         VK_QUEUE_FAMILY_IGNORED, // dstQueueFamilyIndex
         image,                   // image
         {
-            vk::ImageAspectFlagBits::eColor, // aspectMask
-            0,                               // baseMipLevel
-            1,                               // levelCount
-            0,                               // baseArrayLayer
-            1,                               // layerCount
-        },                                   // subresourceRange
+            VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+            0,                         // baseMipLevel
+            1,                         // levelCount
+            0,                         // baseArrayLayer
+            1,                         // layerCount
+        },                             // subresourceRange
     };
 
-    vk::PipelineStageFlags srcStage;
-    vk::PipelineStageFlags dstStage;
+    VkPipelineStageFlags srcStage;
+    VkPipelineStageFlags dstStage;
 
-    if (oldLayout == vk::ImageLayout::eUndefined &&
-        newLayout == vk::ImageLayout::eTransferDstOptimal) {
-      barrier.srcAccessMask = {};
-      barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+      barrier.srcAccessMask = 0;
+      barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-      srcStage = vk::PipelineStageFlagBits::eTopOfPipe;
-      dstStage = vk::PipelineStageFlagBits::eTransfer;
+      srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     } else if (
-        oldLayout == vk::ImageLayout::eTransferDstOptimal &&
-        newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-      barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-      barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+        newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+      barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-      srcStage = vk::PipelineStageFlagBits::eTransfer;
-      dstStage = vk::PipelineStageFlagBits::eFragmentShader;
+      srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     } else {
-      throw std::invalid_argument("Unsupported layout transition!");
+      fstl::log::fatal("Unsupported layout transition!");
+      exit(1);
     }
 
-    commandBuffer.pipelineBarrier(srcStage, dstStage, {}, {}, {}, barrier);
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        srcStage,
+        dstStage,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &barrier);
   };
 
   transitionImageLayout(
-      vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-  vk::BufferImageCopy region{
+  VkBufferImageCopy region{
       0, // bufferOffset
       0, // bufferRowLength
       0, // bufferImageHeight
       {
-          vk::ImageAspectFlagBits::eColor, // aspectMask
-          0,                               // mipLevel
-          0,                               // baseArrayLayer
-          1,                               // layerCount
-      },                                   // imageSubresource
-      {0, 0, 0},                           // imageOffset
-      {width, height, 1},                  // imageExtent
+          VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+          0,                         // mipLevel
+          0,                         // baseArrayLayer
+          1,                         // layerCount
+      },                             // imageSubresource
+      {0, 0, 0},                     // imageOffset
+      {width, height, 1},            // imageExtent
   };
 
-  commandBuffer.copyBufferToImage(
-      this->buffer_, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
+  vkCmdCopyBufferToImage(
+      commandBuffer,
+      this->buffer_,
+      image,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1,
+      &region);
 
   transitionImageLayout(
-      vk::ImageLayout::eTransferDstOptimal,
-      vk::ImageLayout::eShaderReadOnlyOptimal);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
 
-vk::CommandBuffer StagingBuffer::beginSingleTimeCommandBuffer() {
-  vk::CommandBufferAllocateInfo allocateInfo{
+VkCommandBuffer StagingBuffer::beginSingleTimeCommandBuffer() {
+  VkCommandBufferAllocateInfo allocateInfo{
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      nullptr,
       Context::get().transientCommandPool_, // commandPool
-      vk::CommandBufferLevel::ePrimary,    // level
-      1,                                   // commandBufferCount
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY,      // level
+      1,                                    // commandBufferCount
   };
 
-  auto commandBuffers =
-      Context::getDevice().allocateCommandBuffers(allocateInfo);
-  auto commandBuffer = commandBuffers[0];
+  VkCommandBuffer commandBuffer;
 
-  vk::CommandBufferBeginInfo commandBufferBeginInfo{
-      vk::CommandBufferUsageFlagBits::eOneTimeSubmit, // flags
-      nullptr,                                        // pInheritanceInfo
+  VK_CHECK(vkAllocateCommandBuffers(
+      Context::getDevice(), &allocateInfo, &commandBuffer));
+
+  VkCommandBufferBeginInfo commandBufferBeginInfo{
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      nullptr,
+      VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
+      nullptr,                                     // pInheritanceInfo
   };
 
-  commandBuffer.begin(commandBufferBeginInfo);
+  VK_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
   return commandBuffer;
 }
 
-void StagingBuffer::endSingleTimeCommandBuffer(
-    vk::CommandBuffer commandBuffer) {
-  commandBuffer.end();
+void StagingBuffer::endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
+  VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
-  vk::SubmitInfo submitInfo{
+  VkSubmitInfo submitInfo{
+      VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      nullptr,
       0,              // waitSemaphoreCount
       nullptr,        // pWaitSemaphores
       nullptr,        // pWaitDstStageMask
@@ -194,10 +217,14 @@ void StagingBuffer::endSingleTimeCommandBuffer(
       nullptr,        // pSignalSemaphores
   };
 
-  Context::get().transferQueue_.submit(submitInfo, {});
+  VK_CHECK(vkQueueSubmit(
+      Context::get().transferQueue_, 1, &submitInfo, VK_NULL_HANDLE));
 
-  Context::get().transferQueue_.waitIdle();
+  VK_CHECK(vkQueueWaitIdle(Context::get().transferQueue_));
 
-  Context::getDevice().freeCommandBuffers(
-      Context::get().transientCommandPool_, commandBuffer);
+  vkFreeCommandBuffers(
+      Context::getDevice(),
+      Context::get().transientCommandPool_,
+      1,
+      &commandBuffer);
 }

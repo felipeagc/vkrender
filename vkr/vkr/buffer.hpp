@@ -1,7 +1,7 @@
 #pragma once
 
-#include "aliases.hpp"
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
 namespace vkr {
 class Context;
@@ -14,26 +14,26 @@ public:
   Buffer() {}
   Buffer(
       size_t size,
-      BufferUsageFlags bufferUsage,
-      MemoryUsageFlags memoryUsage = MemoryUsageFlagBits::eGpuOnly,
-      MemoryPropertyFlags memoryProperty = {});
+      VkBufferUsageFlags bufferUsage,
+      VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY,
+      VkMemoryPropertyFlags memoryProperty = 0);
   ~Buffer() {}
   Buffer(const Buffer &other) = delete;
   Buffer &operator=(const Buffer &other) = default;
-  Buffer(Buffer&&) = default;
-  Buffer &operator=(Buffer&&) = default;
+  Buffer(Buffer &&) = default;
+  Buffer &operator=(Buffer &&) = default;
 
   operator bool() { return this->buffer_; }
 
   void mapMemory(void **dest);
   void unmapMemory();
 
-  vk::Buffer getHandle() const;
+  VkBuffer getHandle() const;
 
   void destroy();
 
 protected:
-  vk::Buffer buffer_;
+  VkBuffer buffer_;
   VmaAllocation allocation_;
 };
 
@@ -43,8 +43,8 @@ public:
   ~StagingBuffer() {}
   StagingBuffer(const StagingBuffer &other) = delete;
   StagingBuffer &operator=(const StagingBuffer &other) = default;
-  StagingBuffer(StagingBuffer&&) = default;
-  StagingBuffer &operator=(StagingBuffer&&) = default;
+  StagingBuffer(StagingBuffer &&) = default;
+  StagingBuffer &operator=(StagingBuffer &&) = default;
 
   // Copies memory into the staging buffer
   void copyMemory(const void *data, size_t size);
@@ -53,10 +53,10 @@ public:
   void transfer(Buffer &buffer, size_t size);
 
   // Issues a command to transfer this buffer's memory into a texture's image
-  void transfer(Image &image, uint32_t width, uint32_t height);
+  void transfer(VkImage &image, uint32_t width, uint32_t height);
 
 protected:
-  vk::CommandBuffer beginSingleTimeCommandBuffer();
-  void endSingleTimeCommandBuffer(vk::CommandBuffer commandBuffer);
+  VkCommandBuffer beginSingleTimeCommandBuffer();
+  void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer);
 };
 } // namespace vkr

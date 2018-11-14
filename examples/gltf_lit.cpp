@@ -4,7 +4,6 @@
 #include <imgui/imgui.h>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
-#include <vkr/commandbuffer.hpp>
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
 #include <vkr/graphics_pipeline.hpp>
@@ -17,18 +16,26 @@ public:
   Lighting(glm::vec3 lightColor, glm::vec3 lightPos)
       : uniformBuffer({
             sizeof(LightingUniform),
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            vkr::MemoryUsageFlagBits::eCpuToGpu,
-            vkr::MemoryPropertyFlagBits::eHostVisible |
-                vkr::MemoryPropertyFlagBits::eHostCoherent,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VMA_MEMORY_USAGE_CPU_TO_GPU,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         }) {
     auto [descriptorPool, descriptorSetLayout] =
         vkr::Context::getDescriptorManager()[vkr::DESC_LIGHTING];
 
     assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
-    this->descriptorSet =
-        descriptorPool->allocateDescriptorSets({*descriptorSetLayout})[0];
+    VkDescriptorSetAllocateInfo allocateInfo = {
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        nullptr,
+        *descriptorPool,
+        1,
+        descriptorSetLayout,
+    };
+
+    vkAllocateDescriptorSets(
+        vkr::Context::getDevice(), &allocateInfo, &this->descriptorSet);
 
     this->ubo.lightColor = glm::vec4(lightColor, 1.0f);
     this->ubo.lightPos = glm::vec4(lightPos, 1.0f);
@@ -37,23 +44,24 @@ public:
     this->uniformBuffer.mapMemory(&this->mapped);
     memcpy(this->mapped, &this->ubo, sizeof(LightingUniform));
 
-    auto bufferInfo = vk::DescriptorBufferInfo{
+    VkDescriptorBufferInfo bufferInfo = {
         this->uniformBuffer.getHandle(), 0, sizeof(LightingUniform)};
 
-    vkr::Context::getDevice().updateDescriptorSets(
-        {
-            vk::WriteDescriptorSet{
-                this->descriptorSet,                 // dstSet
-                0,                                   // dstBinding
-                0,                                   // dstArrayElement
-                1,                                   // descriptorCount
-                vkr::DescriptorType::eUniformBuffer, // descriptorType
-                nullptr,                             // pImageInfo
-                &bufferInfo,                         // pBufferInfo
-                nullptr,                             // pTexelBufferView
-            },
-        },
-        {});
+    VkWriteDescriptorSet descriptorWrite = {
+        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        nullptr,
+        this->descriptorSet,               // dstSet
+        0,                                 // dstBinding
+        0,                                 // dstArrayElement
+        1,                                 // descriptorCount
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        nullptr,                           // pImageInfo
+        &bufferInfo,                       // pBufferInfo
+        nullptr,                           // pTexelBufferView
+    };
+
+    vkUpdateDescriptorSets(
+        vkr::Context::getDevice(), 1, &descriptorWrite, 0, nullptr);
   }
 
   ~Lighting() {
@@ -65,17 +73,21 @@ public:
 
     assert(descriptorPool != nullptr);
 
-    vkr::Context::getDevice().freeDescriptorSets(
-        *descriptorPool, this->descriptorSet);
+    vkFreeDescriptorSets(
+        vkr::Context::getDevice(), *descriptorPool, 1, &this->descriptorSet);
   }
 
   void bind(vkr::Window &window, vkr::GraphicsPipeline &pipeline) {
-    window.getCurrentCommandBuffer().bindDescriptorSets(
-        vkr::PipelineBindPoint::eGraphics,
+    VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipeline.getLayout(),
         3, // firstSet
-        this->descriptorSet,
-        {});
+        1,
+        &this->descriptorSet,
+        0,
+        nullptr);
   }
 
 private:
@@ -86,17 +98,17 @@ private:
 
   vkr::Buffer uniformBuffer;
   void *mapped;
-  vkr::DescriptorSet descriptorSet;
+  VkDescriptorSet descriptorSet;
 };
 
 int main() {
   vkr::Window window("GLTF models");
 
-  window.setMSAASamples(vkr::SampleCount::e4);
+  window.setMSAASamples(VK_SAMPLE_COUNT_4_BIT);
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};
 
-  vkr::Shader modelShader {
+  vkr::Shader modelShader{
       "../shaders/model_lit.vert",
       "../shaders/model_lit.frag",
   };
@@ -112,8 +124,7 @@ int main() {
 
   Lighting lighting({0.95, 0.80, 0.52}, {3.0, 3.0, 3.0});
 
-  vkr::GltfModel helmet{
-      window, "../assets/DamagedHelmet.glb", true};
+  vkr::GltfModel helmet{window, "../assets/DamagedHelmet.glb", true};
   helmet.setPosition({2.0, 0.0, 0.0});
   vkr::GltfModel boombox{window, "../assets/BoomBox.glb"};
   boombox.setPosition({-2.0, 0.0, 0.0});

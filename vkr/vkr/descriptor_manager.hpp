@@ -1,38 +1,38 @@
 #pragma once
 
-#include "descriptor.hpp"
+#include <fstl/fixed_vector.hpp>
 #include <utility>
 #include <vector>
 
 namespace vkr {
-const char* const DESC_CAMERA = "camera";
-const char* const DESC_MESH = "mesh";
-const char* const DESC_MATERIAL = "material";
-const char* const DESC_LIGHTING = "lighting";
-const char* const DESC_IMGUI = "imgui";
+const char *const DESC_CAMERA = "camera";
+const char *const DESC_MESH = "mesh";
+const char *const DESC_MATERIAL = "material";
+const char *const DESC_LIGHTING = "lighting";
+const char *const DESC_IMGUI = "imgui";
 
 class DescriptorManager {
   friend class Context;
 
 public:
-  std::pair<DescriptorPool *, DescriptorSetLayout *>
+  std::pair<VkDescriptorPool *, VkDescriptorSetLayout *>
   operator[](const std::string &key);
 
-  DescriptorPool *getPool(const std::string &key);
-  DescriptorSetLayout *getSetLayout(const std::string &key);
+  VkDescriptorPool *getPool(const std::string &key);
+  VkDescriptorSetLayout *getSetLayout(const std::string &key);
 
   // Returns true if successful
   // Returns false if a key with that name already exists
-  bool addPool(const std::string &key, DescriptorPool pool);
-  bool addSetLayout(const std::string &key, DescriptorSetLayout setLayout);
+  bool addPool(const std::string &key, VkDescriptorPool pool);
+  bool addSetLayout(const std::string &key, VkDescriptorSetLayout setLayout);
 
-  fstl::fixed_vector<DescriptorSetLayout> getDefaultSetLayouts();
+  fstl::fixed_vector<VkDescriptorSetLayout> getDefaultSetLayouts();
 
 protected:
   void init();
   void destroy();
 
-  std::vector<std::pair<std::string, DescriptorPool>> pools_;
-  std::vector<std::pair<std::string, DescriptorSetLayout>> setLayouts_;
+  std::vector<std::pair<std::string, VkDescriptorPool>> pools_;
+  std::vector<std::pair<std::string, VkDescriptorSetLayout>> setLayouts_;
 };
 } // namespace vkr

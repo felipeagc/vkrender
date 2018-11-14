@@ -1,4 +1,7 @@
 #include "descriptor_manager.hpp"
+#include "context.hpp"
+#include "util.hpp"
+#include <vulkan/vulkan.h>
 
 using namespace vkr;
 
@@ -7,56 +10,120 @@ const uint32_t MESH_MAX_SETS = 500;
 const uint32_t MATERIAL_MAX_SETS = 50;
 const uint32_t LIGHTING_MAX_SETS = 50;
 
-const fstl::fixed_vector<DescriptorSetLayoutBinding> CAMERA_BINDINGS = {{
-    0,                                   // binding
-    vkr::DescriptorType::eUniformBuffer, // descriptorType
-    1,                                   // descriptorCount
-    vkr::ShaderStageFlagBits::eVertex |
-        vkr::ShaderStageFlagBits::eFragment, // stageFlags
-    nullptr,                                 // pImmutableSamplers
+const VkDescriptorSetLayoutBinding CAMERA_BINDINGS[] = {{
+    0,                                 // binding
+    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+    1,                                 // descriptorCount
+    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
+    nullptr, // pImmutableSamplers
 }};
 
-const fstl::fixed_vector<DescriptorSetLayoutBinding> MESH_BINDINGS = {{
-    0,                                   // binding
-    vkr::DescriptorType::eUniformBuffer, // descriptorType
-    1,                                   // descriptorCount
-    vkr::ShaderStageFlagBits::eVertex,   // stageFlags
-    nullptr,                             // pImmutableSamplers
+const VkDescriptorSetLayoutBinding MESH_BINDINGS[] = {{
+    0,                                 // binding
+    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+    1,                                 // descriptorCount
+    VK_SHADER_STAGE_VERTEX_BIT,        // stageFlags
+    nullptr,                           // pImmutableSamplers
 }};
 
-const fstl::fixed_vector<DescriptorSetLayoutBinding> MATERIAL_BINDINGS = {
+const VkDescriptorSetLayoutBinding MATERIAL_BINDINGS[] = {
     {
-        0,                                          // binding
-        vkr::DescriptorType::eCombinedImageSampler, // descriptorType
-        1,                                          // descriptorCount
-        vkr::ShaderStageFlagBits::eFragment,        // stageFlags
-        nullptr,                                    // pImmutableSamplers
+        0,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
     },
     {
-        1,                                   // binding
-        vkr::DescriptorType::eUniformBuffer, // descriptorType
-        1,                                   // descriptorCount
-        vkr::ShaderStageFlagBits::eFragment, // stageFlags
-        nullptr,                             // pImmutableSamplers
+        1,                                 // binding
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        1,                                 // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
+        nullptr,                           // pImmutableSamplers
     },
 };
 
-const fstl::fixed_vector<DescriptorSetLayoutBinding> LIGHTING_BINDINGS = {
+const VkDescriptorSetLayoutBinding LIGHTING_BINDINGS[] = {
     {
-        0,                                   // binding
-        vkr::DescriptorType::eUniformBuffer, // descriptorType
-        1,                                   // descriptorCount
-        vkr::ShaderStageFlagBits::eFragment, // stageFlags
-        nullptr,                             // pImmutableSamplers
+        0,                                 // binding
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        1,                                 // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
+        nullptr,                           // pImmutableSamplers
     },
 };
 
-std::pair<DescriptorPool *, DescriptorSetLayout *> DescriptorManager::
+VkDescriptorSetLayout createDescriptorSetLayout(
+    uint32_t bindingCount, const VkDescriptorSetLayoutBinding *pBindings) {
+  VkDescriptorSetLayout setLayout;
+
+  VkDescriptorSetLayoutCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, // sType
+      nullptr,                                             // pNext
+      0,                                                   // flags,
+      bindingCount,                                        // bindingCount
+      pBindings,                                           // pBindings
+  };
+
+  VK_CHECK(vkCreateDescriptorSetLayout(
+      Context::getDevice(), &createInfo, nullptr, &setLayout));
+
+  return setLayout;
+}
+
+VkDescriptorPool createDescriptorPool(
+    uint32_t maxSets,
+    uint32_t bindingCount,
+    const VkDescriptorSetLayoutBinding *pBindings) {
+  fstl::fixed_vector<VkDescriptorPoolSize> poolSizes;
+
+  for (uint32_t i = 0; i < bindingCount; i++) {
+    auto binding = pBindings[i];
+    VkDescriptorPoolSize *foundp = nullptr;
+    for (auto &poolSize : poolSizes) {
+      if (poolSize.type == binding.descriptorType) {
+        foundp = &poolSize;
+        break;
+      }
+    }
+
+    if (foundp == nullptr) {
+      poolSizes.push_back({
+          binding.descriptorType,
+          binding.descriptorCount,
+      });
+    } else {
+      foundp->descriptorCount += binding.descriptorCount;
+    }
+  }
+
+  for (auto &poolSize : poolSizes) {
+    poolSize.descriptorCount *= maxSets;
+  }
+
+  VkDescriptorPool descriptorPool;
+
+  VkDescriptorPoolCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,     // sType
+      nullptr,                                           // pNext
+      VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, // flags
+      maxSets,                                           // maxSets
+      static_cast<uint32_t>(poolSizes.size()),           // poolSizeCount
+      poolSizes.data(),                                  // pPoolSizes
+  };
+
+  VK_CHECK(vkCreateDescriptorPool(
+      Context::getDevice(), &createInfo, nullptr, &descriptorPool));
+
+  return descriptorPool;
+}
+
+std::pair<VkDescriptorPool *, VkDescriptorSetLayout *> DescriptorManager::
 operator[](const std::string &key) {
   return {this->getPool(key), this->getSetLayout(key)};
 }
 
-DescriptorPool *DescriptorManager::getPool(const std::string &key) {
+VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
   for (auto &p : this->pools_) {
     if (p.first == key) {
       return &p.second;
@@ -66,7 +133,7 @@ DescriptorPool *DescriptorManager::getPool(const std::string &key) {
   return nullptr;
 }
 
-DescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
+VkDescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
   for (auto &p : this->setLayouts_) {
     if (p.first == key) {
       return &p.second;
@@ -76,7 +143,7 @@ DescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
   return nullptr;
 }
 
-bool DescriptorManager::addPool(const std::string &key, DescriptorPool pool) {
+bool DescriptorManager::addPool(const std::string &key, VkDescriptorPool pool) {
   if (this->getPool(key)) {
     return false;
   }
@@ -86,7 +153,7 @@ bool DescriptorManager::addPool(const std::string &key, DescriptorPool pool) {
 }
 
 bool DescriptorManager::addSetLayout(
-    const std::string &key, DescriptorSetLayout setLayout) {
+    const std::string &key, VkDescriptorSetLayout setLayout) {
   if (this->getSetLayout(key)) {
     return false;
   }
@@ -95,9 +162,9 @@ bool DescriptorManager::addSetLayout(
   return true;
 }
 
-fstl::fixed_vector<DescriptorSetLayout>
+fstl::fixed_vector<VkDescriptorSetLayout>
 DescriptorManager::getDefaultSetLayouts() {
-  return fstl::fixed_vector<DescriptorSetLayout>{
+  return fstl::fixed_vector<VkDescriptorSetLayout>{
       *this->getSetLayout(vkr::DESC_CAMERA),
       *this->getSetLayout(vkr::DESC_MATERIAL),
       *this->getSetLayout(vkr::DESC_MESH),
@@ -106,43 +173,80 @@ DescriptorManager::getDefaultSetLayouts() {
 }
 
 void DescriptorManager::init() {
-  this->addPool(DESC_CAMERA, {CAMERA_MAX_SETS, CAMERA_BINDINGS});
-  this->addSetLayout(DESC_CAMERA, {CAMERA_BINDINGS});
-
-  this->addPool(DESC_MATERIAL, {MATERIAL_MAX_SETS, MATERIAL_BINDINGS});
-  this->addSetLayout(DESC_MATERIAL, {MATERIAL_BINDINGS});
-
-  this->addPool(DESC_MESH, {MESH_MAX_SETS, MESH_BINDINGS});
-  this->addSetLayout(DESC_MESH, {MESH_BINDINGS});
-
-  this->addPool(DESC_LIGHTING, {LIGHTING_MAX_SETS, LIGHTING_BINDINGS});
-  this->addSetLayout(DESC_LIGHTING, {LIGHTING_BINDINGS});
-
-  fstl::fixed_vector<DescriptorPoolSize> imguiPoolSizes{
-      {vk::DescriptorType::eSampler, 1000},
-      {vk::DescriptorType::eCombinedImageSampler, 1000},
-      {vk::DescriptorType::eSampledImage, 1000},
-      {vk::DescriptorType::eStorageImage, 1000},
-      {vk::DescriptorType::eUniformTexelBuffer, 1000},
-      {vk::DescriptorType::eStorageTexelBuffer, 1000},
-      {vk::DescriptorType::eUniformBuffer, 1000},
-      {vk::DescriptorType::eStorageBuffer, 1000},
-      {vk::DescriptorType::eUniformBufferDynamic, 1000},
-      {vk::DescriptorType::eStorageBufferDynamic, 1000},
-      {vk::DescriptorType::eInputAttachment, 1000},
-  };
+  this->addPool(
+      DESC_CAMERA,
+      createDescriptorPool(
+          CAMERA_MAX_SETS, ARRAYSIZE(CAMERA_BINDINGS), CAMERA_BINDINGS));
+  this->addSetLayout(
+      DESC_CAMERA,
+      createDescriptorSetLayout(ARRAYSIZE(CAMERA_BINDINGS), CAMERA_BINDINGS));
 
   this->addPool(
-      DESC_IMGUI,
-      {1000 * static_cast<uint32_t>(imguiPoolSizes.size()), imguiPoolSizes});
+      DESC_MATERIAL,
+      createDescriptorPool(
+          MATERIAL_MAX_SETS, ARRAYSIZE(MATERIAL_BINDINGS), MATERIAL_BINDINGS));
+  this->addSetLayout(
+      DESC_MATERIAL,
+      createDescriptorSetLayout(
+          ARRAYSIZE(MATERIAL_BINDINGS), MATERIAL_BINDINGS));
+
+  this->addPool(
+      DESC_MESH,
+      createDescriptorPool(
+          MESH_MAX_SETS, ARRAYSIZE(MESH_BINDINGS), MESH_BINDINGS));
+  this->addSetLayout(
+      DESC_MESH,
+      createDescriptorSetLayout(ARRAYSIZE(MESH_BINDINGS), MESH_BINDINGS));
+
+  this->addPool(
+      DESC_LIGHTING,
+      createDescriptorPool(
+          LIGHTING_MAX_SETS, ARRAYSIZE(LIGHTING_BINDINGS), LIGHTING_BINDINGS));
+  this->addSetLayout(
+      DESC_LIGHTING,
+      createDescriptorSetLayout(
+          ARRAYSIZE(LIGHTING_BINDINGS), LIGHTING_BINDINGS));
+
+  // Imgui
+  {
+    VkDescriptorPoolSize imguiPoolSizes[] = {
+        {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000},
+    };
+
+    VkDescriptorPool imguiDescriptorPool;
+
+    VkDescriptorPoolCreateInfo createInfo = {
+        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,           // sType
+        nullptr,                                                 // pNext
+        VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,       // flags
+        1000 * static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)), // maxSets
+        static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)), // poolSizeCount
+        imguiPoolSizes,                                   // pPoolSizes
+    };
+
+    VK_CHECK(vkCreateDescriptorPool(
+        Context::getDevice(), &createInfo, nullptr, &imguiDescriptorPool));
+
+    this->addPool(DESC_IMGUI, imguiDescriptorPool);
+  }
 }
 
 void DescriptorManager::destroy() {
   for (auto &p : this->pools_) {
-    p.second.destroy();
+    vkDestroyDescriptorPool(Context::getDevice(), p.second, nullptr);
   }
 
   for (auto &p : this->setLayouts_) {
-    p.second.destroy();
+    vkDestroyDescriptorSetLayout(Context::getDevice(), p.second, nullptr);
   }
 }

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "buffer.hpp"
-#include "commandbuffer.hpp"
 #include "texture.hpp"
 #include "vertex_format.hpp"
 #include "window.hpp"
 #include <string>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -19,6 +19,8 @@ class Model;
 }
 
 namespace vkr {
+class GraphicsPipeline;
+
 class GltfModel {
 public:
   struct Vertex {
@@ -36,7 +38,7 @@ public:
 
     std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
     std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
-    std::array<vk::DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+    std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
     Material() {}
     Material(
@@ -67,7 +69,7 @@ public:
     std::vector<Primitive> primitives;
     std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
     std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
-    std::array<vk::DescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+    std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
     struct MeshUniform {
       glm::mat4 model;
@@ -106,19 +108,16 @@ public:
 
   static VertexFormat getVertexFormat() {
     return VertexFormatBuilder()
-        .addBinding(0, sizeof(GltfModel::Vertex), vk::VertexInputRate::eVertex)
+        .addBinding(0, sizeof(GltfModel::Vertex), VK_VERTEX_INPUT_RATE_VERTEX)
         .addAttribute(
-            0,
-            0,
-            vk::Format::eR32G32B32Sfloat,
-            offsetof(GltfModel::Vertex, pos))
+            0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GltfModel::Vertex, pos))
         .addAttribute(
             1,
             0,
-            vk::Format::eR32G32B32Sfloat,
+            VK_FORMAT_R32G32B32_SFLOAT,
             offsetof(GltfModel::Vertex, normal))
         .addAttribute(
-            2, 0, vk::Format::eR32G32Sfloat, offsetof(GltfModel::Vertex, uv))
+            2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GltfModel::Vertex, uv))
         .build();
   }
 
