@@ -9,7 +9,7 @@
 ## TODO
 ### Refactoring
 - [x] Remove unique
-- [ ] Remove array_proxy
+- [x] Remove array_proxy
 - [x] Stop using vulkan.hpp
 - [x] Split pipeline.hpp and pipeline.cpp into multiple files
 - [ ] Convert functions to c-style parameter passing, similar to vulkan functions
