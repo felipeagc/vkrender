@@ -9,18 +9,22 @@
 #include <vkr/graphics_pipeline.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/texture.hpp>
+#include <vkr/util.hpp>
 #include <vkr/window.hpp>
 
 class Lighting {
 public:
-  Lighting(glm::vec3 lightColor, glm::vec3 lightPos)
-      : uniformBuffer({
-            sizeof(LightingUniform),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VMA_MEMORY_USAGE_CPU_TO_GPU,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        }) {
+  Lighting(glm::vec3 lightColor, glm::vec3 lightPos) {
+    this->ubo.lightColor = glm::vec4(lightColor, 1.0f);
+    this->ubo.lightPos = glm::vec4(lightPos, 1.0f);
+
+    for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers.buffers); i++) {
+      vkr::buffer::makeUniformBuffer(
+          sizeof(LightingUniform),
+          &this->uniformBuffers.buffers[i],
+          &this->uniformBuffers.allocations[i]);
+    }
+
     auto [descriptorPool, descriptorSetLayout] =
         vkr::ctx::descriptorManager[vkr::DESC_LIGHTING];
 
@@ -34,46 +38,50 @@ public:
         descriptorSetLayout,
     };
 
-    vkAllocateDescriptorSets(
-        vkr::ctx::device, &allocateInfo, &this->descriptorSet);
+    for (int i = 0; i < vkr::MAX_FRAMES_IN_FLIGHT; i++) {
+      vkAllocateDescriptorSets(
+          vkr::ctx::device, &allocateInfo, &this->descriptorSets[i]);
 
-    this->ubo.lightColor = glm::vec4(lightColor, 1.0f);
-    this->ubo.lightPos = glm::vec4(lightPos, 1.0f);
+      vkr::buffer::mapMemory(this->uniformBuffers.allocations[i], &this->mappings[i]);
+      memcpy(this->mappings[i], &this->ubo, sizeof(LightingUniform));
 
-    // TODO: store this uniform buffer on the GPU using staging buffer
-    this->uniformBuffer.mapMemory(&this->mapped);
-    memcpy(this->mapped, &this->ubo, sizeof(LightingUniform));
+      VkDescriptorBufferInfo bufferInfo = {
+          this->uniformBuffers.buffers[i], 0, sizeof(LightingUniform)};
 
-    VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffer.getHandle(), 0, sizeof(LightingUniform)};
+      VkWriteDescriptorSet descriptorWrite = {
+          VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          nullptr,
+          this->descriptorSets[i],               // dstSet
+          0,                                 // dstBinding
+          0,                                 // dstArrayElement
+          1,                                 // descriptorCount
+          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+          nullptr,                           // pImageInfo
+          &bufferInfo,                       // pBufferInfo
+          nullptr,                           // pTexelBufferView
+      };
 
-    VkWriteDescriptorSet descriptorWrite = {
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        nullptr,
-        this->descriptorSet,               // dstSet
-        0,                                 // dstBinding
-        0,                                 // dstArrayElement
-        1,                                 // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        nullptr,                           // pImageInfo
-        &bufferInfo,                       // pBufferInfo
-        nullptr,                           // pTexelBufferView
-    };
-
-    vkUpdateDescriptorSets(vkr::ctx::device, 1, &descriptorWrite, 0, nullptr);
+      vkUpdateDescriptorSets(vkr::ctx::device, 1, &descriptorWrite, 0, nullptr);
+    }
   }
 
   void destroy() {
-    if (this->uniformBuffer) {
-      this->uniformBuffer.destroy();
+    for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers.buffers); i++) {
+      vkr::buffer::unmapMemory(this->uniformBuffers.allocations[i]);
+      vkr::buffer::destroy(
+          this->uniformBuffers.buffers[i], this->uniformBuffers.allocations[i]);
     }
+
     auto descriptorPool =
         vkr::ctx::descriptorManager.getPool(vkr::DESC_LIGHTING);
 
     assert(descriptorPool != nullptr);
 
     vkFreeDescriptorSets(
-        vkr::ctx::device, *descriptorPool, 1, &this->descriptorSet);
+        vkr::ctx::device,
+        *descriptorPool,
+        ARRAYSIZE(this->descriptorSets),
+        this->descriptorSets);
   }
 
   void bind(vkr::Window &window, vkr::GraphicsPipeline &pipeline) {
@@ -84,7 +92,7 @@ public:
         pipeline.getLayout(),
         3, // firstSet
         1,
-        &this->descriptorSet,
+        &this->descriptorSets[window.getCurrentFrameIndex()],
         0,
         nullptr);
   }
@@ -95,9 +103,9 @@ private:
     glm::vec4 lightPos;
   } ubo;
 
-  vkr::Buffer uniformBuffer;
-  void *mapped;
-  VkDescriptorSet descriptorSet;
+  vkr::buffer::Buffers<vkr::MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+  void *mappings[vkr::MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet descriptorSets[vkr::MAX_FRAMES_IN_FLIGHT];
 };
 
 int main() {

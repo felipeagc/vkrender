@@ -90,8 +90,7 @@ protected:
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
   };
 
-  // TODO: use fixed_vector
-  std::vector<FrameResources> frameResources_{MAX_FRAMES_IN_FLIGHT};
+  fstl::fixed_vector<FrameResources> frameResources_{MAX_FRAMES_IN_FLIGHT};
 
   struct {
     struct {
@@ -115,8 +114,8 @@ protected:
   VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
   VkFormat swapchainImageFormat_;
   VkExtent2D swapchainExtent_;
-  std::vector<VkImage> swapchainImages_;
-  std::vector<VkImageView> swapchainImageViews_;
+  fstl::fixed_vector<VkImage> swapchainImages_;
+  fstl::fixed_vector<VkImageView> swapchainImageViews_;
 
   VkRenderPass renderPass_{VK_NULL_HANDLE};
   VkRenderPass imguiRenderPass_{VK_NULL_HANDLE};

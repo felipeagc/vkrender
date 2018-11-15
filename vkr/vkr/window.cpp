@@ -501,7 +501,6 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
       vkDestroyImageView(ctx::device, imageView, nullptr);
     }
   }
-  this->swapchainImageViews_.clear();
 
   VkSurfaceCapabilitiesKHR surfaceCapabilities;
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(

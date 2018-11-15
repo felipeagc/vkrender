@@ -42,20 +42,29 @@ int main() {
       Vertex{{0.0, -0.5}, {1.0, 0.0, 0.0}},
   };
 
-  vkr::Buffer vertexBuffer{
-      sizeof(Vertex) * vertices.size(), // size
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-  };
+  VkBuffer vertexBuffer;
+  VmaAllocation vertexAllocation;
+  vkr::buffer::makeVertexBuffer(
+      sizeof(Vertex) * vertices.size(), &vertexBuffer, &vertexAllocation);
 
   {
-    vkr::StagingBuffer stagingBuffer{sizeof(Vertex) * vertices.size()};
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingAllocation;
+    vkr::buffer::makeStagingBuffer(
+        sizeof(Vertex) * vertices.size(), &stagingBuffer, &stagingAllocation);
 
-    stagingBuffer.copyMemory(vertices.data(), sizeof(Vertex) * vertices.size());
-    stagingBuffer.transfer(vertexBuffer, sizeof(Vertex) * vertices.size());
+    void *stagingMemoryPointer;
+    vkr::buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
 
-    stagingBuffer.destroy();
+    memcpy(
+        stagingMemoryPointer,
+        vertices.data(),
+        sizeof(Vertex) * vertices.size());
+    vkr::buffer::bufferTransfer(
+        stagingBuffer, vertexBuffer, sizeof(Vertex) * vertices.size());
+
+    vkr::buffer::unmapMemory(stagingAllocation);
+    vkr::buffer::destroy(stagingBuffer, stagingAllocation);
   }
 
   auto draw = [&]() {
@@ -72,9 +81,8 @@ int main() {
     vkCmdBindPipeline(
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
 
-    VkBuffer bufferHandle = vertexBuffer.getHandle();
     VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &bufferHandle, &offset);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 
     vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
   };
@@ -83,7 +91,7 @@ int main() {
     window.present(draw);
   }
 
-  vertexBuffer.destroy();
+  vkr::buffer::destroy(vertexBuffer, vertexAllocation);
   pipeline.destroy();
   shader.destroy();
   window.destroy();

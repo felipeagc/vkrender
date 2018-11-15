@@ -36,7 +36,8 @@ public:
       glm::vec4 baseColorFactor;
     } ubo;
 
-    std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    // std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
     std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
@@ -67,7 +68,8 @@ public:
 
   struct Mesh {
     std::vector<Primitive> primitives;
-    std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    // std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
     std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
@@ -122,7 +124,7 @@ public:
   }
 
   GltfModel(Window &window, const std::string &path, bool flipUVs = false);
-  ~GltfModel() {};
+  ~GltfModel(){};
   GltfModel(const GltfModel &other) = default;
   GltfModel &operator=(GltfModel &other) = default;
 
@@ -149,8 +151,10 @@ private:
   glm::vec3 scale_ = {1.0, 1.0, 1.0};
   glm::vec3 rotation_ = {0.0, 0.0, 0.0};
 
-  Buffer vertexBuffer_;
-  Buffer indexBuffer_;
+  VkBuffer vertexBuffer_;
+  VmaAllocation vertexAllocation_;
+  VkBuffer indexBuffer_;
+  VmaAllocation indexAllocation_;
 
   void loadMaterials(tinygltf::Model &model);
 

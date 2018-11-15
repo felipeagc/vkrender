@@ -30,24 +30,21 @@ GltfModel::Material::Material(
     VK_CHECK(vkAllocateDescriptorSets(
         ctx::device, &allocateInfo, &this->descriptorSets[i]));
 
-    this->uniformBuffers[i] = Buffer{
+    buffer::makeUniformBuffer(
         sizeof(MaterialUniform),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VMA_MEMORY_USAGE_CPU_TO_GPU,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    };
+        &this->uniformBuffers.buffers[i],
+        &this->uniformBuffers.allocations[i]);
 
     // CombinedImageSampler
     auto &texture = model.textures_[this->albedoTextureIndex];
     auto albedoDescriptorInfo = texture.getDescriptorInfo();
 
     // UniformBuffer
-    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+    buffer::mapMemory(this->uniformBuffers.allocations[i], &this->mappings[i]);
     memcpy(this->mappings[i], &this->ubo, sizeof(MaterialUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers[i].getHandle(), 0, sizeof(MaterialUniform)};
+        this->uniformBuffers.buffers[i], 0, sizeof(MaterialUniform)};
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
@@ -77,11 +74,7 @@ GltfModel::Material::Material(
     };
 
     vkUpdateDescriptorSets(
-        ctx::device,
-        ARRAYSIZE(descriptorWrites),
-        descriptorWrites,
-        0,
-        nullptr);
+        ctx::device, ARRAYSIZE(descriptorWrites), descriptorWrites, 0, nullptr);
   }
 }
 
@@ -116,19 +109,16 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
   };
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    this->uniformBuffers[i] = Buffer{
+    buffer::makeUniformBuffer(
         sizeof(MeshUniform),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VMA_MEMORY_USAGE_CPU_TO_GPU,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    };
+        &this->uniformBuffers.buffers[i],
+        &this->uniformBuffers.allocations[i]);
 
-    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+    buffer::mapMemory(this->uniformBuffers.allocations[i], &this->mappings[i]);
     memcpy(this->mappings[i], &this->ubo, sizeof(MeshUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers[i].getHandle(), 0, sizeof(MeshUniform)};
+        this->uniformBuffers.buffers[i], 0, sizeof(MeshUniform)};
 
     VK_CHECK(vkAllocateDescriptorSets(
         ctx::device, &allocateInfo, &this->descriptorSets[i]));
@@ -146,8 +136,7 @@ GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
         nullptr,                           // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(
-        ctx::device, 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(ctx::device, 1, &descriptorWrite, 0, nullptr);
   }
 }
 
@@ -242,7 +231,8 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   }
 
   for (auto &node : nodes_) {
-    if (node.meshIndex != -1 && meshes_[node.meshIndex].uniformBuffers[0]) {
+    if (node.meshIndex != -1 &&
+        meshes_[node.meshIndex].uniformBuffers.buffers[0]) {
       node.update(*this, window.getCurrentFrameIndex());
     }
   }
@@ -254,29 +244,30 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 
   assert((vertexBufferSize > 0) && (indexBufferSize > 0));
 
-  StagingBuffer stagingBuffer{std::max(vertexBufferSize, indexBufferSize)};
+  VkBuffer stagingBuffer;
+  VmaAllocation stagingAllocation;
+  buffer::makeStagingBuffer(
+      std::max(vertexBufferSize, indexBufferSize),
+      &stagingBuffer,
+      &stagingAllocation);
 
-  this->vertexBuffer_ = Buffer{
-      vertexBufferSize,
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-  };
+  void *stagingMemoryPointer;
+  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
 
-  this->indexBuffer_ = Buffer{
-      indexBufferSize,
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-  };
+  buffer::makeVertexBuffer(
+      vertexBufferSize, &this->vertexBuffer_, &this->vertexAllocation_);
 
-  stagingBuffer.copyMemory(vertices.data(), vertexBufferSize);
-  stagingBuffer.transfer(this->vertexBuffer_, vertexBufferSize);
+  buffer::makeIndexBuffer(
+      indexBufferSize, &this->indexBuffer_, &this->indexAllocation_);
 
-  stagingBuffer.copyMemory(indices.data(), indexBufferSize);
-  stagingBuffer.transfer(this->indexBuffer_, indexBufferSize);
+  memcpy(stagingMemoryPointer, vertices.data(), vertexBufferSize);
+  buffer::bufferTransfer(stagingBuffer, this->vertexBuffer_, vertexBufferSize);
 
-  stagingBuffer.destroy();
+  memcpy(stagingMemoryPointer, indices.data(), indexBufferSize);
+  buffer::bufferTransfer(stagingBuffer, this->indexBuffer_, indexBufferSize);
+
+  buffer::unmapMemory(stagingAllocation);
+  buffer::destroy(stagingBuffer, stagingAllocation);
 }
 
 void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
@@ -285,15 +276,15 @@ void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
 
-  VkBuffer vertexBuffer = vertexBuffer_.getHandle();
   VkDeviceSize offset = 0;
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &this->vertexBuffer_, &offset);
 
   vkCmdBindIndexBuffer(
-      commandBuffer, indexBuffer_.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+      commandBuffer, this->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 
   for (auto &node : nodes_) {
-    if (node.meshIndex != -1 && meshes_[node.meshIndex].uniformBuffers[0]) {
+    if (node.meshIndex != -1 &&
+        meshes_[node.meshIndex].uniformBuffers.buffers[0]) {
       node.update(*this, window.getCurrentFrameIndex());
     }
   }
@@ -316,13 +307,14 @@ void GltfModel::setScale(glm::vec3 scale) { this->scale_ = scale; }
 glm::vec3 GltfModel::getScale() const { return this->scale_; }
 
 void GltfModel::destroy() {
-  vertexBuffer_.destroy();
-  indexBuffer_.destroy();
+  buffer::destroy(this->vertexBuffer_, this->vertexAllocation_);
+  buffer::destroy(this->indexBuffer_, this->indexAllocation_);
 
   for (auto &mesh : meshes_) {
-    for (auto &uniformBuffer : mesh.uniformBuffers) {
-      if (uniformBuffer)
-        uniformBuffer.destroy();
+    for (size_t i = 0; i < ARRAYSIZE(mesh.uniformBuffers.buffers); i++) {
+      buffer::unmapMemory(mesh.uniformBuffers.allocations[i]);
+      buffer::destroy(
+          mesh.uniformBuffers.buffers[i], mesh.uniformBuffers.allocations[i]);
     }
 
     auto descriptorPool = ctx::descriptorManager.getPool(DESC_MESH);
@@ -336,13 +328,14 @@ void GltfModel::destroy() {
   }
 
   for (auto &material : materials_) {
-    for (auto &uniformBuffer : material.uniformBuffers) {
-      if (uniformBuffer)
-        uniformBuffer.destroy();
+    for (size_t i = 0; i < ARRAYSIZE(material.uniformBuffers.buffers); i++) {
+      buffer::unmapMemory(material.uniformBuffers.allocations[i]);
+      buffer::destroy(
+          material.uniformBuffers.buffers[i],
+          material.uniformBuffers.allocations[i]);
     }
 
-    auto descriptorPool =
-        ctx::descriptorManager.getPool(DESC_MATERIAL);
+    auto descriptorPool = ctx::descriptorManager.getPool(DESC_MATERIAL);
 
     assert(descriptorPool != nullptr);
 

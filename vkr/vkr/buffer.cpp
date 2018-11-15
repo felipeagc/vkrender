@@ -6,69 +6,178 @@
 
 using namespace vkr;
 
-// Buffer
-Buffer::Buffer(
-    size_t size,
-    VkBufferUsageFlags bufferUsage,
-    VmaMemoryUsage memoryUsage,
-    VkMemoryPropertyFlags memoryProperty) {
+static VkCommandBuffer beginSingleTimeCommandBuffer() {
+  VkCommandBufferAllocateInfo allocateInfo{
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      nullptr,
+      ctx::transientCommandPool,       // commandPool
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
+      1,                               // commandBufferCount
+  };
+
+  VkCommandBuffer commandBuffer;
+
+  VK_CHECK(
+      vkAllocateCommandBuffers(ctx::device, &allocateInfo, &commandBuffer));
+
+  VkCommandBufferBeginInfo commandBufferBeginInfo{
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      nullptr,
+      VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
+      nullptr,                                     // pInheritanceInfo
+  };
+
+  VK_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+
+  return commandBuffer;
+}
+
+static void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
+  VK_CHECK(vkEndCommandBuffer(commandBuffer));
+
+  VkSubmitInfo submitInfo{
+      VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      nullptr,
+      0,              // waitSemaphoreCount
+      nullptr,        // pWaitSemaphores
+      nullptr,        // pWaitDstStageMask
+      1,              // commandBufferCount
+      &commandBuffer, // pCommandBuffers
+      0,              // signalSemaphoreCount
+      nullptr,        // pSignalSemaphores
+  };
+
+  VK_CHECK(vkQueueSubmit(ctx::transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
+
+  VK_CHECK(vkQueueWaitIdle(ctx::transferQueue));
+
+  vkFreeCommandBuffers(
+      ctx::device, ctx::transientCommandPool, 1, &commandBuffer);
+}
+
+namespace vkr {
+namespace buffer {
+void makeVertexBuffer(
+    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
       nullptr,
-      0,                         // flags
-      size,                      // size
-      bufferUsage,               // usage
-      VK_SHARING_MODE_EXCLUSIVE, // sharingMode
-      0,                         // queueFamilyIndexCount
-      nullptr                    // pQueueFamilyIndices
+      0,    // flags
+      size, // size
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT, // usage
+      VK_SHARING_MODE_EXCLUSIVE,            // sharingMode
+      0,                                    // queueFamilyIndexCount
+      nullptr                               // pQueueFamilyIndices
   };
 
   VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = memoryUsage;
-  allocInfo.requiredFlags = memoryProperty;
+  allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
   VK_CHECK(vmaCreateBuffer(
       ctx::allocator,
       &bufferCreateInfo,
       &allocInfo,
-      &this->buffer_,
-      &this->allocation_,
+      buffer,
+      allocation,
       nullptr));
 }
 
-void Buffer::mapMemory(void **dest) {
-  if (vmaMapMemory(ctx::allocator, this->allocation_, dest) != VK_SUCCESS) {
+void makeIndexBuffer(size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
+  VkBufferCreateInfo bufferCreateInfo = {
+      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      nullptr,
+      0,    // flags
+      size, // size
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT, // usage
+      VK_SHARING_MODE_EXCLUSIVE,            // sharingMode
+      0,                                    // queueFamilyIndexCount
+      nullptr                               // pQueueFamilyIndices
+  };
+
+  VmaAllocationCreateInfo allocInfo = {};
+  allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+  VK_CHECK(vmaCreateBuffer(
+      ctx::allocator,
+      &bufferCreateInfo,
+      &allocInfo,
+      buffer,
+      allocation,
+      nullptr));
+}
+
+void makeUniformBuffer(
+    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
+  VkBufferCreateInfo bufferCreateInfo = {
+      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      nullptr,
+      0,                                  // flags
+      size,                               // size
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, // usage
+      VK_SHARING_MODE_EXCLUSIVE,          // sharingMode
+      0,                                  // queueFamilyIndexCount
+      nullptr                             // pQueueFamilyIndices
+  };
+
+  VmaAllocationCreateInfo allocInfo = {};
+  allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+  VK_CHECK(vmaCreateBuffer(
+      ctx::allocator,
+      &bufferCreateInfo,
+      &allocInfo,
+      buffer,
+      allocation,
+      nullptr));
+}
+
+void makeStagingBuffer(
+    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
+  VkBufferCreateInfo bufferCreateInfo = {
+      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      nullptr,
+      0,                                // flags
+      size,                             // size
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // usage
+      VK_SHARING_MODE_EXCLUSIVE,        // sharingMode
+      0,                                // queueFamilyIndexCount
+      nullptr                           // pQueueFamilyIndices
+  };
+
+  VmaAllocationCreateInfo allocInfo = {};
+  allocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+  VK_CHECK(vmaCreateBuffer(
+      ctx::allocator,
+      &bufferCreateInfo,
+      &allocInfo,
+      buffer,
+      allocation,
+      nullptr));
+}
+
+void mapMemory(VmaAllocation allocation, void **dest) {
+  if (vmaMapMemory(ctx::allocator, allocation, dest) != VK_SUCCESS) {
     throw std::runtime_error("Failed to map image memory");
   }
 }
 
-void Buffer::unmapMemory() {
-  vmaUnmapMemory(ctx::allocator, this->allocation_);
+void unmapMemory(VmaAllocation allocation) {
+  vmaUnmapMemory(ctx::allocator, allocation);
 }
 
-VkBuffer Buffer::getHandle() const { return this->buffer_; }
-
-void Buffer::destroy() {
+void destroy(VkBuffer buffer, VmaAllocation allocation) {
   VK_CHECK(vkDeviceWaitIdle(ctx::device));
-  vmaDestroyBuffer(ctx::allocator, this->buffer_, this->allocation_);
+  vmaDestroyBuffer(ctx::allocator, buffer, allocation);
 }
 
-// StagingBuffer
-StagingBuffer::StagingBuffer(size_t size)
-    : Buffer(
-          size,
-          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-          VMA_MEMORY_USAGE_CPU_ONLY,
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {}
-
-void StagingBuffer::copyMemory(const void *data, size_t size) {
-  void *stagingMemoryPointer;
-  this->mapMemory(&stagingMemoryPointer);
-  memcpy(stagingMemoryPointer, data, size);
-  this->unmapMemory();
-}
-
-void StagingBuffer::transfer(Buffer &buffer, size_t size) {
+void bufferTransfer(VkBuffer from, VkBuffer to, size_t size) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
 
   VkBufferCopy bufferCopyInfo = {
@@ -77,13 +186,13 @@ void StagingBuffer::transfer(Buffer &buffer, size_t size) {
       size, // size
   };
 
-  vkCmdCopyBuffer(
-      commandBuffer, this->buffer_, buffer.getHandle(), 1, &bufferCopyInfo);
+  vkCmdCopyBuffer(commandBuffer, from, to, 1, &bufferCopyInfo);
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
 
-void StagingBuffer::transfer(VkImage &image, uint32_t width, uint32_t height) {
+void imageTransfer(
+    VkBuffer fromBuffer, VkImage toImage, uint32_t width, uint32_t height) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
 
   auto transitionImageLayout = [&](VkImageLayout oldLayout,
@@ -97,7 +206,7 @@ void StagingBuffer::transfer(VkImage &image, uint32_t width, uint32_t height) {
         newLayout,               // newLayout
         VK_QUEUE_FAMILY_IGNORED, // srcQueueFamilyIndex
         VK_QUEUE_FAMILY_IGNORED, // dstQueueFamilyIndex
-        image,                   // image
+        toImage,                 // image
         {
             VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
             0,                         // baseMipLevel
@@ -161,8 +270,8 @@ void StagingBuffer::transfer(VkImage &image, uint32_t width, uint32_t height) {
 
   vkCmdCopyBufferToImage(
       commandBuffer,
-      this->buffer_,
-      image,
+      fromBuffer,
+      toImage,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       1,
       &region);
@@ -173,52 +282,5 @@ void StagingBuffer::transfer(VkImage &image, uint32_t width, uint32_t height) {
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
-
-VkCommandBuffer StagingBuffer::beginSingleTimeCommandBuffer() {
-  VkCommandBufferAllocateInfo allocateInfo{
-      VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      nullptr,
-      ctx::transientCommandPool,       // commandPool
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
-      1,                               // commandBufferCount
-  };
-
-  VkCommandBuffer commandBuffer;
-
-  VK_CHECK(
-      vkAllocateCommandBuffers(ctx::device, &allocateInfo, &commandBuffer));
-
-  VkCommandBufferBeginInfo commandBufferBeginInfo{
-      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-      nullptr,
-      VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-      nullptr,                                     // pInheritanceInfo
-  };
-
-  VK_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
-
-  return commandBuffer;
-}
-
-void StagingBuffer::endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
-  VK_CHECK(vkEndCommandBuffer(commandBuffer));
-
-  VkSubmitInfo submitInfo{
-      VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      nullptr,
-      0,              // waitSemaphoreCount
-      nullptr,        // pWaitSemaphores
-      nullptr,        // pWaitDstStageMask
-      1,              // commandBufferCount
-      &commandBuffer, // pCommandBuffers
-      0,              // signalSemaphoreCount
-      nullptr,        // pSignalSemaphores
-  };
-
-  VK_CHECK(vkQueueSubmit(ctx::transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
-
-  VK_CHECK(vkQueueWaitIdle(ctx::transferQueue));
-
-  vkFreeCommandBuffers(
-      ctx::device, ctx::transientCommandPool, 1, &commandBuffer);
-}
+} // namespace buffer
+} // namespace vkr

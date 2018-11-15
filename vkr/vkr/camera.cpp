@@ -1,6 +1,7 @@
 #include "camera.hpp"
 #include "context.hpp"
 #include "graphics_pipeline.hpp"
+#include "util.hpp"
 
 using namespace vkr;
 
@@ -14,14 +15,13 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    this->uniformBuffers_[i] = Buffer{
+    buffer::makeUniformBuffer(
         sizeof(CameraUniform),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VMA_MEMORY_USAGE_CPU_TO_GPU,
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    };
+        &this->uniformBuffers_.buffers[i],
+        &this->uniformBuffers_.allocations[i]);
 
-    this->uniformBuffers_[i].mapMemory(&this->mappings_[i]);
+    buffer::mapMemory(
+        this->uniformBuffers_.allocations[i], &this->mappings_[i]);
 
     VkDescriptorSetAllocateInfo allocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -35,7 +35,7 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
         ctx::device, &allocateInfo, &this->descriptorSets_[i]);
 
     VkDescriptorBufferInfo bufferInfo{
-        this->uniformBuffers_[i].getHandle(),
+        this->uniformBuffers_.buffers[i],
         0,
         sizeof(CameraUniform),
     };
@@ -58,9 +58,10 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
 }
 
 void Camera::destroy() {
-  for (auto &uniformBuffer : uniformBuffers_) {
-    uniformBuffer.unmapMemory();
-    uniformBuffer.destroy();
+  for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers_.buffers); i++) {
+    buffer::unmapMemory(this->uniformBuffers_.allocations[i]);
+    buffer::destroy(
+        this->uniformBuffers_.buffers[i], this->uniformBuffers_.allocations[i]);
   }
 
   auto descriptorPool = ctx::descriptorManager.getPool(DESC_CAMERA);

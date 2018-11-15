@@ -14,10 +14,18 @@ Texture::Texture(const std::string_view &path) {
 
   this->createImage();
 
-  StagingBuffer stagingBuffer(pixels.size());
-  stagingBuffer.copyMemory(pixels.data(), pixels.size());
-  stagingBuffer.transfer(this->image_, this->width_, this->height_);
-  stagingBuffer.destroy();
+  VkBuffer stagingBuffer;
+  VmaAllocation stagingAllocation;
+  buffer::makeStagingBuffer(pixels.size(), &stagingBuffer, &stagingAllocation);
+
+  void *stagingMemoryPointer;
+  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+  memcpy(stagingMemoryPointer, pixels.data(), pixels.size());
+  buffer::imageTransfer(
+      stagingBuffer, this->image_, this->width_, this->height_);
+  buffer::unmapMemory(stagingAllocation);
+
+  buffer::destroy(stagingBuffer, stagingAllocation);
 }
 
 Texture::Texture(
@@ -29,10 +37,18 @@ Texture::Texture(
 
   this->createImage();
 
-  StagingBuffer stagingBuffer(data.size());
-  stagingBuffer.copyMemory(data.data(), data.size());
-  stagingBuffer.transfer(this->image_, this->width_, this->height_);
-  stagingBuffer.destroy();
+  VkBuffer stagingBuffer;
+  VmaAllocation stagingAllocation;
+  buffer::makeStagingBuffer(data.size(), &stagingBuffer, &stagingAllocation);
+
+  void *stagingMemoryPointer;
+  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+  memcpy(stagingMemoryPointer, data.data(), data.size());
+  buffer::imageTransfer(
+      stagingBuffer, this->image_, this->width_, this->height_);
+  buffer::unmapMemory(stagingAllocation);
+
+  buffer::destroy(stagingBuffer, stagingAllocation);
 }
 
 VkSampler Texture::getSampler() const { return this->sampler_; }
