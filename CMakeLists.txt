@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(vkrender)
 
+# Enable building libraries as DLLs
+set(BUILD_SHARED_LIBS ON)
+
 # Enable -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

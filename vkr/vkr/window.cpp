@@ -2,6 +2,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
+#include <chrono>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
@@ -9,7 +10,11 @@
 
 using namespace vkr;
 
-Window::Window(const char *title, uint32_t width, uint32_t height) {
+Window::Window(
+    const char *title,
+    uint32_t width,
+    uint32_t height,
+    VkSampleCountFlagBits sampleCount) {
   auto subsystems = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER;
   if (subsystems == SDL_WasInit(0)) {
     SDL_Init(subsystems);
@@ -56,6 +61,15 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
   }
 
   this->maxMsaaSamples_ = ctx::getMaxUsableSampleCount();
+
+  if (sampleCount <= this->maxMsaaSamples_) {
+    this->msaaSamples_ = sampleCount;
+  } else {
+    fstl::log::error(
+        "Invalid MSAA sample count: {}, max is {}",
+        (int)sampleCount,
+        (int)this->maxMsaaSamples_);
+  }
 
   this->createSyncObjects();
 
@@ -115,7 +129,7 @@ SDL_Event Window::pollEvent() {
 }
 
 void Window::present(std::function<void()> drawFunction) {
-  this->lastTicks_ = SDL_GetTicks();
+  auto timeBefore = std::chrono::high_resolution_clock::now();
 
   // Begin
   vkWaitForFences(
@@ -359,7 +373,13 @@ void Window::present(std::function<void()> drawFunction) {
 
   this->currentFrame_ = (this->currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
 
-  this->deltaTicks_ = SDL_GetTicks() - this->lastTicks_;
+  auto timeAfter = std::chrono::high_resolution_clock::now();
+
+  auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                         timeAfter - timeBefore)
+                         .count();
+
+  this->deltaTime_ = (double)elapsedTime / 1000000.0f;
 }
 
 void Window::updateSize() {
@@ -416,7 +436,7 @@ int Window::getRelativeMouseY() const {
   return y;
 }
 
-float Window::getDelta() const { return (float)this->deltaTicks_ / 1000.0f; }
+double Window::getDelta() const { return this->deltaTime_; }
 
 bool Window::getShouldClose() const { return this->shouldClose_; }
 
@@ -430,17 +450,6 @@ VkSampleCountFlagBits Window::getMaxMSAASamples() const {
 
 VkSampleCountFlagBits Window::getMSAASamples() const {
   return this->msaaSamples_;
-}
-
-void Window::setMSAASamples(VkSampleCountFlagBits sampleCount) {
-  if (sampleCount <= this->maxMsaaSamples_) {
-    this->msaaSamples_ = sampleCount;
-
-    // Recreate stuff using new sample count
-    this->updateSize();
-  } else {
-    throw std::runtime_error("Invalid MSAA sample count");
-  }
 }
 
 int Window::getCurrentFrameIndex() const { return this->currentFrame_; }

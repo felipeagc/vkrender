@@ -27,6 +27,7 @@
 - [ ] Shader live refresh
 
 ### Camera
+- [ ] Rewrite camera class
 - [x] Camera options
 - [x] Use quaternion for camera
 - [ ] First person camera
@@ -63,6 +64,7 @@
 ### Window
 - [ ] Better event system
 - [ ] Input handling
+- [ ] Get state of a key
 
 ### Libraries
 - [x] Add google test as a git submodule
@@ -74,7 +76,7 @@
 - [ ] Selected object outline
 - [ ] Fullscreen post process shader
 - [ ] Document as much as possible
-- [ ] Imgui
+- [x] Imgui
 - [ ] Imgui shader uniform menu
 
 

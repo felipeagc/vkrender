@@ -15,8 +15,12 @@ class Window {
   friend class GraphicsPipeline;
 
 public:
-  Window(const char *title, uint32_t width = 800, uint32_t height = 600);
-  ~Window() {};
+  Window(
+      const char *title,
+      uint32_t width = 800,
+      uint32_t height = 600,
+      VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
+  ~Window(){};
   Window(const Window &other) = delete;
   Window &operator=(Window other) = delete;
 
@@ -41,14 +45,13 @@ public:
   int getRelativeMouseX() const;
   int getRelativeMouseY() const;
 
-  float getDelta() const;
+  double getDelta() const;
 
   bool getShouldClose() const;
   void setShouldClose(bool shouldClose);
 
   VkSampleCountFlagBits getMaxMSAASamples() const;
   VkSampleCountFlagBits getMSAASamples() const;
-  void setMSAASamples(VkSampleCountFlagBits sampleCount);
 
   int getCurrentFrameIndex() const;
   VkCommandBuffer getCurrentCommandBuffer();
@@ -63,8 +66,7 @@ protected:
 
   SDL_Window *window_{nullptr};
 
-  uint32_t lastTicks_ = 0;
-  uint32_t deltaTicks_ = 0;
+  double deltaTime_ = 0.0f;
 
   VkSurfaceKHR surface_{VK_NULL_HANDLE};
 

@@ -7,6 +7,7 @@
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
 #include <vkr/graphics_pipeline.hpp>
+#include <vkr/imgui_utils.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/texture.hpp>
 #include <vkr/util.hpp>
@@ -42,7 +43,8 @@ public:
       vkAllocateDescriptorSets(
           vkr::ctx::device, &allocateInfo, &this->descriptorSets[i]);
 
-      vkr::buffer::mapMemory(this->uniformBuffers.allocations[i], &this->mappings[i]);
+      vkr::buffer::mapMemory(
+          this->uniformBuffers.allocations[i], &this->mappings[i]);
       memcpy(this->mappings[i], &this->ubo, sizeof(LightingUniform));
 
       VkDescriptorBufferInfo bufferInfo = {
@@ -51,7 +53,7 @@ public:
       VkWriteDescriptorSet descriptorWrite = {
           VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
           nullptr,
-          this->descriptorSets[i],               // dstSet
+          this->descriptorSets[i],           // dstSet
           0,                                 // dstBinding
           0,                                 // dstArrayElement
           1,                                 // descriptorCount
@@ -109,9 +111,7 @@ private:
 };
 
 int main() {
-  vkr::Window window("GLTF models");
-
-  window.setMSAASamples(VK_SAMPLE_COUNT_4_BIT);
+  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};
 
@@ -127,7 +127,7 @@ int main() {
       vkr::ctx::descriptorManager.getDefaultSetLayouts(),
   };
 
-  vkr::Camera camera({0.0, 0.0, 0.0});
+  vkr::Camera camera({3.0, 3.0, 3.0});
 
   Lighting lighting({0.95, 0.80, 0.52}, {3.0, 3.0, 3.0});
 
@@ -161,9 +161,6 @@ int main() {
     // float camX = sin(time) * radius;
     // float camY = cos(time) * radius;
     // camera.setPos(glm::vec3{camX, radius / 1.5, camY});
-    camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
-
-    camera.update(window);
 
     helmet.setRotation({0.0, time * 100.0, 0.0});
     boombox.setRotation({0.0, time * 100.0, 0.0});
@@ -175,15 +172,17 @@ int main() {
 
     ImGui::Begin("Camera");
 
-    static float camPos[3] = {
-        camera.getPos().x,
-        camera.getPos().y,
-        camera.getPos().z,
-    };
+    static float camPos[] = {3.0, 3.0, 3.0};
+
     ImGui::SliderFloat3("Camera position", camPos, -10.0f, 10.0f);
     camera.setPos({camPos[0], camPos[1], camPos[2]});
 
     ImGui::End();
+
+    camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
+    camera.update(window);
+
+    vkr::imgui::statsWindow(window);
   };
 
   while (!window.getShouldClose()) {

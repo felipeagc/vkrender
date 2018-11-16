@@ -15,6 +15,7 @@ set(
   vkr/graphics_pipeline.cpp
   vkr/vertex_format.cpp
   vkr/shader.cpp
+  vkr/imgui_utils.cpp
   )
 
 add_library(

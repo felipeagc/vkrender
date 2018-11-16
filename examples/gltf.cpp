@@ -11,9 +11,7 @@
 #include <vkr/window.hpp>
 
 int main() {
-  vkr::Window window("GLTF models");
-
-  window.setMSAASamples(VK_SAMPLE_COUNT_4_BIT);
+  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
 
   vkr::Shader modelShader{
       "../shaders/model.vert",
