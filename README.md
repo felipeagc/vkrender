@@ -7,21 +7,6 @@
 - No virtual member functions
 
 ## TODO
-### Refactoring
-- [x] Remove unique
-- [x] Remove array_proxy
-- [x] Stop using vulkan.hpp
-- [x] Split pipeline.hpp and pipeline.cpp into multiple files
-- [x] Re-do context
-- [x] Remove Buffer classes and add helper functions for buffer creation
-- [x] Add Buffers class that stores an array of buffers and an array of allocations
-
-### Template library
-- [x] Move it to its own folder and namespace (fstl)
-- [x] fixed_vector (for usage in cases where an allocation would be done each frame)
-- [x] unique (for optional RAII with a destroy() method)
-- [x] array_proxy (for passing parameters that could be converted to an array)
-
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang
 - [ ] Shader live refresh
