@@ -16,6 +16,7 @@ set(
   vkr/vertex_format.cpp
   vkr/shader.cpp
   vkr/imgui_utils.cpp
+  vkr/lighting.cpp
   )
 
 add_library(

@@ -8,107 +8,11 @@
 #include <vkr/gltf_model.hpp>
 #include <vkr/graphics_pipeline.hpp>
 #include <vkr/imgui_utils.hpp>
+#include <vkr/lighting.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/texture.hpp>
 #include <vkr/util.hpp>
 #include <vkr/window.hpp>
-
-class Lighting {
-public:
-  Lighting(glm::vec3 lightColor, glm::vec3 lightPos) {
-    this->ubo.lightColor = glm::vec4(lightColor, 1.0f);
-    this->ubo.lightPos = glm::vec4(lightPos, 1.0f);
-
-    for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers.buffers); i++) {
-      vkr::buffer::makeUniformBuffer(
-          sizeof(LightingUniform),
-          &this->uniformBuffers.buffers[i],
-          &this->uniformBuffers.allocations[i]);
-    }
-
-    auto [descriptorPool, descriptorSetLayout] =
-        vkr::ctx::descriptorManager[vkr::DESC_LIGHTING];
-
-    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-    VkDescriptorSetAllocateInfo allocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *descriptorPool,
-        1,
-        descriptorSetLayout,
-    };
-
-    for (int i = 0; i < vkr::MAX_FRAMES_IN_FLIGHT; i++) {
-      vkAllocateDescriptorSets(
-          vkr::ctx::device, &allocateInfo, &this->descriptorSets[i]);
-
-      vkr::buffer::mapMemory(
-          this->uniformBuffers.allocations[i], &this->mappings[i]);
-      memcpy(this->mappings[i], &this->ubo, sizeof(LightingUniform));
-
-      VkDescriptorBufferInfo bufferInfo = {
-          this->uniformBuffers.buffers[i], 0, sizeof(LightingUniform)};
-
-      VkWriteDescriptorSet descriptorWrite = {
-          VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          nullptr,
-          this->descriptorSets[i],           // dstSet
-          0,                                 // dstBinding
-          0,                                 // dstArrayElement
-          1,                                 // descriptorCount
-          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-          nullptr,                           // pImageInfo
-          &bufferInfo,                       // pBufferInfo
-          nullptr,                           // pTexelBufferView
-      };
-
-      vkUpdateDescriptorSets(vkr::ctx::device, 1, &descriptorWrite, 0, nullptr);
-    }
-  }
-
-  void destroy() {
-    for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers.buffers); i++) {
-      vkr::buffer::unmapMemory(this->uniformBuffers.allocations[i]);
-      vkr::buffer::destroy(
-          this->uniformBuffers.buffers[i], this->uniformBuffers.allocations[i]);
-    }
-
-    auto descriptorPool =
-        vkr::ctx::descriptorManager.getPool(vkr::DESC_LIGHTING);
-
-    assert(descriptorPool != nullptr);
-
-    vkFreeDescriptorSets(
-        vkr::ctx::device,
-        *descriptorPool,
-        ARRAYSIZE(this->descriptorSets),
-        this->descriptorSets);
-  }
-
-  void bind(vkr::Window &window, vkr::GraphicsPipeline &pipeline) {
-    VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
-    vkCmdBindDescriptorSets(
-        commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline.getLayout(),
-        3, // firstSet
-        1,
-        &this->descriptorSets[window.getCurrentFrameIndex()],
-        0,
-        nullptr);
-  }
-
-private:
-  struct LightingUniform {
-    glm::vec4 lightColor;
-    glm::vec4 lightPos;
-  } ubo;
-
-  vkr::buffer::Buffers<vkr::MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-  void *mappings[vkr::MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet descriptorSets[vkr::MAX_FRAMES_IN_FLIGHT];
-};
 
 int main() {
   vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
@@ -129,7 +33,11 @@ int main() {
 
   vkr::Camera camera({3.0, 3.0, 3.0});
 
-  Lighting lighting({0.95, 0.80, 0.52}, {3.0, 3.0, 3.0});
+  vkr::LightManager lightManager({
+      vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
+      vkr::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
+                 glm::vec4(0.0, 1.0, 0.0, 1.0)},
+  });
 
   vkr::GltfModel helmet{window, "../assets/DamagedHelmet.glb", true};
   helmet.setPosition({2.0, 0.0, 0.0});
@@ -157,19 +65,6 @@ int main() {
       break;
     }
 
-    // float radius = 3.5f;
-    // float camX = sin(time) * radius;
-    // float camY = cos(time) * radius;
-    // camera.setPos(glm::vec3{camX, radius / 1.5, camY});
-
-    helmet.setRotation({0.0, time * 100.0, 0.0});
-    boombox.setRotation({0.0, time * 100.0, 0.0});
-    lighting.bind(window, modelPipeline);
-
-    camera.bind(window, modelPipeline);
-    helmet.draw(window, modelPipeline);
-    boombox.draw(window, modelPipeline);
-
     ImGui::Begin("Camera");
 
     static float camPos[] = {3.0, 3.0, 3.0};
@@ -182,14 +77,56 @@ int main() {
     camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
     camera.update(window);
 
+    ImGui::Begin("Lights");
+
+    for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
+      ImGui::PushID(i);
+      ImGui::Text("Light %d", i);
+
+      vkr::Light *light = &lightManager.getLights()[i];
+
+      float pos[3] = {
+          light->pos.x,
+          light->pos.y,
+          light->pos.z,
+      };
+      ImGui::DragFloat3("Position", pos, 1.0f, -10.0f, 10.0f);
+      light->pos = {pos[0], pos[1], pos[2], 1.0f};
+
+      float color[4] = {
+          light->color.x,
+          light->color.y,
+          light->color.z,
+          light->color.w,
+      };
+      ImGui::ColorEdit4("Color", color);
+      light->color = {color[0], color[1], color[2], color[3]};
+
+      ImGui::Separator();
+      ImGui::PopID();
+    }
+
+    ImGui::End();
+
     vkr::imgui::statsWindow(window);
+
+    // Draw stuff
+
+    helmet.setRotation({0.0, time * 100.0, 0.0});
+    boombox.setRotation({0.0, time * 100.0, 0.0});
+    lightManager.bind(window, modelPipeline);
+
+    camera.bind(window, modelPipeline);
+    helmet.draw(window, modelPipeline);
+    boombox.draw(window, modelPipeline);
   };
 
   while (!window.getShouldClose()) {
     window.present(draw);
+    lightManager.update();
   }
 
-  lighting.destroy();
+  lightManager.destroy();
   camera.destroy();
   helmet.destroy();
   boombox.destroy();
