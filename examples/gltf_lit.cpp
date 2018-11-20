@@ -138,8 +138,8 @@ int main() {
     camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
     camera.update(window);
 
-    helmet.setRotation({0.0, time * 100.0, 0.0});
-    boombox.setRotation({0.0, time * 100.0, 0.0});
+    // helmet.setRotation({0.0, time * 100.0, 0.0});
+    // boombox.setRotation({0.0, time * 100.0, 0.0});
     lightManager.bind(window, modelPipeline);
 
     camera.bind(window, modelPipeline);

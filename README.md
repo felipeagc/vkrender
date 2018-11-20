@@ -43,8 +43,8 @@
 - [ ] Noise
 
 ### Lighting
-- [ ] Figure out phong lighting
-- [ ] Multiple lights
+- [ ] Figure out blinn-phong lighting
+- [x] Multiple lights
 
 ### Window
 - [ ] Better event system
