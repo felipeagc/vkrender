@@ -70,10 +70,11 @@ int main() {
             !ImGui::IsAnyItemActive()) {
           cameraAngle += (float)event.motion.xrel / 100.0f;
           cameraHeightMultiplier += (float)event.motion.yrel / 100.0f;
-          if (cameraHeightMultiplier > 1.0f) {
-            cameraHeightMultiplier = 1.0f;
-          } else if (cameraHeightMultiplier < -1.0f) {
-            cameraHeightMultiplier = -1.0f;
+          float threshold = M_PI / 2.0f - 0.001f;
+          if (cameraHeightMultiplier >= threshold) {
+            cameraHeightMultiplier = threshold;
+          } else if (cameraHeightMultiplier <= -threshold) {
+            cameraHeightMultiplier = -threshold;
           }
         }
         break;
@@ -125,11 +126,9 @@ int main() {
 
     // Draw stuff
 
-    float camX = sin(cameraAngle) * cameraRadius *
-                 std::max(1.0f - abs(cameraHeightMultiplier), 0.01f);
-    float camZ = cos(cameraAngle) * cameraRadius *
-                 std::max(1.0f - abs(cameraHeightMultiplier), 0.01f);
-    camera.setPos({camX, cameraRadius * cameraHeightMultiplier, camZ});
+    float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
+    float camZ = cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
+    camera.setPos({camX, cameraRadius * sin(cameraHeightMultiplier), camZ});
 
     ImGui::Begin("Camera");
     float camPos[] = {camera.getPos().x, camera.getPos().y, camera.getPos().z};
