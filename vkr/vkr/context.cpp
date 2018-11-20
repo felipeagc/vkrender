@@ -153,6 +153,16 @@ static bool checkPhysicalDeviceProperties(
     return false;
   }
 
+  // Check for required device features
+  VkPhysicalDeviceFeatures features = {};
+  vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+  if (!features.wideLines) {
+    fstl::log::warn(
+        "Physical device {} doesn't support required features!",
+        deviceProperties.deviceName);
+    return false;
+  }
+
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
   fstl::fixed_vector<VkQueueFamilyProperties> queueFamilyProperties(count);
   vkGetPhysicalDeviceQueueFamilyProperties(
@@ -204,10 +214,6 @@ static bool checkPhysicalDeviceProperties(
       break;
     }
   }
-
-  fstl::log::info("Graphics: {}", graphicsQueueFamilyIndex);
-  fstl::log::info("Present: {}", presentQueueFamilyIndex);
-  fstl::log::info("Transfer: {}", transferQueueFamilyIndex);
 
   if (graphicsQueueFamilyIndex == UINT32_MAX ||
       presentQueueFamilyIndex == UINT32_MAX ||

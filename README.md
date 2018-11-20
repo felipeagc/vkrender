@@ -58,7 +58,7 @@
 
 ### Misc
 - [ ] Object picking
-- [ ] Selected object outline
+- [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [ ] Fullscreen post process shader
 - [ ] Document as much as possible
 - [x] Imgui
