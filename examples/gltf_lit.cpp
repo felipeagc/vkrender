@@ -31,8 +31,6 @@ int main() {
       vkr::ctx::descriptorManager.getDefaultSetLayouts(),
   };
 
-  vkr::Camera camera({3.0, 3.0, 3.0});
-
   vkr::LightManager lightManager({
       vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
       vkr::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
@@ -45,37 +43,52 @@ int main() {
   boombox.setPosition({-2.0, 0.0, 0.0});
   boombox.setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 
+  vkr::Camera camera({3.0, 3.0, 3.0});
+  camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
+  camera.update(window);
+
   float time = 0.0;
+  float cameraAngle = 0;
+  float cameraHeightMultiplier = 0;
+  float cameraRadius = 6.0f;
 
   auto draw = [&]() {
     time += window.getDelta();
 
-    SDL_Event event = window.pollEvent();
-    switch (event.type) {
-    case SDL_WINDOWEVENT:
-      switch (event.window.type) {
-      case SDL_WINDOWEVENT_RESIZED:
-        window.updateSize();
+    SDL_Event event;
+    while (window.pollEvent(&event)) {
+      switch (event.type) {
+      case SDL_WINDOWEVENT:
+        switch (event.window.type) {
+        case SDL_WINDOWEVENT_RESIZED:
+          window.updateSize();
+          break;
+        }
+        break;
+      case SDL_MOUSEMOTION:
+        if (event.motion.state & SDL_BUTTON_LMASK &&
+            !ImGui::IsAnyItemActive()) {
+          cameraAngle += (float)event.motion.xrel / 100.0f;
+          cameraHeightMultiplier += (float)event.motion.yrel / 100.0f;
+          if (cameraHeightMultiplier > 1.0f) {
+            cameraHeightMultiplier = 1.0f;
+          } else if (cameraHeightMultiplier < -1.0f) {
+            cameraHeightMultiplier = -1.0f;
+          }
+        }
+        break;
+      case SDL_MOUSEWHEEL:
+        cameraRadius -= event.wheel.y;
+        if (cameraRadius < 0.0f) {
+          cameraRadius = 0.0f;
+        }
+        break;
+      case SDL_QUIT:
+        fstl::log::info("Goodbye");
+        window.setShouldClose(true);
         break;
       }
-      break;
-    case SDL_QUIT:
-      fstl::log::info("Goodbye");
-      window.setShouldClose(true);
-      break;
     }
-
-    ImGui::Begin("Camera");
-
-    static float camPos[] = {3.0, 3.0, 3.0};
-
-    ImGui::SliderFloat3("Camera position", camPos, -10.0f, 10.0f);
-    camera.setPos({camPos[0], camPos[1], camPos[2]});
-
-    ImGui::End();
-
-    camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
-    camera.update(window);
 
     ImGui::Begin("Lights");
 
@@ -111,6 +124,20 @@ int main() {
     vkr::imgui::statsWindow(window);
 
     // Draw stuff
+
+    float camX = sin(cameraAngle) * cameraRadius *
+                 std::max(1.0f - abs(cameraHeightMultiplier), 0.01f);
+    float camZ = cos(cameraAngle) * cameraRadius *
+                 std::max(1.0f - abs(cameraHeightMultiplier), 0.01f);
+    camera.setPos({camX, cameraRadius * cameraHeightMultiplier, camZ});
+
+    ImGui::Begin("Camera");
+    float camPos[] = {camera.getPos().x, camera.getPos().y, camera.getPos().z};
+    ImGui::DragFloat3("Camera position", camPos, -10.0f, 10.0f);
+    ImGui::End();
+
+    camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
+    camera.update(window);
 
     helmet.setRotation({0.0, time * 100.0, 0.0});
     boombox.setRotation({0.0, time * 100.0, 0.0});

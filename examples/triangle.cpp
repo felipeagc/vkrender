@@ -68,12 +68,13 @@ int main() {
   }
 
   auto draw = [&]() {
-    SDL_Event event = window.pollEvent();
-
-    switch (event.type) {
-    case SDL_QUIT:
-      window.setShouldClose(true);
-      break;
+    SDL_Event event;
+    while (window.pollEvent(&event)) {
+      switch (event.type) {
+      case SDL_QUIT:
+        window.setShouldClose(true);
+        break;
+      }
     }
 
     VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();

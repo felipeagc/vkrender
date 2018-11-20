@@ -38,19 +38,21 @@ int main() {
   auto draw = [&]() {
     time += window.getDelta();
 
-    SDL_Event event = window.pollEvent();
-    switch (event.type) {
-    case SDL_WINDOWEVENT:
-      switch (event.window.type) {
-      case SDL_WINDOWEVENT_RESIZED:
-        window.updateSize();
+    SDL_Event event;
+    while (window.pollEvent(&event)) {
+      switch (event.type) {
+      case SDL_WINDOWEVENT:
+        switch (event.window.type) {
+        case SDL_WINDOWEVENT_RESIZED:
+          window.updateSize();
+          break;
+        }
+        break;
+      case SDL_QUIT:
+        fstl::log::info("Goodbye");
+        window.setShouldClose(true);
         break;
       }
-      break;
-    case SDL_QUIT:
-      fstl::log::info("Goodbye");
-      window.setShouldClose(true);
-      break;
     }
 
     float radius = 3.0f;

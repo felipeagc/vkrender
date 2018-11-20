@@ -26,7 +26,7 @@ public:
 
   void destroy();
 
-  SDL_Event pollEvent();
+  bool pollEvent(SDL_Event *event);
 
   void present(std::function<void()> drawFunction);
 
@@ -44,6 +44,9 @@ public:
 
   int getRelativeMouseX() const;
   int getRelativeMouseY() const;
+
+  bool isMouseLeftPressed() const;
+  bool isMouseRightPressed() const;
 
   double getDelta() const;
 

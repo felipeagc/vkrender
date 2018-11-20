@@ -119,13 +119,12 @@ void Window::destroy() {
   SDL_DestroyWindow(this->window_);
 }
 
-SDL_Event Window::pollEvent() {
-  SDL_Event event;
-  SDL_PollEvent(&event);
+bool Window::pollEvent(SDL_Event *event) {
+  bool result = SDL_PollEvent(event);
 
-  ImGui_ImplSDL2_ProcessEvent(&event);
+  ImGui_ImplSDL2_ProcessEvent(event);
 
-  return event;
+  return result;
 }
 
 void Window::present(std::function<void()> drawFunction) {
@@ -434,6 +433,16 @@ int Window::getRelativeMouseY() const {
   int y;
   SDL_GetRelativeMouseState(nullptr, &y);
   return y;
+}
+
+bool Window::isMouseLeftPressed() const {
+  auto state = SDL_GetMouseState(nullptr, nullptr);
+  return (state & SDL_BUTTON(SDL_BUTTON_LEFT));
+}
+
+bool Window::isMouseRightPressed() const {
+  auto state = SDL_GetMouseState(nullptr, nullptr);
+  return (state & SDL_BUTTON(SDL_BUTTON_RIGHT));
 }
 
 double Window::getDelta() const { return this->deltaTime_; }
