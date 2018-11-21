@@ -10,7 +10,7 @@
 #include <vkr/window.hpp>
 
 int main() {
-  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
+  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   vkr::Shader modelShader{
       "../shaders/model.vert",
@@ -33,6 +33,20 @@ int main() {
   float time = 0.0;
 
   auto draw = [&]() {
+    float radius = 3.0f;
+    float camX = sin(time) * radius;
+    float camY = cos(time) * radius;
+    camera.setPos({camX, radius, camY});
+    camera.lookAt((helmet.getPosition() + duck.getPosition()) / 2.0f);
+
+    camera.update(window);
+
+    camera.bind(window, modelPipeline);
+    helmet.draw(window, modelPipeline);
+    duck.draw(window, modelPipeline);
+  };
+
+  while (!window.getShouldClose()) {
     time += window.getDelta();
 
     SDL_Event event;
@@ -52,20 +66,6 @@ int main() {
       }
     }
 
-    float radius = 3.0f;
-    float camX = sin(time) * radius;
-    float camY = cos(time) * radius;
-    camera.setPos({camX, radius, camY});
-    camera.lookAt((helmet.getPosition() + duck.getPosition()) / 2.0f);
-
-    camera.update(window);
-
-    camera.bind(window, modelPipeline);
-    helmet.draw(window, modelPipeline);
-    duck.draw(window, modelPipeline);
-  };
-
-  while (!window.getShouldClose()) {
     window.present(draw);
   }
 

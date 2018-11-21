@@ -41,8 +41,8 @@ public:
   void bind(Window &window, GraphicsPipeline &pipeline);
 
 protected:
-  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
   buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers_;
+  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
   std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
 
   CameraUniform cameraUniform_;

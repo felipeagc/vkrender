@@ -17,6 +17,7 @@ set(
   vkr/imgui_utils.cpp
   vkr/lighting.cpp
   vkr/pipeline.cpp
+  vkr/billboard.cpp
   )
 
 add_library(

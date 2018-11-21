@@ -2,6 +2,7 @@
 #include <fstl/logging.hpp>
 #include <glm/glm.hpp>
 #include <imgui/imgui.h>
+#include <vkr/billboard.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
 #include <vkr/context.hpp>
@@ -15,9 +16,20 @@
 #include <vkr/window.hpp>
 
 int main() {
-  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
+  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};
+
+  // Create shaders & pipelines
+  vkr::Shader billboardShader{
+      "../shaders/billboard.vert",
+      "../shaders/billboard.frag",
+  };
+
+  vkr::GraphicsPipeline billboardPipeline =
+      vkr::createBillboardPipeline(window, billboardShader);
+
+  billboardShader.destroy();
 
   vkr::Shader modelShader{
       "../shaders/model_lit.vert",
@@ -29,18 +41,33 @@ int main() {
 
   modelShader.destroy();
 
+  // Create billboard
+  fstl::fixed_vector<vkr::Billboard> lightBillboards;
+
+  // Create light manager
   vkr::LightManager lightManager({
       vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
       vkr::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
                  glm::vec4(0.0, 1.0, 0.0, 1.0)},
   });
 
+  for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
+    lightBillboards.push_back(vkr::Billboard{
+        {"../assets/light.png"}, // texture
+        {3.0f, 3.0f, 3.0f},      // position
+        {1.0f, 1.0f, 1.0f},      // scale
+        {1.0, 0.0, 0.0, 1.0}     // color
+    });
+  }
+
+  // Create models
   vkr::GltfModel helmet{window, "../assets/DamagedHelmet.glb", true};
   helmet.setPosition({2.0, 0.0, 0.0});
   vkr::GltfModel boombox{window, "../assets/BoomBox.glb"};
   boombox.setPosition({-2.0, 0.0, 0.0});
   boombox.setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 
+  // Create camera
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
   camera.update(window);
@@ -143,6 +170,15 @@ int main() {
     camera.bind(window, modelPipeline);
     helmet.draw(window, modelPipeline);
     boombox.draw(window, modelPipeline);
+
+    camera.bind(window, billboardPipeline);
+
+    for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
+      vkr::Light *light = &lightManager.getLights()[i];
+      lightBillboards[i].setPos(light->pos);
+      lightBillboards[i].setColor(light->color);
+      lightBillboards[i].draw(window, billboardPipeline);
+    }
   };
 
   while (!window.getShouldClose()) {
@@ -150,11 +186,16 @@ int main() {
     lightManager.update();
   }
 
+  for (auto &lightBillboard : lightBillboards) {
+    lightBillboard.destroy();
+  }
+
   lightManager.destroy();
   camera.destroy();
   helmet.destroy();
   boombox.destroy();
   modelPipeline.destroy();
+  billboardPipeline.destroy();
   window.destroy();
   vkr::ctx::destroy();
 

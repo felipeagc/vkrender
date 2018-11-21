@@ -113,15 +113,6 @@ int main() {
   }
 
   auto draw = [&]() {
-    SDL_Event event;
-    while (window.pollEvent(&event)) {
-      switch (event.type) {
-      case SDL_QUIT:
-        window.setShouldClose(true);
-        break;
-      }
-    }
-
     VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
     vkCmdBindPipeline(
@@ -134,6 +125,15 @@ int main() {
   };
 
   while (!window.getShouldClose()) {
+    SDL_Event event;
+    while (window.pollEvent(&event)) {
+      switch (event.type) {
+      case SDL_QUIT:
+        window.setShouldClose(true);
+        break;
+      }
+    }
+
     window.present(draw);
   }
 

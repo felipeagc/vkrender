@@ -20,6 +20,8 @@ struct GraphicsPipeline {
 };
 
 GraphicsPipeline createStandardPipeline(Window &window, Shader &shader);
+
+GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader);
 } // namespace vkr
 
 namespace vkr::pipeline {

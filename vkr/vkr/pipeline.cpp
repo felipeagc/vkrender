@@ -63,6 +63,67 @@ GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
 
   return GraphicsPipeline{pipeline, pipelineLayout};
 }
+
+GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
+  VkDescriptorSetLayout descriptorSetLayouts[] = {
+      *ctx::descriptorManager.getSetLayout(vkr::DESC_CAMERA),
+      *ctx::descriptorManager.getSetLayout(vkr::DESC_MATERIAL),
+      *ctx::descriptorManager.getSetLayout(vkr::DESC_MESH),
+  };
+
+  auto pipelineLayout = pipeline::createPipelineLayout(
+      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
+
+  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
+
+  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
+      nullptr,                                                   // pNext
+      0,                                                         // flags
+      0,       // vertexBindingDescriptionCount
+      nullptr, // pVertexBindingDescriptions
+      0,       // vertexAttributeDescriptionCount
+      nullptr, // pVertexAttributeDescriptions
+  };
+
+  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
+  auto viewportStateCreateInfo = pipeline::defaultViewportState();
+  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
+  auto multisampleStateCreateInfo =
+      pipeline::defaultMultisampleState(window.getMSAASamples());
+  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
+  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
+  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
+      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      nullptr,
+      0,                                                    // flags
+      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
+      shaderStageCreateInfos.data(),                        // pStages
+      &vertexInputStateCreateInfo,                          // pVertexInputState
+      &inputAssemblyStateCreateInfo, // pInputAssemblyState
+      nullptr,                       // pTesselationState
+      &viewportStateCreateInfo,      // pViewportState
+      &rasterizationStateCreateInfo, // pRasterizationState
+      &multisampleStateCreateInfo,   // multisampleState
+      &depthStencilStateCreateInfo,  // pDepthStencilState
+      &colorBlendStateCreateInfo,    // pColorBlendState
+      &dynamicStateCreateInfo,       // pDynamicState
+      pipelineLayout,                // pipelineLayout
+      window.getRenderPass(),        // renderPass
+      0,                             // subpass
+      {},                            // basePipelineHandle
+      -1                             // basePipelineIndex
+  };
+
+  VkPipeline pipeline;
+
+  VK_CHECK(vkCreateGraphicsPipelines(
+      ctx::device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
+
+  return GraphicsPipeline{pipeline, pipelineLayout};
+}
 } // namespace vkr
 
 namespace vkr::pipeline {
@@ -146,17 +207,17 @@ VkPipelineRasterizationStateCreateInfo defaultRasterizationState() {
   VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
       nullptr,
-      0,                               // flags
-      VK_FALSE,                        // depthClampEnable
-      VK_FALSE,                        // rasterizerDiscardEnable
-      VK_POLYGON_MODE_FILL,            // polygonMode
-      VK_CULL_MODE_FRONT_BIT,          // cullMode
-      VK_FRONT_FACE_COUNTER_CLOCKWISE, // frontFace
-      VK_FALSE,                        // depthBiasEnable
-      0.0f,                            // depthBiasConstantFactor,
-      0.0f,                            // depthBiasClamp
-      0.0f,                            // depthBiasSlopeFactor
-      1.0f,                            // lineWidth
+      0,                       // flags
+      VK_FALSE,                // depthClampEnable
+      VK_FALSE,                // rasterizerDiscardEnable
+      VK_POLYGON_MODE_FILL,    // polygonMode
+      VK_CULL_MODE_BACK_BIT,   // cullMode
+      VK_FRONT_FACE_CLOCKWISE, // frontFace
+      VK_FALSE,                // depthBiasEnable
+      0.0f,                    // depthBiasConstantFactor,
+      0.0f,                    // depthBiasClamp
+      0.0f,                    // depthBiasSlopeFactor
+      1.0f,                    // lineWidth
   };
 
   return rasterizationStateCreateInfo;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -13,8 +14,10 @@ public:
       const uint32_t width,
       const uint32_t height);
   ~Texture(){};
-  Texture(const Texture &other) = default;
-  Texture &operator=(const Texture &other) = default;
+  Texture(const Texture &) = default;
+  Texture &operator=(const Texture &) = default;
+  Texture(Texture &&) = default;
+  Texture &operator=(Texture &&) = default;
 
   operator bool() { return this->image_; }
 

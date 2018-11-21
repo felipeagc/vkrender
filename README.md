@@ -56,7 +56,12 @@
 - [x] Add glm as a git submodule
 - [ ] Figure out how to add vulkan SDK as a submodule
 
+### Assets
+- [ ] Asset management system
+- [ ] Separate GltfModel into GltfModel and GltfModelInstance
+
 ### Misc
+- [x] Billboards
 - [ ] Object picking
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [ ] Fullscreen post process shader
