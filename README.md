@@ -18,7 +18,7 @@
 - [ ] First person camera
 
 ### Pipeline
-- [ ] Figure out a way to pass more parameters to the pipeline on creation
+- [x] Figure out a way to pass more parameters to the pipeline on creation
 - [x] Multisampling
 - [x] Make multisampling configurable
 

@@ -7,7 +7,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 namespace vkr {
-class GraphicsPipeline;
+struct GraphicsPipeline;
 
 class Camera {
 public:

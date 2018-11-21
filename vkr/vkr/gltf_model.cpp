@@ -1,6 +1,6 @@
 #include "gltf_model.hpp"
 #include "context.hpp"
-#include "graphics_pipeline.hpp"
+#include "pipeline.hpp"
 #include "util.hpp"
 #include <algorithm>
 #include <fstl/logging.hpp>
@@ -219,7 +219,7 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   loadMaterials(model);
 
   std::vector<uint32_t> indices;
-  std::vector<Vertex> vertices;
+  std::vector<StandardVertex> vertices;
 
   tinygltf::Scene &scene = model.scenes[model.defaultScene];
 
@@ -237,7 +237,7 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
     }
   }
 
-  size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
+  size_t vertexBufferSize = vertices.size() * sizeof(StandardVertex);
   // TODO: index buffer size could be larger than it needs to be
   // due to other index types
   size_t indexBufferSize = indices.size() * sizeof(uint32_t);
@@ -274,7 +274,7 @@ void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, &this->vertexBuffer_, &offset);
@@ -393,7 +393,7 @@ void GltfModel::loadNode(
     int nodeIndex,
     const tinygltf::Model &model,
     std::vector<uint32_t> &indices,
-    std::vector<Vertex> &vertices,
+    std::vector<StandardVertex> &vertices,
     bool flipUVs) {
   const tinygltf::Node &node = model.nodes[nodeIndex];
   Node newNode;
@@ -493,7 +493,7 @@ void GltfModel::loadNode(
         }
 
         for (size_t v = 0; v < posAccessor.count; v++) {
-          Vertex vert{};
+          StandardVertex vert{};
           // TODO: fix rendundancies and see if it works?
           vert.pos = glm::make_vec3(&bufferPos[v * 3]);
           vert.normal = glm::normalize(
@@ -631,7 +631,7 @@ void GltfModel::drawNode(
     vkCmdBindDescriptorSets(
         commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline.getLayout(),
+        pipeline.pipelineLayout,
         2, // firstSet
         1,
         &this->meshes_[node.meshIndex].descriptorSets[i],
@@ -642,7 +642,7 @@ void GltfModel::drawNode(
         vkCmdBindDescriptorSets(
             commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline.getLayout(),
+            pipeline.pipelineLayout,
             1, // firstSet
             1,
             &this->materials_[primitive.materialIndex].descriptorSets[i],

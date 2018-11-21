@@ -475,6 +475,8 @@ void Window::imguiBeginFrame() {
 
 void Window::imguiEndFrame() { ImGui::Render(); }
 
+VkRenderPass Window::getRenderPass() { return this->renderPass_; }
+
 void Window::createVulkanSurface() {
   if (!SDL_Vulkan_CreateSurface(
           this->window_, ctx::instance, &this->surface_)) {

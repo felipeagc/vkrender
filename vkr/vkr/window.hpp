@@ -12,8 +12,6 @@ namespace vkr {
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Window {
-  friend class GraphicsPipeline;
-
 public:
   Window(
       const char *title,
@@ -61,6 +59,8 @@ public:
 
   void imguiBeginFrame();
   void imguiEndFrame();
+
+  VkRenderPass getRenderPass();
 
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
 

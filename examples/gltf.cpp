@@ -5,7 +5,6 @@
 #include <vkr/camera.hpp>
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
-#include <vkr/graphics_pipeline.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/texture.hpp>
 #include <vkr/window.hpp>
@@ -18,12 +17,10 @@ int main() {
       "../shaders/model.frag",
   };
 
-  vkr::GraphicsPipeline modelPipeline{
-      window,
-      modelShader,
-      vkr::GltfModel::getVertexFormat(),
-      vkr::ctx::descriptorManager.getDefaultSetLayouts(),
-  };
+  vkr::GraphicsPipeline modelPipeline =
+      vkr::createStandardPipeline(window, modelShader);
+
+  modelShader.destroy();
 
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
@@ -76,7 +73,6 @@ int main() {
   helmet.destroy();
   duck.destroy();
   modelPipeline.destroy();
-  modelShader.destroy();
   window.destroy();
   vkr::ctx::destroy();
 

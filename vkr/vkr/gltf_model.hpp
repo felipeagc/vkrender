@@ -1,8 +1,8 @@
 #pragma once
 
 #include "buffer.hpp"
+#include "pipeline.hpp"
 #include "texture.hpp"
-#include "vertex_format.hpp"
 #include "window.hpp"
 #include <string>
 #include <vector>
@@ -19,16 +19,10 @@ class Model;
 }
 
 namespace vkr {
-class GraphicsPipeline;
+struct GraphicsPipeline;
 
 class GltfModel {
 public:
-  struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 normal;
-    glm::vec2 uv;
-  };
-
   struct Material {
     int albedoTextureIndex = -1;
 
@@ -108,21 +102,6 @@ public:
     float radius;
   } dimensions;
 
-  static VertexFormat getVertexFormat() {
-    return VertexFormatBuilder()
-        .addBinding(0, sizeof(GltfModel::Vertex), VK_VERTEX_INPUT_RATE_VERTEX)
-        .addAttribute(
-            0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GltfModel::Vertex, pos))
-        .addAttribute(
-            1,
-            0,
-            VK_FORMAT_R32G32B32_SFLOAT,
-            offsetof(GltfModel::Vertex, normal))
-        .addAttribute(
-            2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GltfModel::Vertex, uv))
-        .build();
-  }
-
   GltfModel(Window &window, const std::string &path, bool flipUVs = false);
   ~GltfModel(){};
   GltfModel(const GltfModel &other) = default;
@@ -165,7 +144,7 @@ private:
       int nodeIndex,
       const tinygltf::Model &model,
       std::vector<uint32_t> &indices,
-      std::vector<Vertex> &vertices,
+      std::vector<StandardVertex> &vertices,
       bool flipUVs);
 
   void getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max);

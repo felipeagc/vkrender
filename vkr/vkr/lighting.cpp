@@ -1,6 +1,6 @@
 #include "lighting.hpp"
 #include "context.hpp"
-#include "graphics_pipeline.hpp"
+#include "pipeline.hpp"
 #include "util.hpp"
 
 using namespace vkr;
@@ -71,7 +71,7 @@ void LightManager::bind(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.getLayout(),
+      pipeline.pipelineLayout,
       3, // firstSet
       1,
       &this->descriptorSets[window.getCurrentFrameIndex()],

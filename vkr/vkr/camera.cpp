@@ -1,6 +1,6 @@
 #include "camera.hpp"
 #include "context.hpp"
-#include "graphics_pipeline.hpp"
+#include "pipeline.hpp"
 #include "util.hpp"
 
 using namespace vkr;
@@ -136,7 +136,7 @@ void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.getLayout(),
+      pipeline.pipelineLayout,
       0,
       1,
       &this->descriptorSets_[i],

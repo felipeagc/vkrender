@@ -4,7 +4,7 @@
 #include "window.hpp"
 
 namespace vkr {
-class GraphicsPipeline;
+struct GraphicsPipeline;
 
 const uint32_t MAX_LIGHTS = 20;
 

@@ -12,11 +12,11 @@ set(
   vkr/gltf_model.cpp
   vkr/camera.cpp
   vkr/descriptor_manager.cpp
-  vkr/graphics_pipeline.cpp
   vkr/vertex_format.cpp
   vkr/shader.cpp
   vkr/imgui_utils.cpp
   vkr/lighting.cpp
+  vkr/pipeline.cpp
   )
 
 add_library(

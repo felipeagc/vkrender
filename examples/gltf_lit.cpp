@@ -6,9 +6,9 @@
 #include <vkr/camera.hpp>
 #include <vkr/context.hpp>
 #include <vkr/gltf_model.hpp>
-#include <vkr/graphics_pipeline.hpp>
 #include <vkr/imgui_utils.hpp>
 #include <vkr/lighting.hpp>
+#include <vkr/pipeline.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/texture.hpp>
 #include <vkr/util.hpp>
@@ -24,12 +24,10 @@ int main() {
       "../shaders/model_lit.frag",
   };
 
-  vkr::GraphicsPipeline modelPipeline{
-      window,
-      modelShader,
-      vkr::GltfModel::getVertexFormat(),
-      vkr::ctx::descriptorManager.getDefaultSetLayouts(),
-  };
+  vkr::GraphicsPipeline modelPipeline =
+      vkr::createStandardPipeline(window, modelShader);
+
+  modelShader.destroy();
 
   vkr::LightManager lightManager({
       vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
@@ -157,7 +155,6 @@ int main() {
   helmet.destroy();
   boombox.destroy();
   modelPipeline.destroy();
-  modelShader.destroy();
   window.destroy();
   vkr::ctx::destroy();
 

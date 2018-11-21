@@ -5,7 +5,6 @@
 
 namespace vkr {
 class VertexFormat {
-  friend class GraphicsPipeline;
   friend class Shader;
 
 public:
@@ -18,12 +17,12 @@ public:
   VertexFormat(const VertexFormat &other) = default;
   VertexFormat &operator=(VertexFormat &other) = default;
 
+  VkPipelineVertexInputStateCreateInfo
+  getPipelineVertexInputStateCreateInfo() const;
+
 protected:
   fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions_;
   fstl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions_;
-
-  VkPipelineVertexInputStateCreateInfo
-  getPipelineVertexInputStateCreateInfo() const;
 };
 
 class VertexFormatBuilder {
