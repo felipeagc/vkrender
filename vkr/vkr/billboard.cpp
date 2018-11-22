@@ -6,7 +6,7 @@
 using namespace vkr;
 
 Billboard::Billboard(
-    const Texture &&texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color)
+    Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color)
     : texture_(texture) {
 
   // Initialize mesh UBO struct
@@ -225,6 +225,4 @@ void Billboard::destroy() {
         this->materialUniformBuffers_.buffers[i],
         this->materialUniformBuffers_.allocations[i]);
   }
-
-  this->texture_.destroy();
 }

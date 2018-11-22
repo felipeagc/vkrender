@@ -2,6 +2,7 @@
 #include <fstl/logging.hpp>
 #include <glm/glm.hpp>
 #include <imgui/imgui.h>
+#include <vkr/assets.hpp>
 #include <vkr/billboard.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
@@ -19,6 +20,8 @@ int main() {
   vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};
+
+  vkr::AssetManager assetManager;
 
   // Create shaders & pipelines
   vkr::Shader billboardShader{
@@ -53,10 +56,10 @@ int main() {
 
   for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
     lightBillboards.push_back(vkr::Billboard{
-        {"../assets/light.png"}, // texture
-        {3.0f, 3.0f, 3.0f},      // position
-        {1.0f, 1.0f, 1.0f},      // scale
-        {1.0, 0.0, 0.0, 1.0}     // color
+        assetManager.getAsset<vkr::Texture>("../assets/light.png"), // texture
+        {3.0f, 3.0f, 3.0f},                                         // position
+        {1.0f, 1.0f, 1.0f},                                         // scale
+        {1.0, 0.0, 0.0, 1.0}                                        // color
     });
   }
 
@@ -116,38 +119,9 @@ int main() {
       }
     }
 
-    ImGui::Begin("Lights");
-
-    for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-      ImGui::PushID(i);
-      ImGui::Text("Light %d", i);
-
-      vkr::Light *light = &lightManager.getLights()[i];
-
-      float pos[3] = {
-          light->pos.x,
-          light->pos.y,
-          light->pos.z,
-      };
-      ImGui::DragFloat3("Position", pos, 1.0f, -10.0f, 10.0f);
-      light->pos = {pos[0], pos[1], pos[2], 1.0f};
-
-      float color[4] = {
-          light->color.x,
-          light->color.y,
-          light->color.z,
-          light->color.w,
-      };
-      ImGui::ColorEdit4("Color", color);
-      light->color = {color[0], color[1], color[2], color[3]};
-
-      ImGui::Separator();
-      ImGui::PopID();
-    }
-
-    ImGui::End();
-
     vkr::imgui::statsWindow(window);
+    vkr::imgui::assetsWindow(assetManager);
+    vkr::imgui::lightsWindow(lightManager);
 
     // Draw stuff
 
@@ -155,10 +129,7 @@ int main() {
     float camZ = cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
     camera.setPos({camX, cameraRadius * sin(cameraHeightMultiplier), camZ});
 
-    ImGui::Begin("Camera");
-    float camPos[] = {camera.getPos().x, camera.getPos().y, camera.getPos().z};
-    ImGui::DragFloat3("Camera position", camPos, -10.0f, 10.0f);
-    ImGui::End();
+    vkr::imgui::cameraWindow(camera);
 
     camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
     camera.update(window);
@@ -196,6 +167,7 @@ int main() {
   boombox.destroy();
   modelPipeline.destroy();
   billboardPipeline.destroy();
+  assetManager.destroy();
   window.destroy();
   vkr::ctx::destroy();
 

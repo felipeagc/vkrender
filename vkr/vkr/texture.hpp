@@ -19,7 +19,7 @@ public:
   Texture(Texture &&) = default;
   Texture &operator=(Texture &&) = default;
 
-  operator bool() { return this->image_; }
+  operator bool() { return this->image_ != VK_NULL_HANDLE; }
 
   VkSampler getSampler() const;
   VkImageView getImageView() const;
@@ -29,10 +29,10 @@ public:
   void destroy();
 
 protected:
-  VkImage image_;
-  VmaAllocation allocation_;
-  VkImageView imageView_;
-  VkSampler sampler_;
+  VkImage image_{VK_NULL_HANDLE};
+  VmaAllocation allocation_{VK_NULL_HANDLE};
+  VkImageView imageView_{VK_NULL_HANDLE};
+  VkSampler sampler_{VK_NULL_HANDLE};
 
   uint32_t width_;
   uint32_t height_;

@@ -56,9 +56,11 @@ VkSampler Texture::getSampler() const { return this->sampler_; }
 VkImageView Texture::getImageView() const { return this->imageView_; }
 
 VkDescriptorImageInfo Texture::getDescriptorInfo() const {
-  return {this->sampler_,
-          this->imageView_,
-          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+  return {
+      this->sampler_,
+      this->imageView_,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+  };
 }
 
 void Texture::destroy() {
@@ -66,6 +68,11 @@ void Texture::destroy() {
   vkDestroyImageView(ctx::device, this->imageView_, nullptr);
   vkDestroySampler(ctx::device, this->sampler_, nullptr);
   vmaDestroyImage(ctx::allocator, this->image_, this->allocation_);
+
+  this->image_ = VK_NULL_HANDLE;
+  this->allocation_ = VK_NULL_HANDLE;
+  this->imageView_ = VK_NULL_HANDLE;
+  this->sampler_ = VK_NULL_HANDLE;
 }
 
 void Texture::createImage() {
