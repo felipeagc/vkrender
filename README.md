@@ -55,12 +55,18 @@
 - [x] Add google test as a git submodule
 - [x] Add glm as a git submodule
 - [ ] Figure out how to add vulkan SDK as a submodule
+- [ ] Add rapidjson
 
 ### Assets
 - [ ] Asset management system
 - [ ] Separate GltfModel into GltfModel and GltfModelInstance
+- [ ] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
+- [ ] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
+      Maybe handle this in the asset constructor itself.
 
 ### Misc
+- [ ] Specify which types can be copied (maybe with a Handle suffix)
+      Also applies to asset types?
 - [x] Billboards
 - [ ] Object picking
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
