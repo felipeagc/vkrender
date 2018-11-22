@@ -2,7 +2,6 @@
 
 ## Code style
 - Avoid using templates when unnecessary
-- Use _ suffix for class member variables
 - No inheritance
 - No virtual member functions
 
@@ -74,6 +73,11 @@
 - [ ] Document as much as possible
 - [x] Imgui
 - [ ] Imgui shader uniform menu
+
+## Assets
+Async loading:
+- diskLoad();
+- gpuLoad();
 
 
 ## Shaders

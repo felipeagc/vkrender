@@ -1,9 +1,9 @@
-#include "assets.hpp"
+#include "asset_manager.hpp"
 
 using namespace vkr;
 
 template <>
-Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
+const Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
   if (assetTable.find(identifier) != assetTable.end()) {
     auto &asset = this->assetTable.at(identifier);
 
@@ -14,9 +14,11 @@ Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
     }
   }
 
-  fstl::log::debug("Loading texture: " + identifier);
+  fstl::log::debug("Loading texture asset: {}", identifier);
 
-  Texture texture(identifier);
+  Texture texture;
+  texture.loadFromPath(identifier);
+
   // Allocate Texture
   size_t textureIndex = textures.size();
 
@@ -30,9 +32,9 @@ Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
   }
 
   if (textureIndex == textures.size()) {
-    this->textures.push_back(texture);
+    this->textures.push_back(std::move(texture));
   } else {
-    this->textures[textureIndex] = texture;
+    this->textures[textureIndex] = std::move(texture);
   }
 
   this->loadedTextureCount++;
@@ -43,7 +45,7 @@ Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
 }
 
 template <>
-void AssetManager::destroyAsset<Texture>(const std::string &identifier) {
+void AssetManager::unloadAsset<Texture>(const std::string &identifier) {
   if (assetTable.find(identifier) == assetTable.end()) {
     return;
   }
@@ -64,6 +66,5 @@ void AssetManager::destroy() {
       texture.destroy();
     }
   }
-
   assetTable.clear();
 }

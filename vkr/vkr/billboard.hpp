@@ -9,7 +9,7 @@ struct GraphicsPipeline;
 class Billboard {
 public:
   Billboard(){};
-  Billboard(Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color);
+  Billboard(const Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color);
 
   void draw(Window &window, GraphicsPipeline &pipeline);
 

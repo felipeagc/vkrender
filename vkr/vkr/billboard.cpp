@@ -6,7 +6,7 @@
 using namespace vkr;
 
 Billboard::Billboard(
-    Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color)
+    const Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color)
     : texture_(texture) {
 
   // Initialize mesh UBO struct

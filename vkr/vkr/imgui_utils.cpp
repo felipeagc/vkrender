@@ -1,5 +1,5 @@
 #include "imgui_utils.hpp"
-#include "assets.hpp"
+#include "asset_manager.hpp"
 #include "camera.hpp"
 #include "context.hpp"
 #include "lighting.hpp"

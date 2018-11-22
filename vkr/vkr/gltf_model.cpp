@@ -382,9 +382,10 @@ void GltfModel::loadTextures(tinygltf::Model &model) {
       throw std::runtime_error("Only 4-component images are supported.");
     }
 
-    this->textures_[i] = {model.images[i].image,
-                          static_cast<uint32_t>(model.images[i].width),
-                          static_cast<uint32_t>(model.images[i].height)};
+    this->textures_[i].loadFromBinary(
+        model.images[i].image,
+        static_cast<uint32_t>(model.images[i].width),
+        static_cast<uint32_t>(model.images[i].height));
   }
 }
 

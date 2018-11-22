@@ -2,7 +2,7 @@
 #include <fstl/logging.hpp>
 #include <glm/glm.hpp>
 #include <imgui/imgui.h>
-#include <vkr/assets.hpp>
+#include <vkr/asset_manager.hpp>
 #include <vkr/billboard.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
@@ -124,7 +124,6 @@ int main() {
     vkr::imgui::lightsWindow(lightManager);
 
     // Draw stuff
-
     float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
     float camZ = cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
     camera.setPos({camX, cameraRadius * sin(cameraHeightMultiplier), camZ});

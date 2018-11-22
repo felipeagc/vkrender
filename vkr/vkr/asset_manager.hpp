@@ -20,11 +20,13 @@ struct AssetManager {
 
   std::unordered_map<std::string, Asset> assetTable;
 
-  template <typename A> A &getAsset(const std::string &);
-  template <> Texture &getAsset<Texture>(const std::string &identifier);
+  template <typename H> const H &getAsset(const std::string &);
+  template <>
+  const Texture &
+  getAsset<Texture>(const std::string &identifier);
 
-  template <typename A> void destroyAsset(const std::string &);
-  template <> void destroyAsset<Texture>(const std::string &identifier);
+  template <typename A> void unloadAsset(const std::string &);
+  template <> void unloadAsset<Texture>(const std::string &identifier);
 
   void destroy();
 };

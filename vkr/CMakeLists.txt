@@ -18,7 +18,7 @@ set(
   vkr/lighting.cpp
   vkr/pipeline.cpp
   vkr/billboard.cpp
-  vkr/assets.cpp
+  vkr/asset_manager.cpp
   )
 
 add_library(

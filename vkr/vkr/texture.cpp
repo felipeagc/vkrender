@@ -7,75 +7,7 @@
 
 using namespace vkr;
 
-Texture::Texture(const std::string_view &path) {
-  fstl::log::debug("Loading texture: {}", path);
-
-  auto pixels = this->loadImage(path);
-
-  this->createImage();
-
-  VkBuffer stagingBuffer;
-  VmaAllocation stagingAllocation;
-  buffer::makeStagingBuffer(pixels.size(), &stagingBuffer, &stagingAllocation);
-
-  void *stagingMemoryPointer;
-  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
-  memcpy(stagingMemoryPointer, pixels.data(), pixels.size());
-  buffer::imageTransfer(
-      stagingBuffer, this->image_, this->width_, this->height_);
-  buffer::unmapMemory(stagingAllocation);
-
-  buffer::destroy(stagingBuffer, stagingAllocation);
-}
-
-Texture::Texture(
-    const std::vector<unsigned char> &data,
-    const uint32_t width,
-    const uint32_t height)
-    : width_(width), height_(height) {
-  fstl::log::debug("Loading texture from binary data");
-
-  this->createImage();
-
-  VkBuffer stagingBuffer;
-  VmaAllocation stagingAllocation;
-  buffer::makeStagingBuffer(data.size(), &stagingBuffer, &stagingAllocation);
-
-  void *stagingMemoryPointer;
-  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
-  memcpy(stagingMemoryPointer, data.data(), data.size());
-  buffer::imageTransfer(
-      stagingBuffer, this->image_, this->width_, this->height_);
-  buffer::unmapMemory(stagingAllocation);
-
-  buffer::destroy(stagingBuffer, stagingAllocation);
-}
-
-VkSampler Texture::getSampler() const { return this->sampler_; }
-
-VkImageView Texture::getImageView() const { return this->imageView_; }
-
-VkDescriptorImageInfo Texture::getDescriptorInfo() const {
-  return {
-      this->sampler_,
-      this->imageView_,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-  };
-}
-
-void Texture::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(ctx::device));
-  vkDestroyImageView(ctx::device, this->imageView_, nullptr);
-  vkDestroySampler(ctx::device, this->sampler_, nullptr);
-  vmaDestroyImage(ctx::allocator, this->image_, this->allocation_);
-
-  this->image_ = VK_NULL_HANDLE;
-  this->allocation_ = VK_NULL_HANDLE;
-  this->imageView_ = VK_NULL_HANDLE;
-  this->sampler_ = VK_NULL_HANDLE;
-}
-
-void Texture::createImage() {
+static void createImage(Texture *handle) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       nullptr,
@@ -83,8 +15,8 @@ void Texture::createImage() {
       VK_IMAGE_TYPE_2D,         // imageType
       VK_FORMAT_R8G8B8A8_UNORM, // format
       {
-          this->width_,        // width
-          this->height_,       // height
+          handle->width,       // width
+          handle->height,      // height
           1,                   // depth
       },                       // extent
       1,                       // mipLevels
@@ -105,15 +37,15 @@ void Texture::createImage() {
       ctx::allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
-      &this->image_,
-      &this->allocation_,
+      &handle->image,
+      &handle->allocation,
       nullptr));
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
       nullptr,
       0,                        // flags
-      this->image_,             // image
+      handle->image,            // image
       VK_IMAGE_VIEW_TYPE_2D,    // viewType
       VK_FORMAT_R8G8B8A8_UNORM, // format
       {
@@ -132,7 +64,7 @@ void Texture::createImage() {
   };
 
   VK_CHECK(vkCreateImageView(
-      ctx::device, &imageViewCreateInfo, nullptr, &this->imageView_));
+      ctx::device, &imageViewCreateInfo, nullptr, &handle->imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -156,18 +88,19 @@ void Texture::createImage() {
   };
 
   VK_CHECK(vkCreateSampler(
-      ctx::device, &samplerCreateInfo, nullptr, &this->sampler_));
+      ctx::device, &samplerCreateInfo, nullptr, &handle->sampler));
 }
 
-std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {
-  int width, height, channels;
+static std::vector<unsigned char>
+loadImage(const std::string_view &path, uint32_t *width, uint32_t *height) {
+  int iwidth, iheight, channels;
   stbi_uc *pixels =
-      stbi_load(path.data(), &width, &height, &channels, STBI_rgb_alpha);
+      stbi_load(path.data(), &iwidth, &iheight, &channels, STBI_rgb_alpha);
 
-  VkDeviceSize imageSize = width * height * 4;
+  size_t imageSize = static_cast<size_t>(iwidth * iheight * 4);
 
-  this->width_ = static_cast<uint32_t>(width);
-  this->height_ = static_cast<uint32_t>(height);
+  *width = static_cast<uint32_t>(iwidth);
+  *height = static_cast<uint32_t>(iheight);
 
   if (!pixels) {
     throw std::runtime_error("Failed to load image from disk");
@@ -178,4 +111,55 @@ std::vector<unsigned char> Texture::loadImage(const std::string_view &path) {
   stbi_image_free(pixels);
 
   return result;
+}
+
+void Texture::loadFromPath(const std::string_view &path) {
+  uint32_t width, height;
+  auto pixels = loadImage(path, &width, &height);
+
+  this->loadFromBinary(pixels, width, height);
+}
+
+void Texture::loadFromBinary(
+    const std::vector<unsigned char> &data,
+    const uint32_t width,
+    const uint32_t height) {
+  this->width = width;
+  this->height = height;
+
+  createImage(this);
+
+  VkBuffer stagingBuffer;
+  VmaAllocation stagingAllocation;
+  buffer::makeStagingBuffer(data.size(), &stagingBuffer, &stagingAllocation);
+
+  void *stagingMemoryPointer;
+  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+  memcpy(stagingMemoryPointer, data.data(), data.size());
+  buffer::imageTransfer(stagingBuffer, this->image, this->width, this->height);
+  buffer::unmapMemory(stagingAllocation);
+
+  buffer::destroy(stagingBuffer, stagingAllocation);
+}
+
+Texture::operator bool() const { return this->image != VK_NULL_HANDLE; }
+
+VkDescriptorImageInfo Texture::getDescriptorInfo() const {
+  return {
+      this->sampler,
+      this->imageView,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+  };
+}
+
+void Texture::destroy() {
+  VK_CHECK(vkDeviceWaitIdle(ctx::device));
+  vkDestroyImageView(ctx::device, this->imageView, nullptr);
+  vkDestroySampler(ctx::device, this->sampler, nullptr);
+  vmaDestroyImage(ctx::allocator, this->image, this->allocation);
+
+  this->image = VK_NULL_HANDLE;
+  this->allocation = VK_NULL_HANDLE;
+  this->imageView = VK_NULL_HANDLE;
+  this->sampler = VK_NULL_HANDLE;
 }
