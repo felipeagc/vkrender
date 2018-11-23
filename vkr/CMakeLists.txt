@@ -56,6 +56,7 @@ target_link_libraries(
   glslang-default-resource-limits
   SPIRV
   tinygltf
+  rapidjson
   )
 
 cotire(vkrender)
