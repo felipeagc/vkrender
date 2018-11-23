@@ -29,7 +29,7 @@ int main() {
   camera.lookAt({0.0, 0.0, 0.0});
 
   vkr::GltfModelInstance helmet{
-      assetManager.getAsset<vkr::GltfModel>("../assets/DamagedHelmet.glb")};
+      assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
   helmet.pos = {0.0, 0.0, 1.0};
   vkr::GltfModelInstance duck{
       assetManager.getAsset<vkr::GltfModel>("../assets/Duck.glb")};

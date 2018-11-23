@@ -65,7 +65,7 @@ int main() {
 
   // Create models
   vkr::GltfModelInstance helmet{
-      assetManager.getAsset<vkr::GltfModel>("../assets/DamagedHelmet.glb")};
+      assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
   helmet.pos = {2.0, 0.0, 0.0};
   vkr::GltfModelInstance boombox{
       assetManager.getAsset<vkr::GltfModel>("../assets/BoomBox.glb")};

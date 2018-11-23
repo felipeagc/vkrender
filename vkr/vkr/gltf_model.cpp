@@ -4,6 +4,8 @@
 #include "util.hpp"
 #include <algorithm>
 #include <fstl/logging.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/istreamwrapper.h>
 #include <tiny_gltf.h>
 
 using namespace vkr;
@@ -112,19 +114,53 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   return m;
 }
 
-void GltfModel::loadFromPath(const std::string &path, bool flipUVs) {
+void GltfModel::loadFromPath(const std::string &path) {
+  bool flipUVs = false;
+
+  std::string ext = path.substr(path.find_last_of('.'), path.size());
+
+  std::string dir = path.substr(0, path.find_last_of('/') + 1);
+
+  // Load json asset descriptor
+  std::string gltfPath;
+  if (std::strncmp(ext.c_str(), ".json", ext.length()) == 0) {
+    std::ifstream file(path);
+    if (file.fail()) {
+      throw std::runtime_error("Failed to load asset json file");
+    }
+
+    rapidjson::IStreamWrapper isw(file);
+
+    rapidjson::Document doc;
+    doc.ParseStream(isw);
+
+    assert(doc["path"].IsString());
+
+    gltfPath = dir + doc["path"].GetString();
+
+    if (doc.HasMember("parameters") && doc["parameters"].HasMember("flipUVs") &&
+        doc["parameters"]["flipUVs"].IsBool()) {
+      flipUVs = doc["parameters"]["flipUVs"].GetBool();
+    }
+
+    file.close();
+  } else {
+    gltfPath = path;
+  }
+
   tinygltf::TinyGLTF loader;
   tinygltf::Model model;
 
   std::string err, warn;
 
   // TODO: check file extension and load accordingly
-  std::string ext = path.substr(path.find_last_of('.'), path.size());
+  std::string gltfExt =
+      gltfPath.substr(gltfPath.find_last_of('.'), path.size());
   bool ret;
-  if (std::strncmp(ext.c_str(), ".glb", ext.length()) == 0) {
-    ret = loader.LoadBinaryFromFile(&model, &err, &warn, path);
+  if (std::strncmp(gltfExt.c_str(), ".glb", gltfExt.length()) == 0) {
+    ret = loader.LoadBinaryFromFile(&model, &err, &warn, gltfPath);
   } else {
-    ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
+    ret = loader.LoadASCIIFromFile(&model, &err, &warn, gltfPath);
   }
 
   if (!warn.empty()) {
@@ -503,4 +539,3 @@ void GltfModel::getSceneDimensions() {
   dimensions.center = (dimensions.min + dimensions.max) / 2.0f;
   dimensions.radius = glm::distance(dimensions.min, dimensions.max) / 2.0f;
 }
-

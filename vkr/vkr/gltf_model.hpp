@@ -92,7 +92,7 @@ public:
 
   GltfModel(){};
 
-  void loadFromPath(const std::string &path, bool flipUVs = false);
+  void loadFromPath(const std::string &path);
 
   operator bool() const;
 
