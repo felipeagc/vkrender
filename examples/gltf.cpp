@@ -25,9 +25,9 @@ int main() {
   vkr::Camera camera({3.0, 3.0, 3.0});
   camera.lookAt({0.0, 0.0, 0.0});
 
-  vkr::GltfModel helmet{window, "../assets/DamagedHelmet.glb", true};
+  vkr::GltfModel helmet{"../assets/DamagedHelmet.glb", true};
   helmet.setPosition({0.0, 0.0, 1.0});
-  vkr::GltfModel duck{window, "../assets/Duck.glb"};
+  vkr::GltfModel duck{"../assets/Duck.glb"};
   duck.setPosition({0.0, 0.0, -1.0});
 
   float time = 0.0;

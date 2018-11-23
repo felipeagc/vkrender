@@ -92,57 +92,11 @@ GltfModel::Primitive::Primitive(
       indexCount(indexCount),
       materialIndex(materialIndex) {}
 
-GltfModel::Mesh::Mesh(const glm::mat4 &matrix) {
-  this->ubo.model = matrix;
+GltfModel::Mesh::Mesh(const glm::mat4 &matrix) { this->transform = matrix; }
 
-  auto [descriptorPool, descriptorSetLayout] =
-      ctx::descriptorManager[DESC_MESH];
-
-  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-  VkDescriptorSetAllocateInfo allocateInfo = {
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      nullptr,
-      *descriptorPool,
-      1,
-      descriptorSetLayout,
-  };
-
-  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    buffer::makeUniformBuffer(
-        sizeof(MeshUniform),
-        &this->uniformBuffers.buffers[i],
-        &this->uniformBuffers.allocations[i]);
-
-    buffer::mapMemory(this->uniformBuffers.allocations[i], &this->mappings[i]);
-    memcpy(this->mappings[i], &this->ubo, sizeof(MeshUniform));
-
-    VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers.buffers[i], 0, sizeof(MeshUniform)};
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        ctx::device, &allocateInfo, &this->descriptorSets[i]));
-
-    VkWriteDescriptorSet descriptorWrite = {
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        nullptr,
-        this->descriptorSets[i],           // dstSet
-        0,                                 // dstBinding
-        0,                                 // dstArrayElement
-        1,                                 // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        nullptr,                           // pImageInfo
-        &bufferInfo,                       // pBufferInfo
-        nullptr,                           // pTexelBufferView
-    };
-
-    vkUpdateDescriptorSets(ctx::device, 1, &descriptorWrite, 0, nullptr);
-  }
-}
-
-void GltfModel::Mesh::updateUniform(int frameIndex) {
-  memcpy(this->mappings[frameIndex], &this->ubo, sizeof(MeshUniform));
-}
+// void GltfModel::Mesh::updateUniform(int frameIndex) {
+//   memcpy(this->mappings[frameIndex], &this->ubo, sizeof(MeshUniform));
+// }
 
 glm::mat4 GltfModel::Node::localMatrix() {
   return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) *
@@ -157,36 +111,20 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
     p = model.nodes_[this->parentIndex].parentIndex;
   }
 
-  auto translation = glm::translate(glm::mat4(1.0f), model.pos_);
-  auto rotation = glm::rotate(
-      glm::mat4(1.0f), glm::radians(model.rotation_.x), {1.0, 0.0, 0.0});
-  rotation =
-      glm::rotate(rotation, glm::radians(model.rotation_.y), {0.0, 1.0, 0.0});
-  rotation =
-      glm::rotate(rotation, glm::radians(model.rotation_.z), {0.0, 0.0, 1.0});
-  auto scaling = glm::scale(glm::mat4(1.0f), model.scale_);
-
-  auto modelMatrix = translation * rotation * scaling;
-
-  m = modelMatrix * m;
-
   return m;
 }
 
-void GltfModel::Node::update(GltfModel &model, int frameIndex) {
+void GltfModel::Node::update(GltfModel &model) {
   if (this->meshIndex != -1) {
-    glm::mat4 m = this->getMatrix(model);
-    auto &mesh = model.meshes_[meshIndex];
-    mesh.ubo.model = m;
-    mesh.updateUniform(frameIndex);
+    model.meshes_[meshIndex].transform = this->getMatrix(model);
   }
 
   for (auto &childIndex : childrenIndices) {
-    model.nodes_[childIndex].update(model, frameIndex);
+    model.nodes_[childIndex].update(model);
   }
 }
 
-GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
+GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   fstl::log::debug("Loading glTF model: {}", path);
 
   tinygltf::TinyGLTF loader;
@@ -215,6 +153,54 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
     throw std::runtime_error("Failed to parse GLTF model");
   }
 
+  {
+    auto [descriptorPool, descriptorSetLayout] =
+        ctx::descriptorManager[DESC_MESH];
+
+    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
+
+    VkDescriptorSetAllocateInfo allocateInfo = {
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        nullptr,
+        *descriptorPool,
+        1,
+        descriptorSetLayout,
+    };
+
+    // Create uniform buffers and descriptors
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+      buffer::makeUniformBuffer(
+          sizeof(ModelUniform),
+          &this->uniformBuffers_.buffers[i],
+          &this->uniformBuffers_.allocations[i]);
+
+      buffer::mapMemory(
+          this->uniformBuffers_.allocations[i], &this->mappings_[i]);
+      memcpy(this->mappings_[i], &this->ubo, sizeof(ModelUniform));
+
+      VkDescriptorBufferInfo bufferInfo = {
+          this->uniformBuffers_.buffers[i], 0, sizeof(ModelUniform)};
+
+      VK_CHECK(vkAllocateDescriptorSets(
+          ctx::device, &allocateInfo, &this->descriptorSets_[i]));
+
+      VkWriteDescriptorSet descriptorWrite = {
+          VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          nullptr,
+          this->descriptorSets_[i],          // dstSet
+          0,                                 // dstBinding
+          0,                                 // dstArrayElement
+          1,                                 // descriptorCount
+          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+          nullptr,                           // pImageInfo
+          &bufferInfo,                       // pBufferInfo
+          nullptr,                           // pTexelBufferView
+      };
+
+      vkUpdateDescriptorSets(ctx::device, 1, &descriptorWrite, 0, nullptr);
+    }
+  }
+
   loadTextures(model);
   loadMaterials(model);
 
@@ -231,9 +217,8 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
   }
 
   for (auto &node : nodes_) {
-    if (node.meshIndex != -1 &&
-        meshes_[node.meshIndex].uniformBuffers.buffers[0]) {
-      node.update(*this, window.getCurrentFrameIndex());
+    if (node.meshIndex != -1) {
+      node.update(*this);
     }
   }
 
@@ -273,6 +258,8 @@ GltfModel::GltfModel(Window &window, const std::string &path, bool flipUVs) {
 void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
+  this->updateUniforms(window.getCurrentFrameIndex());
+
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
@@ -282,12 +269,11 @@ void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindIndexBuffer(
       commandBuffer, this->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 
-  for (auto &node : nodes_) {
-    if (node.meshIndex != -1 &&
-        meshes_[node.meshIndex].uniformBuffers.buffers[0]) {
-      node.update(*this, window.getCurrentFrameIndex());
-    }
-  }
+  // for (auto &node : nodes_) {
+  //   if (node.meshIndex != -1) {
+  //     node.update(*this);
+  //   }
+  // }
 
   for (auto &node : nodes_) {
     drawNode(node, window, pipeline);
@@ -306,26 +292,36 @@ void GltfModel::setScale(glm::vec3 scale) { this->scale_ = scale; }
 
 glm::vec3 GltfModel::getScale() const { return this->scale_; }
 
+void GltfModel::updateUniforms(int frameIndex) {
+  auto translation = glm::translate(glm::mat4(1.0f), pos_);
+  auto rotation =
+      glm::rotate(glm::mat4(1.0f), glm::radians(rotation_.x), {1.0, 0.0, 0.0});
+  rotation = glm::rotate(rotation, glm::radians(rotation_.y), {0.0, 1.0, 0.0});
+  rotation = glm::rotate(rotation, glm::radians(rotation_.z), {0.0, 0.0, 1.0});
+  auto scaling = glm::scale(glm::mat4(1.0f), scale_);
+
+  this->ubo.model = translation * rotation * scaling;
+
+  memcpy(this->mappings_[frameIndex], &this->ubo, sizeof(ModelUniform));
+}
+
 void GltfModel::destroy() {
   buffer::destroy(this->vertexBuffer_, this->vertexAllocation_);
   buffer::destroy(this->indexBuffer_, this->indexAllocation_);
 
-  for (auto &mesh : meshes_) {
-    for (size_t i = 0; i < ARRAYSIZE(mesh.uniformBuffers.buffers); i++) {
-      buffer::unmapMemory(mesh.uniformBuffers.allocations[i]);
-      buffer::destroy(
-          mesh.uniformBuffers.buffers[i], mesh.uniformBuffers.allocations[i]);
-    }
-
-    auto descriptorPool = ctx::descriptorManager.getPool(DESC_MESH);
-    assert(descriptorPool != nullptr);
-
-    vkFreeDescriptorSets(
-        ctx::device,
-        *descriptorPool,
-        mesh.descriptorSets.size(),
-        mesh.descriptorSets.data());
+  for (size_t i = 0; i < ARRAYSIZE(uniformBuffers_.buffers); i++) {
+    buffer::unmapMemory(uniformBuffers_.allocations[i]);
+    buffer::destroy(uniformBuffers_.buffers[i], uniformBuffers_.allocations[i]);
   }
+
+  auto descriptorPool = ctx::descriptorManager.getPool(DESC_MESH);
+  assert(descriptorPool != nullptr);
+
+  vkFreeDescriptorSets(
+      ctx::device,
+      *descriptorPool,
+      descriptorSets_.size(),
+      descriptorSets_.data());
 
   for (auto &material : materials_) {
     for (size_t i = 0; i < ARRAYSIZE(material.uniformBuffers.buffers); i++) {
@@ -397,7 +393,8 @@ void GltfModel::loadNode(
     std::vector<StandardVertex> &vertices,
     bool flipUVs) {
   const tinygltf::Node &node = model.nodes[nodeIndex];
-  Node newNode;
+
+  Node &newNode = nodes_[nodeIndex];
   newNode.index = nodeIndex;
   newNode.parentIndex = parentIndex;
   newNode.name = node.name;
@@ -427,7 +424,7 @@ void GltfModel::loadNode(
 
   if (node.mesh > -1) {
     const tinygltf::Mesh mesh = model.meshes[node.mesh];
-    Mesh newMesh(newNode.matrix);
+    Mesh &newMesh = this->meshes_[node.mesh];
 
     for (size_t j = 0; j < mesh.primitives.size(); j++) {
       const tinygltf::Primitive &primitive = mesh.primitives[j];
@@ -495,10 +492,15 @@ void GltfModel::loadNode(
 
         for (size_t v = 0; v < posAccessor.count; v++) {
           StandardVertex vert{};
+
           // TODO: fix rendundancies and see if it works?
-          vert.pos = glm::make_vec3(&bufferPos[v * 3]);
+          vert.pos = glm::vec3(
+              newNode.getMatrix(*this) *
+              glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0));
           vert.normal = glm::normalize(
-              bufferNormals ? glm::make_vec3(&bufferNormals[v * 3])
+              bufferNormals ? glm::mat3(glm::transpose(
+                                  glm::inverse(newNode.getMatrix(*this)))) *
+                                  glm::make_vec3(&bufferNormals[v * 3])
                             : glm::vec3(0.0f));
           vert.uv = bufferTexCoords ? glm::make_vec2(&bufferTexCoords[v * 2])
                                     : glm::vec2(0.0f);
@@ -567,8 +569,6 @@ void GltfModel::loadNode(
       newMesh.primitives.push_back(newPrimitive);
     }
 
-    this->meshes_[node.mesh] = newMesh;
-
     newNode.meshIndex = node.mesh;
   }
 
@@ -576,7 +576,9 @@ void GltfModel::loadNode(
     nodes_[parentIndex].childrenIndices.push_back(nodeIndex);
   }
 
-  nodes_[nodeIndex] = newNode;
+  if (newNode.meshIndex != -1) {
+    newNode.update(*this);
+  }
 }
 
 void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
@@ -635,7 +637,7 @@ void GltfModel::drawNode(
         pipeline.pipelineLayout,
         2, // firstSet
         1,
-        &this->meshes_[node.meshIndex].descriptorSets[i],
+        &this->descriptorSets_[i],
         0,
         nullptr);
     for (Primitive &primitive : this->meshes_[node.meshIndex].primitives) {

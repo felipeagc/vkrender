@@ -64,9 +64,9 @@ int main() {
   }
 
   // Create models
-  vkr::GltfModel helmet{window, "../assets/DamagedHelmet.glb", true};
+  vkr::GltfModel helmet{"../assets/DamagedHelmet.glb", true};
   helmet.setPosition({2.0, 0.0, 0.0});
-  vkr::GltfModel boombox{window, "../assets/BoomBox.glb"};
+  vkr::GltfModel boombox{"../assets/BoomBox.glb"};
   boombox.setPosition({-2.0, 0.0, 0.0});
   boombox.setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 

@@ -22,6 +22,8 @@ namespace vkr {
 struct GraphicsPipeline;
 
 class GltfModel {
+  friend struct GltfModelInstance;
+
 public:
   struct Material {
     int albedoTextureIndex = -1;
@@ -31,7 +33,6 @@ public:
     } ubo;
 
     buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-    // std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
     std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
@@ -62,16 +63,10 @@ public:
 
   struct Mesh {
     std::vector<Primitive> primitives;
-    buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-    // std::array<Buffer, MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-    std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings;
-    std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
-    struct MeshUniform {
-      glm::mat4 model;
-    } ubo;
+    glm::mat4 transform{1.0f};
 
-    void updateUniform(int frameIndex);
+    // void updateUniform(int frameIndex);
 
     Mesh() {}
     Mesh(const glm::mat4 &matrix);
@@ -81,7 +76,7 @@ public:
     int parentIndex = -1;
     int index = -1;
     std::vector<int> childrenIndices;
-    glm::mat4 matrix;
+    glm::mat4 matrix{1.0f};
     std::string name;
     int meshIndex = -1;
     glm::vec3 translation{};
@@ -91,7 +86,7 @@ public:
     glm::mat4 localMatrix();
     glm::mat4 getMatrix(GltfModel &model);
 
-    void update(GltfModel &model, int frameIndex);
+    void update(GltfModel &model);
   };
 
   struct Dimensions {
@@ -102,7 +97,7 @@ public:
     float radius;
   } dimensions;
 
-  GltfModel(Window &window, const std::string &path, bool flipUVs = false);
+  GltfModel(const std::string &path, bool flipUVs = false);
   ~GltfModel(){};
   GltfModel(const GltfModel &other) = default;
   GltfModel &operator=(GltfModel &other) = default;
@@ -120,7 +115,7 @@ public:
 
   void destroy();
 
-private:
+protected:
   std::vector<Node> nodes_;
   std::vector<Mesh> meshes_;
   std::vector<Texture> textures_;
@@ -129,6 +124,16 @@ private:
   glm::vec3 pos_ = {0.0, 0.0, 0.0};
   glm::vec3 scale_ = {1.0, 1.0, 1.0};
   glm::vec3 rotation_ = {0.0, 0.0, 0.0};
+
+  struct ModelUniform {
+    glm::mat4 model{1.0};
+  } ubo;
+
+  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers_;
+  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
+  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
+
+  void updateUniforms(int frameIndex);
 
   VkBuffer vertexBuffer_;
   VmaAllocation vertexAllocation_;
