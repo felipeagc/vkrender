@@ -21,6 +21,8 @@ class Model;
 namespace vkr {
 struct GraphicsPipeline;
 
+// Represents a glTF model asset
+// Can be treated as a handle to the resource
 class GltfModel {
   friend struct GltfModelInstance;
 
@@ -63,13 +65,6 @@ public:
 
   struct Mesh {
     std::vector<Primitive> primitives;
-
-    glm::mat4 transform{1.0f};
-
-    // void updateUniform(int frameIndex);
-
-    Mesh() {}
-    Mesh(const glm::mat4 &matrix);
   };
 
   struct Node {
@@ -85,8 +80,6 @@ public:
 
     glm::mat4 localMatrix();
     glm::mat4 getMatrix(GltfModel &model);
-
-    void update(GltfModel &model);
   };
 
   struct Dimensions {
@@ -96,6 +89,8 @@ public:
     glm::vec3 center;
     float radius;
   } dimensions;
+
+  // TODO: instead of constructor use load functions
 
   GltfModel(const std::string &path, bool flipUVs = false);
   ~GltfModel(){};
@@ -116,11 +111,6 @@ public:
   void destroy();
 
 protected:
-  std::vector<Node> nodes_;
-  std::vector<Mesh> meshes_;
-  std::vector<Texture> textures_;
-  std::vector<Material> materials_;
-
   glm::vec3 pos_ = {0.0, 0.0, 0.0};
   glm::vec3 scale_ = {1.0, 1.0, 1.0};
   glm::vec3 rotation_ = {0.0, 0.0, 0.0};
@@ -133,7 +123,16 @@ protected:
   std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
   std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
 
+  // Run every frame to update the uniform transform matrix with
+  // updated position, scale and rotations
   void updateUniforms(int frameIndex);
+
+  void drawNode(Node &node, Window &window, GraphicsPipeline &pipeline);
+
+  std::vector<Node> nodes_;
+  std::vector<Mesh> meshes_;
+  std::vector<Texture> textures_;
+  std::vector<Material> materials_;
 
   VkBuffer vertexBuffer_;
   VmaAllocation vertexAllocation_;
@@ -155,7 +154,5 @@ protected:
   void getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max);
 
   void getSceneDimensions();
-
-  void drawNode(Node &node, Window &window, GraphicsPipeline &pipeline);
 };
 } // namespace vkr

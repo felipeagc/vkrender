@@ -92,8 +92,6 @@ GltfModel::Primitive::Primitive(
       indexCount(indexCount),
       materialIndex(materialIndex) {}
 
-GltfModel::Mesh::Mesh(const glm::mat4 &matrix) { this->transform = matrix; }
-
 // void GltfModel::Mesh::updateUniform(int frameIndex) {
 //   memcpy(this->mappings[frameIndex], &this->ubo, sizeof(MeshUniform));
 // }
@@ -112,16 +110,6 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   }
 
   return m;
-}
-
-void GltfModel::Node::update(GltfModel &model) {
-  if (this->meshIndex != -1) {
-    model.meshes_[meshIndex].transform = this->getMatrix(model);
-  }
-
-  for (auto &childIndex : childrenIndices) {
-    model.nodes_[childIndex].update(model);
-  }
 }
 
 GltfModel::GltfModel(const std::string &path, bool flipUVs) {
@@ -216,12 +204,6 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
     this->loadNode(-1, scene.nodes[i], model, indices, vertices, flipUVs);
   }
 
-  for (auto &node : nodes_) {
-    if (node.meshIndex != -1) {
-      node.update(*this);
-    }
-  }
-
   size_t vertexBufferSize = vertices.size() * sizeof(StandardVertex);
   // TODO: index buffer size could be larger than it needs to be
   // due to other index types
@@ -258,7 +240,9 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
 void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
-  this->updateUniforms(window.getCurrentFrameIndex());
+  auto i = window.getCurrentFrameIndex();
+
+  this->updateUniforms(i);
 
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
@@ -269,11 +253,15 @@ void GltfModel::draw(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindIndexBuffer(
       commandBuffer, this->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 
-  // for (auto &node : nodes_) {
-  //   if (node.meshIndex != -1) {
-  //     node.update(*this);
-  //   }
-  // }
+  vkCmdBindDescriptorSets(
+      commandBuffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline.pipelineLayout,
+      2, // firstSet
+      1,
+      &this->descriptorSets_[i],
+      0,
+      nullptr);
 
   for (auto &node : nodes_) {
     drawNode(node, window, pipeline);
@@ -494,6 +482,7 @@ void GltfModel::loadNode(
           StandardVertex vert{};
 
           // TODO: fix rendundancies and see if it works?
+          // TODO: this is a mess.
           vert.pos = glm::vec3(
               newNode.getMatrix(*this) *
               glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0));
@@ -575,10 +564,6 @@ void GltfModel::loadNode(
   if (parentIndex != -1) {
     nodes_[parentIndex].childrenIndices.push_back(nodeIndex);
   }
-
-  if (newNode.meshIndex != -1) {
-    newNode.update(*this);
-  }
 }
 
 void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
@@ -631,15 +616,6 @@ void GltfModel::drawNode(
   auto i = window.getCurrentFrameIndex();
 
   if (node.meshIndex != -1) {
-    vkCmdBindDescriptorSets(
-        commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline.pipelineLayout,
-        2, // firstSet
-        1,
-        &this->descriptorSets_[i],
-        0,
-        nullptr);
     for (Primitive &primitive : this->meshes_[node.meshIndex].primitives) {
       if (primitive.materialIndex != -1 && this->materials_.size() > 0) {
         vkCmdBindDescriptorSets(

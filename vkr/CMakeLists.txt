@@ -19,6 +19,7 @@ set(
   vkr/pipeline.cpp
   vkr/billboard.cpp
   vkr/asset_manager.cpp
+  vkr/gltf_model_instance.cpp
   )
 
 add_library(
