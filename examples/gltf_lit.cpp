@@ -7,7 +7,7 @@
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
 #include <vkr/context.hpp>
-#include <vkr/gltf_model.hpp>
+#include <vkr/gltf_model_instance.hpp>
 #include <vkr/imgui_utils.hpp>
 #include <vkr/lighting.hpp>
 #include <vkr/pipeline.hpp>
@@ -64,15 +64,17 @@ int main() {
   }
 
   // Create models
-  vkr::GltfModel helmet{"../assets/DamagedHelmet.glb", true};
-  helmet.setPosition({2.0, 0.0, 0.0});
-  vkr::GltfModel boombox{"../assets/BoomBox.glb"};
-  boombox.setPosition({-2.0, 0.0, 0.0});
-  boombox.setScale(glm::vec3{1.0, 1.0, 1.0} * 100.0f);
+  vkr::GltfModelInstance helmet{
+      assetManager.getAsset<vkr::GltfModel>("../assets/DamagedHelmet.glb")};
+  helmet.pos = {2.0, 0.0, 0.0};
+  vkr::GltfModelInstance boombox{
+      assetManager.getAsset<vkr::GltfModel>("../assets/BoomBox.glb")};
+  boombox.pos = {-2.0, 0.0, 0.0};
+  boombox.scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
 
   // Create camera
   vkr::Camera camera({3.0, 3.0, 3.0});
-  camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
+  camera.lookAt((helmet.pos + boombox.pos) / 2.0f);
   camera.update(window);
 
   float time = 0.0;
@@ -130,7 +132,7 @@ int main() {
 
     vkr::imgui::cameraWindow(camera);
 
-    camera.lookAt((helmet.getPosition() + boombox.getPosition()) / 2.0f);
+    camera.lookAt((helmet.pos + boombox.pos) / 2.0f);
     camera.update(window);
 
     // helmet.setRotation({0.0, time * 100.0, 0.0});
@@ -160,10 +162,10 @@ int main() {
     lightBillboard.destroy();
   }
 
-  lightManager.destroy();
-  camera.destroy();
   helmet.destroy();
   boombox.destroy();
+  lightManager.destroy();
+  camera.destroy();
   modelPipeline.destroy();
   billboardPipeline.destroy();
   assetManager.destroy();

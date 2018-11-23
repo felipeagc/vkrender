@@ -90,54 +90,24 @@ public:
     float radius;
   } dimensions;
 
-  // TODO: instead of constructor use load functions
+  GltfModel(){};
 
-  GltfModel(const std::string &path, bool flipUVs = false);
-  ~GltfModel(){};
-  GltfModel(const GltfModel &other) = default;
-  GltfModel &operator=(GltfModel &other) = default;
+  void loadFromPath(const std::string &path, bool flipUVs = false);
 
-  void draw(Window &window, GraphicsPipeline &pipeline);
-
-  void setPosition(glm::vec3 pos);
-  glm::vec3 getPosition() const;
-
-  void setRotation(glm::vec3 rotation);
-  glm::vec3 getRotation() const;
-
-  void setScale(glm::vec3 scale);
-  glm::vec3 getScale() const;
+  operator bool() const;
 
   void destroy();
 
 protected:
-  glm::vec3 pos_ = {0.0, 0.0, 0.0};
-  glm::vec3 scale_ = {1.0, 1.0, 1.0};
-  glm::vec3 rotation_ = {0.0, 0.0, 0.0};
-
-  struct ModelUniform {
-    glm::mat4 model{1.0};
-  } ubo;
-
-  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers_;
-  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
-  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
-
-  // Run every frame to update the uniform transform matrix with
-  // updated position, scale and rotations
-  void updateUniforms(int frameIndex);
-
-  void drawNode(Node &node, Window &window, GraphicsPipeline &pipeline);
-
   std::vector<Node> nodes_;
   std::vector<Mesh> meshes_;
   std::vector<Texture> textures_;
   std::vector<Material> materials_;
 
-  VkBuffer vertexBuffer_;
-  VmaAllocation vertexAllocation_;
-  VkBuffer indexBuffer_;
-  VmaAllocation indexAllocation_;
+  VkBuffer vertexBuffer_ = VK_NULL_HANDLE;
+  VmaAllocation vertexAllocation_ = VK_NULL_HANDLE;
+  VkBuffer indexBuffer_ = VK_NULL_HANDLE;
+  VmaAllocation indexAllocation_ = VK_NULL_HANDLE;
 
   void loadMaterials(tinygltf::Model &model);
 
