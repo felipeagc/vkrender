@@ -12,9 +12,10 @@ struct StandardVertex {
   glm::vec2 uv;
 };
 
-struct GraphicsPipeline {
-  VkPipeline pipeline;
-  VkPipelineLayout pipelineLayout;
+class GraphicsPipeline {
+public:
+  VkPipeline m_pipeline;
+  VkPipelineLayout m_pipelineLayout;
 
   void destroy();
 };

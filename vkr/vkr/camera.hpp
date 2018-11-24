@@ -7,7 +7,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 namespace vkr {
-struct GraphicsPipeline;
+class GraphicsPipeline;
 
 class Camera {
 public:
@@ -21,6 +21,7 @@ public:
       glm::quat rotation = glm::quat(glm::vec3(0.0f, M_PI, M_PI)));
   ~Camera(){};
 
+  // TODO: replace with destructor
   void destroy();
 
   void setPos(glm::vec3 pos);
@@ -41,15 +42,15 @@ public:
   void bind(Window &window, GraphicsPipeline &pipeline);
 
 protected:
-  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers_;
-  std::array<void *, MAX_FRAMES_IN_FLIGHT> mappings_;
-  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets_;
+  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;
+  std::array<void *, MAX_FRAMES_IN_FLIGHT> m_mappings;
+  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> m_descriptorSets;
 
-  CameraUniform cameraUniform_;
+  CameraUniform m_cameraUniform;
 
-  float fov_ = 70.0f;
+  float m_fov = 70.0f;
 
-  float near_ = 0.001f;
-  float far_ = 300.0f;
+  float m_near = 0.001f;
+  float m_far = 300.0f;
 };
 } // namespace vkr

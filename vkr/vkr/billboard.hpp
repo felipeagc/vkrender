@@ -4,7 +4,7 @@
 #include "window.hpp"
 
 namespace vkr {
-struct GraphicsPipeline;
+class GraphicsPipeline;
 
 class Billboard {
 public:
@@ -16,25 +16,26 @@ public:
   void setPos(glm::vec3 pos);
   void setColor(glm::vec4 color);
 
+  // TODO: replace with destructor
   void destroy();
 
 protected:
-  Texture texture_;
+  Texture m_texture;
 
   struct MeshUniform {
     glm::mat4 model;
-  } meshUbo_;
+  } m_meshUbo;
 
   struct MaterialUniform {
     glm::vec4 color;
-  } materialUbo_;
+  } m_materialUbo;
 
-  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> meshUniformBuffers_;
-  void *meshMappings_[MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet meshDescriptorSets_[MAX_FRAMES_IN_FLIGHT];
+  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_meshUniformBuffers;
+  void *m_meshMappings[MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet m_meshDescriptorSets[MAX_FRAMES_IN_FLIGHT];
 
-  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> materialUniformBuffers_;
-  void *materialMappings_[MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet materialDescriptorSets_[MAX_FRAMES_IN_FLIGHT];
+  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_materialUniformBuffers;
+  void *m_materialMappings[MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet m_materialDescriptorSets[MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace vkr

@@ -7,7 +7,13 @@
 
 using namespace vkr;
 
-static void createImage(Texture *handle) {
+static void createImage(
+    VkImage *image,
+    VmaAllocation *allocation,
+    VkImageView *imageView,
+    VkSampler *sampler,
+    uint32_t width,
+    uint32_t height) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       nullptr,
@@ -15,8 +21,8 @@ static void createImage(Texture *handle) {
       VK_IMAGE_TYPE_2D,         // imageType
       VK_FORMAT_R8G8B8A8_UNORM, // format
       {
-          handle->width,       // width
-          handle->height,      // height
+          width,               // width
+          height,              // height
           1,                   // depth
       },                       // extent
       1,                       // mipLevels
@@ -37,15 +43,15 @@ static void createImage(Texture *handle) {
       ctx::allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
-      &handle->image,
-      &handle->allocation,
+      image,
+      allocation,
       nullptr));
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
       nullptr,
       0,                        // flags
-      handle->image,            // image
+      *image,                   // image
       VK_IMAGE_VIEW_TYPE_2D,    // viewType
       VK_FORMAT_R8G8B8A8_UNORM, // format
       {
@@ -63,8 +69,8 @@ static void createImage(Texture *handle) {
       },                             // subresourceRange
   };
 
-  VK_CHECK(vkCreateImageView(
-      ctx::device, &imageViewCreateInfo, nullptr, &handle->imageView));
+  VK_CHECK(
+      vkCreateImageView(ctx::device, &imageViewCreateInfo, nullptr, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -87,8 +93,7 @@ static void createImage(Texture *handle) {
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(
-      ctx::device, &samplerCreateInfo, nullptr, &handle->sampler));
+  VK_CHECK(vkCreateSampler(ctx::device, &samplerCreateInfo, nullptr, sampler));
 }
 
 static std::vector<unsigned char>
@@ -124,42 +129,43 @@ void Texture::loadFromBinary(
     const std::vector<unsigned char> &data,
     const uint32_t width,
     const uint32_t height) {
-  this->width = width;
-  this->height = height;
+  this->m_width = width;
+  this->m_height = height;
 
-  createImage(this);
+  createImage(&m_image, &m_allocation, &m_imageView, &m_sampler, width, height);
 
   VkBuffer stagingBuffer;
   VmaAllocation stagingAllocation;
-  buffer::makeStagingBuffer(data.size(), &stagingBuffer, &stagingAllocation);
+  buffer::createStagingBuffer(data.size(), &stagingBuffer, &stagingAllocation);
 
   void *stagingMemoryPointer;
   buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
   memcpy(stagingMemoryPointer, data.data(), data.size());
-  buffer::imageTransfer(stagingBuffer, this->image, this->width, this->height);
+  buffer::imageTransfer(
+      stagingBuffer, this->m_image, this->m_width, this->m_height);
   buffer::unmapMemory(stagingAllocation);
 
   buffer::destroy(stagingBuffer, stagingAllocation);
 }
 
-Texture::operator bool() const { return this->image != VK_NULL_HANDLE; }
+Texture::operator bool() const { return this->m_image != VK_NULL_HANDLE; }
 
 VkDescriptorImageInfo Texture::getDescriptorInfo() const {
   return {
-      this->sampler,
-      this->imageView,
+      this->m_sampler,
+      this->m_imageView,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
   };
 }
 
 void Texture::destroy() {
   VK_CHECK(vkDeviceWaitIdle(ctx::device));
-  vkDestroyImageView(ctx::device, this->imageView, nullptr);
-  vkDestroySampler(ctx::device, this->sampler, nullptr);
-  vmaDestroyImage(ctx::allocator, this->image, this->allocation);
+  vkDestroyImageView(ctx::device, this->m_imageView, nullptr);
+  vkDestroySampler(ctx::device, this->m_sampler, nullptr);
+  vmaDestroyImage(ctx::allocator, this->m_image, this->m_allocation);
 
-  this->image = VK_NULL_HANDLE;
-  this->allocation = VK_NULL_HANDLE;
-  this->imageView = VK_NULL_HANDLE;
-  this->sampler = VK_NULL_HANDLE;
+  this->m_image = VK_NULL_HANDLE;
+  this->m_allocation = VK_NULL_HANDLE;
+  this->m_imageView = VK_NULL_HANDLE;
+  this->m_sampler = VK_NULL_HANDLE;
 }

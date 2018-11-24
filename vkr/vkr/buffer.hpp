@@ -6,14 +6,16 @@
 namespace vkr {
 namespace buffer {
 
-void makeVertexBuffer(size_t size, VkBuffer *buffer, VmaAllocation *allocation);
-
-void makeIndexBuffer(size_t size, VkBuffer *buffer, VmaAllocation *allocation);
-
-void makeUniformBuffer(
+void createVertexBuffer(
     size_t size, VkBuffer *buffer, VmaAllocation *allocation);
 
-void makeStagingBuffer(
+void createIndexBuffer(
+    size_t size, VkBuffer *buffer, VmaAllocation *allocation);
+
+void createUniformBuffer(
+    size_t size, VkBuffer *buffer, VmaAllocation *allocation);
+
+void createStagingBuffer(
     size_t size, VkBuffer *buffer, VmaAllocation *allocation);
 
 void mapMemory(VmaAllocation allocation, void **dest);

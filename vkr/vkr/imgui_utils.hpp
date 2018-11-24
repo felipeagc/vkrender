@@ -3,7 +3,7 @@
 namespace vkr {
 class Window;
 class Camera;
-struct AssetManager;
+class AssetManager;
 class LightManager;
 
 namespace imgui {

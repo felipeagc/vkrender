@@ -22,6 +22,7 @@ public:
   Window(const Window &other) = delete;
   Window &operator=(Window other) = delete;
 
+  // TODO: replace with destructor
   void destroy();
 
   bool pollEvent(SDL_Event *event);
@@ -65,24 +66,24 @@ public:
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
 
 protected:
-  bool shouldClose_ = false;
+  bool m_shouldClose = false;
 
-  SDL_Window *window_{nullptr};
+  SDL_Window *m_window{nullptr};
 
-  double deltaTime_ = 0.0f;
+  double m_deltaTime = 0.0f;
 
-  VkSurfaceKHR surface_{VK_NULL_HANDLE};
+  VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
-  VkSampleCountFlagBits msaaSamples_{VK_SAMPLE_COUNT_1_BIT};
-  VkSampleCountFlagBits maxMsaaSamples_{VK_SAMPLE_COUNT_1_BIT};
+  VkSampleCountFlagBits m_msaaSamples{VK_SAMPLE_COUNT_1_BIT};
+  VkSampleCountFlagBits m_maxMsaaSamples{VK_SAMPLE_COUNT_1_BIT};
 
-  VkFormat depthImageFormat_;
+  VkFormat m_depthImageFormat;
 
   struct {
     VkImage image{VK_NULL_HANDLE};
     VmaAllocation allocation{VK_NULL_HANDLE};
     VkImageView view{VK_NULL_HANDLE};
-  } depthStencil_;
+  } m_depthStencil;
 
   struct FrameResources {
     VkSemaphore imageAvailableSemaphore{VK_NULL_HANDLE};
@@ -95,7 +96,7 @@ protected:
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
   };
 
-  fstl::fixed_vector<FrameResources> frameResources_{MAX_FRAMES_IN_FLIGHT};
+  fstl::fixed_vector<FrameResources> m_frameResources{MAX_FRAMES_IN_FLIGHT};
 
   struct {
     struct {
@@ -109,21 +110,21 @@ protected:
       VmaAllocation allocation{VK_NULL_HANDLE};
       VkImageView view{VK_NULL_HANDLE};
     } color;
-  } multiSampleTargets_;
+  } m_multiSampleTargets;
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
-  int currentFrame_ = 0;
+  int m_currentFrame = 0;
   // Index of the current swapchain image
-  uint32_t currentImageIndex_;
+  uint32_t m_currentImageIndex;
 
-  VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
-  VkFormat swapchainImageFormat_;
-  VkExtent2D swapchainExtent_;
-  fstl::fixed_vector<VkImage> swapchainImages_;
-  fstl::fixed_vector<VkImageView> swapchainImageViews_;
+  VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
+  VkFormat m_swapchainImageFormat;
+  VkExtent2D m_swapchainExtent;
+  fstl::fixed_vector<VkImage> m_swapchainImages;
+  fstl::fixed_vector<VkImageView> m_swapchainImageViews;
 
-  VkRenderPass renderPass_{VK_NULL_HANDLE};
-  VkRenderPass imguiRenderPass_{VK_NULL_HANDLE};
+  VkRenderPass m_renderPass{VK_NULL_HANDLE};
+  VkRenderPass m_imguiRenderPass{VK_NULL_HANDLE};
 
   void createVulkanSurface();
 

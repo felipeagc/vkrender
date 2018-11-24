@@ -89,13 +89,13 @@ int main() {
 
   VkBuffer vertexBuffer;
   VmaAllocation vertexAllocation;
-  vkr::buffer::makeVertexBuffer(
+  vkr::buffer::createVertexBuffer(
       sizeof(Vertex) * vertices.size(), &vertexBuffer, &vertexAllocation);
 
   {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAllocation;
-    vkr::buffer::makeStagingBuffer(
+    vkr::buffer::createStagingBuffer(
         sizeof(Vertex) * vertices.size(), &stagingBuffer, &stagingAllocation);
 
     void *stagingMemoryPointer;
@@ -116,7 +116,7 @@ int main() {
     VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
     vkCmdBindPipeline(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
 
     VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);

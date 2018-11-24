@@ -66,15 +66,15 @@ int main() {
   // Create models
   vkr::GltfModelInstance helmet{
       assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
-  helmet.pos = {2.0, 0.0, 0.0};
+  helmet.m_pos = {2.0, 0.0, 0.0};
   vkr::GltfModelInstance boombox{
       assetManager.getAsset<vkr::GltfModel>("../assets/BoomBox.glb")};
-  boombox.pos = {-2.0, 0.0, 0.0};
-  boombox.scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
+  boombox.m_pos = {-2.0, 0.0, 0.0};
+  boombox.m_scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
 
   // Create camera
   vkr::Camera camera({3.0, 3.0, 3.0});
-  camera.lookAt((helmet.pos + boombox.pos) / 2.0f);
+  camera.lookAt((helmet.m_pos + boombox.m_pos) / 2.0f);
   camera.update(window);
 
   float time = 0.0;
@@ -132,7 +132,7 @@ int main() {
 
     vkr::imgui::cameraWindow(camera);
 
-    camera.lookAt((helmet.pos + boombox.pos) / 2.0f);
+    camera.lookAt((helmet.m_pos + boombox.m_pos) / 2.0f);
     camera.update(window);
 
     // helmet.setRotation({0.0, time * 100.0, 0.0});

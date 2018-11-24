@@ -19,12 +19,12 @@ class Model;
 }
 
 namespace vkr {
-struct GraphicsPipeline;
+class GraphicsPipeline;
 
 // Represents a glTF model asset
 // Can be treated as a handle to the resource
 class GltfModel {
-  friend struct GltfModelInstance;
+  friend class GltfModelInstance;
 
 public:
   struct Material {
@@ -99,15 +99,15 @@ public:
   void destroy();
 
 protected:
-  std::vector<Node> nodes_;
-  std::vector<Mesh> meshes_;
-  std::vector<Texture> textures_;
-  std::vector<Material> materials_;
+  std::vector<Node> m_nodes;
+  std::vector<Mesh> m_meshes;
+  std::vector<Texture> m_textures;
+  std::vector<Material> m_materials;
 
-  VkBuffer vertexBuffer_ = VK_NULL_HANDLE;
-  VmaAllocation vertexAllocation_ = VK_NULL_HANDLE;
-  VkBuffer indexBuffer_ = VK_NULL_HANDLE;
-  VmaAllocation indexAllocation_ = VK_NULL_HANDLE;
+  VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
+  VmaAllocation m_vertexAllocation = VK_NULL_HANDLE;
+  VkBuffer m_indexBuffer = VK_NULL_HANDLE;
+  VmaAllocation m_indexAllocation = VK_NULL_HANDLE;
 
   void loadMaterials(tinygltf::Model &model);
 

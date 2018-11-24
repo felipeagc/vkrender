@@ -30,10 +30,10 @@ int main() {
 
   vkr::GltfModelInstance helmet{
       assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
-  helmet.pos = {0.0, 0.0, 1.0};
+  helmet.m_pos = {0.0, 0.0, 1.0};
   vkr::GltfModelInstance duck{
       assetManager.getAsset<vkr::GltfModel>("../assets/Duck.glb")};
-  duck.pos = {0.0, 0.0, -1.0};
+  duck.m_pos = {0.0, 0.0, -1.0};
 
   float time = 0.0;
 
@@ -42,7 +42,7 @@ int main() {
     float camX = sin(time) * radius;
     float camY = cos(time) * radius;
     camera.setPos({camX, radius, camY});
-    camera.lookAt((helmet.pos + duck.pos) / 2.0f);
+    camera.lookAt((helmet.m_pos + duck.m_pos) / 2.0f);
 
     camera.update(window);
 

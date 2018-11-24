@@ -7,8 +7,8 @@
 namespace vkr {
 
 void GraphicsPipeline::destroy() {
-  vkDestroyPipelineLayout(ctx::device, this->pipelineLayout, nullptr);
-  vkDestroyPipeline(ctx::device, this->pipeline, nullptr);
+  vkDestroyPipelineLayout(ctx::device, this->m_pipelineLayout, nullptr);
+  vkDestroyPipeline(ctx::device, this->m_pipeline, nullptr);
 }
 
 GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {

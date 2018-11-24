@@ -124,7 +124,7 @@ operator[](const std::string &key) {
 }
 
 VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
-  for (auto &p : this->pools_) {
+  for (auto &p : this->m_pools) {
     if (p.first == key) {
       return &p.second;
     }
@@ -134,7 +134,7 @@ VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
 }
 
 VkDescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
-  for (auto &p : this->setLayouts_) {
+  for (auto &p : this->m_setLayouts) {
     if (p.first == key) {
       return &p.second;
     }
@@ -148,7 +148,7 @@ bool DescriptorManager::addPool(const std::string &key, VkDescriptorPool pool) {
     return false;
   }
 
-  pools_.push_back({key, pool});
+  m_pools.push_back({key, pool});
   return true;
 }
 
@@ -158,7 +158,7 @@ bool DescriptorManager::addSetLayout(
     return false;
   }
 
-  setLayouts_.push_back({key, setLayout});
+  m_setLayouts.push_back({key, setLayout});
   return true;
 }
 
@@ -242,11 +242,11 @@ void DescriptorManager::init() {
 }
 
 void DescriptorManager::destroy() {
-  for (auto &p : this->pools_) {
+  for (auto &p : this->m_pools) {
     vkDestroyDescriptorPool(ctx::device, p.second, nullptr);
   }
 
-  for (auto &p : this->setLayouts_) {
+  for (auto &p : this->m_setLayouts) {
     vkDestroyDescriptorSetLayout(ctx::device, p.second, nullptr);
   }
 }

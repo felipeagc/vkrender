@@ -3,26 +3,30 @@
 using namespace vkr;
 
 void AssetManager::destroy() {
-  for (auto &texture : textures) {
+  for (auto &texture : m_textures) {
     if (texture) {
       texture.destroy();
     }
   }
 
-  for (auto &model : gltfModels) {
+  for (auto &model : m_gltfModels) {
     if (model) {
       model.destroy();
     }
   }
 }
 
+std::unordered_map<std::string, Asset> &AssetManager::getAssetTable() {
+  return m_assetTable;
+}
+
 template <>
 const Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
-  if (assetTable.find(identifier) != assetTable.end()) {
-    auto &asset = this->assetTable.at(identifier);
+  if (m_assetTable.find(identifier) != m_assetTable.end()) {
+    auto &asset = m_assetTable.at(identifier);
 
     if (asset.type == AssetType::eTexture) {
-      return this->textures[asset.index];
+      return m_textures[asset.index];
     } else {
       throw std::runtime_error("Wrong asset type");
     }
@@ -34,38 +38,38 @@ const Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
   texture.loadFromPath(identifier);
 
   // Allocate Texture
-  size_t textureIndex = textures.size();
+  size_t textureIndex = m_textures.size();
 
-  if (loadedTextureCount < textures.size()) {
-    for (size_t i = 0; i < textures.size(); i++) {
-      if (!textures[i]) {
+  if (m_loadedTextureCount < m_textures.size()) {
+    for (size_t i = 0; i < m_textures.size(); i++) {
+      if (!m_textures[i]) {
         textureIndex = i;
         break;
       }
     }
   }
 
-  if (textureIndex == textures.size()) {
-    this->textures.push_back(texture);
+  if (textureIndex == m_textures.size()) {
+    m_textures.push_back(texture);
   } else {
-    this->textures[textureIndex] = texture;
+    m_textures[textureIndex] = texture;
   }
 
-  this->loadedTextureCount++;
+  m_loadedTextureCount++;
 
-  this->assetTable[identifier] = Asset{textureIndex, AssetType::eTexture};
+  m_assetTable[identifier] = Asset{textureIndex, AssetType::eTexture};
 
-  return textures[textureIndex];
+  return m_textures[textureIndex];
 }
 
 template <>
 const GltfModel &
 AssetManager::getAsset<GltfModel>(const std::string &identifier) {
-  if (assetTable.find(identifier) != assetTable.end()) {
-    auto &asset = this->assetTable.at(identifier);
+  if (m_assetTable.find(identifier) != m_assetTable.end()) {
+    auto &asset = m_assetTable.at(identifier);
 
     if (asset.type == AssetType::eGltfModel) {
-      return this->gltfModels[asset.index];
+      return m_gltfModels[asset.index];
     } else {
       throw std::runtime_error("Wrong asset type");
     }
@@ -79,41 +83,41 @@ AssetManager::getAsset<GltfModel>(const std::string &identifier) {
   model.loadFromPath(identifier);
 
   // Allocate GltfModel
-  size_t modelIndex = gltfModels.size();
+  size_t modelIndex = m_gltfModels.size();
 
-  if (loadedGltfModelCount < gltfModels.size()) {
-    for (size_t i = 0; i < gltfModels.size(); i++) {
-      if (!gltfModels[i]) {
+  if (m_loadedGltfModelCount < m_gltfModels.size()) {
+    for (size_t i = 0; i < m_gltfModels.size(); i++) {
+      if (!m_gltfModels[i]) {
         modelIndex = i;
         break;
       }
     }
   }
 
-  if (modelIndex == gltfModels.size()) {
-    this->gltfModels.push_back(model);
+  if (modelIndex == m_gltfModels.size()) {
+    m_gltfModels.push_back(model);
   } else {
-    this->gltfModels[modelIndex] = model;
+    m_gltfModels[modelIndex] = model;
   }
 
-  this->loadedGltfModelCount++;
+  m_loadedGltfModelCount++;
 
-  this->assetTable[identifier] = Asset{modelIndex, AssetType::eGltfModel};
+  m_assetTable[identifier] = Asset{modelIndex, AssetType::eGltfModel};
 
-  return gltfModels[modelIndex];
+  return m_gltfModels[modelIndex];
 }
 
 template <>
 void AssetManager::unloadAsset<Texture>(const std::string &identifier) {
-  if (assetTable.find(identifier) == assetTable.end()) {
+  if (m_assetTable.find(identifier) == m_assetTable.end()) {
     return;
   }
 
-  auto &asset = this->assetTable.at(identifier);
+  auto &asset = m_assetTable.at(identifier);
 
   if (asset.type == AssetType::eTexture) {
-    this->textures[asset.index].destroy();
-    assetTable.erase(identifier);
+    m_textures[asset.index].destroy();
+    m_assetTable.erase(identifier);
   } else {
     throw std::runtime_error("Wrong asset type");
   }
@@ -121,15 +125,15 @@ void AssetManager::unloadAsset<Texture>(const std::string &identifier) {
 
 template <>
 void AssetManager::unloadAsset<GltfModel>(const std::string &identifier) {
-  if (assetTable.find(identifier) == assetTable.end()) {
+  if (m_assetTable.find(identifier) == m_assetTable.end()) {
     return;
   }
 
-  auto &asset = this->assetTable.at(identifier);
+  auto &asset = m_assetTable.at(identifier);
 
   if (asset.type == AssetType::eGltfModel) {
-    this->gltfModels[asset.index].destroy();
-    assetTable.erase(identifier);
+    m_gltfModels[asset.index].destroy();
+    m_assetTable.erase(identifier);
   } else {
     throw std::runtime_error("Wrong asset type");
   }

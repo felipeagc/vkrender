@@ -5,15 +5,8 @@
 #include <vulkan/vulkan.h>
 
 namespace vkr {
-struct Texture {
-  VkImage image = VK_NULL_HANDLE;
-  VmaAllocation allocation = VK_NULL_HANDLE;
-  VkImageView imageView = VK_NULL_HANDLE;
-  VkSampler sampler = VK_NULL_HANDLE;
-
-  uint32_t width = 0;
-  uint32_t height = 0;
-
+class Texture {
+public:
   void loadFromPath(const std::string_view &path);
   void loadFromBinary(
       const std::vector<unsigned char> &data,
@@ -25,5 +18,14 @@ struct Texture {
   VkDescriptorImageInfo getDescriptorInfo() const;
 
   void destroy();
+
+private:
+  VkImage m_image = VK_NULL_HANDLE;
+  VmaAllocation m_allocation = VK_NULL_HANDLE;
+  VkImageView m_imageView = VK_NULL_HANDLE;
+  VkSampler m_sampler = VK_NULL_HANDLE;
+
+  uint32_t m_width = 0;
+  uint32_t m_height = 0;
 };
 } // namespace vkr

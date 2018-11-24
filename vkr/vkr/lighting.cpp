@@ -6,17 +6,17 @@
 using namespace vkr;
 
 LightManager::LightManager(const fstl::fixed_vector<Light> &lights) {
-  this->ubo.lightCount = std::min((uint32_t)lights.size(), MAX_LIGHTS);
-  for (uint32_t i = 0; i < this->ubo.lightCount; i++) {
-    this->ubo.lights[i].pos = lights[i].pos;
-    this->ubo.lights[i].color = lights[i].color;
+  this->m_ubo.lightCount = std::min((uint32_t)lights.size(), MAX_LIGHTS);
+  for (uint32_t i = 0; i < this->m_ubo.lightCount; i++) {
+    this->m_ubo.lights[i].pos = lights[i].pos;
+    this->m_ubo.lights[i].color = lights[i].color;
   }
 
-  for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers.buffers); i++) {
-    vkr::buffer::makeUniformBuffer(
+  for (size_t i = 0; i < ARRAYSIZE(this->m_uniformBuffers.buffers); i++) {
+    vkr::buffer::createUniformBuffer(
         sizeof(LightingUniform),
-        &this->uniformBuffers.buffers[i],
-        &this->uniformBuffers.allocations[i]);
+        &this->m_uniformBuffers.buffers[i],
+        &this->m_uniformBuffers.allocations[i]);
   }
 
   auto [descriptorPool, descriptorSetLayout] =
@@ -34,19 +34,19 @@ LightManager::LightManager(const fstl::fixed_vector<Light> &lights) {
 
   for (int i = 0; i < vkr::MAX_FRAMES_IN_FLIGHT; i++) {
     vkAllocateDescriptorSets(
-        ctx::device, &allocateInfo, &this->descriptorSets[i]);
+        ctx::device, &allocateInfo, &this->m_descriptorSets[i]);
 
     vkr::buffer::mapMemory(
-        this->uniformBuffers.allocations[i], &this->mappings[i]);
-    memcpy(this->mappings[i], &this->ubo, sizeof(LightingUniform));
+        this->m_uniformBuffers.allocations[i], &this->m_mappings[i]);
+    memcpy(this->m_mappings[i], &this->m_ubo, sizeof(LightingUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers.buffers[i], 0, sizeof(LightingUniform)};
+        this->m_uniformBuffers.buffers[i], 0, sizeof(LightingUniform)};
 
     VkWriteDescriptorSet descriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        this->descriptorSets[i],           // dstSet
+        this->m_descriptorSets[i],           // dstSet
         0,                                 // dstBinding
         0,                                 // dstArrayElement
         1,                                 // descriptorCount
@@ -62,7 +62,7 @@ LightManager::LightManager(const fstl::fixed_vector<Light> &lights) {
 
 void LightManager::update() {
   for (int i = 0; i < vkr::MAX_FRAMES_IN_FLIGHT; i++) {
-    memcpy(this->mappings[i], &this->ubo, sizeof(LightingUniform));
+    memcpy(this->m_mappings[i], &this->m_ubo, sizeof(LightingUniform));
   }
 }
 
@@ -71,27 +71,27 @@ void LightManager::bind(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.pipelineLayout,
+      pipeline.m_pipelineLayout,
       3, // firstSet
       1,
-      &this->descriptorSets[window.getCurrentFrameIndex()],
+      &this->m_descriptorSets[window.getCurrentFrameIndex()],
       0,
       nullptr);
 }
 
-Light *LightManager::getLights() { return this->ubo.lights; }
+Light *LightManager::getLights() { return this->m_ubo.lights; }
 
-uint32_t LightManager::getLightCount() const { return this->ubo.lightCount; }
+uint32_t LightManager::getLightCount() const { return this->m_ubo.lightCount; }
 
 void LightManager::setLightCount(uint32_t count) {
-  this->ubo.lightCount = count;
+  this->m_ubo.lightCount = count;
 }
 
 void LightManager::destroy() {
-  for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers.buffers); i++) {
-    vkr::buffer::unmapMemory(this->uniformBuffers.allocations[i]);
+  for (size_t i = 0; i < ARRAYSIZE(this->m_uniformBuffers.buffers); i++) {
+    vkr::buffer::unmapMemory(this->m_uniformBuffers.allocations[i]);
     vkr::buffer::destroy(
-        this->uniformBuffers.buffers[i], this->uniformBuffers.allocations[i]);
+        this->m_uniformBuffers.buffers[i], this->m_uniformBuffers.allocations[i]);
   }
 
   auto descriptorPool = ctx::descriptorManager.getPool(DESC_LIGHTING);
@@ -101,6 +101,6 @@ void LightManager::destroy() {
   vkFreeDescriptorSets(
       ctx::device,
       *descriptorPool,
-      ARRAYSIZE(this->descriptorSets),
-      this->descriptorSets);
+      ARRAYSIZE(this->m_descriptorSets),
+      this->m_descriptorSets);
 }

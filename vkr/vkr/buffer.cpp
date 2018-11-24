@@ -57,7 +57,7 @@ static void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
 
 namespace vkr {
 namespace buffer {
-void makeVertexBuffer(
+void createVertexBuffer(
     size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -84,7 +84,8 @@ void makeVertexBuffer(
       nullptr));
 }
 
-void makeIndexBuffer(size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
+void createIndexBuffer(
+    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
       nullptr,
@@ -110,7 +111,7 @@ void makeIndexBuffer(size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
       nullptr));
 }
 
-void makeUniformBuffer(
+void createUniformBuffer(
     size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -136,7 +137,7 @@ void makeUniformBuffer(
       nullptr));
 }
 
-void makeStagingBuffer(
+void createStagingBuffer(
     size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,

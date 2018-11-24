@@ -12,8 +12,6 @@ const char *const DESC_LIGHTING = "lighting";
 const char *const DESC_IMGUI = "imgui";
 
 class DescriptorManager {
-  friend class Context;
-
 public:
   std::pair<VkDescriptorPool *, VkDescriptorSetLayout *>
   operator[](const std::string &key);
@@ -32,7 +30,7 @@ public:
   void destroy();
 
 protected:
-  std::vector<std::pair<std::string, VkDescriptorPool>> pools_;
-  std::vector<std::pair<std::string, VkDescriptorSetLayout>> setLayouts_;
+  std::vector<std::pair<std::string, VkDescriptorPool>> m_pools;
+  std::vector<std::pair<std::string, VkDescriptorSetLayout>> m_setLayouts;
 };
 } // namespace vkr

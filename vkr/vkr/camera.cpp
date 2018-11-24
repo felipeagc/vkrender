@@ -15,13 +15,13 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    buffer::makeUniformBuffer(
+    buffer::createUniformBuffer(
         sizeof(CameraUniform),
-        &this->uniformBuffers_.buffers[i],
-        &this->uniformBuffers_.allocations[i]);
+        &this->m_uniformBuffers.buffers[i],
+        &this->m_uniformBuffers.allocations[i]);
 
     buffer::mapMemory(
-        this->uniformBuffers_.allocations[i], &this->mappings_[i]);
+        this->m_uniformBuffers.allocations[i], &this->m_mappings[i]);
 
     VkDescriptorSetAllocateInfo allocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -32,10 +32,10 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
     };
 
     vkAllocateDescriptorSets(
-        ctx::device, &allocateInfo, &this->descriptorSets_[i]);
+        ctx::device, &allocateInfo, &this->m_descriptorSets[i]);
 
     VkDescriptorBufferInfo bufferInfo{
-        this->uniformBuffers_.buffers[i],
+        this->m_uniformBuffers.buffers[i],
         0,
         sizeof(CameraUniform),
     };
@@ -43,7 +43,7 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
     VkWriteDescriptorSet descriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        this->descriptorSets_[i],          // dstSet
+        this->m_descriptorSets[i],          // dstSet
         0,                                 // dstBinding
         0,                                 // dstArrayElement
         1,                                 // descriptorCount
@@ -58,10 +58,10 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
 }
 
 void Camera::destroy() {
-  for (size_t i = 0; i < ARRAYSIZE(this->uniformBuffers_.buffers); i++) {
-    buffer::unmapMemory(this->uniformBuffers_.allocations[i]);
+  for (size_t i = 0; i < ARRAYSIZE(this->m_uniformBuffers.buffers); i++) {
+    buffer::unmapMemory(this->m_uniformBuffers.allocations[i]);
     buffer::destroy(
-        this->uniformBuffers_.buffers[i], this->uniformBuffers_.allocations[i]);
+        this->m_uniformBuffers.buffers[i], this->m_uniformBuffers.allocations[i]);
   }
 
   auto descriptorPool = ctx::descriptorManager.getPool(DESC_CAMERA);
@@ -71,62 +71,62 @@ void Camera::destroy() {
   vkFreeDescriptorSets(
       ctx::device,
       *descriptorPool,
-      this->descriptorSets_.size(),
-      this->descriptorSets_.data());
+      this->m_descriptorSets.size(),
+      this->m_descriptorSets.data());
 }
 
 void Camera::setPos(glm::vec3 pos) {
-  cameraUniform_.view[3][0] = pos.x;
-  cameraUniform_.view[3][1] = pos.y;
-  cameraUniform_.view[3][2] = pos.z;
+  m_cameraUniform.view[3][0] = pos.x;
+  m_cameraUniform.view[3][1] = pos.y;
+  m_cameraUniform.view[3][2] = pos.z;
 }
 
 glm::vec3 Camera::getPos() const {
   return glm::vec3(
-      cameraUniform_.view[3][0],
-      cameraUniform_.view[3][1],
-      cameraUniform_.view[3][2]);
+      m_cameraUniform.view[3][0],
+      m_cameraUniform.view[3][1],
+      m_cameraUniform.view[3][2]);
 }
 
 void Camera::translate(glm::vec3 translation) {
-  cameraUniform_.view = glm::translate(cameraUniform_.view, translation);
+  m_cameraUniform.view = glm::translate(m_cameraUniform.view, translation);
 }
 
 void Camera::setRot(glm::quat rot) {
-  glm::quat currentRot = glm::quat_cast(cameraUniform_.view);
-  cameraUniform_.view =
-      glm::mat4_cast(glm::inverse(currentRot)) * cameraUniform_.view;
-  cameraUniform_.view = glm::mat4_cast(rot) * cameraUniform_.view;
+  glm::quat currentRot = glm::quat_cast(m_cameraUniform.view);
+  m_cameraUniform.view =
+      glm::mat4_cast(glm::inverse(currentRot)) * m_cameraUniform.view;
+  m_cameraUniform.view = glm::mat4_cast(rot) * m_cameraUniform.view;
 }
 
 glm::quat Camera::getRot() const {
-  glm::quat currentRot = glm::quat_cast(cameraUniform_.view);
+  glm::quat currentRot = glm::quat_cast(m_cameraUniform.view);
   return currentRot;
 }
 
 void Camera::rotate(glm::quat rot) {
-  cameraUniform_.view = glm::mat4_cast(rot) * cameraUniform_.view;
+  m_cameraUniform.view = glm::mat4_cast(rot) * m_cameraUniform.view;
 }
 
-void Camera::setFov(float fov) { this->fov_ = fov; }
+void Camera::setFov(float fov) { this->m_fov = fov; }
 
-float Camera::getFov() const { return this->fov_; }
+float Camera::getFov() const { return this->m_fov; }
 
 void Camera::lookAt(glm::vec3 point) {
-  cameraUniform_.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
+  m_cameraUniform.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
 }
 
 void Camera::update(Window &window) {
   auto i = window.getCurrentFrameIndex();
 
-  cameraUniform_.proj = glm::perspective(
-      glm::radians(this->fov_),
+  m_cameraUniform.proj = glm::perspective(
+      glm::radians(this->m_fov),
       static_cast<float>(window.getWidth()) /
           static_cast<float>(window.getHeight()),
-      this->near_,
-      this->far_);
+      this->m_near,
+      this->m_far);
 
-  memcpy(this->mappings_[i], &this->cameraUniform_, sizeof(CameraUniform));
+  memcpy(this->m_mappings[i], &this->m_cameraUniform, sizeof(CameraUniform));
 }
 
 void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
@@ -136,10 +136,10 @@ void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.pipelineLayout,
+      pipeline.m_pipelineLayout,
       0,
       1,
-      &this->descriptorSets_[i],
+      &this->m_descriptorSets[i],
       0,
       nullptr);
 }

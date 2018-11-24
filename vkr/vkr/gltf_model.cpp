@@ -32,13 +32,13 @@ GltfModel::Material::Material(
     VK_CHECK(vkAllocateDescriptorSets(
         ctx::device, &allocateInfo, &this->descriptorSets[i]));
 
-    buffer::makeUniformBuffer(
+    buffer::createUniformBuffer(
         sizeof(MaterialUniform),
         &this->uniformBuffers.buffers[i],
         &this->uniformBuffers.allocations[i]);
 
     // CombinedImageSampler
-    auto &texture = model.textures_[this->albedoTextureIndex];
+    auto &texture = model.m_textures[this->albedoTextureIndex];
     auto albedoDescriptorInfo = texture.getDescriptorInfo();
 
     // UniformBuffer
@@ -107,8 +107,8 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   glm::mat4 m = localMatrix();
   int p = this->parentIndex;
   while (p != -1) {
-    m = model.nodes_[this->parentIndex].localMatrix() * m;
-    p = model.nodes_[this->parentIndex].parentIndex;
+    m = model.m_nodes[this->parentIndex].localMatrix() * m;
+    p = model.m_nodes[this->parentIndex].parentIndex;
   }
 
   return m;
@@ -183,8 +183,8 @@ void GltfModel::loadFromPath(const std::string &path) {
 
   tinygltf::Scene &scene = model.scenes[model.defaultScene];
 
-  this->nodes_.resize(model.nodes.size());
-  this->meshes_.resize(model.meshes.size());
+  this->m_nodes.resize(model.nodes.size());
+  this->m_meshes.resize(model.meshes.size());
 
   for (size_t i = 0; i < scene.nodes.size(); i++) {
     this->loadNode(-1, scene.nodes[i], model, indices, vertices, flipUVs);
@@ -199,7 +199,7 @@ void GltfModel::loadFromPath(const std::string &path) {
 
   VkBuffer stagingBuffer;
   VmaAllocation stagingAllocation;
-  buffer::makeStagingBuffer(
+  buffer::createStagingBuffer(
       std::max(vertexBufferSize, indexBufferSize),
       &stagingBuffer,
       &stagingAllocation);
@@ -207,24 +207,24 @@ void GltfModel::loadFromPath(const std::string &path) {
   void *stagingMemoryPointer;
   buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
 
-  buffer::makeVertexBuffer(
-      vertexBufferSize, &this->vertexBuffer_, &this->vertexAllocation_);
+  buffer::createVertexBuffer(
+      vertexBufferSize, &this->m_vertexBuffer, &this->m_vertexAllocation);
 
-  buffer::makeIndexBuffer(
-      indexBufferSize, &this->indexBuffer_, &this->indexAllocation_);
+  buffer::createIndexBuffer(
+      indexBufferSize, &this->m_indexBuffer, &this->m_indexAllocation);
 
   memcpy(stagingMemoryPointer, vertices.data(), vertexBufferSize);
-  buffer::bufferTransfer(stagingBuffer, this->vertexBuffer_, vertexBufferSize);
+  buffer::bufferTransfer(stagingBuffer, this->m_vertexBuffer, vertexBufferSize);
 
   memcpy(stagingMemoryPointer, indices.data(), indexBufferSize);
-  buffer::bufferTransfer(stagingBuffer, this->indexBuffer_, indexBufferSize);
+  buffer::bufferTransfer(stagingBuffer, this->m_indexBuffer, indexBufferSize);
 
   buffer::unmapMemory(stagingAllocation);
   buffer::destroy(stagingBuffer, stagingAllocation);
 }
 
 GltfModel::operator bool() const {
-  return (this->vertexBuffer_ != VK_NULL_HANDLE);
+  return (this->m_vertexBuffer != VK_NULL_HANDLE);
 }
 
 void GltfModel::destroy() {
@@ -232,13 +232,13 @@ void GltfModel::destroy() {
     return;
   }
 
-  buffer::destroy(this->vertexBuffer_, this->vertexAllocation_);
-  buffer::destroy(this->indexBuffer_, this->indexAllocation_);
+  buffer::destroy(this->m_vertexBuffer, this->m_vertexAllocation);
+  buffer::destroy(this->m_indexBuffer, this->m_indexAllocation);
 
-  this->vertexBuffer_ = VK_NULL_HANDLE;
-  this->indexBuffer_ = VK_NULL_HANDLE;
+  this->m_vertexBuffer = VK_NULL_HANDLE;
+  this->m_indexBuffer = VK_NULL_HANDLE;
 
-  for (auto &material : materials_) {
+  for (auto &material : m_materials) {
     for (size_t i = 0; i < ARRAYSIZE(material.uniformBuffers.buffers); i++) {
       buffer::unmapMemory(material.uniformBuffers.allocations[i]);
       buffer::destroy(
@@ -257,18 +257,18 @@ void GltfModel::destroy() {
         material.descriptorSets.data());
   }
 
-  this->materials_.clear();
+  this->m_materials.clear();
 
-  for (auto &texture : textures_) {
+  for (auto &texture : m_textures) {
     if (texture)
       texture.destroy();
   }
 
-  this->textures_.clear();
+  this->m_textures.clear();
 }
 
 void GltfModel::loadMaterials(tinygltf::Model &model) {
-  this->materials_.resize(model.materials.size());
+  this->m_materials.resize(model.materials.size());
   for (size_t i = 0; i < model.materials.size(); i++) {
     auto &mat = model.materials[i];
 
@@ -285,19 +285,19 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
           glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
     }
 
-    this->materials_[i] = Material{*this, albedoTextureIndex, baseColorFactor};
+    this->m_materials[i] = Material{*this, albedoTextureIndex, baseColorFactor};
   }
 }
 
 void GltfModel::loadTextures(tinygltf::Model &model) {
-  this->textures_.resize(model.images.size());
+  this->m_textures.resize(model.images.size());
   for (size_t i = 0; i < model.images.size(); i++) {
     if (model.images[i].component != 4) {
       // TODO: support RGB images
       throw std::runtime_error("Only 4-component images are supported.");
     }
 
-    this->textures_[i].loadFromBinary(
+    this->m_textures[i].loadFromBinary(
         model.images[i].image,
         static_cast<uint32_t>(model.images[i].width),
         static_cast<uint32_t>(model.images[i].height));
@@ -313,7 +313,7 @@ void GltfModel::loadNode(
     bool flipUVs) {
   const tinygltf::Node &node = model.nodes[nodeIndex];
 
-  Node &newNode = nodes_[nodeIndex];
+  Node &newNode = m_nodes[nodeIndex];
   newNode.index = nodeIndex;
   newNode.parentIndex = parentIndex;
   newNode.name = node.name;
@@ -343,7 +343,7 @@ void GltfModel::loadNode(
 
   if (node.mesh > -1) {
     const tinygltf::Mesh mesh = model.meshes[node.mesh];
-    Mesh &newMesh = this->meshes_[node.mesh];
+    Mesh &newMesh = this->m_meshes[node.mesh];
 
     for (size_t j = 0; j < mesh.primitives.size(); j++) {
       const tinygltf::Primitive &primitive = mesh.primitives[j];
@@ -493,13 +493,13 @@ void GltfModel::loadNode(
   }
 
   if (parentIndex != -1) {
-    nodes_[parentIndex].childrenIndices.push_back(nodeIndex);
+    m_nodes[parentIndex].childrenIndices.push_back(nodeIndex);
   }
 }
 
 void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
   if (node.meshIndex != -1) {
-    for (Primitive &primitive : this->meshes_[node.meshIndex].primitives) {
+    for (Primitive &primitive : this->m_meshes[node.meshIndex].primitives) {
       glm::vec4 locMin =
           glm::vec4(primitive.dimensions.min, 1.0f) * node.getMatrix(*this);
       glm::vec4 locMax =
@@ -525,14 +525,14 @@ void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
     }
   }
   for (auto childIndex : node.childrenIndices) {
-    getNodeDimensions(this->nodes_[childIndex], min, max);
+    getNodeDimensions(this->m_nodes[childIndex], min, max);
   }
 }
 
 void GltfModel::getSceneDimensions() {
   dimensions.min = glm::vec3(FLT_MAX);
   dimensions.max = glm::vec3(-FLT_MAX);
-  for (auto node : nodes_) {
+  for (auto node : m_nodes) {
     getNodeDimensions(node, dimensions.min, dimensions.max);
   }
   dimensions.size = dimensions.max - dimensions.min;

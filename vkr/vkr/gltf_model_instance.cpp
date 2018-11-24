@@ -4,7 +4,7 @@
 
 using namespace vkr;
 
-GltfModelInstance::GltfModelInstance(const GltfModel &model) : model(model) {
+GltfModelInstance::GltfModelInstance(const GltfModel &model) : m_model(model) {
   // Create uniform buffers and descriptors
   {
     auto [descriptorPool, descriptorSetLayout] =
@@ -21,25 +21,25 @@ GltfModelInstance::GltfModelInstance(const GltfModel &model) : model(model) {
     };
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-      buffer::makeUniformBuffer(
+      buffer::createUniformBuffer(
           sizeof(ModelUniform),
-          &this->uniformBuffers.buffers[i],
-          &this->uniformBuffers.allocations[i]);
+          &this->m_uniformBuffers.buffers[i],
+          &this->m_uniformBuffers.allocations[i]);
 
       buffer::mapMemory(
-          this->uniformBuffers.allocations[i], &this->mappings[i]);
-      memcpy(this->mappings[i], &this->ubo, sizeof(ModelUniform));
+          this->m_uniformBuffers.allocations[i], &this->m_mappings[i]);
+      memcpy(this->m_mappings[i], &this->m_ubo, sizeof(ModelUniform));
 
       VkDescriptorBufferInfo bufferInfo = {
-          this->uniformBuffers.buffers[i], 0, sizeof(ModelUniform)};
+          this->m_uniformBuffers.buffers[i], 0, sizeof(ModelUniform)};
 
       VK_CHECK(vkAllocateDescriptorSets(
-          ctx::device, &allocateInfo, &this->descriptorSets[i]));
+          ctx::device, &allocateInfo, &this->m_descriptorSets[i]));
 
       VkWriteDescriptorSet descriptorWrite = {
           VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
           nullptr,
-          this->descriptorSets[i],          // dstSet
+          this->m_descriptorSets[i],          // dstSet
           0,                                 // dstBinding
           0,                                 // dstArrayElement
           1,                                 // descriptorCount
@@ -55,9 +55,9 @@ GltfModelInstance::GltfModelInstance(const GltfModel &model) : model(model) {
 }
 
 void GltfModelInstance::destroy() {
-  for (size_t i = 0; i < ARRAYSIZE(uniformBuffers.buffers); i++) {
-    buffer::unmapMemory(uniformBuffers.allocations[i]);
-    buffer::destroy(uniformBuffers.buffers[i], uniformBuffers.allocations[i]);
+  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
+    buffer::unmapMemory(m_uniformBuffers.allocations[i]);
+    buffer::destroy(m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
   }
 
   auto descriptorPool = ctx::descriptorManager.getPool(DESC_MESH);
@@ -66,8 +66,8 @@ void GltfModelInstance::destroy() {
   vkFreeDescriptorSets(
       ctx::device,
       *descriptorPool,
-      descriptorSets.size(),
-      descriptorSets.data());
+      m_descriptorSets.size(),
+      m_descriptorSets.data());
 }
 
 void GltfModelInstance::draw(Window &window, GraphicsPipeline &pipeline) {
@@ -78,43 +78,43 @@ void GltfModelInstance::draw(Window &window, GraphicsPipeline &pipeline) {
   this->updateUniforms(i);
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
 
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(
-      commandBuffer, 0, 1, &this->model.vertexBuffer_, &offset);
+      commandBuffer, 0, 1, &this->m_model.m_vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
-      commandBuffer, this->model.indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
+      commandBuffer, this->m_model.m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.pipelineLayout,
+      pipeline.m_pipelineLayout,
       2, // firstSet
       1,
-      &this->descriptorSets[i],
+      &this->m_descriptorSets[i],
       0,
       nullptr);
 
-  for (auto &node : this->model.nodes_) {
+  for (auto &node : this->m_model.m_nodes) {
     drawNode(node, window, pipeline);
   }
 }
 
 void GltfModelInstance::updateUniforms(int frameIndex) {
-  auto translation = glm::translate(glm::mat4(1.0f), this->pos);
+  auto translation = glm::translate(glm::mat4(1.0f), this->m_pos);
   auto rotation = glm::rotate(
-      glm::mat4(1.0f), glm::radians(this->rotation.x), {1.0, 0.0, 0.0});
+      glm::mat4(1.0f), glm::radians(this->m_rotation.x), {1.0, 0.0, 0.0});
   rotation =
-      glm::rotate(rotation, glm::radians(this->rotation.y), {0.0, 1.0, 0.0});
+      glm::rotate(rotation, glm::radians(this->m_rotation.y), {0.0, 1.0, 0.0});
   rotation =
-      glm::rotate(rotation, glm::radians(this->rotation.z), {0.0, 0.0, 1.0});
-  auto scaling = glm::scale(glm::mat4(1.0f), this->scale);
+      glm::rotate(rotation, glm::radians(this->m_rotation.z), {0.0, 0.0, 1.0});
+  auto scaling = glm::scale(glm::mat4(1.0f), this->m_scale);
 
-  this->ubo.model = translation * rotation * scaling;
+  this->m_ubo.model = translation * rotation * scaling;
 
-  memcpy(this->mappings[frameIndex], &this->ubo, sizeof(ModelUniform));
+  memcpy(this->m_mappings[frameIndex], &this->m_ubo, sizeof(ModelUniform));
 }
 
 void GltfModelInstance::drawNode(
@@ -125,15 +125,15 @@ void GltfModelInstance::drawNode(
 
   if (node.meshIndex != -1) {
     for (GltfModel::Primitive &primitive :
-         this->model.meshes_[node.meshIndex].primitives) {
-      if (primitive.materialIndex != -1 && this->model.materials_.size() > 0) {
+         this->m_model.m_meshes[node.meshIndex].primitives) {
+      if (primitive.materialIndex != -1 && this->m_model.m_materials.size() > 0) {
         vkCmdBindDescriptorSets(
             commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline.pipelineLayout,
+            pipeline.m_pipelineLayout,
             1, // firstSet
             1,
-            &this->model.materials_[primitive.materialIndex].descriptorSets[i],
+            &this->m_model.m_materials[primitive.materialIndex].descriptorSets[i],
             0,
             nullptr);
       }
@@ -144,6 +144,6 @@ void GltfModelInstance::drawNode(
   }
 
   for (auto &childIndex : node.childrenIndices) {
-    drawNode(this->model.nodes_[childIndex], window, pipeline);
+    drawNode(this->m_model.m_nodes[childIndex], window, pipeline);
   }
 }

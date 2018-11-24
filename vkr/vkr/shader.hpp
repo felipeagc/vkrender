@@ -1,8 +1,8 @@
 #pragma once
 
+#include "vertex_format.hpp"
 #include <fstl/fixed_vector.hpp>
 #include <fstream>
-#include "vertex_format.hpp"
 
 namespace vkr {
 class Shader {
@@ -19,7 +19,7 @@ public:
   Shader(const Shader &other) = delete;
   Shader &operator=(Shader &other) = delete;
 
-  operator bool() { return this->vertexModule_ && this->fragmentModule_; };
+  operator bool() { return this->m_vertexModule && this->m_fragmentModule; };
 
   fstl::fixed_vector<VkPipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
@@ -56,11 +56,11 @@ public:
   }
 
 private:
-  std::vector<uint32_t> vertexCode_;
-  std::vector<uint32_t> fragmentCode_;
-  VkShaderModule vertexModule_;
-  VkShaderModule fragmentModule_;
+  std::vector<uint32_t> m_vertexCode;
+  std::vector<uint32_t> m_fragmentCode;
+  VkShaderModule m_vertexModule;
+  VkShaderModule m_fragmentModule;
 
   VkShaderModule createShaderModule(const std::vector<uint32_t> &code) const;
 };
-}
+} // namespace vkr

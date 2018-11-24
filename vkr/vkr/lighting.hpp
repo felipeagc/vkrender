@@ -4,7 +4,7 @@
 #include "window.hpp"
 
 namespace vkr {
-struct GraphicsPipeline;
+class GraphicsPipeline;
 
 const uint32_t MAX_LIGHTS = 20;
 
@@ -26,16 +26,17 @@ public:
   uint32_t getLightCount() const;
   void setLightCount(uint32_t count);
 
+  // TODO: replace with destructor
   void destroy();
 
 private:
   struct LightingUniform {
     Light lights[MAX_LIGHTS];
     uint32_t lightCount;
-  } ubo;
+  } m_ubo;
 
-  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-  void *mappings[MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet descriptorSets[MAX_FRAMES_IN_FLIGHT];
+  buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;
+  void *m_mappings[MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet m_descriptorSets[MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace vkr

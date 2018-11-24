@@ -15,17 +15,13 @@ struct Asset {
   AssetType type;
 };
 
-struct AssetManager {
-  size_t loadedTextureCount = 0;
-  std::vector<Texture> textures;
-
-  size_t loadedGltfModelCount = 0;
-  std::vector<GltfModel> gltfModels;
-
-  std::unordered_map<std::string, Asset> assetTable;
-
+class AssetManager {
+public:
+  AssetManager(){};
   // TODO: get rid of this and use a destructor
   void destroy();
+
+  std::unordered_map<std::string, Asset> &getAssetTable();
 
   template <typename H> const H &getAsset(const std::string &);
   template <> const Texture &getAsset<Texture>(const std::string &identifier);
@@ -35,5 +31,14 @@ struct AssetManager {
   template <typename A> void unloadAsset(const std::string &);
   template <> void unloadAsset<Texture>(const std::string &identifier);
   template <> void unloadAsset<GltfModel>(const std::string &identifier);
+
+private:
+  size_t m_loadedTextureCount = 0;
+  std::vector<Texture> m_textures;
+
+  size_t m_loadedGltfModelCount = 0;
+  std::vector<GltfModel> m_gltfModels;
+
+  std::unordered_map<std::string, Asset> m_assetTable;
 };
 } // namespace vkr

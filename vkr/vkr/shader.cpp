@@ -9,20 +9,20 @@ using namespace vkr;
 
 Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
   fstl::log::debug("Creating shader from GLSL code");
-  this->vertexCode_ = compileShader(vertexPath, ShaderType::eVertex);
-  this->fragmentCode_ = compileShader(fragmentPath, ShaderType::eFragment);
-  this->vertexModule_ = this->createShaderModule(vertexCode_);
-  this->fragmentModule_ = this->createShaderModule(fragmentCode_);
+  this->m_vertexCode = compileShader(vertexPath, ShaderType::eVertex);
+  this->m_fragmentCode = compileShader(fragmentPath, ShaderType::eFragment);
+  this->m_vertexModule = this->createShaderModule(m_vertexCode);
+  this->m_fragmentModule = this->createShaderModule(m_fragmentCode);
 }
 
 Shader::Shader(
     const std::vector<uint32_t> &vertexCode,
     const std::vector<uint32_t> &fragmentCode) {
   fstl::log::debug("Creating shader from SPV code");
-  this->vertexCode_ = vertexCode;
-  this->fragmentCode_ = fragmentCode;
-  this->vertexModule_ = this->createShaderModule(vertexCode);
-  this->fragmentModule_ = this->createShaderModule(fragmentCode);
+  this->m_vertexCode = vertexCode;
+  this->m_fragmentCode = fragmentCode;
+  this->m_vertexModule = this->createShaderModule(vertexCode);
+  this->m_fragmentModule = this->createShaderModule(fragmentCode);
 }
 
 fstl::fixed_vector<VkPipelineShaderStageCreateInfo>
@@ -33,7 +33,7 @@ Shader::getPipelineShaderStageCreateInfos() const {
           nullptr,                                             // pNext
           0,                                                   // flags
           VK_SHADER_STAGE_VERTEX_BIT,                          // stage
-          this->vertexModule_,                                 // module
+          this->m_vertexModule,                                 // module
           "main",                                              // pName
           nullptr, // pSpecializationInfo
       },
@@ -42,7 +42,7 @@ Shader::getPipelineShaderStageCreateInfos() const {
           nullptr,                                             // pNext
           0,                                                   // flags
           VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
-          this->fragmentModule_,                               // module
+          this->m_fragmentModule,                               // module
           "main",                                              // pName
           nullptr, // pSpecializationInfo
       },
@@ -53,10 +53,10 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   Shader::ShaderMetadata metadata{};
 
   spirv_cross::Compiler vertexComp(
-      this->vertexCode_.data(), this->vertexCode_.size());
+      this->m_vertexCode.data(), this->m_vertexCode.size());
 
   spirv_cross::Compiler fragmentComp(
-      this->fragmentCode_.data(), this->fragmentCode_.size());
+      this->m_fragmentCode.data(), this->m_fragmentCode.size());
 
   // Descriptor stuff ===========================
 
@@ -158,8 +158,8 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
 void Shader::destroy() {
   VK_CHECK(vkDeviceWaitIdle(ctx::device));
 
-  vkDestroyShaderModule(ctx::device, this->vertexModule_, nullptr);
-  vkDestroyShaderModule(ctx::device, this->fragmentModule_, nullptr);
+  vkDestroyShaderModule(ctx::device, this->m_vertexModule, nullptr);
+  vkDestroyShaderModule(ctx::device, this->m_fragmentModule, nullptr);
 }
 
 VkShaderModule

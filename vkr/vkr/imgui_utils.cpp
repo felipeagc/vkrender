@@ -32,7 +32,7 @@ void cameraWindow(Camera &camera) {
 void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
-  for (auto &[name, asset] : assetManager.assetTable) {
+  for (auto &[name, asset] : assetManager.getAssetTable()) {
     ImGui::Selectable(name.c_str(), false);
   }
 
