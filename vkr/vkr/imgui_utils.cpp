@@ -24,8 +24,15 @@ void statsWindow(Window &window) {
 
 void cameraWindow(Camera &camera) {
   ImGui::Begin("Camera");
-  float camPos[] = {camera.getPos().x, camera.getPos().y, camera.getPos().z};
+
+  float camPos[] = {
+      camera.m_position.x, camera.m_position.y, camera.m_position.z};
   ImGui::DragFloat3("Camera position", camPos, -10.0f, 10.0f);
+
+  glm::vec3 euler = glm::degrees(glm::eulerAngles(camera.m_rotation));
+  float camRot[] = {euler.x, euler.y, euler.z};
+  ImGui::DragFloat3("Camera rotation", camRot, -180.0f, 180.0f);
+
   ImGui::End();
 }
 

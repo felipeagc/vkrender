@@ -8,9 +8,13 @@ class GraphicsPipeline;
 
 class Billboard {
 public:
+  // Creates an uninitialized Billboard
   Billboard();
+
+  // Creates an initialized Billboard with the given parameters
   Billboard(
       const Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color);
+
   ~Billboard();
 
   // Billboard can't be copied
@@ -20,6 +24,9 @@ public:
   // Billboard can be moved
   Billboard(Billboard &&rhs);
   Billboard &operator=(Billboard &&rhs);
+
+  // Returns whether the object is initialized or not
+  operator bool() const;
 
   void draw(Window &window, GraphicsPipeline &pipeline);
 

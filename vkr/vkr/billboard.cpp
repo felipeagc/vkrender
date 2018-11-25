@@ -155,9 +155,9 @@ Billboard::Billboard(
 }
 
 Billboard::~Billboard() {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  if (*this) {
+    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_meshDescriptorSets[0] != VK_NULL_HANDLE) {
     VK_CHECK(vkFreeDescriptorSets(
         ctx().m_device,
         *ctx().m_descriptorManager.getPool(DESC_MESH),
@@ -167,9 +167,7 @@ Billboard::~Billboard() {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
       m_meshDescriptorSets[i] = VK_NULL_HANDLE;
     }
-  }
 
-  if (m_materialDescriptorSets[0] != VK_NULL_HANDLE) {
     VK_CHECK(vkFreeDescriptorSets(
         ctx().m_device,
         *ctx().m_descriptorManager.getPool(DESC_MATERIAL),
@@ -179,18 +177,14 @@ Billboard::~Billboard() {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
       m_materialDescriptorSets[i] = VK_NULL_HANDLE;
     }
-  }
 
-  for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
-    if (m_meshUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+    for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
       buffer::unmapMemory(m_meshUniformBuffers.allocations[i]);
       buffer::destroy(
           m_meshUniformBuffers.buffers[i], m_meshUniformBuffers.allocations[i]);
     }
-  }
 
-  for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
-    if (m_materialUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+    for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
       buffer::unmapMemory(m_materialUniformBuffers.allocations[i]);
       buffer::destroy(
           m_materialUniformBuffers.buffers[i],
@@ -234,9 +228,9 @@ Billboard::Billboard(Billboard &&rhs) {
 
 Billboard &Billboard::operator=(Billboard &&rhs) {
   if (this != &rhs) {
-    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+    if (*this) {
+      VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-    if (m_meshDescriptorSets[0] != VK_NULL_HANDLE) {
       VK_CHECK(vkFreeDescriptorSets(
           ctx().m_device,
           *ctx().m_descriptorManager.getPool(DESC_MESH),
@@ -246,9 +240,7 @@ Billboard &Billboard::operator=(Billboard &&rhs) {
       for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         m_meshDescriptorSets[i] = VK_NULL_HANDLE;
       }
-    }
 
-    if (m_materialDescriptorSets[0] != VK_NULL_HANDLE) {
       VK_CHECK(vkFreeDescriptorSets(
           ctx().m_device,
           *ctx().m_descriptorManager.getPool(DESC_MATERIAL),
@@ -258,19 +250,15 @@ Billboard &Billboard::operator=(Billboard &&rhs) {
       for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         m_materialDescriptorSets[i] = VK_NULL_HANDLE;
       }
-    }
 
-    for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
-      if (m_meshUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+      for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
         buffer::unmapMemory(m_meshUniformBuffers.allocations[i]);
         buffer::destroy(
             m_meshUniformBuffers.buffers[i],
             m_meshUniformBuffers.allocations[i]);
       }
-    }
 
-    for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
-      if (m_materialUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+      for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
         buffer::unmapMemory(m_materialUniformBuffers.allocations[i]);
         buffer::destroy(
             m_materialUniformBuffers.buffers[i],
@@ -311,6 +299,10 @@ Billboard &Billboard::operator=(Billboard &&rhs) {
   }
 
   return *this;
+}
+
+Billboard::operator bool() const {
+  return (m_meshDescriptorSets[0] != VK_NULL_HANDLE);
 }
 
 void Billboard::draw(Window &window, GraphicsPipeline &pipeline) {

@@ -73,9 +73,7 @@ int main() {
   boombox.m_scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
 
   // Create camera
-  vkr::Camera camera({3.0, 3.0, 3.0});
-  camera.lookAt((helmet.m_pos + boombox.m_pos) / 2.0f);
-  camera.update(window);
+  vkr::Camera camera{{0.0, 0.0, 0.0}};
 
   float time = 0.0;
   float cameraAngle = 0;
@@ -98,14 +96,8 @@ int main() {
       case SDL_MOUSEMOTION:
         if (event.motion.state & SDL_BUTTON_LMASK &&
             !ImGui::IsAnyItemActive()) {
-          cameraAngle += (float)event.motion.xrel / 100.0f;
-          cameraHeightMultiplier += (float)event.motion.yrel / 100.0f;
-          float threshold = M_PI / 2.0f - 0.001f;
-          if (cameraHeightMultiplier >= threshold) {
-            cameraHeightMultiplier = threshold;
-          } else if (cameraHeightMultiplier <= -threshold) {
-            cameraHeightMultiplier = -threshold;
-          }
+          cameraAngle -= (float)event.motion.xrel / 100.0f;
+          cameraHeightMultiplier -= (float)event.motion.yrel / 100.0f;
         }
         break;
       case SDL_MOUSEWHEEL:
@@ -121,30 +113,33 @@ int main() {
       }
     }
 
+    // Change camera position and rotation
+    float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
+    float camZ = -cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
+    camera.m_position = {
+        camX, cameraRadius * sin(cameraHeightMultiplier), camZ};
+
+    camera.lookAt(
+        (helmet.m_pos + boombox.m_pos) / 2.0f,
+        glm::normalize(glm::vec3{0.0, -cos(cameraHeightMultiplier), 0.0}));
+
+    // Update camera matrices
+    camera.update(window);
+
+    // Show ImGui windows
     vkr::imgui::statsWindow(window);
     vkr::imgui::assetsWindow(assetManager);
     vkr::imgui::lightsWindow(lightManager);
-
-    // Draw stuff
-    float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
-    float camZ = cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
-    camera.setPos({camX, cameraRadius * sin(cameraHeightMultiplier), camZ});
-
     vkr::imgui::cameraWindow(camera);
 
-    camera.lookAt((helmet.m_pos + boombox.m_pos) / 2.0f);
-    camera.update(window);
-
-    // helmet.setRotation({0.0, time * 100.0, 0.0});
-    // boombox.setRotation({0.0, time * 100.0, 0.0});
+    // Draw models
     lightManager.bind(window, modelPipeline);
-
     camera.bind(window, modelPipeline);
     helmet.draw(window, modelPipeline);
     boombox.draw(window, modelPipeline);
 
+    // Draw billboards
     camera.bind(window, billboardPipeline);
-
     for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
       vkr::Light light = lightManager.getLights()[i];
       lightBillboards[i].setPos(light.pos);

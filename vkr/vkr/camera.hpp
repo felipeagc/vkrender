@@ -1,10 +1,13 @@
 #pragma once
 
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include "buffer.hpp"
 #include "window.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace vkr {
 class GraphicsPipeline;
@@ -12,14 +15,16 @@ class GraphicsPipeline;
 class Camera {
 public:
   struct CameraUniform {
-    glm::mat4 view{1.0f};
-    glm::mat4 proj{1.0f};
+    glm::mat4 view;
+    glm::mat4 proj;
   };
 
+  // Creates an uninitialized Camera
   Camera();
-  Camera(
-      glm::vec3 position = glm::vec3(0.0f),
-      glm::quat rotation = glm::quat(glm::vec3(0.0f, M_PI, M_PI)));
+
+  // Creates an initialized camera with the given parameters
+  Camera(glm::vec3 position, glm::quat rotation = glm::quat());
+
   ~Camera();
 
   // Camera cannot be copied
@@ -30,22 +35,19 @@ public:
   Camera(Camera &&rhs);
   Camera &operator=(Camera &&rhs);
 
-  void setPos(glm::vec3 pos);
-  glm::vec3 getPos() const;
-  void translate(glm::vec3 translation);
+  // Returns whether the object is initialized or not
+  operator bool() const;
 
-  void setRot(glm::quat rot);
-  glm::quat getRot() const;
-  void rotate(glm::quat rot);
+  void lookAt(glm::vec3 point, glm::vec3 up);
 
-  void setFov(float fov);
-  float getFov() const;
-
-  void lookAt(glm::vec3 point);
-
+  // Updates the GPU resources with the data in this Camera object
   void update(Window &window);
 
+  // Binds this camera to a pipeline
   void bind(Window &window, GraphicsPipeline &pipeline);
+
+  glm::vec3 m_position;
+  glm::quat m_rotation;
 
 protected:
   buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;

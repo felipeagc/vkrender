@@ -62,20 +62,18 @@ GltfModelInstance::GltfModelInstance(const GltfModel &model) : m_model(model) {
 }
 
 GltfModelInstance::~GltfModelInstance() {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  if (*this) {
+    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
     for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
       buffer::unmapMemory(m_uniformBuffers.allocations[i]);
       buffer::destroy(
           m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
     }
-  }
 
-  auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_MESH);
-  assert(descriptorPool != nullptr);
+    auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_MESH);
+    assert(descriptorPool != nullptr);
 
-  if (m_descriptorSets[0] != VK_NULL_HANDLE) {
     vkFreeDescriptorSets(
         ctx().m_device,
         *descriptorPool,
@@ -110,21 +108,19 @@ GltfModelInstance::GltfModelInstance(GltfModelInstance &&rhs) {
 
 GltfModelInstance &GltfModelInstance::operator=(GltfModelInstance &&rhs) {
   if (this != &rhs) {
-    // Free old stuff
-    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+    if (*this) {
+      // Free old stuff
+      VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-    if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
       for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
         buffer::unmapMemory(m_uniformBuffers.allocations[i]);
         buffer::destroy(
             m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
       }
-    }
 
-    auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_MESH);
-    assert(descriptorPool != nullptr);
+      auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_MESH);
+      assert(descriptorPool != nullptr);
 
-    if (m_descriptorSets[0] != VK_NULL_HANDLE) {
       vkFreeDescriptorSets(
           ctx().m_device,
           *descriptorPool,
@@ -156,6 +152,10 @@ GltfModelInstance &GltfModelInstance::operator=(GltfModelInstance &&rhs) {
   }
 
   return *this;
+}
+
+GltfModelInstance::operator bool() const {
+  return (m_descriptorSets[0] != VK_NULL_HANDLE);
 }
 
 void GltfModelInstance::draw(Window &window, GraphicsPipeline &pipeline) {

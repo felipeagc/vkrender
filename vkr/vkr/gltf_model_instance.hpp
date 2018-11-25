@@ -5,8 +5,12 @@
 namespace vkr {
 class GltfModelInstance {
 public:
+  // Creates an uninitialized GltfModelInstance
   GltfModelInstance();
+
+  // Creates an initialized GltfModelInstance with the given model
   GltfModelInstance(const GltfModel &model);
+
   ~GltfModelInstance();
 
   // GltfModelInstance cannot be copied
@@ -16,6 +20,9 @@ public:
   // GltfModelInstance can be moved
   GltfModelInstance(GltfModelInstance &&rhs);
   GltfModelInstance &operator=(GltfModelInstance &&rhs);
+
+  // Returns whether the object is initialized or not
+  operator bool() const;
 
   void draw(Window &window, GraphicsPipeline &pipeline);
 

@@ -13,10 +13,8 @@ Camera::Camera() {
   }
 }
 
-Camera::Camera(glm::vec3 position, glm::quat rotation) {
-  this->setPos(position);
-  this->setRot(rotation);
-
+Camera::Camera(glm::vec3 position, glm::quat rotation)
+    : m_position(position), m_rotation(rotation) {
   auto [descriptorPool, descriptorSetLayout] =
       ctx().m_descriptorManager[DESC_CAMERA];
 
@@ -65,17 +63,15 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
 }
 
 Camera::~Camera() {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  if (*this) {
+    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
     for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
       buffer::unmapMemory(m_uniformBuffers.allocations[i]);
       buffer::destroy(
           m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
     }
-  }
 
-  if (m_descriptorSets[0] != VK_NULL_HANDLE) {
     auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_CAMERA);
 
     assert(descriptorPool != nullptr);
@@ -93,6 +89,8 @@ Camera::Camera(Camera &&rhs) {
   m_fov = rhs.m_fov;
   m_near = rhs.m_near;
   m_far = rhs.m_far;
+  m_position = rhs.m_position;
+  m_rotation = rhs.m_rotation;
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     m_uniformBuffers.buffers[i] = rhs.m_uniformBuffers.buffers[i];
@@ -111,18 +109,16 @@ Camera::Camera(Camera &&rhs) {
 
 Camera &Camera::operator=(Camera &&rhs) {
   if (this != &rhs) {
-    // Free old stuff
-    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+    if (*this) {
+      // Free old stuff
+      VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-    if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
       for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
         buffer::unmapMemory(m_uniformBuffers.allocations[i]);
         buffer::destroy(
             m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
       }
-    }
 
-    if (m_descriptorSets[0] != VK_NULL_HANDLE) {
       auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_CAMERA);
 
       assert(descriptorPool != nullptr);
@@ -139,6 +135,8 @@ Camera &Camera::operator=(Camera &&rhs) {
   m_fov = rhs.m_fov;
   m_near = rhs.m_near;
   m_far = rhs.m_far;
+  m_position = rhs.m_position;
+  m_rotation = rhs.m_rotation;
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     m_uniformBuffers.buffers[i] = rhs.m_uniformBuffers.buffers[i];
@@ -157,45 +155,13 @@ Camera &Camera::operator=(Camera &&rhs) {
   return *this;
 }
 
-void Camera::setPos(glm::vec3 pos) {
-  m_cameraUniform.view[3][0] = pos.x;
-  m_cameraUniform.view[3][1] = pos.y;
-  m_cameraUniform.view[3][2] = pos.z;
+Camera::operator bool() const {
+  return (m_descriptorSets[0] != VK_NULL_HANDLE);
 }
 
-glm::vec3 Camera::getPos() const {
-  return glm::vec3(
-      m_cameraUniform.view[3][0],
-      m_cameraUniform.view[3][1],
-      m_cameraUniform.view[3][2]);
-}
-
-void Camera::translate(glm::vec3 translation) {
-  m_cameraUniform.view = glm::translate(m_cameraUniform.view, translation);
-}
-
-void Camera::setRot(glm::quat rot) {
-  glm::quat currentRot = glm::quat_cast(m_cameraUniform.view);
-  m_cameraUniform.view =
-      glm::mat4_cast(glm::inverse(currentRot)) * m_cameraUniform.view;
-  m_cameraUniform.view = glm::mat4_cast(rot) * m_cameraUniform.view;
-}
-
-glm::quat Camera::getRot() const {
-  glm::quat currentRot = glm::quat_cast(m_cameraUniform.view);
-  return currentRot;
-}
-
-void Camera::rotate(glm::quat rot) {
-  m_cameraUniform.view = glm::mat4_cast(rot) * m_cameraUniform.view;
-}
-
-void Camera::setFov(float fov) { m_fov = fov; }
-
-float Camera::getFov() const { return m_fov; }
-
-void Camera::lookAt(glm::vec3 point) {
-  m_cameraUniform.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
+void Camera::lookAt(glm::vec3 point, glm::vec3 up) {
+  m_rotation =
+      glm::conjugate(glm::quatLookAt(glm::normalize(m_position - point), up));
 }
 
 void Camera::update(Window &window) {
@@ -207,6 +173,10 @@ void Camera::update(Window &window) {
           static_cast<float>(window.getHeight()),
       m_near,
       m_far);
+
+  m_cameraUniform.view = glm::mat4(1.0f);
+  m_cameraUniform.view = glm::toMat4(m_rotation) * m_cameraUniform.view;
+  m_cameraUniform.view = glm::translate(m_cameraUniform.view, m_position);
 
   memcpy(m_mappings[i], &m_cameraUniform, sizeof(CameraUniform));
 }

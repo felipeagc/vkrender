@@ -242,6 +242,8 @@ void DescriptorManager::init() {
 }
 
 void DescriptorManager::destroy() {
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
   for (auto &p : m_pools) {
     vkDestroyDescriptorPool(ctx().m_device, p.second, nullptr);
   }

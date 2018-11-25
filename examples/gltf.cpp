@@ -25,8 +25,7 @@ int main() {
 
   modelShader.destroy();
 
-  vkr::Camera camera({3.0, 3.0, 3.0});
-  camera.lookAt({0.0, 0.0, 0.0});
+  vkr::Camera camera{{0.0, 0.0, 0.0}};
 
   vkr::GltfModelInstance helmet{
       assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
@@ -41,8 +40,8 @@ int main() {
     float radius = 3.0f;
     float camX = sin(time) * radius;
     float camY = cos(time) * radius;
-    camera.setPos({camX, radius, camY});
-    camera.lookAt((helmet.m_pos + duck.m_pos) / 2.0f);
+    camera.m_position = {camX, -radius, camY};
+    camera.lookAt((helmet.m_pos + duck.m_pos) / 2.0f, {0.0, -1.0, 0.0});
 
     camera.update(window);
 
