@@ -12,7 +12,7 @@
 - [ ] Shader live refresh
 
 ### Camera
-- [ ] Rewrite camera class
+- [x] Rewrite camera class
 - [x] Camera options
 - [x] Use quaternion for camera
 - [ ] First person camera
@@ -55,14 +55,15 @@
 - [x] Add google test as a git submodule
 - [x] Add glm as a git submodule
 - [ ] Figure out how to add vulkan SDK as a submodule
-- [ ] Add rapidjson
+- [x] Add rapidjson
 
 ### Assets
-- [ ] Asset management system
-- [ ] Separate GltfModel into GltfModel and GltfModelInstance
+- [x] Asset management system
+- [x] Separate GltfModel into GltfModel and GltfModelInstance
 - [ ] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
-- [ ] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
+- [x] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
       Maybe handle this in the asset constructor itself.
+- [ ] Multi-threaded asset loading
 
 ### Misc
 - [ ] Specify which types can be copied (maybe with a Handle suffix)
