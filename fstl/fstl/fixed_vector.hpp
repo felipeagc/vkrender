@@ -15,7 +15,7 @@ public:
     this->resize(count);
 
     for (size_t i = 0; i < count; i++) {
-      this->m_heapVector[i] = value;
+      m_heapVector[i] = value;
     }
   }
 
@@ -23,11 +23,11 @@ public:
     size_t len = data.end() - data.begin();
 
     this->resize(len);
-    this->m_size = len;
+    m_size = len;
 
     size_t i = 0;
     for (auto p = data.begin(); p < data.end(); p++) {
-      this->m_heapVector[i++] = *p;
+      m_heapVector[i++] = *p;
     }
   }
 
@@ -39,44 +39,66 @@ public:
 
   fixed_vector(const fixed_vector &other) {
     this->resize(other.m_size);
-    this->m_size = other.m_size;
+    m_size = other.m_size;
 
     for (size_t i = 0; i < other.m_size; i++) {
-      this->m_heapVector[i] = other[i];
+      m_heapVector[i] = other[i];
     }
   }
 
   fixed_vector &operator=(const fixed_vector &other) {
     this->resize(other.m_size);
-    this->m_size = other.m_size;
+    m_size = other.m_size;
 
     for (size_t i = 0; i < other.m_size; i++) {
-      this->m_heapVector[i] = other[i];
+      m_heapVector[i] = other[i];
     }
 
     return *this;
   }
 
   void push_back(const T &value) noexcept {
-    if (this->m_size == this->m_capacity) {
-      T *newStorage = new T[this->m_capacity * 2];
+    if (m_size == m_capacity) {
+      T *newStorage = new T[m_capacity * 2];
 
-      for (size_t i = 0; i < this->m_capacity; i++) {
-        newStorage[i] = this->m_heapVector[i];
+      for (size_t i = 0; i < m_capacity; i++) {
+        newStorage[i] = m_heapVector[i];
       }
 
-      this->m_capacity *= 2;
+      m_capacity *= 2;
 
       // Delete heap vector if it's not the stack allocated array
-      if (this->m_heapVector != this->m_array.data()) {
-        delete[] this->m_heapVector;
+      if (m_heapVector != m_array.data()) {
+        delete[] m_heapVector;
       }
 
-      this->m_heapVector = newStorage;
+      m_heapVector = newStorage;
     }
 
-    this->m_size++;
-    this->m_heapVector[this->m_size - 1] = value;
+    m_size++;
+    m_heapVector[m_size - 1] = value;
+  }
+
+  void push_back(T &&value) noexcept {
+    if (m_size == m_capacity) {
+      T *newStorage = new T[m_capacity * 2];
+
+      for (size_t i = 0; i < m_capacity; i++) {
+        newStorage[i] = std::move(m_heapVector[i]);
+      }
+
+      m_capacity *= 2;
+
+      // Delete heap vector if it's not the stack allocated array
+      if (m_heapVector != m_array.data()) {
+        delete[] m_heapVector;
+      }
+
+      m_heapVector = newStorage;
+    }
+
+    m_size++;
+    m_heapVector[m_size - 1] = std::move(value);
   }
 
   T &operator[](size_t index) const noexcept { return m_heapVector[index]; }
@@ -89,7 +111,7 @@ public:
   }
 
   void resize(size_t newCapacity) noexcept {
-    this->m_size = newCapacity;
+    m_size = newCapacity;
     if (newCapacity <= N) {
       if (m_heapVector != m_array.data()) {
         for (size_t i = 0; i < N; i++) {
@@ -99,7 +121,7 @@ public:
         delete[] m_heapVector;
 
         m_heapVector = m_array.data();
-        this->m_capacity = N;
+        m_capacity = N;
       }
       return;
     }
@@ -107,10 +129,10 @@ public:
     T *newStorage = new T[newCapacity];
 
     size_t minCapacity =
-        newCapacity <= this->m_capacity ? newCapacity : this->m_capacity;
+        newCapacity <= m_capacity ? newCapacity : m_capacity;
 
     for (size_t i = 0; i < minCapacity; i++) {
-      newStorage[i] = this->m_heapVector[i];
+      newStorage[i] = m_heapVector[i];
     }
 
     for (size_t i = minCapacity; i < newCapacity; i++) {
@@ -122,16 +144,16 @@ public:
     }
 
     m_heapVector = newStorage;
-    this->m_capacity = newCapacity;
+    m_capacity = newCapacity;
   }
 
-  size_t size() const noexcept { return this->m_size; }
+  size_t size() const noexcept { return m_size; }
 
   T *data() const noexcept { return m_heapVector; }
 
   T *begin() const noexcept { return &m_heapVector[0]; }
 
-  T *end() const noexcept { return &m_heapVector[this->m_size]; }
+  T *end() const noexcept { return &m_heapVector[m_size]; }
 
 protected:
   std::array<T, N> m_array{};

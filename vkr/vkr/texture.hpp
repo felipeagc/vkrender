@@ -7,11 +7,21 @@
 namespace vkr {
 class Texture {
 public:
-  void loadFromPath(const std::string_view &path);
-  void loadFromBinary(
+  Texture(){};
+  Texture(const std::string_view &path);
+  Texture(
       const std::vector<unsigned char> &data,
       const uint32_t width,
       const uint32_t height);
+  ~Texture(){};
+
+  // Texture can be copied
+  Texture(const Texture &) = default;
+  Texture &operator=(const Texture &) = default;
+
+  // Texture can be moved
+  Texture(Texture &&) = default;
+  Texture &operator=(Texture &&) = default;
 
   operator bool() const;
 

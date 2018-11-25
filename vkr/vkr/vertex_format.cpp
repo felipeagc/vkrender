@@ -5,8 +5,8 @@ using namespace vkr;
 VertexFormat::VertexFormat(
     fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions,
     fstl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions)
-    : bindingDescriptions_(bindingDescriptions),
-      attributeDescriptions_(attributeDescriptions) {}
+    : m_bindingDescriptions(bindingDescriptions),
+      m_attributeDescriptions(attributeDescriptions) {}
 
 VkPipelineVertexInputStateCreateInfo
 VertexFormat::getPipelineVertexInputStateCreateInfo() const {
@@ -15,26 +15,26 @@ VertexFormat::getPipelineVertexInputStateCreateInfo() const {
       nullptr,                                                   // pNext
       0,                                                         // flags
       static_cast<uint32_t>(
-          this->bindingDescriptions_.size()), // vertexBindingDescriptionCount
-      this->bindingDescriptions_.data(),      // pVertexBindingDescriptions
-      static_cast<uint32_t>(this->attributeDescriptions_
+          m_bindingDescriptions.size()), // vertexBindingDescriptionCount
+      m_bindingDescriptions.data(),      // pVertexBindingDescriptions
+      static_cast<uint32_t>(m_attributeDescriptions
                                 .size()), // vertexAttributeDescriptionCount
-      this->attributeDescriptions_.data() // pVertexAttributeDescriptions
+      m_attributeDescriptions.data() // pVertexAttributeDescriptions
   };
 }
 
 VertexFormatBuilder VertexFormatBuilder::addBinding(
     uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) {
-  this->bindingDescriptions_.push_back({binding, stride, inputRate});
+  m_bindingDescriptions.push_back({binding, stride, inputRate});
   return *this;
 }
 
 VertexFormatBuilder VertexFormatBuilder::addAttribute(
     uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) {
-  this->attributeDescriptions_.push_back({location, binding, format, offset});
+  m_attributeDescriptions.push_back({location, binding, format, offset});
   return *this;
 }
 
 VertexFormat VertexFormatBuilder::build() {
-  return {this->bindingDescriptions_, this->attributeDescriptions_};
+  return {m_bindingDescriptions, m_attributeDescriptions};
 }

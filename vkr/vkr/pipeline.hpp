@@ -14,10 +14,19 @@ struct StandardVertex {
 
 class GraphicsPipeline {
 public:
-  VkPipeline m_pipeline;
-  VkPipelineLayout m_pipelineLayout;
+  GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
+  ~GraphicsPipeline();
 
-  void destroy();
+  // GraphicsPipeline cannot be copied
+  GraphicsPipeline(const GraphicsPipeline &) = delete;
+  GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
+
+  // GraphicsPipeline can be moved
+  GraphicsPipeline(GraphicsPipeline &&rhs);
+  GraphicsPipeline &operator=(GraphicsPipeline &&rhs);
+
+  VkPipeline m_pipeline = VK_NULL_HANDLE;
+  VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 };
 
 GraphicsPipeline createStandardPipeline(Window &window, Shader &shader);

@@ -6,17 +6,38 @@
 
 namespace vkr {
 
-void GraphicsPipeline::destroy() {
-  vkDestroyPipelineLayout(ctx::device, this->m_pipelineLayout, nullptr);
-  vkDestroyPipeline(ctx::device, this->m_pipeline, nullptr);
+GraphicsPipeline::GraphicsPipeline(
+    VkPipeline pipeline, VkPipelineLayout pipelineLayout)
+    : m_pipeline(pipeline), m_pipelineLayout(pipelineLayout) {}
+
+GraphicsPipeline::~GraphicsPipeline() {
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
+  if (m_pipelineLayout != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(ctx().m_device, m_pipelineLayout, nullptr);
+  }
+  if (m_pipeline != VK_NULL_HANDLE) {
+    vkDestroyPipeline(ctx().m_device, m_pipeline, nullptr);
+  }
+}
+
+GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&rhs) {
+  std::swap(m_pipeline, rhs.m_pipeline);
+  std::swap(m_pipelineLayout, rhs.m_pipelineLayout);
+}
+
+GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
+  std::swap(m_pipeline, rhs.m_pipeline);
+  std::swap(m_pipelineLayout, rhs.m_pipelineLayout);
+  return *this;
 }
 
 GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_CAMERA),
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_MATERIAL),
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_MESH),
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_LIGHTING),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_CAMERA),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_MATERIAL),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_MESH),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_LIGHTING),
   };
 
   auto pipelineLayout = pipeline::createPipelineLayout(
@@ -59,16 +80,21 @@ GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
   VkPipeline pipeline;
 
   VK_CHECK(vkCreateGraphicsPipelines(
-      ctx::device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
+      ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &pipeline));
 
   return GraphicsPipeline{pipeline, pipelineLayout};
 }
 
 GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_CAMERA),
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_MATERIAL),
-      *ctx::descriptorManager.getSetLayout(vkr::DESC_MESH),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_CAMERA),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_MATERIAL),
+      *ctx().m_descriptorManager.getSetLayout(vkr::DESC_MESH),
   };
 
   auto pipelineLayout = pipeline::createPipelineLayout(
@@ -120,7 +146,12 @@ GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
   VkPipeline pipeline;
 
   VK_CHECK(vkCreateGraphicsPipelines(
-      ctx::device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
+      ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &pipeline));
 
   return GraphicsPipeline{pipeline, pipelineLayout};
 }
@@ -142,7 +173,7 @@ VkPipelineLayout createPipelineLayout(
   VkPipelineLayout pipelineLayout;
 
   VK_CHECK(vkCreatePipelineLayout(
-      ctx::device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 
   return pipelineLayout;
 }
@@ -226,7 +257,7 @@ VkPipelineRasterizationStateCreateInfo defaultRasterizationState() {
 VkPipelineMultisampleStateCreateInfo
 defaultMultisampleState(VkSampleCountFlagBits sampleCount) {
   VkPhysicalDeviceFeatures deviceFeatures;
-  vkGetPhysicalDeviceFeatures(ctx::physicalDevice, &deviceFeatures);
+  vkGetPhysicalDeviceFeatures(ctx().m_physicalDevice, &deviceFeatures);
   VkBool32 hasSampleShading = deviceFeatures.sampleRateShading;
 
   VkBool32 sampleShadingEnable =

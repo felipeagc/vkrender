@@ -16,13 +16,19 @@ public:
     glm::mat4 proj{1.0f};
   };
 
+  Camera();
   Camera(
       glm::vec3 position = glm::vec3(0.0f),
       glm::quat rotation = glm::quat(glm::vec3(0.0f, M_PI, M_PI)));
-  ~Camera(){};
+  ~Camera();
 
-  // TODO: replace with destructor
-  void destroy();
+  // Camera cannot be copied
+  Camera(const Camera &) = delete;
+  Camera &operator=(const Camera &) = delete;
+
+  // Camera can be moved
+  Camera(Camera &&rhs);
+  Camera &operator=(Camera &&rhs);
 
   void setPos(glm::vec3 pos);
   glm::vec3 getPos() const;
@@ -43,8 +49,8 @@ public:
 
 protected:
   buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;
-  std::array<void *, MAX_FRAMES_IN_FLIGHT> m_mappings;
-  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> m_descriptorSets;
+  void *m_mappings[MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet m_descriptorSets[MAX_FRAMES_IN_FLIGHT];
 
   CameraUniform m_cameraUniform;
 

@@ -18,8 +18,11 @@ struct Asset {
 class AssetManager {
 public:
   AssetManager(){};
-  // TODO: get rid of this and use a destructor
-  void destroy();
+  ~AssetManager();
+
+  // No copying AssetManager
+  AssetManager(const AssetManager &) = delete;
+  AssetManager &operator=(const AssetManager &) = delete;
 
   std::unordered_map<std::string, Asset> &getAssetTable();
 

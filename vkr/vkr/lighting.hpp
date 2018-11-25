@@ -16,6 +16,15 @@ struct Light {
 class LightManager {
 public:
   LightManager(const fstl::fixed_vector<Light> &lights);
+  ~LightManager();
+
+  // LightManager cannot be copied
+  LightManager(const LightManager&) = delete;
+  LightManager& operator=(const LightManager&) = delete;
+
+  // LightManager cannot be moved
+  LightManager(LightManager&& rhs) = delete;
+  LightManager& operator=(LightManager&& rhs) = delete;
 
   void update();
 
@@ -25,9 +34,6 @@ public:
 
   uint32_t getLightCount() const;
   void setLightCount(uint32_t count);
-
-  // TODO: replace with destructor
-  void destroy();
 
 private:
   struct LightingUniform {

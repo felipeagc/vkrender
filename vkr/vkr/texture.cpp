@@ -40,7 +40,7 @@ static void createImage(
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      ctx::allocator,
+      ctx().m_allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
       image,
@@ -69,8 +69,8 @@ static void createImage(
       },                             // subresourceRange
   };
 
-  VK_CHECK(
-      vkCreateImageView(ctx::device, &imageViewCreateInfo, nullptr, imageView));
+  VK_CHECK(vkCreateImageView(
+      ctx().m_device, &imageViewCreateInfo, nullptr, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -93,7 +93,8 @@ static void createImage(
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(ctx::device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(
+      vkCreateSampler(ctx().m_device, &samplerCreateInfo, nullptr, sampler));
 }
 
 static std::vector<unsigned char>
@@ -118,19 +119,19 @@ loadImage(const std::string_view &path, uint32_t *width, uint32_t *height) {
   return result;
 }
 
-void Texture::loadFromPath(const std::string_view &path) {
+Texture::Texture(const std::string_view &path) {
   uint32_t width, height;
   auto pixels = loadImage(path, &width, &height);
 
-  this->loadFromBinary(pixels, width, height);
+  *this = Texture{pixels, width, height};
 }
 
-void Texture::loadFromBinary(
+Texture::Texture(
     const std::vector<unsigned char> &data,
     const uint32_t width,
     const uint32_t height) {
-  this->m_width = width;
-  this->m_height = height;
+  m_width = width;
+  m_height = height;
 
   createImage(&m_image, &m_allocation, &m_imageView, &m_sampler, width, height);
 
@@ -142,30 +143,30 @@ void Texture::loadFromBinary(
   buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
   memcpy(stagingMemoryPointer, data.data(), data.size());
   buffer::imageTransfer(
-      stagingBuffer, this->m_image, this->m_width, this->m_height);
+      stagingBuffer, m_image, m_width, m_height);
   buffer::unmapMemory(stagingAllocation);
 
   buffer::destroy(stagingBuffer, stagingAllocation);
 }
 
-Texture::operator bool() const { return this->m_image != VK_NULL_HANDLE; }
+Texture::operator bool() const { return m_image != VK_NULL_HANDLE; }
 
 VkDescriptorImageInfo Texture::getDescriptorInfo() const {
   return {
-      this->m_sampler,
-      this->m_imageView,
+      m_sampler,
+      m_imageView,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
   };
 }
 
 void Texture::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(ctx::device));
-  vkDestroyImageView(ctx::device, this->m_imageView, nullptr);
-  vkDestroySampler(ctx::device, this->m_sampler, nullptr);
-  vmaDestroyImage(ctx::allocator, this->m_image, this->m_allocation);
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  vkDestroyImageView(ctx().m_device, m_imageView, nullptr);
+  vkDestroySampler(ctx().m_device, m_sampler, nullptr);
+  vmaDestroyImage(ctx().m_allocator, m_image, m_allocation);
 
-  this->m_image = VK_NULL_HANDLE;
-  this->m_allocation = VK_NULL_HANDLE;
-  this->m_imageView = VK_NULL_HANDLE;
-  this->m_sampler = VK_NULL_HANDLE;
+  m_image = VK_NULL_HANDLE;
+  m_allocation = VK_NULL_HANDLE;
+  m_imageView = VK_NULL_HANDLE;
+  m_sampler = VK_NULL_HANDLE;
 }

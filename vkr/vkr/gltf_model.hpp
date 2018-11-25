@@ -91,8 +91,7 @@ public:
   } dimensions;
 
   GltfModel(){};
-
-  void loadFromPath(const std::string &path);
+  GltfModel(const std::string &path);
 
   operator bool() const;
 

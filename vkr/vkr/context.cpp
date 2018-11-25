@@ -6,6 +6,11 @@
 
 using namespace vkr;
 
+Context &vkr::ctx() {
+  static Context context;
+  return context;
+}
+
 // Debug callback
 
 // Ignore warnings for this function
@@ -51,29 +56,6 @@ void DestroyDebugReportCallbackEXT(
   }
 }
 
-namespace vkr {
-namespace ctx {
-VkInstance instance = VK_NULL_HANDLE;
-VkDevice device = VK_NULL_HANDLE;
-VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-
-VkDebugReportCallbackEXT callback = VK_NULL_HANDLE;
-
-uint32_t graphicsQueueFamilyIndex = VK_NULL_HANDLE;
-uint32_t presentQueueFamilyIndex = VK_NULL_HANDLE;
-uint32_t transferQueueFamilyIndex = VK_NULL_HANDLE;
-
-VkQueue graphicsQueue = VK_NULL_HANDLE;
-VkQueue presentQueue = VK_NULL_HANDLE;
-VkQueue transferQueue = VK_NULL_HANDLE;
-
-VmaAllocator allocator = VK_NULL_HANDLE;
-
-VkCommandPool graphicsCommandPool = VK_NULL_HANDLE;
-VkCommandPool transientCommandPool = VK_NULL_HANDLE;
-
-DescriptorManager descriptorManager;
-
 static bool checkValidationLayerSupport() {
   uint32_t count;
   vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -102,7 +84,7 @@ static std::vector<const char *>
 getRequiredExtensions(std::vector<const char *> sdlExtensions) {
   std::vector<const char *> extensions{sdlExtensions};
 
-#ifndef NDEBUG
+#ifdef VKR_ENABLE_VALIDATION
   extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
@@ -232,10 +214,10 @@ static bool checkPhysicalDeviceProperties(
   return true;
 }
 
-static void createInstance(
+void Context::createInstance(
     const std::vector<const char *> &requiredWindowVulkanExtensions) {
   fstl::log::debug("Creating vulkan instance");
-#ifndef NDEBUG
+#ifdef VKR_ENABLE_VALIDATION
   fstl::log::debug("Using validation layers");
   if (!checkValidationLayerSupport()) {
     throw std::runtime_error("Validation layers requested, but not available");
@@ -258,13 +240,13 @@ static void createInstance(
   createInfo.flags = 0;
   createInfo.pApplicationInfo = &appInfo;
 
-#ifdef NDEBUG
-  createInfo.enabledLayerCount = 0;
-  createInfo.ppEnabledLayerNames = nullptr;
-#else
+#ifdef VKR_ENABLE_VALIDATION
   createInfo.enabledLayerCount =
       static_cast<uint32_t>(REQUIRED_VALIDATION_LAYERS.size());
   createInfo.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data();
+#else
+  createInfo.enabledLayerCount = 0;
+  createInfo.ppEnabledLayerNames = nullptr;
 #endif
 
   // Set required instance extensions
@@ -272,79 +254,79 @@ static void createInstance(
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames = extensions.data();
 
-  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
+  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &m_instance));
 }
 
-static void setupDebugCallback() {
+void Context::setupDebugCallback() {
   VkDebugReportCallbackCreateInfoEXT createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
   createInfo.flags =
       VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
   createInfo.pfnCallback = debugCallback;
 
-  VK_CHECK(
-      CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
+  VK_CHECK(CreateDebugReportCallbackEXT(
+      m_instance, &createInfo, nullptr, &m_callback));
 }
 
-static void createDevice(VkSurfaceKHR &surface) {
+void Context::createDevice(VkSurfaceKHR &surface) {
   uint32_t count;
-  vkEnumeratePhysicalDevices(instance, &count, nullptr);
+  vkEnumeratePhysicalDevices(m_instance, &count, nullptr);
   fstl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
-  vkEnumeratePhysicalDevices(instance, &count, physicalDevices.data());
+  vkEnumeratePhysicalDevices(m_instance, &count, physicalDevices.data());
 
   for (auto physicalDevice_ : physicalDevices) {
     if (checkPhysicalDeviceProperties(
             physicalDevice_,
             surface,
-            &graphicsQueueFamilyIndex,
-            &presentQueueFamilyIndex,
-            &transferQueueFamilyIndex)) {
-      physicalDevice = physicalDevice_;
+            &m_graphicsQueueFamilyIndex,
+            &m_presentQueueFamilyIndex,
+            &m_transferQueueFamilyIndex)) {
+      m_physicalDevice = physicalDevice_;
       break;
     }
   }
 
-  if (!physicalDevice) {
+  if (!m_physicalDevice) {
     throw std::runtime_error(
         "Could not select physical device based on chosen properties");
   }
 
   VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+  vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
 
   fstl::log::debug("Using physical device: {}", properties.deviceName);
 
   fstl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::array<float, 1> queuePriorities = {1.0f};
+  float queuePriorities[] = {1.0f};
 
   queueCreateInfos.push_back({
       VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
       nullptr,
       0,
-      graphicsQueueFamilyIndex,
-      static_cast<uint32_t>(queuePriorities.size()),
-      queuePriorities.data(),
+      m_graphicsQueueFamilyIndex,
+      static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
+      queuePriorities,
   });
 
-  if (presentQueueFamilyIndex != graphicsQueueFamilyIndex) {
+  if (m_presentQueueFamilyIndex != m_graphicsQueueFamilyIndex) {
     queueCreateInfos.push_back({
         VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
         nullptr,
         0,
-        presentQueueFamilyIndex,
-        static_cast<uint32_t>(queuePriorities.size()),
-        queuePriorities.data(),
+        m_presentQueueFamilyIndex,
+        static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
+        queuePriorities,
     });
   }
 
-  if (transferQueueFamilyIndex != graphicsQueueFamilyIndex) {
+  if (m_transferQueueFamilyIndex != m_graphicsQueueFamilyIndex) {
     queueCreateInfos.push_back({
         VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
         nullptr,
         0,
-        transferQueueFamilyIndex,
-        static_cast<uint32_t>(queuePriorities.size()),
-        queuePriorities.data(),
+        m_transferQueueFamilyIndex,
+        static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
+        queuePriorities,
     });
   }
 
@@ -356,13 +338,13 @@ static void createDevice(VkSurfaceKHR &surface) {
   deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
   // Validation layer stuff
-#ifdef NDEBUG
-  deviceCreateInfo.enabledLayerCount = 0;
-  deviceCreateInfo.ppEnabledLayerNames = nullptr;
-#else
+#ifdef VKR_ENABLE_VALIDATION
   deviceCreateInfo.enabledLayerCount =
       static_cast<uint32_t>(REQUIRED_VALIDATION_LAYERS.size());
   deviceCreateInfo.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data();
+#else
+  deviceCreateInfo.enabledLayerCount = 0;
+  deviceCreateInfo.ppEnabledLayerNames = nullptr;
 #endif
 
   deviceCreateInfo.enabledExtensionCount =
@@ -371,114 +353,115 @@ static void createDevice(VkSurfaceKHR &surface) {
 
   // Enable all features
   VkPhysicalDeviceFeatures features;
-  vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+  vkGetPhysicalDeviceFeatures(m_physicalDevice, &features);
   deviceCreateInfo.pEnabledFeatures = &features;
 
-  VK_CHECK(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
+  VK_CHECK(
+      vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device));
 }
 
-static void getDeviceQueues() {
-  vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
-  vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, &presentQueue);
-  vkGetDeviceQueue(device, transferQueueFamilyIndex, 0, &transferQueue);
+void Context::getDeviceQueues() {
+  vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+  vkGetDeviceQueue(m_device, m_presentQueueFamilyIndex, 0, &m_presentQueue);
+  vkGetDeviceQueue(m_device, m_transferQueueFamilyIndex, 0, &m_transferQueue);
 }
 
-static void setupMemoryAllocator() {
+void Context::setupMemoryAllocator() {
   VmaAllocatorCreateInfo allocatorInfo = {};
-  allocatorInfo.physicalDevice = physicalDevice;
-  allocatorInfo.device = device;
+  allocatorInfo.physicalDevice = m_physicalDevice;
+  allocatorInfo.device = m_device;
 
-  VK_CHECK(vmaCreateAllocator(&allocatorInfo, &allocator));
+  VK_CHECK(vmaCreateAllocator(&allocatorInfo, &m_allocator));
 }
 
-static void createGraphicsCommandPool() {
+void Context::createGraphicsCommandPool() {
   VkCommandPoolCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   createInfo.pNext = 0;
   createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  createInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
+  createInfo.queueFamilyIndex = m_graphicsQueueFamilyIndex;
 
-  VK_CHECK(
-      vkCreateCommandPool(device, &createInfo, nullptr, &graphicsCommandPool));
+  VK_CHECK(vkCreateCommandPool(
+      m_device, &createInfo, nullptr, &m_graphicsCommandPool));
 }
 
-static void createTransientCommandPool() {
+void Context::createTransientCommandPool() {
   VkCommandPoolCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   createInfo.pNext = 0;
   createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  createInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
+  createInfo.queueFamilyIndex = m_graphicsQueueFamilyIndex;
 
-  VK_CHECK(
-      vkCreateCommandPool(device, &createInfo, nullptr, &transientCommandPool));
+  VK_CHECK(vkCreateCommandPool(
+      m_device, &createInfo, nullptr, &m_transientCommandPool));
 }
 
-void preInitialize(
+void Context::preInitialize(
     const std::vector<const char *> &requiredWindowVulkanExtensions) {
-  if (instance != VK_NULL_HANDLE) {
+  if (m_instance != VK_NULL_HANDLE) {
     return;
   }
 
   createInstance(requiredWindowVulkanExtensions);
-#ifndef NDEBUG
+#ifdef VKR_ENABLE_VALIDATION
   setupDebugCallback();
 #endif
 }
 
-void lateInitialize(VkSurfaceKHR &surface) {
-  if (device != VK_NULL_HANDLE) {
+void Context::lateInitialize(VkSurfaceKHR &surface) {
+  if (m_device != VK_NULL_HANDLE) {
     return;
   }
 
-  createDevice(surface);
+  this->createDevice(surface);
 
-  getDeviceQueues();
+  this->getDeviceQueues();
 
-  setupMemoryAllocator();
+  this->setupMemoryAllocator();
 
-  createGraphicsCommandPool();
-  createTransientCommandPool();
+  this->createGraphicsCommandPool();
+  this->createTransientCommandPool();
 
-  descriptorManager.init();
+  m_descriptorManager.init();
 }
 
-void destroy() {
+Context::~Context() {
   fstl::log::debug("Vulkan context shutting down...");
 
-  VK_CHECK(vkDeviceWaitIdle(device));
+  VK_CHECK(vkDeviceWaitIdle(m_device));
 
-  descriptorManager.destroy();
+  m_descriptorManager.destroy();
 
-  if (transientCommandPool) {
-    vkDestroyCommandPool(device, transientCommandPool, nullptr);
+  if (m_transientCommandPool) {
+    vkDestroyCommandPool(m_device, m_transientCommandPool, nullptr);
   }
 
-  if (graphicsCommandPool) {
-    vkDestroyCommandPool(device, graphicsCommandPool, nullptr);
+  if (m_graphicsCommandPool) {
+    vkDestroyCommandPool(m_device, m_graphicsCommandPool, nullptr);
   }
 
-  if (allocator != VK_NULL_HANDLE) {
-    vmaDestroyAllocator(allocator);
+  if (m_allocator != VK_NULL_HANDLE) {
+    vmaDestroyAllocator(m_allocator);
   }
 
-  if (device != VK_NULL_HANDLE) {
-    vkDestroyDevice(device, nullptr);
+  if (m_device != VK_NULL_HANDLE) {
+    vkDestroyDevice(m_device, nullptr);
   }
 
-  if (callback != VK_NULL_HANDLE) {
-    DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+  if (m_callback != VK_NULL_HANDLE) {
+    DestroyDebugReportCallbackEXT(m_instance, m_callback, nullptr);
   }
 
-  if (instance != VK_NULL_HANDLE) {
-    vkDestroyInstance(instance, nullptr);
+  if (m_instance != VK_NULL_HANDLE) {
+    vkDestroyInstance(m_instance, nullptr);
   }
 
   SDL_Quit();
 }
 
-VkSampleCountFlagBits getMaxUsableSampleCount() {
+VkSampleCountFlagBits Context::getMaxUsableSampleCount() {
   VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+  vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
 
   VkSampleCountFlags colorSamples =
       properties.limits.framebufferColorSampleCounts;
@@ -516,5 +499,3 @@ VkSampleCountFlagBits getMaxUsableSampleCount() {
 
   return VK_SAMPLE_COUNT_1_BIT;
 }
-} // namespace ctx
-} // namespace vkr

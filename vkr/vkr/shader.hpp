@@ -19,7 +19,7 @@ public:
   Shader(const Shader &other) = delete;
   Shader &operator=(Shader &other) = delete;
 
-  operator bool() { return this->m_vertexModule && this->m_fragmentModule; };
+  operator bool() { return m_vertexModule && m_fragmentModule; };
 
   fstl::fixed_vector<VkPipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;

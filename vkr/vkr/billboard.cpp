@@ -2,55 +2,62 @@
 #include "context.hpp"
 #include "pipeline.hpp"
 #include "util.hpp"
+#include <fstl/logging.hpp>
 
 using namespace vkr;
+
+Billboard::Billboard() {
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_meshDescriptorSets[i] = VK_NULL_HANDLE;
+    m_materialDescriptorSets[i] = VK_NULL_HANDLE;
+
+    m_meshUniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    m_meshUniformBuffers.allocations[i] = VK_NULL_HANDLE;
+
+    m_materialUniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    m_materialUniformBuffers.allocations[i] = VK_NULL_HANDLE;
+  }
+}
 
 Billboard::Billboard(
     const Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color)
     : m_texture(texture) {
-
   // Initialize mesh UBO struct
   glm::mat4 model(1.0f);
   model = glm::translate(model, pos);
   model = glm::scale(model, scale);
-  this->m_meshUbo.model = model;
+  m_meshUbo.model = model;
 
   // Initialize material UBO struct
-  this->m_materialUbo.color = color;
+  m_materialUbo.color = color;
 
   // Create mesh uniform buffers
-  for (size_t i = 0; i < ARRAYSIZE(this->m_meshUniformBuffers.buffers); i++) {
+  for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
     buffer::createUniformBuffer(
         sizeof(MeshUniform),
-        &this->m_meshUniformBuffers.buffers[i],
-        &this->m_meshUniformBuffers.allocations[i]);
+        &m_meshUniformBuffers.buffers[i],
+        &m_meshUniformBuffers.allocations[i]);
 
-    buffer::mapMemory(
-        this->m_meshUniformBuffers.allocations[i], &this->m_meshMappings[i]);
-    memcpy(this->m_meshMappings[i], &this->m_meshUbo, sizeof(MeshUniform));
+    buffer::mapMemory(m_meshUniformBuffers.allocations[i], &m_meshMappings[i]);
+    memcpy(m_meshMappings[i], &m_meshUbo, sizeof(MeshUniform));
   }
 
   // Create material uniform buffers
-  for (size_t i = 0; i < ARRAYSIZE(this->m_materialUniformBuffers.buffers);
-       i++) {
+  for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
     buffer::createUniformBuffer(
         sizeof(MaterialUniform),
-        &this->m_materialUniformBuffers.buffers[i],
-        &this->m_materialUniformBuffers.allocations[i]);
+        &m_materialUniformBuffers.buffers[i],
+        &m_materialUniformBuffers.allocations[i]);
 
     buffer::mapMemory(
-        this->m_materialUniformBuffers.allocations[i],
-        &this->m_materialMappings[i]);
-    memcpy(
-        this->m_materialMappings[i],
-        &this->m_materialUbo,
-        sizeof(MaterialUniform));
+        m_materialUniformBuffers.allocations[i], &m_materialMappings[i]);
+    memcpy(m_materialMappings[i], &m_materialUbo, sizeof(MaterialUniform));
   }
 
   // Allocate mesh descriptor sets
   {
     auto [descriptorPool, descriptorSetLayout] =
-        ctx::descriptorManager[DESC_MESH];
+        ctx().m_descriptorManager[DESC_MESH];
 
     assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -62,16 +69,16 @@ Billboard::Billboard(
         descriptorSetLayout,
     };
 
-    for (size_t i = 0; i < ARRAYSIZE(this->m_meshDescriptorSets); i++) {
+    for (size_t i = 0; i < ARRAYSIZE(m_meshDescriptorSets); i++) {
       VK_CHECK(vkAllocateDescriptorSets(
-          ctx::device, &allocateInfo, &this->m_meshDescriptorSets[i]));
+          ctx().m_device, &allocateInfo, &m_meshDescriptorSets[i]));
     }
   }
 
   // Allocate material descriptor sets
   {
     auto [descriptorPool, descriptorSetLayout] =
-        ctx::descriptorManager[DESC_MATERIAL];
+        ctx().m_descriptorManager[DESC_MATERIAL];
 
     assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -83,27 +90,27 @@ Billboard::Billboard(
         descriptorSetLayout,
     };
 
-    for (size_t i = 0; i < ARRAYSIZE(this->m_materialDescriptorSets); i++) {
+    for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
       VK_CHECK(vkAllocateDescriptorSets(
-          ctx::device, &allocateInfo, &this->m_materialDescriptorSets[i]));
+          ctx().m_device, &allocateInfo, &m_materialDescriptorSets[i]));
     }
   }
 
   // Update descriptor sets
-  for (size_t i = 0; i < ARRAYSIZE(this->m_materialDescriptorSets); i++) {
-    auto albedoDescriptorInfo = this->m_texture.getDescriptorInfo();
+  for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
+    auto albedoDescriptorInfo = m_texture.getDescriptorInfo();
 
     VkDescriptorBufferInfo meshBufferInfo = {
-        this->m_meshUniformBuffers.buffers[i], 0, sizeof(MeshUniform)};
+        m_meshUniformBuffers.buffers[i], 0, sizeof(MeshUniform)};
 
     VkDescriptorBufferInfo materialBufferInfo = {
-        this->m_materialUniformBuffers.buffers[i], 0, sizeof(MaterialUniform)};
+        m_materialUniformBuffers.buffers[i], 0, sizeof(MaterialUniform)};
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->m_materialDescriptorSets[i],          // dstSet
+            m_materialDescriptorSets[i],               // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -115,7 +122,7 @@ Billboard::Billboard(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->m_materialDescriptorSets[i],  // dstSet
+            m_materialDescriptorSets[i],       // dstSet
             1,                                 // dstBinding
             0,                                 // dstArrayElement
             1,                                 // descriptorCount
@@ -127,7 +134,7 @@ Billboard::Billboard(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->m_meshDescriptorSets[i],      // dstSet
+            m_meshDescriptorSets[i],           // dstSet
             0,                                 // dstBinding
             0,                                 // dstArrayElement
             1,                                 // descriptorCount
@@ -139,8 +146,171 @@ Billboard::Billboard(
     };
 
     vkUpdateDescriptorSets(
-        ctx::device, ARRAYSIZE(descriptorWrites), descriptorWrites, 0, nullptr);
+        ctx().m_device,
+        ARRAYSIZE(descriptorWrites),
+        descriptorWrites,
+        0,
+        nullptr);
   }
+}
+
+Billboard::~Billboard() {
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
+  if (m_meshDescriptorSets[0] != VK_NULL_HANDLE) {
+    VK_CHECK(vkFreeDescriptorSets(
+        ctx().m_device,
+        *ctx().m_descriptorManager.getPool(DESC_MESH),
+        ARRAYSIZE(m_meshDescriptorSets),
+        m_meshDescriptorSets));
+
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+      m_meshDescriptorSets[i] = VK_NULL_HANDLE;
+    }
+  }
+
+  if (m_materialDescriptorSets[0] != VK_NULL_HANDLE) {
+    VK_CHECK(vkFreeDescriptorSets(
+        ctx().m_device,
+        *ctx().m_descriptorManager.getPool(DESC_MATERIAL),
+        ARRAYSIZE(m_materialDescriptorSets),
+        m_materialDescriptorSets));
+
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+      m_materialDescriptorSets[i] = VK_NULL_HANDLE;
+    }
+  }
+
+  for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
+    if (m_meshUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+      buffer::unmapMemory(m_meshUniformBuffers.allocations[i]);
+      buffer::destroy(
+          m_meshUniformBuffers.buffers[i], m_meshUniformBuffers.allocations[i]);
+    }
+  }
+
+  for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
+    if (m_materialUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+      buffer::unmapMemory(m_materialUniformBuffers.allocations[i]);
+      buffer::destroy(
+          m_materialUniformBuffers.buffers[i],
+          m_materialUniformBuffers.allocations[i]);
+    }
+  }
+}
+
+Billboard::Billboard(Billboard &&rhs) {
+  m_texture = rhs.m_texture;
+  m_meshUbo = rhs.m_meshUbo;
+  m_materialUbo = rhs.m_materialUbo;
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_meshUniformBuffers.buffers[i] = rhs.m_meshUniformBuffers.buffers[i];
+    m_meshUniformBuffers.allocations[i] =
+        rhs.m_meshUniformBuffers.allocations[i];
+    m_meshMappings[i] = rhs.m_meshMappings[i];
+    m_meshDescriptorSets[i] = rhs.m_meshDescriptorSets[i];
+
+    m_materialUniformBuffers.buffers[i] =
+        rhs.m_materialUniformBuffers.buffers[i];
+    m_materialUniformBuffers.allocations[i] =
+        rhs.m_materialUniformBuffers.allocations[i];
+    m_materialMappings[i] = rhs.m_materialMappings[i];
+    m_materialDescriptorSets[i] = rhs.m_materialDescriptorSets[i];
+  }
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    rhs.m_meshUniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    rhs.m_meshUniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    rhs.m_meshMappings[i] = VK_NULL_HANDLE;
+    rhs.m_meshDescriptorSets[i] = VK_NULL_HANDLE;
+
+    rhs.m_materialUniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    rhs.m_materialUniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    rhs.m_materialMappings[i] = VK_NULL_HANDLE;
+    rhs.m_materialDescriptorSets[i] = VK_NULL_HANDLE;
+  }
+}
+
+Billboard &Billboard::operator=(Billboard &&rhs) {
+  if (this != &rhs) {
+    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
+    if (m_meshDescriptorSets[0] != VK_NULL_HANDLE) {
+      VK_CHECK(vkFreeDescriptorSets(
+          ctx().m_device,
+          *ctx().m_descriptorManager.getPool(DESC_MESH),
+          ARRAYSIZE(m_meshDescriptorSets),
+          m_meshDescriptorSets));
+
+      for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        m_meshDescriptorSets[i] = VK_NULL_HANDLE;
+      }
+    }
+
+    if (m_materialDescriptorSets[0] != VK_NULL_HANDLE) {
+      VK_CHECK(vkFreeDescriptorSets(
+          ctx().m_device,
+          *ctx().m_descriptorManager.getPool(DESC_MATERIAL),
+          ARRAYSIZE(m_materialDescriptorSets),
+          m_materialDescriptorSets));
+
+      for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        m_materialDescriptorSets[i] = VK_NULL_HANDLE;
+      }
+    }
+
+    for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
+      if (m_meshUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+        buffer::unmapMemory(m_meshUniformBuffers.allocations[i]);
+        buffer::destroy(
+            m_meshUniformBuffers.buffers[i],
+            m_meshUniformBuffers.allocations[i]);
+      }
+    }
+
+    for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
+      if (m_materialUniformBuffers.buffers[i] != VK_NULL_HANDLE) {
+        buffer::unmapMemory(m_materialUniformBuffers.allocations[i]);
+        buffer::destroy(
+            m_materialUniformBuffers.buffers[i],
+            m_materialUniformBuffers.allocations[i]);
+      }
+    }
+  }
+
+  m_texture = rhs.m_texture;
+  m_meshUbo = rhs.m_meshUbo;
+  m_materialUbo = rhs.m_materialUbo;
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_meshUniformBuffers.buffers[i] = rhs.m_meshUniformBuffers.buffers[i];
+    m_meshUniformBuffers.allocations[i] =
+        rhs.m_meshUniformBuffers.allocations[i];
+    m_meshMappings[i] = rhs.m_meshMappings[i];
+    m_meshDescriptorSets[i] = rhs.m_meshDescriptorSets[i];
+
+    m_materialUniformBuffers.buffers[i] =
+        rhs.m_materialUniformBuffers.buffers[i];
+    m_materialUniformBuffers.allocations[i] =
+        rhs.m_materialUniformBuffers.allocations[i];
+    m_materialMappings[i] = rhs.m_materialMappings[i];
+    m_materialDescriptorSets[i] = rhs.m_materialDescriptorSets[i];
+  }
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    rhs.m_meshUniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    rhs.m_meshUniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    rhs.m_meshMappings[i] = VK_NULL_HANDLE;
+    rhs.m_meshDescriptorSets[i] = VK_NULL_HANDLE;
+
+    rhs.m_materialUniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    rhs.m_materialUniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    rhs.m_materialMappings[i] = VK_NULL_HANDLE;
+    rhs.m_materialDescriptorSets[i] = VK_NULL_HANDLE;
+  }
+
+  return *this;
 }
 
 void Billboard::draw(Window &window, GraphicsPipeline &pipeline) {
@@ -175,54 +345,19 @@ void Billboard::draw(Window &window, GraphicsPipeline &pipeline) {
 }
 
 void Billboard::setPos(glm::vec3 pos) {
-  this->m_meshUbo.model[3][0] = pos.x;
-  this->m_meshUbo.model[3][1] = pos.y;
-  this->m_meshUbo.model[3][2] = pos.z;
+  m_meshUbo.model[3][0] = pos.x;
+  m_meshUbo.model[3][1] = pos.y;
+  m_meshUbo.model[3][2] = pos.z;
 
-  for (size_t i = 0; i < ARRAYSIZE(this->m_meshUniformBuffers.buffers); i++) {
-    memcpy(this->m_meshMappings[i], &this->m_meshUbo, sizeof(MeshUniform));
+  for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers.buffers); i++) {
+    memcpy(m_meshMappings[i], &m_meshUbo, sizeof(MeshUniform));
   }
 }
 
 void Billboard::setColor(glm::vec4 color) {
-  this->m_materialUbo.color = color;
+  m_materialUbo.color = color;
 
-  for (size_t i = 0; i < ARRAYSIZE(this->m_materialUniformBuffers.buffers);
-       i++) {
-    memcpy(
-        this->m_materialMappings[i],
-        &this->m_materialUbo,
-        sizeof(MaterialUniform));
-  }
-}
-
-void Billboard::destroy() {
-  VK_CHECK(vkDeviceWaitIdle(ctx::device));
-
-  VK_CHECK(vkFreeDescriptorSets(
-      ctx::device,
-      *ctx::descriptorManager.getPool(DESC_MESH),
-      ARRAYSIZE(this->m_meshDescriptorSets),
-      this->m_meshDescriptorSets));
-
-  VK_CHECK(vkFreeDescriptorSets(
-      ctx::device,
-      *ctx::descriptorManager.getPool(DESC_MATERIAL),
-      ARRAYSIZE(this->m_materialDescriptorSets),
-      this->m_materialDescriptorSets));
-
-  for (size_t i = 0; i < ARRAYSIZE(this->m_meshUniformBuffers.buffers); i++) {
-    buffer::unmapMemory(this->m_meshUniformBuffers.allocations[i]);
-    buffer::destroy(
-        this->m_meshUniformBuffers.buffers[i],
-        this->m_meshUniformBuffers.allocations[i]);
-  }
-
-  for (size_t i = 0; i < ARRAYSIZE(this->m_materialUniformBuffers.buffers);
-       i++) {
-    buffer::unmapMemory(this->m_materialUniformBuffers.allocations[i]);
-    buffer::destroy(
-        this->m_materialUniformBuffers.buffers[i],
-        this->m_materialUniformBuffers.allocations[i]);
+  for (size_t i = 0; i < ARRAYSIZE(m_materialUniformBuffers.buffers); i++) {
+    memcpy(m_materialMappings[i], &m_materialUbo, sizeof(MaterialUniform));
   }
 }

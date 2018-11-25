@@ -18,12 +18,11 @@ public:
       uint32_t width = 800,
       uint32_t height = 600,
       VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
-  ~Window(){};
-  Window(const Window &other) = delete;
-  Window &operator=(Window other) = delete;
+  ~Window();
 
-  // TODO: replace with destructor
-  void destroy();
+  // No copying Window
+  Window(const Window &) = delete;
+  Window &operator=(const Window &) = delete;
 
   bool pollEvent(SDL_Event *event);
 

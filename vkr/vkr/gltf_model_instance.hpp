@@ -5,17 +5,23 @@
 namespace vkr {
 class GltfModelInstance {
 public:
+  GltfModelInstance();
+  GltfModelInstance(const GltfModel &model);
+  ~GltfModelInstance();
+
+  // GltfModelInstance cannot be copied
+  GltfModelInstance(const GltfModelInstance &) = delete;
+  GltfModelInstance &operator=(const GltfModelInstance &) = delete;
+
+  // GltfModelInstance can be moved
+  GltfModelInstance(GltfModelInstance &&rhs);
+  GltfModelInstance &operator=(GltfModelInstance &&rhs);
+
+  void draw(Window &window, GraphicsPipeline &pipeline);
+
   glm::vec3 m_pos = {0.0, 0.0, 0.0};
   glm::vec3 m_scale = {1.0, 1.0, 1.0};
   glm::vec3 m_rotation = {0.0, 0.0, 0.0};
-
-  GltfModelInstance() {}
-  GltfModelInstance(const GltfModel &model);
-  ~GltfModelInstance(){};
-
-  void destroy();
-
-  void draw(Window &window, GraphicsPipeline &pipeline);
 
 private:
   GltfModel m_model;
@@ -25,10 +31,10 @@ private:
   } m_ubo;
 
   buffer::Buffers<MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;
-  std::array<void *, MAX_FRAMES_IN_FLIGHT> m_mappings;
-  std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> m_descriptorSets;
+  void *m_mappings[MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet m_descriptorSets[MAX_FRAMES_IN_FLIGHT];
 
-  // Run every frame to update the uniform transform matrix with
+  // Runs in every draw call to update the uniform transform matrix with
   // updated position, scale and rotations
   void updateUniforms(int frameIndex);
 

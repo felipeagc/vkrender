@@ -8,16 +8,23 @@ class GraphicsPipeline;
 
 class Billboard {
 public:
-  Billboard(){};
-  Billboard(const Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color);
+  Billboard();
+  Billboard(
+      const Texture &texture, glm::vec3 pos, glm::vec3 scale, glm::vec4 color);
+  ~Billboard();
+
+  // Billboard can't be copied
+  Billboard(const Billboard &) = delete;
+  Billboard &operator=(const Billboard &) = delete;
+
+  // Billboard can be moved
+  Billboard(Billboard &&rhs);
+  Billboard &operator=(Billboard &&rhs);
 
   void draw(Window &window, GraphicsPipeline &pipeline);
 
   void setPos(glm::vec3 pos);
   void setColor(glm::vec4 color);
-
-  // TODO: replace with destructor
-  void destroy();
 
 protected:
   Texture m_texture;

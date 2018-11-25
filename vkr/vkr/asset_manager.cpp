@@ -2,7 +2,7 @@
 
 using namespace vkr;
 
-void AssetManager::destroy() {
+AssetManager::~AssetManager() {
   for (auto &texture : m_textures) {
     if (texture) {
       texture.destroy();
@@ -34,8 +34,7 @@ const Texture &AssetManager::getAsset<Texture>(const std::string &identifier) {
 
   fstl::log::debug("Loading texture asset: {}", identifier);
 
-  Texture texture;
-  texture.loadFromPath(identifier);
+  Texture texture{identifier};
 
   // Allocate Texture
   size_t textureIndex = m_textures.size();
@@ -77,10 +76,7 @@ AssetManager::getAsset<GltfModel>(const std::string &identifier) {
 
   fstl::log::debug("Loading glTF model asset: {}", identifier);
 
-  // TODO: fix loading models with flipped UVs
-
-  GltfModel model;
-  model.loadFromPath(identifier);
+  GltfModel model{identifier};
 
   // Allocate GltfModel
   size_t modelIndex = m_gltfModels.size();

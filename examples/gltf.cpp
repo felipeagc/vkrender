@@ -74,13 +74,5 @@ int main() {
     window.present(draw);
   }
 
-  helmet.destroy();
-  duck.destroy();
-  camera.destroy();
-  modelPipeline.destroy();
-  assetManager.destroy();
-  window.destroy();
-  vkr::ctx::destroy();
-
   return 0;
 }

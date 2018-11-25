@@ -44,15 +44,15 @@ int main() {
 
   modelShader.destroy();
 
-  // Create billboard
-  fstl::fixed_vector<vkr::Billboard> lightBillboards;
-
   // Create light manager
   vkr::LightManager lightManager({
       vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
       vkr::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
                  glm::vec4(0.0, 1.0, 0.0, 1.0)},
   });
+
+  // Create billboards
+  fstl::fixed_vector<vkr::Billboard> lightBillboards;
 
   for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
     lightBillboards.push_back(vkr::Billboard{
@@ -146,9 +146,9 @@ int main() {
     camera.bind(window, billboardPipeline);
 
     for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-      vkr::Light *light = &lightManager.getLights()[i];
-      lightBillboards[i].setPos(light->pos);
-      lightBillboards[i].setColor(light->color);
+      vkr::Light light = lightManager.getLights()[i];
+      lightBillboards[i].setPos(light.pos);
+      lightBillboards[i].setColor(light.color);
       lightBillboards[i].draw(window, billboardPipeline);
     }
   };
@@ -157,20 +157,6 @@ int main() {
     window.present(draw);
     lightManager.update();
   }
-
-  for (auto &lightBillboard : lightBillboards) {
-    lightBillboard.destroy();
-  }
-
-  helmet.destroy();
-  boombox.destroy();
-  lightManager.destroy();
-  camera.destroy();
-  modelPipeline.destroy();
-  billboardPipeline.destroy();
-  assetManager.destroy();
-  window.destroy();
-  vkr::ctx::destroy();
 
   return 0;
 }

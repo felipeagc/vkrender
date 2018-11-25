@@ -66,7 +66,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(
   };
 
   VK_CHECK(vkCreateDescriptorSetLayout(
-      ctx::device, &createInfo, nullptr, &setLayout));
+      ctx().m_device, &createInfo, nullptr, &setLayout));
 
   return setLayout;
 }
@@ -113,7 +113,7 @@ VkDescriptorPool createDescriptorPool(
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      ctx::device, &createInfo, nullptr, &descriptorPool));
+      ctx().m_device, &createInfo, nullptr, &descriptorPool));
 
   return descriptorPool;
 }
@@ -124,7 +124,7 @@ operator[](const std::string &key) {
 }
 
 VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
-  for (auto &p : this->m_pools) {
+  for (auto &p : m_pools) {
     if (p.first == key) {
       return &p.second;
     }
@@ -134,7 +134,7 @@ VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
 }
 
 VkDescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
-  for (auto &p : this->m_setLayouts) {
+  for (auto &p : m_setLayouts) {
     if (p.first == key) {
       return &p.second;
     }
@@ -235,18 +235,18 @@ void DescriptorManager::init() {
     };
 
     VK_CHECK(vkCreateDescriptorPool(
-        ctx::device, &createInfo, nullptr, &imguiDescriptorPool));
+        ctx().m_device, &createInfo, nullptr, &imguiDescriptorPool));
 
     this->addPool(DESC_IMGUI, imguiDescriptorPool);
   }
 }
 
 void DescriptorManager::destroy() {
-  for (auto &p : this->m_pools) {
-    vkDestroyDescriptorPool(ctx::device, p.second, nullptr);
+  for (auto &p : m_pools) {
+    vkDestroyDescriptorPool(ctx().m_device, p.second, nullptr);
   }
 
-  for (auto &p : this->m_setLayouts) {
-    vkDestroyDescriptorSetLayout(ctx::device, p.second, nullptr);
+  for (auto &p : m_setLayouts) {
+    vkDestroyDescriptorSetLayout(ctx().m_device, p.second, nullptr);
   }
 }

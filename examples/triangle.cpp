@@ -66,7 +66,12 @@ createTrianglePipeline(vkr::Window &window, vkr::Shader &shader) {
   VkPipeline pipeline;
 
   VK_CHECK(vkCreateGraphicsPipelines(
-      ctx::device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
+      ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &pipeline));
 
   return GraphicsPipeline{pipeline, pipelineLayout};
 }
@@ -80,6 +85,8 @@ int main() {
   };
 
   vkr::GraphicsPipeline pipeline = createTrianglePipeline(window, shader);
+
+  shader.destroy();
 
   std::array<Vertex, 3> vertices{
       Vertex{{0.5, 0.5}, {0.0, 0.0, 1.0}},
@@ -138,10 +145,6 @@ int main() {
   }
 
   vkr::buffer::destroy(vertexBuffer, vertexAllocation);
-  pipeline.destroy();
-  shader.destroy();
-  window.destroy();
-  vkr::ctx::destroy();
 
   return 0;
 }

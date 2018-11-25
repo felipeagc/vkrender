@@ -6,49 +6,72 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-namespace vkr {
-namespace ctx {
+#ifndef NDEBUG
+#define VKR_ENABLE_VALIDATION
+#endif
 
-#ifdef NDEBUG
-const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {};
-#else
+namespace vkr {
+
+class Context;
+
+Context &ctx();
+
+#ifdef VKR_ENABLE_VALIDATION
 const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {
     "VK_LAYER_LUNARG_standard_validation",
 };
+#else
+const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {};
 #endif
 
 const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
-extern VkInstance instance;
-extern VkDevice device;
-extern VkPhysicalDevice physicalDevice;
+class Context {
+public:
+  Context(){};
+  ~Context();
 
-extern VkDebugReportCallbackEXT callback;
+  Context(const Context &) = delete;
+  Context &operator=(const Context &) = delete;
 
-extern uint32_t graphicsQueueFamilyIndex;
-extern uint32_t presentQueueFamilyIndex;
-extern uint32_t transferQueueFamilyIndex;
+  void preInitialize(
+      const std::vector<const char *> &requiredWindowVulkanExtensions);
+  void lateInitialize(VkSurfaceKHR &surface);
 
-extern VkQueue graphicsQueue;
-extern VkQueue presentQueue;
-extern VkQueue transferQueue;
+  VkSampleCountFlagBits getMaxUsableSampleCount();
 
-extern VmaAllocator allocator;
+  VkInstance m_instance = VK_NULL_HANDLE;
+  VkDevice m_device = VK_NULL_HANDLE;
+  VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 
-extern VkCommandPool graphicsCommandPool;
-extern VkCommandPool transientCommandPool;
+  VkDebugReportCallbackEXT m_callback = VK_NULL_HANDLE;
 
-extern DescriptorManager descriptorManager;
+  uint32_t m_graphicsQueueFamilyIndex = -1;
+  uint32_t m_presentQueueFamilyIndex = -1;
+  uint32_t m_transferQueueFamilyIndex = -1;
 
-void preInitialize(
-    const std::vector<const char *> &requiredWindowVulkanExtensions);
-void lateInitialize(VkSurfaceKHR &surface);
-void destroy();
+  VkQueue m_graphicsQueue = VK_NULL_HANDLE;
+  VkQueue m_presentQueue = VK_NULL_HANDLE;
+  VkQueue m_transferQueue = VK_NULL_HANDLE;
 
-VkSampleCountFlagBits getMaxUsableSampleCount();
+  VmaAllocator m_allocator = VK_NULL_HANDLE;
 
-} // namespace ctx
+  VkCommandPool m_graphicsCommandPool = VK_NULL_HANDLE;
+  VkCommandPool m_transientCommandPool = VK_NULL_HANDLE;
+
+  DescriptorManager m_descriptorManager;
+
+private:
+  void createInstance(
+      const std::vector<const char *> &requiredWindowVulkanExtensions);
+  void setupDebugCallback();
+  void createDevice(VkSurfaceKHR &surface);
+  void getDeviceQueues();
+  void setupMemoryAllocator();
+  void createGraphicsCommandPool();
+  void createTransientCommandPool();
+};
 
 } // namespace vkr

@@ -10,7 +10,7 @@ static VkCommandBuffer beginSingleTimeCommandBuffer() {
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
-      ctx::transientCommandPool,       // commandPool
+      ctx().m_transientCommandPool,       // commandPool
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
       1,                               // commandBufferCount
   };
@@ -18,7 +18,7 @@ static VkCommandBuffer beginSingleTimeCommandBuffer() {
   VkCommandBuffer commandBuffer;
 
   VK_CHECK(
-      vkAllocateCommandBuffers(ctx::device, &allocateInfo, &commandBuffer));
+      vkAllocateCommandBuffers(ctx().m_device, &allocateInfo, &commandBuffer));
 
   VkCommandBufferBeginInfo commandBufferBeginInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -47,12 +47,12 @@ static void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
       nullptr,        // pSignalSemaphores
   };
 
-  VK_CHECK(vkQueueSubmit(ctx::transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
+  VK_CHECK(vkQueueSubmit(ctx().m_transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
 
-  VK_CHECK(vkQueueWaitIdle(ctx::transferQueue));
+  VK_CHECK(vkQueueWaitIdle(ctx().m_transferQueue));
 
   vkFreeCommandBuffers(
-      ctx::device, ctx::transientCommandPool, 1, &commandBuffer);
+      ctx().m_device, ctx().m_transientCommandPool, 1, &commandBuffer);
 }
 
 namespace vkr {
@@ -76,7 +76,7 @@ void createVertexBuffer(
   allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
   VK_CHECK(vmaCreateBuffer(
-      ctx::allocator,
+      ctx().m_allocator,
       &bufferCreateInfo,
       &allocInfo,
       buffer,
@@ -103,7 +103,7 @@ void createIndexBuffer(
   allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
   VK_CHECK(vmaCreateBuffer(
-      ctx::allocator,
+      ctx().m_allocator,
       &bufferCreateInfo,
       &allocInfo,
       buffer,
@@ -129,7 +129,7 @@ void createUniformBuffer(
   allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
   VK_CHECK(vmaCreateBuffer(
-      ctx::allocator,
+      ctx().m_allocator,
       &bufferCreateInfo,
       &allocInfo,
       buffer,
@@ -155,7 +155,7 @@ void createStagingBuffer(
   allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
   VK_CHECK(vmaCreateBuffer(
-      ctx::allocator,
+      ctx().m_allocator,
       &bufferCreateInfo,
       &allocInfo,
       buffer,
@@ -164,18 +164,18 @@ void createStagingBuffer(
 }
 
 void mapMemory(VmaAllocation allocation, void **dest) {
-  if (vmaMapMemory(ctx::allocator, allocation, dest) != VK_SUCCESS) {
+  if (vmaMapMemory(ctx().m_allocator, allocation, dest) != VK_SUCCESS) {
     throw std::runtime_error("Failed to map image memory");
   }
 }
 
 void unmapMemory(VmaAllocation allocation) {
-  vmaUnmapMemory(ctx::allocator, allocation);
+  vmaUnmapMemory(ctx().m_allocator, allocation);
 }
 
 void destroy(VkBuffer buffer, VmaAllocation allocation) {
-  VK_CHECK(vkDeviceWaitIdle(ctx::device));
-  vmaDestroyBuffer(ctx::allocator, buffer, allocation);
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  vmaDestroyBuffer(ctx().m_allocator, buffer, allocation);
 }
 
 void bufferTransfer(VkBuffer from, VkBuffer to, size_t size) {

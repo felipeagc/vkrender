@@ -5,23 +5,30 @@
 
 using namespace vkr;
 
+Camera::Camera() {
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_uniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    m_uniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    m_descriptorSets[i] = VK_NULL_HANDLE;
+  }
+}
+
 Camera::Camera(glm::vec3 position, glm::quat rotation) {
   this->setPos(position);
   this->setRot(rotation);
 
   auto [descriptorPool, descriptorSetLayout] =
-      ctx::descriptorManager[DESC_CAMERA];
+      ctx().m_descriptorManager[DESC_CAMERA];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     buffer::createUniformBuffer(
         sizeof(CameraUniform),
-        &this->m_uniformBuffers.buffers[i],
-        &this->m_uniformBuffers.allocations[i]);
+        &m_uniformBuffers.buffers[i],
+        &m_uniformBuffers.allocations[i]);
 
-    buffer::mapMemory(
-        this->m_uniformBuffers.allocations[i], &this->m_mappings[i]);
+    buffer::mapMemory(m_uniformBuffers.allocations[i], &m_mappings[i]);
 
     VkDescriptorSetAllocateInfo allocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -32,10 +39,10 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
     };
 
     vkAllocateDescriptorSets(
-        ctx::device, &allocateInfo, &this->m_descriptorSets[i]);
+        ctx().m_device, &allocateInfo, &m_descriptorSets[i]);
 
     VkDescriptorBufferInfo bufferInfo{
-        this->m_uniformBuffers.buffers[i],
+        m_uniformBuffers.buffers[i],
         0,
         sizeof(CameraUniform),
     };
@@ -43,7 +50,7 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
     VkWriteDescriptorSet descriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        this->m_descriptorSets[i],          // dstSet
+        m_descriptorSets[i],               // dstSet
         0,                                 // dstBinding
         0,                                 // dstArrayElement
         1,                                 // descriptorCount
@@ -53,26 +60,101 @@ Camera::Camera(glm::vec3 position, glm::quat rotation) {
         nullptr,                           // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(ctx::device, 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(ctx().m_device, 1, &descriptorWrite, 0, nullptr);
   }
 }
 
-void Camera::destroy() {
-  for (size_t i = 0; i < ARRAYSIZE(this->m_uniformBuffers.buffers); i++) {
-    buffer::unmapMemory(this->m_uniformBuffers.allocations[i]);
-    buffer::destroy(
-        this->m_uniformBuffers.buffers[i], this->m_uniformBuffers.allocations[i]);
+Camera::~Camera() {
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
+  if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
+    for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
+      buffer::unmapMemory(m_uniformBuffers.allocations[i]);
+      buffer::destroy(
+          m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
+    }
   }
 
-  auto descriptorPool = ctx::descriptorManager.getPool(DESC_CAMERA);
+  if (m_descriptorSets[0] != VK_NULL_HANDLE) {
+    auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_CAMERA);
 
-  assert(descriptorPool != nullptr);
+    assert(descriptorPool != nullptr);
 
-  vkFreeDescriptorSets(
-      ctx::device,
-      *descriptorPool,
-      this->m_descriptorSets.size(),
-      this->m_descriptorSets.data());
+    vkFreeDescriptorSets(
+        ctx().m_device,
+        *descriptorPool,
+        ARRAYSIZE(m_descriptorSets),
+        m_descriptorSets);
+  }
+}
+
+Camera::Camera(Camera &&rhs) {
+  m_cameraUniform = rhs.m_cameraUniform;
+  m_fov = rhs.m_fov;
+  m_near = rhs.m_near;
+  m_far = rhs.m_far;
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_uniformBuffers.buffers[i] = rhs.m_uniformBuffers.buffers[i];
+    m_uniformBuffers.allocations[i] = rhs.m_uniformBuffers.allocations[i];
+    m_mappings[i] = rhs.m_mappings[i];
+    m_descriptorSets[i] = rhs.m_descriptorSets[i];
+  }
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    rhs.m_uniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    rhs.m_uniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    rhs.m_mappings[i] = VK_NULL_HANDLE;
+    rhs.m_descriptorSets[i] = VK_NULL_HANDLE;
+  }
+}
+
+Camera &Camera::operator=(Camera &&rhs) {
+  if (this != &rhs) {
+    // Free old stuff
+    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
+    if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
+      for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
+        buffer::unmapMemory(m_uniformBuffers.allocations[i]);
+        buffer::destroy(
+            m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
+      }
+    }
+
+    if (m_descriptorSets[0] != VK_NULL_HANDLE) {
+      auto descriptorPool = ctx().m_descriptorManager.getPool(DESC_CAMERA);
+
+      assert(descriptorPool != nullptr);
+
+      vkFreeDescriptorSets(
+          ctx().m_device,
+          *descriptorPool,
+          ARRAYSIZE(m_descriptorSets),
+          m_descriptorSets);
+    }
+  }
+
+  m_cameraUniform = rhs.m_cameraUniform;
+  m_fov = rhs.m_fov;
+  m_near = rhs.m_near;
+  m_far = rhs.m_far;
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_uniformBuffers.buffers[i] = rhs.m_uniformBuffers.buffers[i];
+    m_uniformBuffers.allocations[i] = rhs.m_uniformBuffers.allocations[i];
+    m_mappings[i] = rhs.m_mappings[i];
+    m_descriptorSets[i] = rhs.m_descriptorSets[i];
+  }
+
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    rhs.m_uniformBuffers.buffers[i] = VK_NULL_HANDLE;
+    rhs.m_uniformBuffers.allocations[i] = VK_NULL_HANDLE;
+    rhs.m_mappings[i] = VK_NULL_HANDLE;
+    rhs.m_descriptorSets[i] = VK_NULL_HANDLE;
+  }
+
+  return *this;
 }
 
 void Camera::setPos(glm::vec3 pos) {
@@ -108,9 +190,9 @@ void Camera::rotate(glm::quat rot) {
   m_cameraUniform.view = glm::mat4_cast(rot) * m_cameraUniform.view;
 }
 
-void Camera::setFov(float fov) { this->m_fov = fov; }
+void Camera::setFov(float fov) { m_fov = fov; }
 
-float Camera::getFov() const { return this->m_fov; }
+float Camera::getFov() const { return m_fov; }
 
 void Camera::lookAt(glm::vec3 point) {
   m_cameraUniform.view = glm::lookAt(this->getPos(), point, {0.0, -1.0, 0.0});
@@ -120,13 +202,13 @@ void Camera::update(Window &window) {
   auto i = window.getCurrentFrameIndex();
 
   m_cameraUniform.proj = glm::perspective(
-      glm::radians(this->m_fov),
+      glm::radians(m_fov),
       static_cast<float>(window.getWidth()) /
           static_cast<float>(window.getHeight()),
-      this->m_near,
-      this->m_far);
+      m_near,
+      m_far);
 
-  memcpy(this->m_mappings[i], &this->m_cameraUniform, sizeof(CameraUniform));
+  memcpy(m_mappings[i], &m_cameraUniform, sizeof(CameraUniform));
 }
 
 void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
@@ -139,7 +221,7 @@ void Camera::bind(Window &window, GraphicsPipeline &pipeline) {
       pipeline.m_pipelineLayout,
       0,
       1,
-      &this->m_descriptorSets[i],
+      &m_descriptorSets[i],
       0,
       nullptr);
 }

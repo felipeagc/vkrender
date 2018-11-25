@@ -21,8 +21,8 @@ public:
   getPipelineVertexInputStateCreateInfo() const;
 
 protected:
-  fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions_;
-  fstl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions_;
+  fstl::fixed_vector<VkVertexInputBindingDescription> m_bindingDescriptions;
+  fstl::fixed_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 };
 
 class VertexFormatBuilder {
@@ -40,8 +40,8 @@ public:
   VertexFormat build();
 
 private:
-  fstl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions_;
-  fstl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions_;
+  fstl::fixed_vector<VkVertexInputBindingDescription> m_bindingDescriptions;
+  fstl::fixed_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 };
 
 } // namespace vkr
