@@ -124,20 +124,16 @@ operator[](const std::string &key) {
 }
 
 VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
-  for (auto &p : m_pools) {
-    if (p.first == key) {
-      return &p.second;
-    }
+  if (m_pools.find(key) != m_pools.end()) {
+    return &m_pools[key];
   }
 
   return nullptr;
 }
 
 VkDescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
-  for (auto &p : m_setLayouts) {
-    if (p.first == key) {
-      return &p.second;
-    }
+  if (m_setLayouts.find(key) != m_setLayouts.end()) {
+    return &m_setLayouts[key];
   }
 
   return nullptr;
@@ -148,7 +144,7 @@ bool DescriptorManager::addPool(const std::string &key, VkDescriptorPool pool) {
     return false;
   }
 
-  m_pools.push_back({key, pool});
+  m_pools[key] = pool;
   return true;
 }
 
@@ -158,7 +154,7 @@ bool DescriptorManager::addSetLayout(
     return false;
   }
 
-  m_setLayouts.push_back({key, setLayout});
+  m_setLayouts[key] = setLayout;
   return true;
 }
 

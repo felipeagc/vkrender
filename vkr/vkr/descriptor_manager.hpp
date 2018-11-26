@@ -1,8 +1,8 @@
 #pragma once
 
 #include <fstl/fixed_vector.hpp>
+#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace vkr {
 const char *const DESC_CAMERA = "camera";
@@ -30,7 +30,7 @@ public:
   void destroy();
 
 protected:
-  std::vector<std::pair<std::string, VkDescriptorPool>> m_pools;
-  std::vector<std::pair<std::string, VkDescriptorSetLayout>> m_setLayouts;
+  std::unordered_map<std::string, VkDescriptorPool> m_pools;
+  std::unordered_map<std::string, VkDescriptorSetLayout> m_setLayouts;
 };
 } // namespace vkr
