@@ -23,7 +23,8 @@ public:
   ~World();
 
   /*
-   Gets the first available entity ID
+   Gets the first available entity ID.
+   If all of the slots are filled up, allocate some more.
    */
   Entity createEntity();
 
@@ -34,9 +35,22 @@ public:
   void removeEntity(Entity entity);
 
   /*
-    Returns whether the entity has any component associated with it.
+    Returns whether the entity has at least one component associated with it.
    */
   bool hasComponents(Entity entity);
+
+  /*
+    Returns whether the entity has a type of component associated with it.
+   */
+  template<typename Component>
+  bool hasComponent(Entity entity) {
+    if (m_entityComponentMasks.size() <= entity) {
+      throw std::runtime_error("Invalid entity");
+    }
+
+    auto compId = WorldTypeId::type<Component>;
+    return m_entityComponentMasks[entity][compId];
+  }
 
   /*
     Sets a component for an entity.

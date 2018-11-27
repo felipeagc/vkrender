@@ -28,6 +28,10 @@ Entity World::createEntity() {
 }
 
 void World::removeEntity(Entity entity) {
+  if (m_entityComponentMasks.size() <= entity) {
+    throw std::runtime_error("Invalid entity");
+  }
+
   for (size_t compId = 0; compId < MAX_COMPONENTS; compId++) {
     if (m_entityComponentMasks[entity][compId]) {
       const void *component =
@@ -43,5 +47,9 @@ void World::removeEntity(Entity entity) {
 }
 
 bool World::hasComponents(Entity entity) {
+  if (m_entityComponentMasks.size() <= entity) {
+    throw std::runtime_error("Invalid entity");
+  }
+
   return (!m_entityComponentMasks[entity].none());
 }
