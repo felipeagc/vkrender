@@ -1,8 +1,8 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
-#include <glm/glm.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/context.hpp>
+#include <vkr/glm.hpp>
 #include <vkr/pipeline.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/util.hpp>

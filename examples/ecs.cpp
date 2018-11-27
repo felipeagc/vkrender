@@ -1,3 +1,4 @@
+#include <ecs/world.hpp>
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
@@ -44,6 +45,8 @@ int main() {
 
   modelShader.destroy();
 
+  ecs::World world;
+
   // Create light manager
   vkr::LightManager lightManager({
       vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
@@ -64,13 +67,19 @@ int main() {
   }
 
   // Create models
-  vkr::GltfModelInstance helmet{
-      assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
-  helmet.m_pos = {2.0, 0.0, 0.0};
-  vkr::GltfModelInstance boombox{
-      assetManager.getAsset<vkr::GltfModel>("../assets/BoomBox.glb")};
-  boombox.m_pos = {-2.0, 0.0, 0.0};
-  boombox.m_scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
+  ecs::Entity helmet = world.createEntity();
+  world.assign<vkr::GltfModelInstance>(
+      helmet,
+      assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json"));
+  world.getComponent<vkr::GltfModelInstance>(helmet)->m_pos = {2.0, 0.0, 0.0};
+
+  ecs::Entity boombox = world.createEntity();
+  world.assign<vkr::GltfModelInstance>(
+      boombox, assetManager.getAsset<vkr::GltfModel>("../assets/BoomBox.glb"));
+  auto boomboxModelInstance =
+      world.getComponent<vkr::GltfModelInstance>(boombox);
+  boomboxModelInstance->m_pos = {-2.0, 0.0, 0.0};
+  boomboxModelInstance->m_scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
 
   // Create camera
   vkr::Camera camera{{0.0, 0.0, 0.0}};
@@ -120,7 +129,7 @@ int main() {
         camX, cameraRadius * sin(cameraHeightMultiplier), camZ};
 
     camera.lookAt(
-        (helmet.m_pos + boombox.m_pos) / 2.0f,
+        {0.0, 0.0, 0.0},
         glm::normalize(glm::vec3{0.0, -cos(cameraHeightMultiplier), 0.0}));
 
     // Update camera matrices
@@ -135,8 +144,11 @@ int main() {
     // Draw models
     lightManager.bind(window, modelPipeline);
     camera.bind(window, modelPipeline);
-    helmet.draw(window, modelPipeline);
-    boombox.draw(window, modelPipeline);
+
+    world.each<vkr::GltfModelInstance>(
+        [&](ecs::Entity, vkr::GltfModelInstance &model) {
+          model.draw(window, modelPipeline);
+        });
 
     // Draw billboards
     camera.bind(window, billboardPipeline);

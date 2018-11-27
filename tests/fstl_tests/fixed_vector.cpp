@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-TEST(smallvec, test_create_stack) {
+TEST(fixed_vector, test_create_stack) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3, 4};
   std::vector<int> v{1, 2, 3, 4};
 
@@ -14,7 +14,7 @@ TEST(smallvec, test_create_stack) {
   }
 }
 
-TEST(smallvec, test_create_heap) {
+TEST(fixed_vector, test_create_heap) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3, 4, 5, 6};
   std::vector<int> v{1, 2, 3, 4, 5, 6};
 
@@ -25,7 +25,7 @@ TEST(smallvec, test_create_heap) {
   }
 }
 
-TEST(smallvec, test_push_back_stack) {
+TEST(fixed_vector, test_push_back_stack) {
   fstl::fixed_vector<int, 4> sv{1, 2};
   sv.push_back(3);
 
@@ -39,7 +39,7 @@ TEST(smallvec, test_push_back_stack) {
   }
 }
 
-TEST(smallvec, test_push_back_heap) {
+TEST(fixed_vector, test_push_back_heap) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3, 4};
   sv.push_back(5);
 
@@ -53,7 +53,7 @@ TEST(smallvec, test_push_back_heap) {
   }
 }
 
-TEST(smallvec, test_push_back_heap2) {
+TEST(fixed_vector, test_push_back_heap2) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3, 4, 5};
   sv.push_back(6);
 
@@ -67,7 +67,7 @@ TEST(smallvec, test_push_back_heap2) {
   }
 }
 
-TEST(smallvec, test_resize_stack) {
+TEST(fixed_vector, test_resize_stack) {
   fstl::fixed_vector<int, 4> sv{1, 2};
   sv.resize(4);
 
@@ -81,7 +81,7 @@ TEST(smallvec, test_resize_stack) {
   }
 }
 
-TEST(smallvec, test_resize_heap) {
+TEST(fixed_vector, test_resize_heap) {
   fstl::fixed_vector<int, 4> sv{1, 2};
   sv.resize(6);
 
@@ -95,7 +95,7 @@ TEST(smallvec, test_resize_heap) {
   }
 }
 
-TEST(smallvec, test_count_constructor_stack) {
+TEST(fixed_vector, test_count_constructor_stack) {
   fstl::fixed_vector<int, 4> sv(4);
   std::vector<int> v(4);
 
@@ -106,7 +106,7 @@ TEST(smallvec, test_count_constructor_stack) {
   }
 }
 
-TEST(smallvec, test_count_constructor_heap) {
+TEST(fixed_vector, test_count_constructor_heap) {
   fstl::fixed_vector<int, 4> sv(10);
   std::vector<int> v(10);
 
@@ -117,7 +117,7 @@ TEST(smallvec, test_count_constructor_heap) {
   }
 }
 
-TEST(smallvec, test_count_value_constructor_stack) {
+TEST(fixed_vector, test_count_value_constructor_stack) {
   fstl::fixed_vector<int, 4> sv(4, 2);
   std::vector<int> v(4, 2);
 
@@ -128,7 +128,7 @@ TEST(smallvec, test_count_value_constructor_stack) {
   }
 }
 
-TEST(smallvec, test_count_value_constructor_heap) {
+TEST(fixed_vector, test_count_value_constructor_heap) {
   fstl::fixed_vector<int, 4> sv(10, 2);
   std::vector<int> v(10, 2);
 
@@ -139,7 +139,7 @@ TEST(smallvec, test_count_value_constructor_heap) {
   }
 }
 
-TEST(smallvec, test_copy_constructor_stack) {
+TEST(fixed_vector, test_copy_constructor_stack) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3};
   std::vector<int> v{1, 2, 3};
 
@@ -153,7 +153,7 @@ TEST(smallvec, test_copy_constructor_stack) {
   }
 }
 
-TEST(smallvec, test_copy_constructor_heap) {
+TEST(fixed_vector, test_copy_constructor_heap) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3, 4, 5};
   std::vector<int> v{1, 2, 3, 4, 5};
 
@@ -167,7 +167,7 @@ TEST(smallvec, test_copy_constructor_heap) {
   }
 }
 
-TEST(smallvec, test_copy_assign_op_stack) {
+TEST(fixed_vector, test_copy_assign_op_stack) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3};
   std::vector<int> v{1, 2, 3};
 
@@ -183,7 +183,7 @@ TEST(smallvec, test_copy_assign_op_stack) {
   }
 }
 
-TEST(smallvec, test_copy_assign_op_heap) {
+TEST(fixed_vector, test_copy_assign_op_heap) {
   fstl::fixed_vector<int, 4> sv{1, 2, 3, 4, 5};
   std::vector<int> v{1, 2, 3, 4, 5};
 

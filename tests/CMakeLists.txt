@@ -1,3 +1,4 @@
 include(GoogleTest)
 
-add_subdirectory(container_tests)
+add_subdirectory(fstl_tests)
+add_subdirectory(ecs_tests)

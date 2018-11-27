@@ -31,6 +31,7 @@ include(cotire)
 
 add_subdirectory(thirdparty)
 add_subdirectory(fstl)
+add_subdirectory(ecs)
 add_subdirectory(vkr)
 
 option(VKR_BUILD_EXAMPLES "Build the examples" ON)

@@ -1,10 +1,10 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
-#include <glm/glm.hpp>
 #include <vkr/asset_manager.hpp>
 #include <vkr/buffer.hpp>
 #include <vkr/camera.hpp>
 #include <vkr/context.hpp>
+#include <vkr/glm.hpp>
 #include <vkr/gltf_model_instance.hpp>
 #include <vkr/shader.hpp>
 #include <vkr/texture.hpp>

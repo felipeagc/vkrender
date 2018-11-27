@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vkr/glm.hpp>
 
 namespace vkr {
 class Window;
