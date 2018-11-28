@@ -85,7 +85,7 @@ public:
   } dimensions;
 
   GltfModel(){};
-  GltfModel(const std::string &path);
+  GltfModel(const std::string &path, bool flipUVs = false);
 
   operator bool() const;
 

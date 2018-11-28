@@ -7,6 +7,7 @@
 #include <functional>
 #include <stdexcept>
 #include <vector>
+#include <cassert>
 
 namespace ecs {
 
@@ -62,7 +63,9 @@ public:
 
     auto compId = WorldTypeId::type<Component>;
 
-    const size_t index = entity * m_componentSizes[compId];
+    assert(sizeof(Component) == m_componentSizes[compId]);
+
+    const size_t index = entity * sizeof(Component);
 
     if (m_entityComponentMasks.size() <= entity) {
       throw std::runtime_error("Invalid entity");

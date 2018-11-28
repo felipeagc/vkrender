@@ -59,7 +59,7 @@ GltfModelComponent::GltfModelComponent(const GltfModel &model)
 GltfModelComponent::~GltfModelComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
+  for (size_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     renderer::buffer::unmapMemory(m_uniformBuffers.allocations[i]);
     renderer::buffer::destroy(
         m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);

@@ -120,9 +120,7 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   return m;
 }
 
-GltfModel::GltfModel(const std::string &path) {
-  bool flipUVs = false;
-
+GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   std::string ext = path.substr(path.find_last_of('.'), path.size());
 
   std::string dir = path.substr(0, path.find_last_of('/') + 1);
