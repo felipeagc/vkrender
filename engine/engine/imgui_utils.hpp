@@ -5,14 +5,15 @@ class Window;
 }
 
 namespace engine {
-class Camera;
 class AssetManager;
 class LightManager;
+struct TransformComponent;
+class CameraComponent;
 
 namespace imgui {
 void statsWindow(renderer::Window &window);
 
-void cameraWindow(Camera &camera);
+void cameraWindow(CameraComponent *camera, TransformComponent *transform);
 
 void assetsWindow(AssetManager &assetManager);
 

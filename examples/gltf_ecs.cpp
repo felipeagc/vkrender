@@ -58,23 +58,21 @@ int main() {
 
   // Create models
   ecs::Entity helmet = world.createEntity();
-  world.assign<engine::GltfModelInstance>(
+  world.assign<engine::GltfModelComponent>(
       helmet,
       assetManager.getAsset<engine::GltfModel>("../assets/helmet_model.json"));
-  world.getComponent<engine::GltfModelInstance>(helmet)->m_pos = {
-      2.0, 0.0, 0.0};
+  world.assign<engine::TransformComponent>(helmet, glm::vec3{2.0, 0.0, 0.0});
 
   ecs::Entity boombox = world.createEntity();
-  world.assign<engine::GltfModelInstance>(
+  world.assign<engine::GltfModelComponent>(
       boombox,
       assetManager.getAsset<engine::GltfModel>("../assets/BoomBox.glb"));
-  auto boomboxModelInstance =
-      world.getComponent<engine::GltfModelInstance>(boombox);
-  boomboxModelInstance->m_pos = {-2.0, 0.0, 0.0};
-  boomboxModelInstance->m_scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
+  world.assign<engine::TransformComponent>(
+      boombox, glm::vec3{-2.0, 0.0, 0.0}, glm::vec3{1.0, 1.0, 1.0} * 100.0f);
 
-  // Create camera
-  engine::Camera camera{{0.0, 0.0, 0.0}};
+  ecs::Entity camera = world.createEntity();
+  world.assign<engine::CameraComponent>(camera);
+  world.assign<engine::TransformComponent>(camera);
 
   float time = 0.0;
   float cameraAngle = 0;
@@ -117,33 +115,41 @@ int main() {
     // Change camera position and rotation
     float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
     float camZ = -cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
-    camera.m_position = {
-        camX, cameraRadius * sin(cameraHeightMultiplier), camZ};
+    world.each<engine::CameraComponent, engine::TransformComponent>([&](ecs::Entity,
+                                                  engine::CameraComponent &camera,
+                                                  engine::TransformComponent &transform) {
+      transform.position = {
+          camX, cameraRadius * sin(cameraHeightMultiplier), camZ};
 
-    camera.lookAt(
-        {0.0, 0.0, 0.0},
-        glm::normalize(glm::vec3{0.0, -cos(cameraHeightMultiplier), 0.0}));
+      transform.lookAt(
+          {0.0, 0.0, 0.0},
+          glm::normalize(glm::vec3{0.0, -cos(cameraHeightMultiplier), 0.0}));
 
-    // Update camera matrices
-    camera.update(window);
+      camera.update(window, transform.getMatrix());
+    });
 
     // Show ImGui windows
     engine::imgui::statsWindow(window);
     engine::imgui::assetsWindow(assetManager);
     engine::imgui::lightsWindow(lightManager);
-    engine::imgui::cameraWindow(camera);
+    engine::imgui::cameraWindow(
+        world.getComponent<engine::CameraComponent>(camera),
+        world.getComponent<engine::TransformComponent>(camera));
 
     // Draw models
     lightManager.bind(window, modelPipeline);
-    camera.bind(window, modelPipeline);
 
-    world.each<engine::GltfModelInstance>(
-        [&](ecs::Entity, engine::GltfModelInstance &model) {
-          model.draw(window, modelPipeline);
+    world.getComponent<engine::CameraComponent>(camera)->bind(window, modelPipeline);
+
+    world.each<engine::GltfModelComponent, engine::TransformComponent>(
+        [&](ecs::Entity,
+            engine::GltfModelComponent &model,
+            engine::TransformComponent &transform) {
+          model.draw(window, modelPipeline, transform.getMatrix());
         });
 
     // Draw billboards
-    camera.bind(window, billboardPipeline);
+    world.getComponent<engine::CameraComponent>(camera)->bind(window, billboardPipeline);
     for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
       engine::Light light = lightManager.getLights()[i];
       lightBillboards[i].setPos(light.pos);

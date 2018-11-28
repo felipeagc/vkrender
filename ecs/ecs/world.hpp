@@ -10,7 +10,7 @@
 
 namespace ecs {
 
-const size_t MAX_COMPONENTS = 1000;
+const size_t MAX_COMPONENTS = 100;
 const size_t INITIAL_ALLOCATED_ENTITY_COUNT = 1000;
 
 using ComponentMask = std::bitset<MAX_COMPONENTS>;

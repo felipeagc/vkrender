@@ -16,8 +16,9 @@ class Model;
 namespace engine {
 // Represents a glTF model asset
 // Can be treated as a handle to the resource
+
 class GltfModel {
-  friend class GltfModelInstance;
+  friend class GltfModelComponent;
 
 public:
   struct Material {

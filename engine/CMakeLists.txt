@@ -1,12 +1,13 @@
 set(
   ENGINE_SOURCES
   engine/gltf_model.cpp
-  engine/camera.cpp
   engine/light_manager.cpp
   engine/billboard.cpp
   engine/asset_manager.cpp
-  engine/gltf_model_instance.cpp
   engine/imgui_utils.cpp
+
+  engine/camera_component.cpp
+  engine/gltf_model_component.cpp
   )
 
 add_library(
