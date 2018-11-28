@@ -9,5 +9,3 @@ target_link_libraries(
   fstl INTERFACE
   fmt
 )
-
-cotire(fstl)

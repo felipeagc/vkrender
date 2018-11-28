@@ -2,64 +2,52 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
-#include <vkr/asset_manager.hpp>
-#include <vkr/billboard.hpp>
-#include <vkr/buffer.hpp>
-#include <vkr/camera.hpp>
-#include <vkr/context.hpp>
-#include <vkr/glm.hpp>
-#include <vkr/gltf_model_instance.hpp>
-#include <vkr/imgui_utils.hpp>
-#include <vkr/lighting.hpp>
-#include <vkr/pipeline.hpp>
-#include <vkr/shader.hpp>
-#include <vkr/texture.hpp>
-#include <vkr/util.hpp>
-#include <vkr/window.hpp>
+#include <renderer/renderer.hpp>
+#include <engine/engine.hpp>
 
 int main() {
-  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
+  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};
 
-  vkr::AssetManager assetManager;
+  engine::AssetManager assetManager;
 
   // Create shaders & pipelines
-  vkr::Shader billboardShader{
+  renderer::Shader billboardShader{
       "../shaders/billboard.vert",
       "../shaders/billboard.frag",
   };
 
-  vkr::GraphicsPipeline billboardPipeline =
-      vkr::createBillboardPipeline(window, billboardShader);
+  renderer::GraphicsPipeline billboardPipeline =
+      renderer::createBillboardPipeline(window, billboardShader);
 
   billboardShader.destroy();
 
-  vkr::Shader modelShader{
+  renderer::Shader modelShader{
       "../shaders/model_lit.vert",
       "../shaders/model_lit.frag",
   };
 
-  vkr::GraphicsPipeline modelPipeline =
-      vkr::createStandardPipeline(window, modelShader);
+  renderer::GraphicsPipeline modelPipeline =
+      renderer::createStandardPipeline(window, modelShader);
 
   modelShader.destroy();
 
   ecs::World world;
 
   // Create light manager
-  vkr::LightManager lightManager({
-      vkr::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
-      vkr::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
+  engine::LightManager lightManager({
+      engine::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
+      engine::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
                  glm::vec4(0.0, 1.0, 0.0, 1.0)},
   });
 
   // Create billboards
-  fstl::fixed_vector<vkr::Billboard> lightBillboards;
+  fstl::fixed_vector<engine::Billboard> lightBillboards;
 
   for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-    lightBillboards.push_back(vkr::Billboard{
-        assetManager.getAsset<vkr::Texture>("../assets/light.png"), // texture
+    lightBillboards.push_back(engine::Billboard{
+        assetManager.getAsset<renderer::Texture>("../assets/light.png"), // texture
         {3.0f, 3.0f, 3.0f},                                         // position
         {1.0f, 1.0f, 1.0f},                                         // scale
         {1.0, 0.0, 0.0, 1.0}                                        // color
@@ -68,21 +56,21 @@ int main() {
 
   // Create models
   ecs::Entity helmet = world.createEntity();
-  world.assign<vkr::GltfModelInstance>(
+  world.assign<engine::GltfModelInstance>(
       helmet,
-      assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json"));
-  world.getComponent<vkr::GltfModelInstance>(helmet)->m_pos = {2.0, 0.0, 0.0};
+      assetManager.getAsset<engine::GltfModel>("../assets/helmet_model.json"));
+  world.getComponent<engine::GltfModelInstance>(helmet)->m_pos = {2.0, 0.0, 0.0};
 
   ecs::Entity boombox = world.createEntity();
-  world.assign<vkr::GltfModelInstance>(
-      boombox, assetManager.getAsset<vkr::GltfModel>("../assets/BoomBox.glb"));
+  world.assign<engine::GltfModelInstance>(
+      boombox, assetManager.getAsset<engine::GltfModel>("../assets/BoomBox.glb"));
   auto boomboxModelInstance =
-      world.getComponent<vkr::GltfModelInstance>(boombox);
+      world.getComponent<engine::GltfModelInstance>(boombox);
   boomboxModelInstance->m_pos = {-2.0, 0.0, 0.0};
   boomboxModelInstance->m_scale = glm::vec3{1.0, 1.0, 1.0} * 100.0f;
 
   // Create camera
-  vkr::Camera camera{{0.0, 0.0, 0.0}};
+  engine::Camera camera{{0.0, 0.0, 0.0}};
 
   float time = 0.0;
   float cameraAngle = 0;
@@ -136,24 +124,24 @@ int main() {
     camera.update(window);
 
     // Show ImGui windows
-    vkr::imgui::statsWindow(window);
-    vkr::imgui::assetsWindow(assetManager);
-    vkr::imgui::lightsWindow(lightManager);
-    vkr::imgui::cameraWindow(camera);
+    engine::imgui::statsWindow(window);
+    engine::imgui::assetsWindow(assetManager);
+    engine::imgui::lightsWindow(lightManager);
+    engine::imgui::cameraWindow(camera);
 
     // Draw models
     lightManager.bind(window, modelPipeline);
     camera.bind(window, modelPipeline);
 
-    world.each<vkr::GltfModelInstance>(
-        [&](ecs::Entity, vkr::GltfModelInstance &model) {
+    world.each<engine::GltfModelInstance>(
+        [&](ecs::Entity, engine::GltfModelInstance &model) {
           model.draw(window, modelPipeline);
         });
 
     // Draw billboards
     camera.bind(window, billboardPipeline);
     for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-      vkr::Light light = lightManager.getLights()[i];
+      engine::Light light = lightManager.getLights()[i];
       lightBillboards[i].setPos(light.pos);
       lightBillboards[i].setColor(light.color);
       lightBillboards[i].draw(window, billboardPipeline);

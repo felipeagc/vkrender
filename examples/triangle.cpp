@@ -1,29 +1,22 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
-#include <vkr/buffer.hpp>
-#include <vkr/context.hpp>
-#include <vkr/glm.hpp>
-#include <vkr/pipeline.hpp>
-#include <vkr/shader.hpp>
-#include <vkr/util.hpp>
-#include <vkr/vertex_format.hpp>
-#include <vkr/window.hpp>
+#include <renderer/renderer.hpp>
 
 struct Vertex {
   glm::vec2 pos;
   glm::vec3 color;
 };
 
-vkr::GraphicsPipeline
-createTrianglePipeline(vkr::Window &window, vkr::Shader &shader) {
-  using namespace vkr;
+renderer::GraphicsPipeline
+createTrianglePipeline(renderer::Window &window, renderer::Shader &shader) {
+  using namespace renderer;
 
   auto pipelineLayout = pipeline::createPipelineLayout(0, nullptr);
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
-  vkr::VertexFormat vertexFormat =
-      vkr::VertexFormatBuilder()
+  renderer::VertexFormat vertexFormat =
+      renderer::VertexFormatBuilder()
           .addBinding(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX)
           .addAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos))
           .addAttribute(
@@ -77,14 +70,14 @@ createTrianglePipeline(vkr::Window &window, vkr::Shader &shader) {
 }
 
 int main() {
-  vkr::Window window("Triangle");
+  renderer::Window window("Triangle");
 
-  vkr::Shader shader{
+  renderer::Shader shader{
       "../shaders/triangle.vert",
       "../shaders/triangle.frag",
   };
 
-  vkr::GraphicsPipeline pipeline = createTrianglePipeline(window, shader);
+  renderer::GraphicsPipeline pipeline = createTrianglePipeline(window, shader);
 
   shader.destroy();
 
@@ -96,27 +89,27 @@ int main() {
 
   VkBuffer vertexBuffer;
   VmaAllocation vertexAllocation;
-  vkr::buffer::createVertexBuffer(
+  renderer::buffer::createVertexBuffer(
       sizeof(Vertex) * vertices.size(), &vertexBuffer, &vertexAllocation);
 
   {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAllocation;
-    vkr::buffer::createStagingBuffer(
+    renderer::buffer::createStagingBuffer(
         sizeof(Vertex) * vertices.size(), &stagingBuffer, &stagingAllocation);
 
     void *stagingMemoryPointer;
-    vkr::buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+    renderer::buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
 
     memcpy(
         stagingMemoryPointer,
         vertices.data(),
         sizeof(Vertex) * vertices.size());
-    vkr::buffer::bufferTransfer(
+    renderer::buffer::bufferTransfer(
         stagingBuffer, vertexBuffer, sizeof(Vertex) * vertices.size());
 
-    vkr::buffer::unmapMemory(stagingAllocation);
-    vkr::buffer::destroy(stagingBuffer, stagingAllocation);
+    renderer::buffer::unmapMemory(stagingAllocation);
+    renderer::buffer::destroy(stagingBuffer, stagingAllocation);
   }
 
   auto draw = [&]() {
@@ -144,7 +137,7 @@ int main() {
     window.present(draw);
   }
 
-  vkr::buffer::destroy(vertexBuffer, vertexAllocation);
+  renderer::buffer::destroy(vertexBuffer, vertexAllocation);
 
   return 0;
 }

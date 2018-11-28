@@ -1,37 +1,30 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
-#include <vkr/asset_manager.hpp>
-#include <vkr/buffer.hpp>
-#include <vkr/camera.hpp>
-#include <vkr/context.hpp>
-#include <vkr/glm.hpp>
-#include <vkr/gltf_model_instance.hpp>
-#include <vkr/shader.hpp>
-#include <vkr/texture.hpp>
-#include <vkr/window.hpp>
+#include <renderer/renderer.hpp>
+#include <engine/engine.hpp>
 
 int main() {
-  vkr::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
+  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
-  vkr::AssetManager assetManager;
+  engine::AssetManager assetManager;
 
-  vkr::Shader modelShader{
+  renderer::Shader modelShader{
       "../shaders/model.vert",
       "../shaders/model.frag",
   };
 
-  vkr::GraphicsPipeline modelPipeline =
-      vkr::createStandardPipeline(window, modelShader);
+  renderer::GraphicsPipeline modelPipeline =
+      renderer::createStandardPipeline(window, modelShader);
 
   modelShader.destroy();
 
-  vkr::Camera camera{{0.0, 0.0, 0.0}};
+  engine::Camera camera{{0.0, 0.0, 0.0}};
 
-  vkr::GltfModelInstance helmet{
-      assetManager.getAsset<vkr::GltfModel>("../assets/helmet_model.json")};
+  engine::GltfModelInstance helmet{
+      assetManager.getAsset<engine::GltfModel>("../assets/helmet_model.json")};
   helmet.m_pos = {0.0, 0.0, 1.0};
-  vkr::GltfModelInstance duck{
-      assetManager.getAsset<vkr::GltfModel>("../assets/Duck.glb")};
+  engine::GltfModelInstance duck{
+      assetManager.getAsset<engine::GltfModel>("../assets/Duck.glb")};
   duck.m_pos = {0.0, 0.0, -1.0};
 
   float time = 0.0;

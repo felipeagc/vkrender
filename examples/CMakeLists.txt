@@ -1,6 +1,6 @@
 macro(add_example name)
   add_executable(${name}_example ${name}.cpp)
-  target_link_libraries(${name}_example PRIVATE vkrender fstl ecs)
+  target_link_libraries(${name}_example PRIVATE engine)
 endmacro()
 
 add_example(triangle)
