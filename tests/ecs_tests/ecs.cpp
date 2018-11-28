@@ -111,8 +111,11 @@ TEST(ecs, test_component_free_3) {
   ecs::World world;
   ecs::Entity e1 = world.createEntity();
   world.assign<Test>(e1, 3);
+  ecs::Entity e2 = world.createEntity();
+  world.assign<Test>(e2, 3);
 
   world.removeEntity(e1);
+  world.removeEntity(e2);
 }
 
 TEST(ecs, test_component_free_4) {

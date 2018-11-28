@@ -10,8 +10,8 @@
 
 namespace ecs {
 
-const size_t MAX_COMPONENTS = 100;
-const size_t INITIAL_ALLOCATED_ENTITY_COUNT = 1000;
+const size_t MAX_COMPONENTS = 50;
+const size_t INITIAL_ALLOCATED_ENTITY_COUNT = 100;
 
 using ComponentMask = std::bitset<MAX_COMPONENTS>;
 
@@ -42,8 +42,7 @@ public:
   /*
     Returns whether the entity has a type of component associated with it.
    */
-  template<typename Component>
-  bool hasComponent(Entity entity) {
+  template <typename Component> bool hasComponent(Entity entity) {
     if (m_entityComponentMasks.size() <= entity) {
       throw std::runtime_error("Invalid entity");
     }
@@ -59,15 +58,15 @@ public:
    */
   template <typename Component, typename... Args>
   void assign(Entity entity, Args &&... args) {
-    const size_t index = entity * sizeof(Component);
-
     this->ensure<Component>();
+
+    auto compId = WorldTypeId::type<Component>;
+
+    const size_t index = entity * m_componentSizes[compId];
 
     if (m_entityComponentMasks.size() <= entity) {
       throw std::runtime_error("Invalid entity");
     }
-
-    auto compId = WorldTypeId::type<Component>;
 
     std::vector<std::uint8_t> &memory = m_componentVectors[compId];
 
@@ -164,7 +163,7 @@ public:
   }
 
 protected:
-  std::vector<std::vector<uint8_t>> m_componentVectors;
+  std::array<std::vector<uint8_t>, MAX_COMPONENTS> m_componentVectors;
   std::array<std::function<void(const void *)>, MAX_COMPONENTS>
       m_componentDestructors;
   std::array<size_t, MAX_COMPONENTS> m_componentSizes;
@@ -181,14 +180,9 @@ protected:
       };
     }
 
-    if (m_componentSizes[id] == 0) {
-      m_componentSizes[id] = sizeof(Component);
-    }
+    m_componentSizes[id] = sizeof(Component);
 
-    // TODO: these allocations might get expensive
-    if (m_componentVectors.size() <= id) {
-      m_componentVectors.resize(id + 1);
-    }
+    // TODO: error when id is MAX_COMPONENTS
   }
 };
 } // namespace ecs
