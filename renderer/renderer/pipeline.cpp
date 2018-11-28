@@ -155,7 +155,7 @@ GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
 
   return GraphicsPipeline{pipeline, pipelineLayout};
 }
-} // namespace vkr
+} // namespace renderer
 
 namespace renderer::pipeline {
 VkPipelineLayout createPipelineLayout(
@@ -340,4 +340,4 @@ VkPipelineDynamicStateCreateInfo defaultDynamicState() {
 
   return dynamicStateCreateInfo;
 }
-} // namespace vkr::pipeline
+} // namespace renderer::pipeline

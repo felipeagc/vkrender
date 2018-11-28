@@ -1,12 +1,12 @@
 #pragma once
 
+#include "glm.hpp"
 #include <SDL2/SDL.h>
 #include <fstl/fixed_vector.hpp>
 #include <functional>
 #include <string>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
-#include "glm.hpp"
 
 namespace renderer {
 
@@ -169,4 +169,4 @@ protected:
   VkPresentModeKHR getSwapchainPresentMode(
       const fstl::fixed_vector<VkPresentModeKHR> &presentModes);
 };
-} // namespace vkr
+} // namespace renderer

@@ -17,9 +17,9 @@ VertexFormat::getPipelineVertexInputStateCreateInfo() const {
       static_cast<uint32_t>(
           m_bindingDescriptions.size()), // vertexBindingDescriptionCount
       m_bindingDescriptions.data(),      // pVertexBindingDescriptions
-      static_cast<uint32_t>(m_attributeDescriptions
-                                .size()), // vertexAttributeDescriptionCount
-      m_attributeDescriptions.data() // pVertexAttributeDescriptions
+      static_cast<uint32_t>(
+          m_attributeDescriptions.size()), // vertexAttributeDescriptionCount
+      m_attributeDescriptions.data()       // pVertexAttributeDescriptions
   };
 }
 

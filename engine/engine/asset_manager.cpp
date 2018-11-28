@@ -21,7 +21,8 @@ std::unordered_map<std::string, Asset> &AssetManager::getAssetTable() {
 }
 
 template <>
-const renderer::Texture &AssetManager::getAsset<renderer::Texture>(const std::string &identifier) {
+const renderer::Texture &
+AssetManager::getAsset<renderer::Texture>(const std::string &identifier) {
   if (m_assetTable.find(identifier) != m_assetTable.end()) {
     auto &asset = m_assetTable.at(identifier);
 
@@ -104,7 +105,8 @@ AssetManager::getAsset<GltfModel>(const std::string &identifier) {
 }
 
 template <>
-void AssetManager::unloadAsset<renderer::Texture>(const std::string &identifier) {
+void AssetManager::unloadAsset<renderer::Texture>(
+    const std::string &identifier) {
   if (m_assetTable.find(identifier) == m_assetTable.end()) {
     return;
   }

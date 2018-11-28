@@ -34,4 +34,4 @@ protected:
   std::unordered_map<std::string, VkDescriptorPool> m_pools;
   std::unordered_map<std::string, VkDescriptorSetLayout> m_setLayouts;
 };
-} // namespace vkr
+} // namespace renderer

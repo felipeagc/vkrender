@@ -46,11 +46,13 @@ protected:
     glm::vec4 color;
   } m_materialUbo;
 
-  renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT> m_meshUniformBuffers;
+  renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT>
+      m_meshUniformBuffers;
   void *m_meshMappings[renderer::MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet m_meshDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
-  renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT> m_materialUniformBuffers;
+  renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT>
+      m_materialUniformBuffers;
   void *m_materialMappings[renderer::MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet m_materialDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };

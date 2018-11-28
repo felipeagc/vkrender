@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include "glm.hpp"
+#include <vulkan/vulkan.h>
 
 namespace renderer {
 class Window;
@@ -33,7 +33,7 @@ public:
 GraphicsPipeline createStandardPipeline(Window &window, Shader &shader);
 
 GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader);
-} // namespace vkr
+} // namespace renderer
 
 namespace renderer::pipeline {
 VkPipelineLayout createPipelineLayout(
@@ -48,4 +48,4 @@ VkPipelineMultisampleStateCreateInfo defaultMultisampleState(
 VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState();
 VkPipelineColorBlendStateCreateInfo defaultColorBlendState();
 VkPipelineDynamicStateCreateInfo defaultDynamicState();
-} // namespace vkr::pipeline
+} // namespace renderer::pipeline

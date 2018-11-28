@@ -16,7 +16,7 @@ GltfModelInstance::GltfModelInstance(const GltfModel &model) : m_model(model) {
   // Create uniform buffers and descriptors
   {
     auto [descriptorPool, descriptorSetLayout] =
-      renderer::ctx().m_descriptorManager[renderer::DESC_MESH];
+        renderer::ctx().m_descriptorManager[renderer::DESC_MESH];
 
     assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -34,14 +34,15 @@ GltfModelInstance::GltfModelInstance(const GltfModel &model) : m_model(model) {
           &m_uniformBuffers.buffers[i],
           &m_uniformBuffers.allocations[i]);
 
-      renderer::buffer::mapMemory(m_uniformBuffers.allocations[i], &m_mappings[i]);
+      renderer::buffer::mapMemory(
+          m_uniformBuffers.allocations[i], &m_mappings[i]);
       memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
 
       VkDescriptorBufferInfo bufferInfo = {
           m_uniformBuffers.buffers[i], 0, sizeof(ModelUniform)};
 
       VK_CHECK(vkAllocateDescriptorSets(
-                 renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]));
+          renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]));
 
       VkWriteDescriptorSet descriptorWrite = {
           VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -56,7 +57,8 @@ GltfModelInstance::GltfModelInstance(const GltfModel &model) : m_model(model) {
           nullptr,                           // pTexelBufferView
       };
 
-      vkUpdateDescriptorSets(renderer::ctx().m_device, 1, &descriptorWrite, 0, nullptr);
+      vkUpdateDescriptorSets(
+          renderer::ctx().m_device, 1, &descriptorWrite, 0, nullptr);
     }
   }
 }
@@ -71,11 +73,12 @@ GltfModelInstance::~GltfModelInstance() {
           m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
     }
 
-    auto descriptorPool = renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
+    auto descriptorPool =
+        renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
     assert(descriptorPool != nullptr);
 
     vkFreeDescriptorSets(
-      renderer::ctx().m_device,
+        renderer::ctx().m_device,
         *descriptorPool,
         ARRAYSIZE(m_descriptorSets),
         m_descriptorSets);
@@ -118,11 +121,12 @@ GltfModelInstance &GltfModelInstance::operator=(GltfModelInstance &&rhs) {
             m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
       }
 
-      auto descriptorPool = renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
+      auto descriptorPool =
+          renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
       assert(descriptorPool != nullptr);
 
       vkFreeDescriptorSets(
-        renderer::ctx().m_device,
+          renderer::ctx().m_device,
           *descriptorPool,
           ARRAYSIZE(m_descriptorSets),
           m_descriptorSets);
@@ -158,7 +162,8 @@ GltfModelInstance::operator bool() const {
   return (m_descriptorSets[0] != VK_NULL_HANDLE);
 }
 
-void GltfModelInstance::draw(renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
+void GltfModelInstance::draw(
+    renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();
@@ -203,7 +208,9 @@ void GltfModelInstance::updateUniforms(int frameIndex) {
 }
 
 void GltfModelInstance::drawNode(
-  GltfModel::Node &node, renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
+    GltfModel::Node &node,
+    renderer::Window &window,
+    renderer::GraphicsPipeline &pipeline) {
   VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();

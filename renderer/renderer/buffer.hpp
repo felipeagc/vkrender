@@ -35,4 +35,4 @@ template <int count> struct Buffers {
 };
 
 } // namespace buffer
-} // namespace vkr
+} // namespace renderer

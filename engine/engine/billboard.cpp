@@ -95,7 +95,9 @@ Billboard::Billboard(
 
     for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
       VK_CHECK(vkAllocateDescriptorSets(
-          renderer::ctx().m_device, &allocateInfo, &m_materialDescriptorSets[i]));
+          renderer::ctx().m_device,
+          &allocateInfo,
+          &m_materialDescriptorSets[i]));
     }
   }
 
@@ -308,7 +310,8 @@ Billboard::operator bool() const {
   return (m_meshDescriptorSets[0] != VK_NULL_HANDLE);
 }
 
-void Billboard::draw(renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
+void Billboard::draw(
+    renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();

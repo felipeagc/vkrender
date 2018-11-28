@@ -1,9 +1,9 @@
 #pragma once
 
+#include <string_view>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
-#include <string_view>
 
 namespace renderer {
 class Texture {
@@ -39,4 +39,4 @@ private:
   uint32_t m_width = 0;
   uint32_t m_height = 0;
 };
-} // namespace vkr
+} // namespace renderer

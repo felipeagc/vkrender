@@ -9,7 +9,7 @@
 
 namespace engine {
 namespace imgui {
-  void statsWindow(renderer::Window &window) {
+void statsWindow(renderer::Window &window) {
   ImGui::Begin("Stats");
 
   VkPhysicalDeviceProperties properties;

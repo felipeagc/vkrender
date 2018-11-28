@@ -64,4 +64,4 @@ private:
 
   VkShaderModule createShaderModule(const std::vector<uint32_t> &code) const;
 };
-} // namespace vkr
+} // namespace renderer

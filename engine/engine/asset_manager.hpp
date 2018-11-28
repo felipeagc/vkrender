@@ -28,12 +28,14 @@ public:
 
   template <typename H> const H &getAsset(const std::string &);
   template <>
-  const renderer::Texture &getAsset<renderer::Texture>(const std::string &identifier);
+  const renderer::Texture &
+  getAsset<renderer::Texture>(const std::string &identifier);
   template <>
   const GltfModel &getAsset<GltfModel>(const std::string &identifier);
 
   template <typename A> void unloadAsset(const std::string &);
-  template <> void unloadAsset<renderer::Texture>(const std::string &identifier);
+  template <>
+  void unloadAsset<renderer::Texture>(const std::string &identifier);
   template <> void unloadAsset<GltfModel>(const std::string &identifier);
 
 private:

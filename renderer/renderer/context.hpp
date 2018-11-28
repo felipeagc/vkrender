@@ -74,4 +74,4 @@ private:
   void createTransientCommandPool();
 };
 
-} // namespace vkr
+} // namespace renderer

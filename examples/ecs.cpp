@@ -1,9 +1,9 @@
 #include <ecs/world.hpp>
+#include <engine/engine.hpp>
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
-#include <engine/engine.hpp>
 
 int main() {
   renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
@@ -37,9 +37,10 @@ int main() {
 
   // Create light manager
   engine::LightManager lightManager({
-      engine::Light{glm::vec4(3.0, 3.0, 3.0, 1.0), glm::vec4(1.0, 0.0, 0.0, 1.0)},
+      engine::Light{glm::vec4(3.0, 3.0, 3.0, 1.0),
+                    glm::vec4(1.0, 0.0, 0.0, 1.0)},
       engine::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
-                 glm::vec4(0.0, 1.0, 0.0, 1.0)},
+                    glm::vec4(0.0, 1.0, 0.0, 1.0)},
   });
 
   // Create billboards
@@ -47,10 +48,11 @@ int main() {
 
   for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
     lightBillboards.push_back(engine::Billboard{
-        assetManager.getAsset<renderer::Texture>("../assets/light.png"), // texture
-        {3.0f, 3.0f, 3.0f},                                         // position
-        {1.0f, 1.0f, 1.0f},                                         // scale
-        {1.0, 0.0, 0.0, 1.0}                                        // color
+        assetManager.getAsset<renderer::Texture>(
+            "../assets/light.png"), // texture
+        {3.0f, 3.0f, 3.0f},         // position
+        {1.0f, 1.0f, 1.0f},         // scale
+        {1.0, 0.0, 0.0, 1.0}        // color
     });
   }
 
@@ -59,11 +61,13 @@ int main() {
   world.assign<engine::GltfModelInstance>(
       helmet,
       assetManager.getAsset<engine::GltfModel>("../assets/helmet_model.json"));
-  world.getComponent<engine::GltfModelInstance>(helmet)->m_pos = {2.0, 0.0, 0.0};
+  world.getComponent<engine::GltfModelInstance>(helmet)->m_pos = {
+      2.0, 0.0, 0.0};
 
   ecs::Entity boombox = world.createEntity();
   world.assign<engine::GltfModelInstance>(
-      boombox, assetManager.getAsset<engine::GltfModel>("../assets/BoomBox.glb"));
+      boombox,
+      assetManager.getAsset<engine::GltfModel>("../assets/BoomBox.glb"));
   auto boomboxModelInstance =
       world.getComponent<engine::GltfModelInstance>(boombox);
   boomboxModelInstance->m_pos = {-2.0, 0.0, 0.0};

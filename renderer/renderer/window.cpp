@@ -106,7 +106,8 @@ Window::~Window() {
 
   for (auto &frameResource : m_frameResources) {
     vkDestroyFramebuffer(ctx().m_device, frameResource.framebuffer, nullptr);
-    vkDestroyFramebuffer(ctx().m_device, frameResource.imguiFramebuffer, nullptr);
+    vkDestroyFramebuffer(
+        ctx().m_device, frameResource.imguiFramebuffer, nullptr);
     vkDestroySemaphore(
         ctx().m_device, frameResource.imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(
@@ -138,8 +139,7 @@ void Window::present(std::function<void()> drawFunction) {
       VK_TRUE,
       UINT64_MAX);
 
-  vkResetFences(
-      ctx().m_device, 1, &m_frameResources[m_currentFrame].fence);
+  vkResetFences(ctx().m_device, 1, &m_frameResources[m_currentFrame].fence);
 
   if (vkAcquireNextImageKHR(
           ctx().m_device,
@@ -172,23 +172,22 @@ void Window::present(std::function<void()> drawFunction) {
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
   beginInfo.pInheritanceInfo = nullptr;
 
-  auto &commandBuffer =
-      m_frameResources[m_currentFrame].commandBuffer;
+  auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
 
   VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
   if (ctx().m_presentQueue != ctx().m_graphicsQueue) {
     VkImageMemoryBarrier barrierFromPresentToDraw = {
-        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,           // sType
-        nullptr,                                          // pNext
-        VK_ACCESS_MEMORY_READ_BIT,                        // srcAccessMask
-        VK_ACCESS_MEMORY_READ_BIT,                        // dstAccessMask
-        VK_IMAGE_LAYOUT_UNDEFINED,                        // oldLayout
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,         // newLayout
-        ctx().m_presentQueueFamilyIndex,                     // srcQueueFamilyIndex
-        ctx().m_graphicsQueueFamilyIndex,                    // dstQueueFamilyIndex
-        m_swapchainImages[m_currentImageIndex], // image
-        imageSubresourceRange,                            // subresourceRange
+        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
+        nullptr,                                  // pNext
+        VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
+        VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
+        VK_IMAGE_LAYOUT_UNDEFINED,                // oldLayout
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // newLayout
+        ctx().m_presentQueueFamilyIndex,          // srcQueueFamilyIndex
+        ctx().m_graphicsQueueFamilyIndex,         // dstQueueFamilyIndex
+        m_swapchainImages[m_currentImageIndex],   // image
+        imageSubresourceRange,                    // subresourceRange
     };
 
     vkCmdPipelineBarrier(
@@ -227,25 +226,25 @@ void Window::present(std::function<void()> drawFunction) {
   }
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,               // sType
-      nullptr,                                                // pNext
-      m_renderPass,                                      // renderPass
+      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,     // sType
+      nullptr,                                      // pNext
+      m_renderPass,                                 // renderPass
       m_frameResources[m_currentFrame].framebuffer, // framebuffer
-      {{0, 0}, m_swapchainExtent},                       // renderArea
-      static_cast<uint32_t>(clearValues.size()),              // clearValueCount
-      clearValues.data(),                                     // pClearValues
+      {{0, 0}, m_swapchainExtent},                  // renderArea
+      static_cast<uint32_t>(clearValues.size()),    // clearValueCount
+      clearValues.data(),                           // pClearValues
   };
 
   vkCmdBeginRenderPass(
       commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport{
-      0.0f,                                              // x
-      0.0f,                                              // y
+      0.0f,                                         // x
+      0.0f,                                         // y
       static_cast<float>(m_swapchainExtent.width),  // width
       static_cast<float>(m_swapchainExtent.height), // height
-      0.0f,                                              // minDepth
-      1.0f,                                              // maxDepth
+      0.0f,                                         // minDepth
+      1.0f,                                         // maxDepth
   };
 
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -266,26 +265,25 @@ void Window::present(std::function<void()> drawFunction) {
 
   {
     VkRenderPassBeginInfo imguiRenderPassBeginInfo = {
-        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, // sType
-        nullptr,                                  // pNext
-        m_imguiRenderPass,                   // renderPass
-        m_frameResources[m_currentFrame]
-            .imguiFramebuffer,            // framebuffer
-        {{0, 0}, m_swapchainExtent}, // renderArea
-        0,                                // clearValueCount
-        nullptr,                          // pClearValues
+        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,          // sType
+        nullptr,                                           // pNext
+        m_imguiRenderPass,                                 // renderPass
+        m_frameResources[m_currentFrame].imguiFramebuffer, // framebuffer
+        {{0, 0}, m_swapchainExtent},                       // renderArea
+        0,                                                 // clearValueCount
+        nullptr,                                           // pClearValues
     };
 
     vkCmdBeginRenderPass(
         commandBuffer, &imguiRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     VkViewport viewport{
-        0.0f,                                              // x
-        0.0f,                                              // y
+        0.0f,                                         // x
+        0.0f,                                         // y
         static_cast<float>(m_swapchainExtent.width),  // width
         static_cast<float>(m_swapchainExtent.height), // height
-        0.0f,                                              // minDepth
-        1.0f,                                              // maxDepth
+        0.0f,                                         // minDepth
+        1.0f,                                         // maxDepth
     };
 
     VkRect2D scissor{{0, 0}, m_swapchainExtent};
@@ -300,16 +298,16 @@ void Window::present(std::function<void()> drawFunction) {
 
   if (ctx().m_presentQueue != ctx().m_graphicsQueue) {
     VkImageMemoryBarrier barrierFromDrawToPresent{
-        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,           // sType
-        nullptr,                                          // pNext
-        VK_ACCESS_MEMORY_READ_BIT,                        // srcAccessMask
-        VK_ACCESS_MEMORY_READ_BIT,                        // dstAccessMask
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,         // oldLayout
-        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,                  // newLayout
-        ctx().m_graphicsQueueFamilyIndex,                    // srcQueueFamilyIndex
-        ctx().m_presentQueueFamilyIndex,                     // dstQueueFamilyIndex
-        m_swapchainImages[m_currentImageIndex], // image
-        imageSubresourceRange,                            // subresourceRange
+        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
+        nullptr,                                  // pNext
+        VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
+        VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // oldLayout
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,          // newLayout
+        ctx().m_graphicsQueueFamilyIndex,         // srcQueueFamilyIndex
+        ctx().m_presentQueueFamilyIndex,          // dstQueueFamilyIndex
+        m_swapchainImages[m_currentImageIndex],   // image
+        imageSubresourceRange,                    // subresourceRange
     };
 
     vkCmdPipelineBarrier(
@@ -358,8 +356,8 @@ void Window::present(std::function<void()> drawFunction) {
       &m_frameResources[m_currentFrame]
            .renderingFinishedSemaphore, // pWaitSemaphores
       1,                                // swapchainCount
-      &m_swapchain,                // pSwapchains
-      &m_currentImageIndex,        // pImageIndices
+      &m_swapchain,                     // pSwapchains
+      &m_currentImageIndex,             // pImageIndices
       nullptr,                          // pResults
   };
 
@@ -449,17 +447,13 @@ double Window::getDelta() const { return m_deltaTime; }
 
 bool Window::getShouldClose() const { return m_shouldClose; }
 
-void Window::setShouldClose(bool shouldClose) {
-  m_shouldClose = shouldClose;
-}
+void Window::setShouldClose(bool shouldClose) { m_shouldClose = shouldClose; }
 
 VkSampleCountFlagBits Window::getMaxMSAASamples() const {
   return m_maxMsaaSamples;
 }
 
-VkSampleCountFlagBits Window::getMSAASamples() const {
-  return m_msaaSamples;
-}
+VkSampleCountFlagBits Window::getMSAASamples() const { return m_msaaSamples; }
 
 int Window::getCurrentFrameIndex() const { return m_currentFrame; }
 
@@ -478,8 +472,7 @@ void Window::imguiEndFrame() { ImGui::Render(); }
 VkRenderPass Window::getRenderPass() { return m_renderPass; }
 
 void Window::createVulkanSurface() {
-  if (!SDL_Vulkan_CreateSurface(
-          m_window, ctx().m_instance, &m_surface)) {
+  if (!SDL_Vulkan_CreateSurface(m_window, ctx().m_instance, &m_surface)) {
     throw std::runtime_error(
         "Failed to create window surface: " + std::string(SDL_GetError()));
   }
@@ -620,7 +613,8 @@ void Window::allocateGraphicsCommandBuffers() {
 
   fstl::fixed_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
 
-  vkAllocateCommandBuffers(ctx().m_device, &allocateInfo, commandBuffers.data());
+  vkAllocateCommandBuffers(
+      ctx().m_device, &allocateInfo, commandBuffers.data());
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     m_frameResources[i].commandBuffer = commandBuffers[i];
@@ -717,16 +711,16 @@ void Window::createMultisampleTargets() {
         nullptr,                             // pNext
         0,                                   // flags
         VK_IMAGE_TYPE_2D,                    // imageType
-        m_swapchainImageFormat,         // format
+        m_swapchainImageFormat,              // format
         {
             m_swapchainExtent.width,  // width
             m_swapchainExtent.height, // height
-            1,                             // depth
-        },                                 // extent
-        1,                                 // mipLevels
-        1,                                 // arrayLayers
+            1,                        // depth
+        },                            // extent
+        1,                            // mipLevels
+        1,                            // arrayLayers
         m_msaaSamples,                // samples
-        VK_IMAGE_TILING_OPTIMAL,           // tiling
+        VK_IMAGE_TILING_OPTIMAL,      // tiling
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
@@ -750,9 +744,9 @@ void Window::createMultisampleTargets() {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
         nullptr,                                  // pNext
         0,                                        // flags
-        m_multiSampleTargets.color.image,    // image
+        m_multiSampleTargets.color.image,         // image
         VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-        m_swapchainImageFormat,              // format
+        m_swapchainImageFormat,                   // format
         {
             VK_COMPONENT_SWIZZLE_R, // r
             VK_COMPONENT_SWIZZLE_G, // g
@@ -782,16 +776,16 @@ void Window::createMultisampleTargets() {
         nullptr,                             // pNext
         0,                                   // flags
         VK_IMAGE_TYPE_2D,                    // imageType
-        m_depthImageFormat,             // format
+        m_depthImageFormat,                  // format
         {
             m_swapchainExtent.width,  // width
             m_swapchainExtent.height, // height
-            1,                             // depth
-        },                                 // extent
-        1,                                 // mipLevels
-        1,                                 // arrayLayers
+            1,                        // depth
+        },                            // extent
+        1,                            // mipLevels
+        1,                            // arrayLayers
         m_msaaSamples,                // samples
-        VK_IMAGE_TILING_OPTIMAL,           // tiling
+        VK_IMAGE_TILING_OPTIMAL,      // tiling
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,                       // sharingMode
@@ -815,9 +809,9 @@ void Window::createMultisampleTargets() {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
         nullptr,                                  // pNext
         0,                                        // flags
-        m_multiSampleTargets.depth.image,    // image
+        m_multiSampleTargets.depth.image,         // image
         VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-        m_depthImageFormat,                  // format
+        m_depthImageFormat,                       // format
         {
             VK_COMPONENT_SWIZZLE_R, // r
             VK_COMPONENT_SWIZZLE_G, // g
@@ -847,8 +841,8 @@ void Window::createRenderPass() {
       // Multisampled color attachment
       VkAttachmentDescription{
           0,                                        // flags
-          m_swapchainImageFormat,              // format
-          m_msaaSamples,                       // samples
+          m_swapchainImageFormat,                   // format
+          m_msaaSamples,                            // samples
           VK_ATTACHMENT_LOAD_OP_CLEAR,              // loadOp
           VK_ATTACHMENT_STORE_OP_STORE,             // storeOp
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,          // stencilLoadOp
@@ -860,7 +854,7 @@ void Window::createRenderPass() {
       // Resolved color attachment
       VkAttachmentDescription{
           0,                                // flags
-          m_swapchainImageFormat,      // format
+          m_swapchainImageFormat,           // format
           VK_SAMPLE_COUNT_1_BIT,            // samples
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // loadOp
           VK_ATTACHMENT_STORE_OP_STORE,     // storeOp
@@ -873,8 +867,8 @@ void Window::createRenderPass() {
       // Multisampled depth attachment
       VkAttachmentDescription{
           0,                                                // flags
-          m_depthImageFormat,                          // format
-          m_msaaSamples,                               // samples
+          m_depthImageFormat,                               // format
+          m_msaaSamples,                                    // samples
           VK_ATTACHMENT_LOAD_OP_CLEAR,                      // loadOp
           VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // storeOp
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
@@ -886,7 +880,7 @@ void Window::createRenderPass() {
       // Resolved depth attachment
       VkAttachmentDescription{
           0,                                                // flags
-          m_depthImageFormat,                          // format
+          m_depthImageFormat,                               // format
           VK_SAMPLE_COUNT_1_BIT,                            // samples
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // loadOp
           VK_ATTACHMENT_STORE_OP_STORE,                     // storeOp
@@ -1107,11 +1101,11 @@ void Window::regenFramebuffer(
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
       nullptr,                                       // pNext
       0,                                             // flags
-      m_renderPass,                             // renderPass
+      m_renderPass,                                  // renderPass
       static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
       attachments,                                   // pAttachments
-      m_swapchainExtent.width,                  // width
-      m_swapchainExtent.height,                 // height
+      m_swapchainExtent.width,                       // width
+      m_swapchainExtent.height,                      // height
       1,                                             // layers
   };
 
@@ -1127,11 +1121,11 @@ void Window::regenImguiFramebuffer(
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
       nullptr,                                   // pNext
       0,                                         // flags
-      m_imguiRenderPass,                    // renderPass
+      m_imguiRenderPass,                         // renderPass
       1,                                         // attachmentCount
       &swapchainImageView,                       // pAttachments
-      m_swapchainExtent.width,              // width
-      m_swapchainExtent.height,             // height
+      m_swapchainExtent.width,                   // width
+      m_swapchainExtent.height,                  // height
       1,                                         // layers
   };
 
@@ -1144,15 +1138,16 @@ void Window::destroyResizables() {
 
   for (auto &resources : m_frameResources) {
     vkFreeCommandBuffers(
-        ctx().m_device, ctx().m_graphicsCommandPool, 1, &resources.commandBuffer);
+        ctx().m_device,
+        ctx().m_graphicsCommandPool,
+        1,
+        &resources.commandBuffer);
   }
 
   if (m_depthStencil.image) {
     vkDestroyImageView(ctx().m_device, m_depthStencil.view, nullptr);
     vmaDestroyImage(
-        ctx().m_allocator,
-        m_depthStencil.image,
-        m_depthStencil.allocation);
+        ctx().m_allocator, m_depthStencil.image, m_depthStencil.allocation);
     m_depthStencil.image = nullptr;
     m_depthStencil.allocation = VK_NULL_HANDLE;
   }

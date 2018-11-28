@@ -220,10 +220,12 @@ GltfModel::GltfModel(const std::string &path) {
       indexBufferSize, &m_indexBuffer, &m_indexAllocation);
 
   memcpy(stagingMemoryPointer, vertices.data(), vertexBufferSize);
-  renderer::buffer::bufferTransfer(stagingBuffer, m_vertexBuffer, vertexBufferSize);
+  renderer::buffer::bufferTransfer(
+      stagingBuffer, m_vertexBuffer, vertexBufferSize);
 
   memcpy(stagingMemoryPointer, indices.data(), indexBufferSize);
-  renderer::buffer::bufferTransfer(stagingBuffer, m_indexBuffer, indexBufferSize);
+  renderer::buffer::bufferTransfer(
+      stagingBuffer, m_indexBuffer, indexBufferSize);
 
   renderer::buffer::unmapMemory(stagingAllocation);
   renderer::buffer::destroy(stagingBuffer, stagingAllocation);
@@ -302,9 +304,10 @@ void GltfModel::loadTextures(tinygltf::Model &model) {
       throw std::runtime_error("Only 4-component images are supported.");
     }
 
-    m_textures[i] = renderer::Texture{model.images[i].image,
-                                 static_cast<uint32_t>(model.images[i].width),
-                                 static_cast<uint32_t>(model.images[i].height)};
+    m_textures[i] =
+        renderer::Texture{model.images[i].image,
+                          static_cast<uint32_t>(model.images[i].width),
+                          static_cast<uint32_t>(model.images[i].height)};
   }
 }
 

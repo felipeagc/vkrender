@@ -35,7 +35,8 @@ LightManager::LightManager(const fstl::fixed_vector<Light> &lights) {
     vkAllocateDescriptorSets(
         renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]);
 
-    renderer::buffer::mapMemory(m_uniformBuffers.allocations[i], &m_mappings[i]);
+    renderer::buffer::mapMemory(
+        m_uniformBuffers.allocations[i], &m_mappings[i]);
     memcpy(m_mappings[i], &m_ubo, sizeof(LightingUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
@@ -90,7 +91,8 @@ void LightManager::update() {
   }
 }
 
-void LightManager::bind(renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
+void LightManager::bind(
+    renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
   VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
   vkCmdBindDescriptorSets(
       commandBuffer,

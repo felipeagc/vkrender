@@ -14,6 +14,6 @@ enum ShaderType {
   eAuto
 };
 
-std::vector<unsigned int>
-compileShader(const std::string &path, const ShaderType shaderType = ShaderType::eAuto);
-} // namespace vkr
+std::vector<unsigned int> compileShader(
+    const std::string &path, const ShaderType shaderType = ShaderType::eAuto);
+} // namespace renderer

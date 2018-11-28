@@ -44,4 +44,4 @@ private:
   fstl::fixed_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 };
 
-} // namespace vkr
+} // namespace renderer

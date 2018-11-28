@@ -33,7 +33,7 @@ Shader::getPipelineShaderStageCreateInfos() const {
           nullptr,                                             // pNext
           0,                                                   // flags
           VK_SHADER_STAGE_VERTEX_BIT,                          // stage
-          m_vertexModule,                                 // module
+          m_vertexModule,                                      // module
           "main",                                              // pName
           nullptr, // pSpecializationInfo
       },
@@ -42,7 +42,7 @@ Shader::getPipelineShaderStageCreateInfos() const {
           nullptr,                                             // pNext
           0,                                                   // flags
           VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
-          m_fragmentModule,                               // module
+          m_fragmentModule,                                    // module
           "main",                                              // pName
           nullptr, // pSpecializationInfo
       },
@@ -52,8 +52,7 @@ Shader::getPipelineShaderStageCreateInfos() const {
 Shader::ShaderMetadata Shader::getAutoMetadata() const {
   Shader::ShaderMetadata metadata{};
 
-  spirv_cross::Compiler vertexComp(
-      m_vertexCode.data(), m_vertexCode.size());
+  spirv_cross::Compiler vertexComp(m_vertexCode.data(), m_vertexCode.size());
 
   spirv_cross::Compiler fragmentComp(
       m_fragmentCode.data(), m_fragmentCode.size());

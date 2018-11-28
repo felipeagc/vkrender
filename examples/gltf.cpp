@@ -1,7 +1,7 @@
+#include <engine/engine.hpp>
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
 #include <renderer/renderer.hpp>
-#include <engine/engine.hpp>
 
 int main() {
   renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);

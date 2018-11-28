@@ -142,8 +142,7 @@ Texture::Texture(
   void *stagingMemoryPointer;
   buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
   memcpy(stagingMemoryPointer, data.data(), data.size());
-  buffer::imageTransfer(
-      stagingBuffer, m_image, m_width, m_height);
+  buffer::imageTransfer(stagingBuffer, m_image, m_width, m_height);
   buffer::unmapMemory(stagingAllocation);
 
   buffer::destroy(stagingBuffer, stagingAllocation);

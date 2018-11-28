@@ -10,7 +10,7 @@ static VkCommandBuffer beginSingleTimeCommandBuffer() {
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
-      ctx().m_transientCommandPool,       // commandPool
+      ctx().m_transientCommandPool,    // commandPool
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
       1,                               // commandBufferCount
   };
@@ -47,7 +47,8 @@ static void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
       nullptr,        // pSignalSemaphores
   };
 
-  VK_CHECK(vkQueueSubmit(ctx().m_transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
+  VK_CHECK(
+      vkQueueSubmit(ctx().m_transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
 
   VK_CHECK(vkQueueWaitIdle(ctx().m_transferQueue));
 
@@ -284,4 +285,4 @@ void imageTransfer(
   endSingleTimeCommandBuffer(commandBuffer);
 }
 } // namespace buffer
-} // namespace vkr
+} // namespace renderer
