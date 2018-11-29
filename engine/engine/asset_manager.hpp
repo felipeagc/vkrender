@@ -29,6 +29,11 @@ class AssetManager {
   using AssetTypeId = detail::TypeId<struct AssetManagerDummy>;
 
 public:
+  struct AssetInfo {
+    size_t assetIndex;
+    size_t assetTypeId;
+  };
+
   AssetManager(){};
   ~AssetManager();
 
@@ -36,33 +41,36 @@ public:
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
 
-  const std::unordered_map<std::string, void *> &getAssetTable() const;
+  const std::unordered_map<std::string, AssetInfo> &getAssetTable() const;
 
   template <typename Asset, typename... Args>
   const Asset &getAsset(const std::string &path, Args... args) {
     this->ensure<Asset>();
 
+    auto id = AssetTypeId::type<Asset>;
+
     if (m_assetTable.find(path) != m_assetTable.end()) {
-      Asset *asset = (Asset *)m_assetTable[path];
-      return *asset;
+      size_t assetIndex = m_assetTable[path].assetIndex;
+      return *((Asset *)&m_assets[id][assetIndex * sizeof(Asset)]);
     }
 
     fstl::log::debug("Loading asset: {}", path);
 
-    auto id = AssetTypeId::type<Asset>;
+    assert(sizeof(Asset) == m_assetSizes[id]);
 
     size_t assetIndex = 0;
 
     for (size_t i = 0; i < m_assetsInUse[id].size(); i++) {
-      assetIndex = i;
+      assetIndex = i + 1;
       if (!m_assetsInUse[id][i]) {
         break;
       }
     }
 
-    if (m_assetsInUse[id].size() <= assetIndex || assetIndex == 0) {
+    if (m_assetsInUse[id].size() <= assetIndex) {
       m_assetsInUse[id].resize(assetIndex + 1);
       m_assets[id].resize((assetIndex + 1) * sizeof(Asset));
+      assetIndex = m_assetsInUse[id].size() - 1;
     }
 
     Asset *asset = new (&m_assets[id][assetIndex * sizeof(Asset)])
@@ -70,7 +78,7 @@ public:
 
     m_assetsInUse[id][assetIndex] = true;
 
-    m_assetTable[path] = asset;
+    m_assetTable[path] = AssetInfo{assetIndex, id};
 
     return *asset;
   }
@@ -87,14 +95,12 @@ public:
 
     assert(sizeof(Asset) == m_assetSizes[id]);
 
-    Asset *asset = (Asset *)m_assetTable[path];
-    m_assetDestructors[id]((void *)asset);
+    auto assetIndex = m_assetTable[path].assetIndex;
+    m_assetDestructors[id]((void *)&m_assets[id][assetIndex * sizeof(Asset)]);
 
     m_assetTable.erase(path);
 
-    // This asset's index in the array
-    size_t i = (asset - &m_assets[id][0]) / sizeof(Asset);
-    m_assetsInUse[id][i] = false;
+    m_assetsInUse[id][assetIndex] = false;
   }
 
 private:
@@ -103,7 +109,7 @@ private:
   std::array<std::function<void(void *)>, MAX_ASSET_TYPES> m_assetDestructors;
   std::array<size_t, MAX_ASSET_TYPES> m_assetSizes;
 
-  std::unordered_map<std::string, void *> m_assetTable;
+  std::unordered_map<std::string, AssetInfo> m_assetTable;
 
   /*
     Ensures that a component has all of its information initialized.

@@ -10,8 +10,8 @@ AssetManager::~AssetManager() {
 
         void *asset = &m_assets[id][i * m_assetSizes[id]];
 
-        for (auto [path, ptr] : m_assetTable) {
-          if (ptr == asset) {
+        for (auto &[path, info] : m_assetTable) {
+          if (info.assetIndex == i && info.assetTypeId == id) {
             assetPath = path;
             break;
           }
@@ -25,7 +25,7 @@ AssetManager::~AssetManager() {
   }
 }
 
-const std::unordered_map<std::string, void *> &
+const std::unordered_map<std::string, AssetManager::AssetInfo> &
 AssetManager::getAssetTable() const {
   return m_assetTable;
 }

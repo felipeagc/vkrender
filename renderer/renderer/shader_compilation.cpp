@@ -4,7 +4,6 @@
 #include <StandAlone/ResourceLimits.h>
 #include <fstream>
 #include <glslang/Public/ShaderLang.h>
-#include <iostream>
 
 using namespace renderer;
 

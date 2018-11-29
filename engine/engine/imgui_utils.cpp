@@ -43,7 +43,7 @@ void cameraWindow(CameraComponent *camera, TransformComponent *transform) {
 void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
-  for (auto &[name, asset] : assetManager.getAssetTable()) {
+  for (auto &[name, info] : assetManager.getAssetTable()) {
     ImGui::Selectable(name.c_str(), false);
   }
 

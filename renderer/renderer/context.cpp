@@ -2,7 +2,6 @@
 #include "util.hpp"
 #include "window.hpp"
 #include <fstl/logging.hpp>
-#include <iostream>
 
 using namespace renderer;
 
