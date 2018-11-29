@@ -5,45 +5,36 @@
 #include <renderer/window.hpp>
 
 namespace engine {
-class Billboard {
+class BillboardComponent {
 public:
-  // Creates an uninitialized Billboard
-  Billboard();
-
   // Creates an initialized Billboard with the given parameters
-  Billboard(
-      const renderer::Texture &texture,
-      glm::vec3 pos,
-      glm::vec3 scale,
-      glm::vec4 color);
+  BillboardComponent(const renderer::Texture &texture);
 
-  ~Billboard();
+  ~BillboardComponent();
 
   // Billboard can't be copied
-  Billboard(const Billboard &) = delete;
-  Billboard &operator=(const Billboard &) = delete;
+  BillboardComponent(const BillboardComponent &) = delete;
+  BillboardComponent &operator=(const BillboardComponent &) = delete;
 
   // Billboard can be moved
-  Billboard(Billboard &&rhs);
-  Billboard &operator=(Billboard &&rhs);
+  BillboardComponent(BillboardComponent &&rhs) = delete;
+  BillboardComponent &operator=(BillboardComponent &&rhs) = delete;
 
-  // Returns whether the object is initialized or not
-  operator bool() const;
-
-  void draw(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
-
-  void setPos(glm::vec3 pos);
-  void setColor(glm::vec4 color);
+  void draw(
+      renderer::Window &window,
+      renderer::GraphicsPipeline &pipeline,
+      const glm::mat4 &transform,
+      const glm::vec3 &color);
 
 protected:
   renderer::Texture m_texture;
 
   struct MeshUniform {
-    glm::mat4 model;
+    glm::mat4 model = glm::mat4(1.0f);
   } m_meshUbo;
 
   struct MaterialUniform {
-    glm::vec4 color;
+    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
   } m_materialUbo;
 
   renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT>

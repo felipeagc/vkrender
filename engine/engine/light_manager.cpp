@@ -4,13 +4,7 @@
 
 using namespace engine;
 
-LightManager::LightManager(const fstl::fixed_vector<Light> &lights) {
-  m_ubo.lightCount = std::min((uint32_t)lights.size(), MAX_LIGHTS);
-  for (uint32_t i = 0; i < m_ubo.lightCount; i++) {
-    m_ubo.lights[i].pos = lights[i].pos;
-    m_ubo.lights[i].color = lights[i].color;
-  }
-
+LightManager::LightManager() {
   for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
     renderer::buffer::createUniformBuffer(
         sizeof(LightingUniform),
@@ -85,10 +79,8 @@ LightManager::~LightManager() {
   }
 }
 
-void LightManager::update() {
-  for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    memcpy(m_mappings[i], &m_ubo, sizeof(LightingUniform));
-  }
+void LightManager::update(const uint32_t frameIndex) {
+  memcpy(m_mappings[frameIndex], &m_ubo, sizeof(LightingUniform));
 }
 
 void LightManager::bind(
@@ -105,8 +97,10 @@ void LightManager::bind(
       nullptr);
 }
 
-Light *LightManager::getLights() { return m_ubo.lights; }
+void LightManager::addLight(const glm::vec3 &pos, const glm::vec3 &color) {
+  m_ubo.lights[m_ubo.lightCount] =
+      Light{glm::vec4(pos, 1.0), glm::vec4(color, 1.0)};
+  m_ubo.lightCount++;
+}
 
-uint32_t LightManager::getLightCount() const { return m_ubo.lightCount; }
-
-void LightManager::setLightCount(uint32_t count) { m_ubo.lightCount = count; }
+void LightManager::resetLights() { m_ubo.lightCount = 0; }

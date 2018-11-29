@@ -1,6 +1,7 @@
 #include "imgui_utils.hpp"
 #include "asset_manager.hpp"
 #include "camera_component.hpp"
+#include "light_component.hpp"
 #include "light_manager.hpp"
 #include "transform_component.hpp"
 #include <imgui/imgui.h>
@@ -49,37 +50,30 @@ void assetsWindow(AssetManager &assetManager) {
   ImGui::End();
 }
 
-void lightsWindow(LightManager &lightManager) {
-  ImGui::Begin("Lights");
+void lightSection(
+    ecs::Entity entity, TransformComponent &transform, LightComponent &light) {
+  ImGui::PushID(entity);
+  ImGui::Text("Light entity %ld", entity);
 
-  for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-    ImGui::PushID(i);
-    ImGui::Text("Light %d", i);
+  float pos[3] = {
+      transform.position.x,
+      transform.position.y,
+      transform.position.z,
+  };
+  ImGui::DragFloat3("Position", pos, 1.0f, -10.0f, 10.0f);
+  transform.position = {pos[0], pos[1], pos[2]};
 
-    Light *light = &lightManager.getLights()[i];
+  float color[3] = {
+      light.color.x,
+      light.color.y,
+      light.color.z,
+  };
+  ImGui::ColorEdit3("Color", color);
+  light.color = {color[0], color[1], color[2]};
 
-    float pos[3] = {
-        light->pos.x,
-        light->pos.y,
-        light->pos.z,
-    };
-    ImGui::DragFloat3("Position", pos, 1.0f, -10.0f, 10.0f);
-    light->pos = {pos[0], pos[1], pos[2], 1.0f};
-
-    float color[4] = {
-        light->color.x,
-        light->color.y,
-        light->color.z,
-        light->color.w,
-    };
-    ImGui::ColorEdit4("Color", color);
-    light->color = {color[0], color[1], color[2], color[3]};
-
-    ImGui::Separator();
-    ImGui::PopID();
-  }
-
-  ImGui::End();
+  ImGui::Separator();
+  ImGui::PopID();
 }
+
 } // namespace imgui
 } // namespace engine

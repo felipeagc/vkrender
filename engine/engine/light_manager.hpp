@@ -15,7 +15,7 @@ struct Light {
 
 class LightManager {
 public:
-  LightManager(const fstl::fixed_vector<Light> &lights);
+  LightManager();
   ~LightManager();
 
   // LightManager cannot be copied
@@ -26,19 +26,24 @@ public:
   LightManager(LightManager &&rhs) = delete;
   LightManager &operator=(LightManager &&rhs) = delete;
 
-  void update();
+  void update(const uint32_t frameIndex);
 
   void bind(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
 
-  Light *getLights();
+  /*
+    Adds a light
+   */
+  void addLight(const glm::vec3 &pos, const glm::vec3 &color);
 
-  uint32_t getLightCount() const;
-  void setLightCount(uint32_t count);
+  /*
+    Resets the lights
+   */
+  void resetLights();
 
 private:
   struct LightingUniform {
     Light lights[MAX_LIGHTS];
-    uint32_t lightCount;
+    uint32_t lightCount = 0;
   } m_ubo;
 
   renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;

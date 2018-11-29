@@ -36,24 +36,23 @@ int main() {
   ecs::World world;
 
   // Create light manager
-  engine::LightManager lightManager({
-      engine::Light{glm::vec4(3.0, 3.0, 3.0, 1.0),
-                    glm::vec4(1.0, 0.0, 0.0, 1.0)},
-      engine::Light{glm::vec4(-3.0, -3.0, -3.0, 1.0),
-                    glm::vec4(0.0, 1.0, 0.0, 1.0)},
-  });
+  engine::LightManager lightManager;
 
-  // Create billboards
-  fstl::fixed_vector<engine::Billboard> lightBillboards;
-
-  for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-    lightBillboards.push_back(engine::Billboard{
-        assetManager.getAsset<renderer::Texture>(
-            "../assets/light.png"), // texture
-        {3.0f, 3.0f, 3.0f},         // position
-        {1.0f, 1.0f, 1.0f},         // scale
-        {1.0, 0.0, 0.0, 1.0}        // color
-    });
+  // Create lights
+  {
+    ecs::Entity light = world.createEntity();
+    world.assign<engine::LightComponent>(light, glm::vec3{1.0, 1.0, 0.0});
+    world.assign<engine::TransformComponent>(light, glm::vec3{3.0, 3.0, 3.0});
+    world.assign<engine::BillboardComponent>(
+        light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
+  }
+  {
+    ecs::Entity light = world.createEntity();
+    world.assign<engine::LightComponent>(light, glm::vec3{0.0, 0.0, 1.0});
+    world.assign<engine::TransformComponent>(
+        light, glm::vec3{-3.0, -3.0, -3.0});
+    world.assign<engine::BillboardComponent>(
+        light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
 
   // Create models
@@ -131,10 +130,25 @@ int main() {
           camera.update(window, transform.getMatrix());
         });
 
+    lightManager.resetLights();
+
+    ImGui::Begin("Lights");
+
+    world.each<engine::TransformComponent, engine::LightComponent>(
+        [&](ecs::Entity entity,
+            engine::TransformComponent &transform,
+            engine::LightComponent &light) {
+          lightManager.addLight(transform.position, light.color);
+          engine::imgui::lightSection(entity, transform, light);
+        });
+
+    ImGui::End();
+
+    lightManager.update(window.getCurrentFrameIndex());
+
     // Show ImGui windows
     engine::imgui::statsWindow(window);
     engine::imgui::assetsWindow(assetManager);
-    engine::imgui::lightsWindow(lightManager);
     engine::imgui::cameraWindow(
         world.getComponent<engine::CameraComponent>(camera),
         world.getComponent<engine::TransformComponent>(camera));
@@ -155,17 +169,20 @@ int main() {
     // Draw billboards
     world.getComponent<engine::CameraComponent>(camera)->bind(
         window, billboardPipeline);
-    for (uint32_t i = 0; i < lightManager.getLightCount(); i++) {
-      engine::Light light = lightManager.getLights()[i];
-      lightBillboards[i].setPos(light.pos);
-      lightBillboards[i].setColor(light.color);
-      lightBillboards[i].draw(window, billboardPipeline);
-    }
+    world.each<
+        engine::TransformComponent,
+        engine::LightComponent,
+        engine::BillboardComponent>([&](ecs::Entity,
+                                        engine::TransformComponent &transform,
+                                        engine::LightComponent &light,
+                                        engine::BillboardComponent &billboard) {
+      billboard.draw(
+          window, billboardPipeline, transform.getMatrix(), light.color);
+    });
   };
 
   while (!window.getShouldClose()) {
     window.present(draw);
-    lightManager.update();
   }
 
   return 0;

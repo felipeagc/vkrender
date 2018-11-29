@@ -147,6 +147,10 @@ public:
     m_capacity = newCapacity;
   }
 
+  void clear() noexcept {
+    this->resize(0);
+  }
+
   size_t size() const noexcept { return m_size; }
 
   T *data() const noexcept { return m_heapVector; }
