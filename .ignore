@@ -1,0 +1,8 @@
+thirdparty/rapidjson
+thirdparty/fmt
+thirdparty/glm
+thirdparty/glslang
+thirdparty/spirv-cross
+thirdparty/tiny_gltf
+thirdparty/googletest
+
