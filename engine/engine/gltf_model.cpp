@@ -236,8 +236,8 @@ void GltfModel::destroy() {
     vkFreeDescriptorSets(
         renderer::ctx().m_device,
         *descriptorPool,
-        material.descriptorSets.size(),
-        material.descriptorSets.data());
+        ARRAYSIZE(material.descriptorSets),
+        material.descriptorSets);
   }
 
   m_materials.clear();

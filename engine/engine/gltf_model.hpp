@@ -28,9 +28,9 @@ public:
       glm::vec4 baseColorFactor;
     } ubo;
 
-    std::array<renderer::Buffer, renderer::MAX_FRAMES_IN_FLIGHT> uniformBuffers;
-    std::array<void *, renderer::MAX_FRAMES_IN_FLIGHT> mappings;
-    std::array<VkDescriptorSet, renderer::MAX_FRAMES_IN_FLIGHT> descriptorSets;
+    renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
+    void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
+    VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
     Material() {}
     Material(
