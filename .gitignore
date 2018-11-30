@@ -1,2 +1,4 @@
 build/
+build_gcc/
+build_clang/
 **/.cquery_cached_index
