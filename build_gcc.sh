@@ -1,4 +1,4 @@
-mkdir -p build_gcc
-cd build_gcc
+mkdir -p build
+cd build
 CC=gcc CXX=g++ cmake -DCMAKE_BUILD_TYPE=Debug -G Ninja ..
 cd ..

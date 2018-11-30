@@ -1,4 +1,4 @@
-mkdir -p build_clang
-cd build_clang
+mkdir -p build
+cd build
 CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -G Ninja ..
 cd ..
