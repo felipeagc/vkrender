@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace renderer {
-enum ShaderType {
+enum class ShaderType {
   eVertex,
   eTessControl,
   eTessEvaluation,

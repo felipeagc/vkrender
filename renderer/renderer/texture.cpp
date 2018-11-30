@@ -135,17 +135,19 @@ Texture::Texture(
 
   createImage(&m_image, &m_allocation, &m_imageView, &m_sampler, width, height);
 
-  VkBuffer stagingBuffer;
-  VmaAllocation stagingAllocation;
-  buffer::createStagingBuffer(data.size(), &stagingBuffer, &stagingAllocation);
+  Buffer stagingBuffer{
+    BufferType::eStaging,
+    data.size()
+  };
 
   void *stagingMemoryPointer;
-  buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+  stagingBuffer.mapMemory(&stagingMemoryPointer);
   memcpy(stagingMemoryPointer, data.data(), data.size());
-  buffer::imageTransfer(stagingBuffer, m_image, m_width, m_height);
-  buffer::unmapMemory(stagingAllocation);
 
-  buffer::destroy(stagingBuffer, stagingAllocation);
+  stagingBuffer.imageTransfer(m_image, m_width, m_height);
+
+  stagingBuffer.unmapMemory();
+  stagingBuffer.destroy();
 }
 
 Texture::operator bool() const { return m_image != VK_NULL_HANDLE; }

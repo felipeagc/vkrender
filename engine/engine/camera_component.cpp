@@ -12,13 +12,10 @@ CameraComponent::CameraComponent(float fov) : m_fov(fov) {
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
   for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    renderer::buffer::createUniformBuffer(
-        sizeof(CameraUniform),
-        &m_uniformBuffers.buffers[i],
-        &m_uniformBuffers.allocations[i]);
+    m_uniformBuffers[i] =
+        renderer::Buffer{renderer::BufferType::eUniform, sizeof(CameraUniform)};
 
-    renderer::buffer::mapMemory(
-        m_uniformBuffers.allocations[i], &m_mappings[i]);
+    m_uniformBuffers[i].mapMemory(&m_mappings[i]);
 
     VkDescriptorSetAllocateInfo allocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -32,7 +29,7 @@ CameraComponent::CameraComponent(float fov) : m_fov(fov) {
         renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]);
 
     VkDescriptorBufferInfo bufferInfo{
-        m_uniformBuffers.buffers[i],
+        m_uniformBuffers[i].getHandle(),
         0,
         sizeof(CameraUniform),
     };
@@ -58,10 +55,9 @@ CameraComponent::CameraComponent(float fov) : m_fov(fov) {
 CameraComponent::~CameraComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
-    renderer::buffer::unmapMemory(m_uniformBuffers.allocations[i]);
-    renderer::buffer::destroy(
-        m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
+  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
+    m_uniformBuffers[i].unmapMemory();
+    m_uniformBuffers[i].destroy();
   }
 
   auto descriptorPool =

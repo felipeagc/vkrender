@@ -22,17 +22,15 @@ GltfModelComponent::GltfModelComponent(const GltfModel &model)
     };
 
     for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-      renderer::buffer::createUniformBuffer(
-          sizeof(ModelUniform),
-          &m_uniformBuffers.buffers[i],
-          &m_uniformBuffers.allocations[i]);
+      m_uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
+                                             sizeof(ModelUniform)};
 
-      renderer::buffer::mapMemory(
-          m_uniformBuffers.allocations[i], &m_mappings[i]);
+      m_uniformBuffers[i].mapMemory(&m_mappings[i]);
+
       memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
 
       VkDescriptorBufferInfo bufferInfo = {
-          m_uniformBuffers.buffers[i], 0, sizeof(ModelUniform)};
+          m_uniformBuffers[i].getHandle(), 0, sizeof(ModelUniform)};
 
       VK_CHECK(vkAllocateDescriptorSets(
           renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]));
@@ -59,10 +57,9 @@ GltfModelComponent::GltfModelComponent(const GltfModel &model)
 GltfModelComponent::~GltfModelComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  for (size_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    renderer::buffer::unmapMemory(m_uniformBuffers.allocations[i]);
-    renderer::buffer::destroy(
-        m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
+  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
+    m_uniformBuffers[i].unmapMemory();
+    m_uniformBuffers[i].destroy();
   }
 
   auto descriptorPool =
@@ -90,10 +87,14 @@ void GltfModelComponent::draw(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
 
   VkDeviceSize offset = 0;
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_model.m_vertexBuffer, &offset);
+  VkBuffer vertexBuffer = m_model.m_vertexBuffer.getHandle();
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
-      commandBuffer, m_model.m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+      commandBuffer,
+      m_model.m_indexBuffer.getHandle(),
+      0,
+      VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(
       commandBuffer,

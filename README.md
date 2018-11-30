@@ -7,10 +7,6 @@
 - No virtual member functions
 
 ## TODO
-### Buffers
-- [ ] Create `Buffer` class
-- [ ] Remove `Buffers` struct
-
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang
 - [ ] Shader live refresh
@@ -49,7 +45,6 @@
 ### Lighting
 - [ ] Figure out blinn-phong lighting
 - [x] Multiple lights
-- [ ] Light as a component
 
 ### Window
 - [ ] Better event system
@@ -68,20 +63,19 @@
 - [ ] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
 - [x] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
       Maybe handle this in the asset constructor itself.
-- [ ] More flexible asset manager (use constructor instead of json for extra parameters)
-- [ ] Allow for arbitrary assets
-- [ ] Use templates even more
+- [x] More flexible asset manager (use constructor instead of json for extra parameters)
+- [x] Allow for arbitrary assets
 - [ ] Multi-threaded asset loading
 
 ### ECS
 - [x] Basic ECS
+- [ ] Better storage solution (packed array)
 
 #### ECS Components
 - [x] Transform component
-- [ ] Remove useless move constructors
-  - [x] GltfModelInstance
-  - [x] Camera
-  - [ ] Billboard
+- [x] glTF model component
+- [x] Light component
+- [x] Billboard component
 
 ### Misc
 - [ ] Specify which types can be copied (maybe with a Handle suffix)

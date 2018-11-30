@@ -87,29 +87,25 @@ int main() {
       Vertex{{0.0, -0.5}, {1.0, 0.0, 0.0}},
   };
 
-  VkBuffer vertexBuffer;
-  VmaAllocation vertexAllocation;
-  renderer::buffer::createVertexBuffer(
-      sizeof(Vertex) * vertices.size(), &vertexBuffer, &vertexAllocation);
+  renderer::Buffer vertexBuffer{renderer::BufferType::eVertex,
+                                sizeof(Vertex) * vertices.size()};
 
   {
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingAllocation;
-    renderer::buffer::createStagingBuffer(
-        sizeof(Vertex) * vertices.size(), &stagingBuffer, &stagingAllocation);
+    renderer::Buffer stagingBuffer{renderer::BufferType::eStaging,
+                                   sizeof(Vertex) * vertices.size()};
 
     void *stagingMemoryPointer;
-    renderer::buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+    stagingBuffer.mapMemory(&stagingMemoryPointer);
 
     memcpy(
         stagingMemoryPointer,
         vertices.data(),
         sizeof(Vertex) * vertices.size());
-    renderer::buffer::bufferTransfer(
-        stagingBuffer, vertexBuffer, sizeof(Vertex) * vertices.size());
+    stagingBuffer.bufferTransfer(
+        vertexBuffer, sizeof(Vertex) * vertices.size());
 
-    renderer::buffer::unmapMemory(stagingAllocation);
-    renderer::buffer::destroy(stagingBuffer, stagingAllocation);
+    stagingBuffer.unmapMemory();
+    stagingBuffer.destroy();
   }
 
   auto draw = [&]() {
@@ -119,7 +115,8 @@ int main() {
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
 
     VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+    VkBuffer vbuffer = vertexBuffer.getHandle();
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vbuffer, &offset);
 
     vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
   };
@@ -137,7 +134,7 @@ int main() {
     window.present(draw);
   }
 
-  renderer::buffer::destroy(vertexBuffer, vertexAllocation);
+  vertexBuffer.destroy();
 
   return 0;
 }

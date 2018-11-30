@@ -35,7 +35,7 @@ public:
   float m_fov;
 
 protected:
-  renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT> m_uniformBuffers;
+  renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 

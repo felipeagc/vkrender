@@ -5,13 +5,6 @@
 using namespace engine;
 
 LightManager::LightManager() {
-  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
-    renderer::buffer::createUniformBuffer(
-        sizeof(LightingUniform),
-        &m_uniformBuffers.buffers[i],
-        &m_uniformBuffers.allocations[i]);
-  }
-
   auto [descriptorPool, descriptorSetLayout] =
       renderer::ctx().m_descriptorManager[renderer::DESC_LIGHTING];
 
@@ -29,12 +22,14 @@ LightManager::LightManager() {
     vkAllocateDescriptorSets(
         renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]);
 
-    renderer::buffer::mapMemory(
-        m_uniformBuffers.allocations[i], &m_mappings[i]);
+    m_uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
+                                           sizeof(LightingUniform)};
+
+    m_uniformBuffers[i].mapMemory(&m_mappings[i]);
     memcpy(m_mappings[i], &m_ubo, sizeof(LightingUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        m_uniformBuffers.buffers[i], 0, sizeof(LightingUniform)};
+        m_uniformBuffers[i].getHandle(), 0, sizeof(LightingUniform)};
 
     VkWriteDescriptorSet descriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -57,12 +52,9 @@ LightManager::LightManager() {
 LightManager::~LightManager() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  if (m_uniformBuffers.buffers[0] != VK_NULL_HANDLE) {
-    for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers.buffers); i++) {
-      renderer::buffer::unmapMemory(m_uniformBuffers.allocations[i]);
-      renderer::buffer::destroy(
-          m_uniformBuffers.buffers[i], m_uniformBuffers.allocations[i]);
-    }
+  for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
+    m_uniformBuffers[i].unmapMemory();
+    m_uniformBuffers[i].destroy();
   }
 
   if (m_descriptorSets[0] != VK_NULL_HANDLE) {

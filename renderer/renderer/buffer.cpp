@@ -5,7 +5,7 @@
 
 using namespace renderer;
 
-static VkCommandBuffer beginSingleTimeCommandBuffer() {
+static inline VkCommandBuffer beginSingleTimeCommandBuffer() {
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
@@ -31,7 +31,7 @@ static VkCommandBuffer beginSingleTimeCommandBuffer() {
   return commandBuffer;
 }
 
-static void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
+static inline void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
   VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
   VkSubmitInfo submitInfo{
@@ -55,130 +55,87 @@ static void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
       ctx().m_device, ctx().m_transientCommandPool, 1, &commandBuffer);
 }
 
-namespace renderer {
-namespace buffer {
-void createVertexBuffer(
-    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
+Buffer::Buffer(BufferType bufferType, size_t size) : m_bufferType(bufferType) {
+  VkBufferUsageFlags bufferUsage;
+  VmaMemoryUsage memoryUsage;
+  VkMemoryPropertyFlags memoryProperty;
+
+  switch (bufferType) {
+  case BufferType::eVertex:
+    bufferUsage =
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+    memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    break;
+  case BufferType::eIndex:
+    bufferUsage =
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+    memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    break;
+  case BufferType::eUniform:
+    bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    memoryProperty = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    break;
+  case BufferType::eStaging:
+    bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+    memoryProperty = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    break;
+  case BufferType::eOther:
+    assert(false);
+    break;
+  }
+
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
       nullptr,
-      0,    // flags
-      size, // size
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT, // usage
-      VK_SHARING_MODE_EXCLUSIVE,            // sharingMode
-      0,                                    // queueFamilyIndexCount
-      nullptr                               // pQueueFamilyIndices
+      0,                         // flags
+      size,                      // size
+      bufferUsage,               // usage
+      VK_SHARING_MODE_EXCLUSIVE, // sharingMode
+      0,                         // queueFamilyIndexCount
+      nullptr                    // pQueueFamilyIndices
   };
 
   VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  allocInfo.usage = memoryUsage;
+  allocInfo.requiredFlags = memoryProperty;
 
   VK_CHECK(vmaCreateBuffer(
       ctx().m_allocator,
       &bufferCreateInfo,
       &allocInfo,
-      buffer,
-      allocation,
+      &m_buffer,
+      &m_allocation,
       nullptr));
 }
 
-void createIndexBuffer(
-    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
-  VkBufferCreateInfo bufferCreateInfo = {
-      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-      nullptr,
-      0,    // flags
-      size, // size
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT, // usage
-      VK_SHARING_MODE_EXCLUSIVE,            // sharingMode
-      0,                                    // queueFamilyIndexCount
-      nullptr                               // pQueueFamilyIndices
-  };
+void Buffer::destroy() {
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  if (m_buffer != VK_NULL_HANDLE && m_allocation != VK_NULL_HANDLE) {
+    vmaDestroyBuffer(ctx().m_allocator, m_buffer, m_allocation);
+  }
 
-  VK_CHECK(vmaCreateBuffer(
-      ctx().m_allocator,
-      &bufferCreateInfo,
-      &allocInfo,
-      buffer,
-      allocation,
-      nullptr));
+  m_buffer = VK_NULL_HANDLE;
+  m_allocation = VK_NULL_HANDLE;
 }
 
-void createUniformBuffer(
-    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
-  VkBufferCreateInfo bufferCreateInfo = {
-      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-      nullptr,
-      0,                                  // flags
-      size,                               // size
-      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, // usage
-      VK_SHARING_MODE_EXCLUSIVE,          // sharingMode
-      0,                                  // queueFamilyIndexCount
-      nullptr                             // pQueueFamilyIndices
-  };
+VkBuffer Buffer::getHandle() const { return m_buffer; }
 
-  VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+Buffer::operator bool() const { return (m_buffer != VK_NULL_HANDLE); }
 
-  VK_CHECK(vmaCreateBuffer(
-      ctx().m_allocator,
-      &bufferCreateInfo,
-      &allocInfo,
-      buffer,
-      allocation,
-      nullptr));
-}
-
-void createStagingBuffer(
-    size_t size, VkBuffer *buffer, VmaAllocation *allocation) {
-  VkBufferCreateInfo bufferCreateInfo = {
-      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-      nullptr,
-      0,                                // flags
-      size,                             // size
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // usage
-      VK_SHARING_MODE_EXCLUSIVE,        // sharingMode
-      0,                                // queueFamilyIndexCount
-      nullptr                           // pQueueFamilyIndices
-  };
-
-  VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-  allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
-  VK_CHECK(vmaCreateBuffer(
-      ctx().m_allocator,
-      &bufferCreateInfo,
-      &allocInfo,
-      buffer,
-      allocation,
-      nullptr));
-}
-
-void mapMemory(VmaAllocation allocation, void **dest) {
-  if (vmaMapMemory(ctx().m_allocator, allocation, dest) != VK_SUCCESS) {
+void Buffer::mapMemory(void **dest) {
+  if (vmaMapMemory(ctx().m_allocator, m_allocation, dest) != VK_SUCCESS) {
     throw std::runtime_error("Failed to map image memory");
   }
 }
 
-void unmapMemory(VmaAllocation allocation) {
-  vmaUnmapMemory(ctx().m_allocator, allocation);
-}
+void Buffer::unmapMemory() { vmaUnmapMemory(ctx().m_allocator, m_allocation); }
 
-void destroy(VkBuffer buffer, VmaAllocation allocation) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-  vmaDestroyBuffer(ctx().m_allocator, buffer, allocation);
-}
-
-void bufferTransfer(VkBuffer from, VkBuffer to, size_t size) {
+void Buffer::bufferTransfer(Buffer &to, size_t size) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
 
   VkBufferCopy bufferCopyInfo = {
@@ -187,13 +144,12 @@ void bufferTransfer(VkBuffer from, VkBuffer to, size_t size) {
       size, // size
   };
 
-  vkCmdCopyBuffer(commandBuffer, from, to, 1, &bufferCopyInfo);
+  vkCmdCopyBuffer(commandBuffer, m_buffer, to.m_buffer, 1, &bufferCopyInfo);
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
 
-void imageTransfer(
-    VkBuffer fromBuffer, VkImage toImage, uint32_t width, uint32_t height) {
+void Buffer::imageTransfer(VkImage toImage, uint32_t width, uint32_t height) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer();
 
   auto transitionImageLayout = [&](VkImageLayout oldLayout,
@@ -271,7 +227,7 @@ void imageTransfer(
 
   vkCmdCopyBufferToImage(
       commandBuffer,
-      fromBuffer,
+      m_buffer,
       toImage,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       1,
@@ -283,5 +239,3 @@ void imageTransfer(
 
   endSingleTimeCommandBuffer(commandBuffer);
 }
-} // namespace buffer
-} // namespace renderer

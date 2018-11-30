@@ -28,7 +28,7 @@ public:
       glm::vec4 baseColorFactor;
     } ubo;
 
-    renderer::buffer::Buffers<renderer::MAX_FRAMES_IN_FLIGHT> uniformBuffers;
+    std::array<renderer::Buffer, renderer::MAX_FRAMES_IN_FLIGHT> uniformBuffers;
     std::array<void *, renderer::MAX_FRAMES_IN_FLIGHT> mappings;
     std::array<VkDescriptorSet, renderer::MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
@@ -97,10 +97,8 @@ protected:
   std::vector<renderer::Texture> m_textures;
   std::vector<Material> m_materials;
 
-  VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
-  VmaAllocation m_vertexAllocation = VK_NULL_HANDLE;
-  VkBuffer m_indexBuffer = VK_NULL_HANDLE;
-  VmaAllocation m_indexAllocation = VK_NULL_HANDLE;
+  renderer::Buffer m_vertexBuffer;
+  renderer::Buffer m_indexBuffer;
 
   void loadMaterials(tinygltf::Model &model);
 

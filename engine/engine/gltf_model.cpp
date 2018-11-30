@@ -33,22 +33,19 @@ GltfModel::Material::Material(
     VK_CHECK(vkAllocateDescriptorSets(
         renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
 
-    renderer::buffer::createUniformBuffer(
-        sizeof(MaterialUniform),
-        &this->uniformBuffers.buffers[i],
-        &this->uniformBuffers.allocations[i]);
+    this->uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
+                                               sizeof(MaterialUniform)};
 
     // CombinedImageSampler
     auto &texture = model.m_textures[this->albedoTextureIndex];
     auto albedoDescriptorInfo = texture.getDescriptorInfo();
 
     // UniformBuffer
-    renderer::buffer::mapMemory(
-        this->uniformBuffers.allocations[i], &this->mappings[i]);
+    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
     memcpy(this->mappings[i], &this->ubo, sizeof(MaterialUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers.buffers[i], 0, sizeof(MaterialUniform)};
+        this->uniformBuffers[i].getHandle(), 0, sizeof(MaterialUniform)};
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
@@ -201,53 +198,34 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
 
   assert((vertexBufferSize > 0) && (indexBufferSize > 0));
 
-  VkBuffer stagingBuffer;
-  VmaAllocation stagingAllocation;
-  renderer::buffer::createStagingBuffer(
-      std::max(vertexBufferSize, indexBufferSize),
-      &stagingBuffer,
-      &stagingAllocation);
+  renderer::Buffer stagingBuffer{renderer::BufferType::eStaging,
+                                 std::max(vertexBufferSize, indexBufferSize)};
 
   void *stagingMemoryPointer;
-  renderer::buffer::mapMemory(stagingAllocation, &stagingMemoryPointer);
+  stagingBuffer.mapMemory(&stagingMemoryPointer);
 
-  renderer::buffer::createVertexBuffer(
-      vertexBufferSize, &m_vertexBuffer, &m_vertexAllocation);
+  this->m_vertexBuffer = renderer::Buffer{renderer::BufferType::eVertex, vertexBufferSize};
 
-  renderer::buffer::createIndexBuffer(
-      indexBufferSize, &m_indexBuffer, &m_indexAllocation);
+  this->m_indexBuffer = renderer::Buffer{renderer::BufferType::eIndex, indexBufferSize};
 
   memcpy(stagingMemoryPointer, vertices.data(), vertexBufferSize);
-  renderer::buffer::bufferTransfer(
-      stagingBuffer, m_vertexBuffer, vertexBufferSize);
+  stagingBuffer.bufferTransfer(m_vertexBuffer, vertexBufferSize);
 
   memcpy(stagingMemoryPointer, indices.data(), indexBufferSize);
-  renderer::buffer::bufferTransfer(
-      stagingBuffer, m_indexBuffer, indexBufferSize);
+  stagingBuffer.bufferTransfer(m_indexBuffer, indexBufferSize);
 
-  renderer::buffer::unmapMemory(stagingAllocation);
-  renderer::buffer::destroy(stagingBuffer, stagingAllocation);
+  stagingBuffer.unmapMemory();
+  stagingBuffer.destroy();
 }
 
-GltfModel::operator bool() const { return (m_vertexBuffer != VK_NULL_HANDLE); }
-
 void GltfModel::destroy() {
-  if (!*this) {
-    return;
-  }
-
-  renderer::buffer::destroy(m_vertexBuffer, m_vertexAllocation);
-  renderer::buffer::destroy(m_indexBuffer, m_indexAllocation);
-
-  m_vertexBuffer = VK_NULL_HANDLE;
-  m_indexBuffer = VK_NULL_HANDLE;
+  m_vertexBuffer.destroy();
+  m_indexBuffer.destroy();
 
   for (auto &material : m_materials) {
-    for (size_t i = 0; i < ARRAYSIZE(material.uniformBuffers.buffers); i++) {
-      renderer::buffer::unmapMemory(material.uniformBuffers.allocations[i]);
-      renderer::buffer::destroy(
-          material.uniformBuffers.buffers[i],
-          material.uniformBuffers.allocations[i]);
+    for (auto &uniformBuffer : material.uniformBuffers) {
+      uniformBuffer.unmapMemory();
+      uniformBuffer.destroy();
     }
 
     auto descriptorPool =
