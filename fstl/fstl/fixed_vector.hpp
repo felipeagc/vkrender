@@ -1,8 +1,8 @@
 #pragma once
 
-#include <array>
 #include <cstring>
-#include <exception>
+#include <stdexcept>
+#include <initializer_list>
 
 namespace fstl {
 template <typename T, size_t N = 8> class fixed_vector {
@@ -32,7 +32,7 @@ public:
   }
 
   ~fixed_vector() {
-    if (m_heapVector != m_array.data()) {
+    if (m_heapVector != m_array) {
       delete[] m_heapVector;
     }
   }
@@ -68,7 +68,7 @@ public:
       m_capacity *= 2;
 
       // Delete heap vector if it's not the stack allocated array
-      if (m_heapVector != m_array.data()) {
+      if (m_heapVector != m_array) {
         delete[] m_heapVector;
       }
 
@@ -90,7 +90,7 @@ public:
       m_capacity *= 2;
 
       // Delete heap vector if it's not the stack allocated array
-      if (m_heapVector != m_array.data()) {
+      if (m_heapVector != m_array) {
         delete[] m_heapVector;
       }
 
@@ -113,14 +113,14 @@ public:
   void resize(size_t newCapacity) noexcept {
     m_size = newCapacity;
     if (newCapacity <= N) {
-      if (m_heapVector != m_array.data()) {
+      if (m_heapVector != m_array) {
         for (size_t i = 0; i < N; i++) {
           m_array[i] = m_heapVector[i];
         }
 
         delete[] m_heapVector;
 
-        m_heapVector = m_array.data();
+        m_heapVector = m_array;
         m_capacity = N;
       }
       return;
@@ -139,7 +139,7 @@ public:
       newStorage[i] = T{};
     }
 
-    if (m_heapVector != m_array.data()) {
+    if (m_heapVector != m_array) {
       delete[] m_heapVector;
     }
 
@@ -160,9 +160,9 @@ public:
   T *end() const noexcept { return &m_heapVector[m_size]; }
 
 protected:
-  std::array<T, N> m_array{};
+  T m_array[N];
   size_t m_size{0};
   size_t m_capacity{N};
-  T *m_heapVector{m_array.data()};
+  T *m_heapVector{m_array};
 };
 } // namespace fstl
