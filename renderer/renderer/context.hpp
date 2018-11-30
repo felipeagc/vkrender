@@ -30,7 +30,7 @@ const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
 
 class Context {
 public:
-  Context(){};
+  Context();
   ~Context();
 
   Context(const Context &) = delete;

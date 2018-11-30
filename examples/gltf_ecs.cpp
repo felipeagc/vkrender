@@ -6,6 +6,7 @@
 #include <renderer/renderer.hpp>
 
 int main() {
+  renderer::Context context;
   renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   window.clearColor = {0.52, 0.80, 0.92, 1.0};

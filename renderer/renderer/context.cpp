@@ -5,9 +5,10 @@
 
 using namespace renderer;
 
+static Context* globalContext;
+
 Context &renderer::ctx() {
-  static Context context;
-  return context;
+  return *globalContext;
 }
 
 // Debug callback
@@ -211,6 +212,10 @@ static bool checkPhysicalDeviceProperties(
   *transferQueueFamily = transferQueueFamilyIndex;
 
   return true;
+}
+
+Context::Context() {
+  globalContext = this;
 }
 
 void Context::createInstance(

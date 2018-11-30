@@ -70,6 +70,7 @@ createTrianglePipeline(renderer::Window &window, renderer::Shader &shader) {
 }
 
 int main() {
+  renderer::Context context;
   renderer::Window window("Triangle");
 
   renderer::Shader shader{
