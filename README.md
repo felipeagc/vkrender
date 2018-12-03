@@ -12,7 +12,6 @@
 - [x] Shader live refresh
 
 ### Camera
-- [x] Rewrite camera class
 - [x] Camera options
 - [x] Use quaternion for camera
 - [ ] First person camera
@@ -30,8 +29,6 @@
 - [ ] Make a better abstraction for updating descriptor sets
 
 ### GLTF models
-- [x] Figure out a way to scale a whole model (probably a member
-      matrix for GltfModel that multiplies before passing to GPU)
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
 - [ ] Animation
@@ -52,14 +49,10 @@
 - [ ] Get state of a key
 
 ### Libraries
-- [x] Add google test as a git submodule
-- [x] Add glm as a git submodule
 - [ ] Figure out how to add vulkan SDK as a submodule
-- [x] Add rapidjson
 
 ### Assets
 - [x] Asset management system
-- [x] Separate GltfModel into GltfModel and GltfModelInstance
 - [ ] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
 - [x] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
       Maybe handle this in the asset constructor itself.
