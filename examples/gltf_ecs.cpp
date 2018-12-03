@@ -3,7 +3,9 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
+#include <mutex>
 #include <renderer/renderer.hpp>
+#include <thread>
 
 int main() {
   renderer::Context context;
@@ -29,6 +31,7 @@ int main() {
       "../shaders/model_lit.frag",
   };
 
+  std::mutex modelPipelineMutex;
   renderer::GraphicsPipeline modelPipeline =
       renderer::createStandardPipeline(window, modelShader);
 
@@ -109,9 +112,11 @@ int main() {
       case SDL_QUIT:
         fstl::log::info("Goodbye");
         window.setShouldClose(true);
-        break;
+        return;
       }
     }
+
+    std::scoped_lock<std::mutex> lockGuard(modelPipelineMutex);
 
     // Change camera position and rotation
     float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
@@ -181,6 +186,30 @@ int main() {
           window, billboardPipeline, transform.getMatrix(), light.color);
     });
   };
+
+  engine::FileWatcher watcher;
+  watcher.addFile("../shaders/model_lit.frag");
+  watcher.addFile("../shaders/model_lit.vert");
+  watcher.onModify = [&](const std::string filename) {
+    std::cout << filename << " was modified\n";
+    std::scoped_lock<std::mutex> lockGuard(modelPipelineMutex);
+
+    VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+
+    try {
+      renderer::Shader modelShader{
+          "../shaders/model_lit.vert",
+          "../shaders/model_lit.frag",
+      };
+
+      modelPipeline = renderer::createStandardPipeline(window, modelShader);
+
+      modelShader.destroy();
+    } catch (const std::exception &exception) {
+      fstl::log::error("Error while compiling shader: {}", exception.what());
+    }
+  };
+  watcher.startWatching();
 
   while (!window.getShouldClose()) {
     window.present(draw);

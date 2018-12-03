@@ -4,6 +4,7 @@ set(
   engine/light_manager.cpp
   engine/asset_manager.cpp
   engine/imgui_utils.cpp
+  engine/file_watcher.cpp
 
   engine/camera_component.cpp
   engine/gltf_model_component.cpp

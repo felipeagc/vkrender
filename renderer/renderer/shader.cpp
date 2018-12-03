@@ -157,8 +157,12 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
 void Shader::destroy() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  vkDestroyShaderModule(ctx().m_device, m_vertexModule, nullptr);
-  vkDestroyShaderModule(ctx().m_device, m_fragmentModule, nullptr);
+  if (m_vertexModule != VK_NULL_HANDLE) {
+    vkDestroyShaderModule(ctx().m_device, m_vertexModule, nullptr);
+  }
+  if (m_fragmentModule != VK_NULL_HANDLE) {
+    vkDestroyShaderModule(ctx().m_device, m_fragmentModule, nullptr);
+  }
 }
 
 VkShaderModule

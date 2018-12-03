@@ -9,7 +9,7 @@
 ## TODO
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang
-- [ ] Shader live refresh
+- [x] Shader live refresh
 
 ### Camera
 - [x] Rewrite camera class

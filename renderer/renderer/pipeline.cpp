@@ -22,13 +22,27 @@ GraphicsPipeline::~GraphicsPipeline() {
 }
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&rhs) {
-  std::swap(m_pipeline, rhs.m_pipeline);
-  std::swap(m_pipelineLayout, rhs.m_pipelineLayout);
+  m_pipeline = rhs.m_pipeline;
+  m_pipelineLayout = rhs.m_pipelineLayout;
+  rhs.m_pipeline = VK_NULL_HANDLE;
+  rhs.m_pipelineLayout = VK_NULL_HANDLE;
 }
 
 GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
-  std::swap(m_pipeline, rhs.m_pipeline);
-  std::swap(m_pipelineLayout, rhs.m_pipelineLayout);
+  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+
+  if (m_pipelineLayout != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(ctx().m_device, m_pipelineLayout, nullptr);
+  }
+  if (m_pipeline != VK_NULL_HANDLE) {
+    vkDestroyPipeline(ctx().m_device, m_pipeline, nullptr);
+  }
+
+  m_pipeline = rhs.m_pipeline;
+  m_pipelineLayout = rhs.m_pipelineLayout;
+  rhs.m_pipeline = VK_NULL_HANDLE;
+  rhs.m_pipelineLayout = VK_NULL_HANDLE;
+
   return *this;
 }
 

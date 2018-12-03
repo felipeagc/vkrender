@@ -4,6 +4,7 @@
 #include "gltf_model.hpp"
 #include "imgui_utils.hpp"
 #include "light_manager.hpp"
+#include "file_watcher.hpp"
 
 #include "camera_component.hpp"
 #include "gltf_model_component.hpp"
