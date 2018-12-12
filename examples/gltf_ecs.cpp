@@ -175,16 +175,30 @@ int main() {
     // Draw billboards
     world.getComponent<engine::CameraComponent>(camera)->bind(
         window, billboardPipeline);
+    glm::vec3 cameraPos =
+        world.getComponent<engine::TransformComponent>(camera)->position;
+    fstl::fixed_vector<std::pair<float, ecs::Entity>> billboards;
     world.each<
         engine::TransformComponent,
         engine::LightComponent,
-        engine::BillboardComponent>([&](ecs::Entity,
+        engine::BillboardComponent>([&](ecs::Entity entity,
                                         engine::TransformComponent &transform,
-                                        engine::LightComponent &light,
-                                        engine::BillboardComponent &billboard) {
-      billboard.draw(
-          window, billboardPipeline, transform.getMatrix(), light.color);
+                                        engine::LightComponent &,
+                                        engine::BillboardComponent &) {
+      billboards.push_back(
+          {glm::distance(cameraPos, transform.position), entity});
     });
+
+    // Sort draw calls
+    std::sort(billboards.begin(), billboards.end());
+
+    for (auto &[dist, entity] : billboards) {
+      auto transform = world.getComponent<engine::TransformComponent>(entity);
+      auto light = world.getComponent<engine::LightComponent>(entity);
+      auto billboard = world.getComponent<engine::BillboardComponent>(entity);
+      billboard->draw(
+          window, billboardPipeline, transform->getMatrix(), light->color);
+    }
   };
 
   engine::FileWatcher watcher;
