@@ -15,6 +15,7 @@ struct StandardVertex {
 
 class GraphicsPipeline {
 public:
+  GraphicsPipeline(){};
   GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
   ~GraphicsPipeline();
 
@@ -26,13 +27,23 @@ public:
   GraphicsPipeline(GraphicsPipeline &&rhs);
   GraphicsPipeline &operator=(GraphicsPipeline &&rhs);
 
+  operator bool() { return m_pipeline != VK_NULL_HANDLE; }
+
   VkPipeline m_pipeline = VK_NULL_HANDLE;
   VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 };
 
-GraphicsPipeline createStandardPipeline(Window &window, Shader &shader);
+class StandardPipeline : public GraphicsPipeline {
+public:
+  using GraphicsPipeline::GraphicsPipeline;
+  StandardPipeline(Window &window, Shader &shader);
+};
 
-GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader);
+class BillboardPipeline : public GraphicsPipeline {
+public:
+  using GraphicsPipeline::GraphicsPipeline;
+  BillboardPipeline(Window &window, Shader &shader);
+};
 } // namespace renderer
 
 namespace renderer::pipeline {

@@ -46,7 +46,7 @@ GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
   return *this;
 }
 
-GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
+StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
@@ -54,7 +54,7 @@ GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_LIGHTING),
   };
 
-  auto pipelineLayout = pipeline::createPipelineLayout(
+  m_pipelineLayout = pipeline::createPipelineLayout(
       ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
@@ -84,14 +84,12 @@ GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
       &depthStencilStateCreateInfo,  // pDepthStencilState
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
-      pipelineLayout,                // pipelineLayout
+      m_pipelineLayout,              // pipelineLayout
       window.getRenderPass(),        // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex
   };
-
-  VkPipeline pipeline;
 
   VK_CHECK(vkCreateGraphicsPipelines(
       ctx().m_device,
@@ -99,19 +97,17 @@ GraphicsPipeline createStandardPipeline(Window &window, Shader &shader) {
       1,
       &pipelineCreateInfo,
       nullptr,
-      &pipeline));
-
-  return GraphicsPipeline{pipeline, pipelineLayout};
+      &m_pipeline));
 }
 
-GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
+BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MESH),
   };
 
-  auto pipelineLayout = pipeline::createPipelineLayout(
+  m_pipelineLayout = pipeline::createPipelineLayout(
       ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
@@ -150,14 +146,12 @@ GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
       &depthStencilStateCreateInfo,  // pDepthStencilState
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
-      pipelineLayout,                // pipelineLayout
+      m_pipelineLayout,              // pipelineLayout
       window.getRenderPass(),        // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex
   };
-
-  VkPipeline pipeline;
 
   VK_CHECK(vkCreateGraphicsPipelines(
       ctx().m_device,
@@ -165,9 +159,7 @@ GraphicsPipeline createBillboardPipeline(Window &window, Shader &shader) {
       1,
       &pipelineCreateInfo,
       nullptr,
-      &pipeline));
-
-  return GraphicsPipeline{pipeline, pipelineLayout};
+      &m_pipeline));
 }
 } // namespace renderer
 

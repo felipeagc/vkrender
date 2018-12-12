@@ -22,20 +22,12 @@ int main() {
   };
 
   renderer::GraphicsPipeline billboardPipeline =
-      renderer::createBillboardPipeline(window, billboardShader);
+      renderer::BillboardPipeline(window, billboardShader);
 
   billboardShader.destroy();
 
-  renderer::Shader modelShader{
-      "../shaders/model_lit.vert",
-      "../shaders/model_lit.frag",
-  };
-
-  std::mutex modelPipelineMutex;
-  renderer::GraphicsPipeline modelPipeline =
-      renderer::createStandardPipeline(window, modelShader);
-
-  modelShader.destroy();
+  engine::ShaderWatcher<renderer::StandardPipeline> shaderWatcher(
+      window, "../shaders/model_lit.vert", "../shaders/model_lit.frag");
 
   ecs::World world;
 
@@ -116,7 +108,7 @@ int main() {
       }
     }
 
-    std::scoped_lock<std::mutex> lockGuard(modelPipelineMutex);
+    shaderWatcher.lockPipeline();
 
     // Change camera position and rotation
     float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
@@ -160,16 +152,16 @@ int main() {
         world.getComponent<engine::TransformComponent>(camera));
 
     // Draw models
-    lightManager.bind(window, modelPipeline);
+    lightManager.bind(window, shaderWatcher.pipeline());
 
     world.getComponent<engine::CameraComponent>(camera)->bind(
-        window, modelPipeline);
+        window, shaderWatcher.pipeline());
 
     world.each<engine::GltfModelComponent, engine::TransformComponent>(
         [&](ecs::Entity,
             engine::GltfModelComponent &model,
             engine::TransformComponent &transform) {
-          model.draw(window, modelPipeline, transform.getMatrix());
+          model.draw(window, shaderWatcher.pipeline(), transform.getMatrix());
         });
 
     // Draw billboards
@@ -201,29 +193,7 @@ int main() {
     }
   };
 
-  engine::FileWatcher watcher;
-  watcher.addFile("../shaders/model_lit.frag");
-  watcher.addFile("../shaders/model_lit.vert");
-  watcher.onModify = [&](const std::string filename) {
-    std::cout << filename << " was modified\n";
-    std::scoped_lock<std::mutex> lockGuard(modelPipelineMutex);
-
-    VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
-
-    try {
-      renderer::Shader modelShader{
-          "../shaders/model_lit.vert",
-          "../shaders/model_lit.frag",
-      };
-
-      modelPipeline = renderer::createStandardPipeline(window, modelShader);
-
-      modelShader.destroy();
-    } catch (const std::exception &exception) {
-      fstl::log::error("Error while compiling shader: {}", exception.what());
-    }
-  };
-  watcher.startWatching();
+  shaderWatcher.startWatching();
 
   while (!window.getShouldClose()) {
     window.present(draw);

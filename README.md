@@ -1,11 +1,5 @@
 # VKRender
 
-## Code style
-- Avoid using templates when unnecessary
-- `m_` prefix for class member variables
-- No inheritance
-- No virtual member functions
-
 ## TODO
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang
