@@ -11,11 +11,11 @@ layout (set = 0, binding = 0) uniform CameraUniform {
   mat4 proj;
 } camera;
 
-layout (set = 1, binding = 0) uniform sampler2D albedo;
-
-layout (set = 1, binding = 1) uniform MaterialUniform {
+layout (set = 1, binding = 0) uniform MaterialUniform {
   vec4 color;
 } material;
+
+layout (set = 1, binding = 1) uniform sampler2D albedo;
 
 struct Light {
   vec4 pos;

@@ -5,11 +5,9 @@
 
 using namespace renderer;
 
-static Context* globalContext;
+static Context *globalContext;
 
-Context &renderer::ctx() {
-  return *globalContext;
-}
+Context &renderer::ctx() { return *globalContext; }
 
 // Debug callback
 
@@ -214,9 +212,7 @@ static bool checkPhysicalDeviceProperties(
   return true;
 }
 
-Context::Context() {
-  globalContext = this;
-}
+Context::Context() { globalContext = this; }
 
 void Context::createInstance(
     const std::vector<const char *> &requiredWindowVulkanExtensions) {
@@ -427,12 +423,16 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
   this->createTransientCommandPool();
 
   m_descriptorManager.init();
+
+  m_defaultTexture = Texture{{255, 255, 255, 255}, 1, 1};
 }
 
 Context::~Context() {
   fstl::log::debug("Vulkan context shutting down...");
 
   VK_CHECK(vkDeviceWaitIdle(m_device));
+
+  m_defaultTexture.destroy();
 
   m_descriptorManager.destroy();
 

@@ -23,9 +23,13 @@ class GltfModel {
 public:
   struct Material {
     int albedoTextureIndex = -1;
+    int metallicRoughnessTextureIndex = -1;
 
     struct MaterialUniform {
-      glm::vec4 baseColorFactor;
+      glm::vec4 albedo;
+      float metallic;
+      float roughness;
+      float ao;
     } ubo;
 
     renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
@@ -36,7 +40,10 @@ public:
     Material(
         const GltfModel &model,
         int albedoTextureIndex,
-        glm::vec4 baseColorFactor);
+        int metallicRoughnessTextureIndex,
+        glm::vec4 albedoColor,
+        float roughness,
+        float metallic);
   };
 
   struct Primitive {

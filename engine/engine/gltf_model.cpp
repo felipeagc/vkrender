@@ -12,14 +12,22 @@
 using namespace engine;
 
 GltfModel::Material::Material(
-    const GltfModel &model, int albedoTextureIndex, glm::vec4 baseColorFactor)
-    : albedoTextureIndex(albedoTextureIndex) {
+    const GltfModel &model,
+    int albedoTextureIndex,
+    int metallicRoughnessTextureIndex,
+    glm::vec4 albedoColor,
+    float metallic,
+    float roughness)
+    : albedoTextureIndex(albedoTextureIndex),
+      metallicRoughnessTextureIndex(metallicRoughnessTextureIndex) {
   auto [descriptorPool, descriptorSetLayout] =
       renderer::ctx().m_descriptorManager[renderer::DESC_MATERIAL];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
-  this->ubo.baseColorFactor = baseColorFactor;
+  this->ubo.albedo = albedoColor;
+  this->ubo.metallic = metallic;
+  this->ubo.roughness = roughness;
 
   VkDescriptorSetAllocateInfo allocateInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -36,10 +44,6 @@ GltfModel::Material::Material(
     this->uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
                                                sizeof(MaterialUniform)};
 
-    // CombinedImageSampler
-    auto &texture = model.m_textures[this->albedoTextureIndex];
-    auto albedoDescriptorInfo = texture.getDescriptorInfo();
-
     // UniformBuffer
     this->uniformBuffers[i].mapMemory(&this->mappings[i]);
     memcpy(this->mappings[i], &this->ubo, sizeof(MaterialUniform));
@@ -47,12 +51,47 @@ GltfModel::Material::Material(
     VkDescriptorBufferInfo bufferInfo = {
         this->uniformBuffers[i].getHandle(), 0, sizeof(MaterialUniform)};
 
+    VkDescriptorImageInfo albedoDescriptorInfo = {};
+    VkDescriptorImageInfo metallicRoughnessDescriptorInfo = {};
+
+    // Albedo
+    if (this->albedoTextureIndex != -1) {
+      auto &albedoTexture = model.m_textures[this->albedoTextureIndex];
+      albedoDescriptorInfo = albedoTexture.getDescriptorInfo();
+    } else {
+      albedoDescriptorInfo =
+          renderer::ctx().m_defaultTexture.getDescriptorInfo();
+    }
+
+    // Metallic/roughness
+    if (this->metallicRoughnessTextureIndex != -1) {
+      auto &metallicRoughnessTexture =
+          model.m_textures[this->metallicRoughnessTextureIndex];
+      metallicRoughnessDescriptorInfo =
+          metallicRoughnessTexture.getDescriptorInfo();
+    } else {
+      metallicRoughnessDescriptorInfo =
+          renderer::ctx().m_defaultTexture.getDescriptorInfo();
+    }
+
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
+            this->descriptorSets[i],           // dstSet
+            0,                                 // dstBinding
+            0,                                 // dstArrayElement
+            1,                                 // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            nullptr,                           // pImageInfo
+            &bufferInfo,                       // pBufferInfo
+            nullptr,                           // pTexelBufferView
+        },
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
             this->descriptorSets[i],                   // dstSet
-            0,                                         // dstBinding
+            1,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
@@ -63,14 +102,14 @@ GltfModel::Material::Material(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],           // dstSet
-            1,                                 // dstBinding
-            0,                                 // dstArrayElement
-            1,                                 // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            nullptr,                           // pImageInfo
-            &bufferInfo,                       // pBufferInfo
-            nullptr,                           // pTexelBufferView
+            this->descriptorSets[i],                   // dstSet
+            2,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &metallicRoughnessDescriptorInfo,          // pImageInfo
+            nullptr,                                   // pBufferInfo
+            nullptr,                                   // pTexelBufferView
         },
     };
 
@@ -204,9 +243,11 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   void *stagingMemoryPointer;
   stagingBuffer.mapMemory(&stagingMemoryPointer);
 
-  this->m_vertexBuffer = renderer::Buffer{renderer::BufferType::eVertex, vertexBufferSize};
+  this->m_vertexBuffer =
+      renderer::Buffer{renderer::BufferType::eVertex, vertexBufferSize};
 
-  this->m_indexBuffer = renderer::Buffer{renderer::BufferType::eIndex, indexBufferSize};
+  this->m_indexBuffer =
+      renderer::Buffer{renderer::BufferType::eIndex, indexBufferSize};
 
   memcpy(stagingMemoryPointer, vertices.data(), vertexBufferSize);
   stagingBuffer.bufferTransfer(m_vertexBuffer, vertexBufferSize);
@@ -256,11 +297,20 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
     auto &mat = model.materials[i];
 
     int albedoTextureIndex = -1;
+    int metallicRoughnessTextureIndex = -1;
     glm::vec4 baseColorFactor = glm::vec4(1.0, 1.0, 1.0, 1.0);
+    float metallicFactor = 1.0;
+    float roughnessFactor = 1.0;
 
     if (mat.values.find("baseColorTexture") != mat.values.end()) {
       albedoTextureIndex =
           model.textures[mat.values["baseColorTexture"].TextureIndex()].source;
+    }
+
+    if (mat.values.find("metallicRoughnessTexture") != mat.values.end()) {
+      metallicRoughnessTextureIndex =
+          model.textures[mat.values["metallicRoughnessTexture"].TextureIndex()]
+              .source;
     }
 
     if (mat.values.find("baseColorFactor") != mat.values.end()) {
@@ -268,7 +318,22 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
           glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
     }
 
-    m_materials[i] = Material{*this, albedoTextureIndex, baseColorFactor};
+    if (mat.values.find("metallicFactor") != mat.values.end()) {
+      metallicFactor =
+          static_cast<float>(mat.values["metallicFactor"].Factor());
+    }
+
+    if (mat.values.find("roughnessFactor") != mat.values.end()) {
+      roughnessFactor =
+          static_cast<float>(mat.values["roughnessFactor"].Factor());
+    }
+
+    m_materials[i] = Material{*this,
+                              albedoTextureIndex,
+                              metallicRoughnessTextureIndex,
+                              baseColorFactor,
+                              metallicFactor,
+                              roughnessFactor};
   }
 }
 

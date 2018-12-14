@@ -101,11 +101,15 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 ### Descriptor set 1
 For the material's stuff
 ```glsl
-layout (set = 1, binding = 0) uniform sampler2D albedo;
-
-layout (set = 1, binding = 1) uniform MaterialUniform {
-    vec4 color;
+layout (set = 1, binding = 0) uniform MaterialUniform {
+    vec4 albedo;
+    float metallic;
+    float roughness;
+    float ao;
 } material;
+
+layout (set = 1, binding = 1) uniform sampler2D albedoTexture;
+layout (set = 1, binding = 2) uniform sampler2D metallicRoughnessTexture;
 ```
 
 ### Descriptor set 2

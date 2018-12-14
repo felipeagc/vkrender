@@ -123,7 +123,8 @@ Window::~Window() {
 bool Window::pollEvent(SDL_Event *event) {
   bool result = SDL_PollEvent(event);
 
-  ImGui_ImplSDL2_ProcessEvent(event);
+  if (result)
+    ImGui_ImplSDL2_ProcessEvent(event);
 
   return result;
 }

@@ -9,8 +9,8 @@ BillboardComponent::BillboardComponent(const renderer::Texture &texture)
     : m_texture(texture) {
   // Create mesh uniform buffers
   for (size_t i = 0; i < ARRAYSIZE(m_meshUniformBuffers); i++) {
-    m_meshUniformBuffers[i] = renderer::Buffer{
-        renderer::BufferType::eUniform, sizeof(MeshUniform)};
+    m_meshUniformBuffers[i] =
+        renderer::Buffer{renderer::BufferType::eUniform, sizeof(MeshUniform)};
     m_meshUniformBuffers[i].mapMemory(&m_meshMappings[i]);
     memcpy(m_meshMappings[i], &m_meshUbo, sizeof(MeshUniform));
   }
@@ -82,26 +82,26 @@ BillboardComponent::BillboardComponent(const renderer::Texture &texture)
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_materialDescriptorSets[i],               // dstSet
-            0,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &albedoDescriptorInfo,                     // pImageInfo
-            nullptr,                                   // pBufferInfo
-            nullptr,                                   // pTexelBufferView
-        },
-        VkWriteDescriptorSet{
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            nullptr,
             m_materialDescriptorSets[i],       // dstSet
-            1,                                 // dstBinding
+            0,                                 // dstBinding
             0,                                 // dstArrayElement
             1,                                 // descriptorCount
             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
             nullptr,                           // pImageInfo
             &materialBufferInfo,               // pBufferInfo
             nullptr,                           // pTexelBufferView
+        },
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
+            m_materialDescriptorSets[i],               // dstSet
+            1,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &albedoDescriptorInfo,                     // pImageInfo
+            nullptr,                                   // pBufferInfo
+            nullptr,                                   // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,

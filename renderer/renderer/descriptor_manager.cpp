@@ -28,18 +28,25 @@ const VkDescriptorSetLayoutBinding MESH_BINDINGS[] = {{
 
 const VkDescriptorSetLayoutBinding MATERIAL_BINDINGS[] = {
     {
-        0,                                         // binding
+        0,                                 // binding
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        1,                                 // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
+        nullptr,                           // pImmutableSamplers
+    },
+    {
+        1,                                         // binding
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         1,                                         // descriptorCount
         VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
         nullptr,                                   // pImmutableSamplers
     },
     {
-        1,                                 // binding
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        1,                                 // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
-        nullptr,                           // pImmutableSamplers
+        2,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
     },
 };
 

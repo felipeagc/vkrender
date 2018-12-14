@@ -38,7 +38,7 @@ public:
     m_watcher.addFile(m_fragmentPath);
 
     m_watcher.onModify = [&](const std::string filename) {
-      std::cout << filename << " was modified\n";
+      fstl::log::debug("Shader \"{}\" was modified", filename);
       auto lock = this->lockPipeline();
 
       VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));

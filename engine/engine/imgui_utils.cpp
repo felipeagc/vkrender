@@ -60,7 +60,7 @@ void lightSection(
       transform.position.y,
       transform.position.z,
   };
-  ImGui::DragFloat3("Position", pos, 1.0f, -10.0f, 10.0f);
+  ImGui::DragFloat3("Position", pos, 0.1f, -10.0f, 10.0f);
   transform.position = {pos[0], pos[1], pos[2]};
 
   float color[3] = {

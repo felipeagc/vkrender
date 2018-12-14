@@ -9,9 +9,9 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
+  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_2_BIT);
 
-  window.clearColor = {0.52, 0.80, 0.92, 1.0};
+  window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
   engine::AssetManager assetManager;
 
@@ -27,7 +27,7 @@ int main() {
   billboardShader.destroy();
 
   engine::ShaderWatcher<renderer::StandardPipeline> shaderWatcher(
-      window, "../shaders/model_lit.vert", "../shaders/model_lit.frag");
+      window, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
 
   ecs::World world;
 
@@ -38,7 +38,8 @@ int main() {
   {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{1.0, 1.0, 0.0});
-    world.assign<engine::TransformComponent>(light, glm::vec3{3.0, 3.0, 3.0});
+    world.assign<engine::TransformComponent>(
+        light, glm::vec3{3.0, 3.0, 3.0}, glm::vec3{0.5, 0.5, 0.5});
     world.assign<engine::BillboardComponent>(
         light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
@@ -46,7 +47,7 @@ int main() {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{0.0, 0.0, 1.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{-3.0, -3.0, -3.0});
+        light, glm::vec3{-3.0, -3.0, -3.0}, glm::vec3{0.5, 0.5, 0.5});
     world.assign<engine::BillboardComponent>(
         light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
@@ -65,6 +66,13 @@ int main() {
       assetManager.getAsset<engine::GltfModel>("../assets/BoomBox.glb"));
   world.assign<engine::TransformComponent>(
       boombox, glm::vec3{-2.0, 0.0, 0.0}, glm::vec3{1.0, 1.0, 1.0} * 100.0f);
+
+  ecs::Entity bunny = world.createEntity();
+  world.assign<engine::GltfModelComponent>(
+      bunny,
+      assetManager.getAsset<engine::GltfModel>(
+          "../assets/DamagedHelmet.glb", true));
+  world.assign<engine::TransformComponent>(bunny, glm::vec3{0.0, 1.0, 0.0});
 
   ecs::Entity camera = world.createEntity();
   world.assign<engine::CameraComponent>(camera);
@@ -132,6 +140,11 @@ int main() {
 
     ImGui::Begin("Lights");
 
+    static bool drawBillboards = true;
+    ImGui::Checkbox("Draw billboards", &drawBillboards);
+
+    ImGui::Separator();
+
     world.each<engine::TransformComponent, engine::LightComponent>(
         [&](ecs::Entity entity,
             engine::TransformComponent &transform,
@@ -165,31 +178,33 @@ int main() {
         });
 
     // Draw billboards
-    world.getComponent<engine::CameraComponent>(camera)->bind(
-        window, billboardPipeline);
-    glm::vec3 cameraPos =
-        world.getComponent<engine::TransformComponent>(camera)->position;
-    fstl::fixed_vector<std::pair<float, ecs::Entity>> billboards;
-    world.each<
-        engine::TransformComponent,
-        engine::LightComponent,
-        engine::BillboardComponent>([&](ecs::Entity entity,
-                                        engine::TransformComponent &transform,
-                                        engine::LightComponent &,
-                                        engine::BillboardComponent &) {
-      billboards.push_back(
-          {glm::distance(cameraPos, transform.position), entity});
-    });
+    if (drawBillboards) {
+      world.getComponent<engine::CameraComponent>(camera)->bind(
+          window, billboardPipeline);
+      glm::vec3 cameraPos =
+          world.getComponent<engine::TransformComponent>(camera)->position;
+      fstl::fixed_vector<std::pair<float, ecs::Entity>> billboards;
+      world.each<
+          engine::TransformComponent,
+          engine::LightComponent,
+          engine::BillboardComponent>([&](ecs::Entity entity,
+                                          engine::TransformComponent &transform,
+                                          engine::LightComponent &,
+                                          engine::BillboardComponent &) {
+        billboards.push_back(
+            {glm::distance(cameraPos, transform.position), entity});
+      });
 
-    // Sort draw calls
-    std::sort(billboards.begin(), billboards.end());
+      // Sort draw calls
+      std::sort(billboards.begin(), billboards.end());
 
-    for (auto &[dist, entity] : billboards) {
-      auto transform = world.getComponent<engine::TransformComponent>(entity);
-      auto light = world.getComponent<engine::LightComponent>(entity);
-      auto billboard = world.getComponent<engine::BillboardComponent>(entity);
-      billboard->draw(
-          window, billboardPipeline, transform->getMatrix(), light->color);
+      for (auto &[dist, entity] : billboards) {
+        auto transform = world.getComponent<engine::TransformComponent>(entity);
+        auto light = world.getComponent<engine::LightComponent>(entity);
+        auto billboard = world.getComponent<engine::BillboardComponent>(entity);
+        billboard->draw(
+            window, billboardPipeline, transform->getMatrix(), light->color);
+      }
     }
   };
 
