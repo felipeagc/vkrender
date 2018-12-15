@@ -9,6 +9,7 @@ set(
   engine/camera_component.cpp
   engine/gltf_model_component.cpp
   engine/billboard_component.cpp
+  engine/skybox_component.cpp
   )
 
 add_library(

@@ -2,6 +2,7 @@
 
 #include "buffer.hpp"
 #include "context.hpp"
+#include "cubemap.hpp"
 #include "descriptor_manager.hpp"
 #include "glm.hpp"
 #include "pipeline.hpp"

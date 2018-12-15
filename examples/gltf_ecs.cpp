@@ -9,7 +9,7 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_2_BIT);
+  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
@@ -26,10 +26,31 @@ int main() {
 
   billboardShader.destroy();
 
+  renderer::Shader skyboxShader{
+      "../shaders/skybox.vert",
+      "../shaders/skybox.frag",
+  };
+
+  renderer::GraphicsPipeline skyboxPipeline =
+      renderer::SkyboxPipeline(window, skyboxShader);
+
+  skyboxShader.destroy();
+
   engine::ShaderWatcher<renderer::StandardPipeline> shaderWatcher(
       window, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
 
   ecs::World world;
+
+  // Create skybox
+  {
+    ecs::Entity skybox = world.createEntity();
+    world.assign<engine::SkyboxComponent>(
+        skybox,
+        assetManager.getAsset<renderer::Cubemap>(
+            "../assets/ice_lake_ref.hdr",
+            static_cast<uint32_t>(1024),
+            static_cast<uint32_t>(1024)));
+  }
 
   // Create light manager
   engine::LightManager lightManager;
@@ -74,6 +95,7 @@ int main() {
           "../assets/DamagedHelmet.glb", true));
   world.assign<engine::TransformComponent>(bunny, glm::vec3{0.0, 1.0, 0.0});
 
+  // Create camera
   ecs::Entity camera = world.createEntity();
   world.assign<engine::CameraComponent>(camera);
   world.assign<engine::TransformComponent>(camera);
@@ -115,6 +137,14 @@ int main() {
         return;
       }
     }
+
+    // Draw skybox
+    world.getComponent<engine::CameraComponent>(camera)->bind(
+        window, skyboxPipeline);
+    world.each<engine::SkyboxComponent>(
+        [&](ecs::Entity, engine::SkyboxComponent &skybox) {
+          skybox.draw(window, skyboxPipeline);
+        });
 
     shaderWatcher.lockPipeline();
 

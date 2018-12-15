@@ -11,4 +11,5 @@
 #include "camera_component.hpp"
 #include "gltf_model_component.hpp"
 #include "light_component.hpp"
+#include "skybox_component.hpp"
 #include "transform_component.hpp"

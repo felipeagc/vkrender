@@ -44,7 +44,7 @@ public:
   const std::unordered_map<std::string, AssetInfo> &getAssetTable() const;
 
   template <typename Asset, typename... Args>
-  const Asset &getAsset(const std::string &path, Args... args) {
+  Asset &getAsset(const std::string &path, Args... args) {
     this->ensure<Asset>();
 
     auto id = AssetTypeId::type<Asset>;

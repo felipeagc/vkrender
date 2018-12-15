@@ -44,6 +44,18 @@ public:
   using GraphicsPipeline::GraphicsPipeline;
   BillboardPipeline(Window &window, Shader &shader);
 };
+
+class SkyboxPipeline : public GraphicsPipeline {
+public:
+  using GraphicsPipeline::GraphicsPipeline;
+  SkyboxPipeline(Window &window, Shader &shader);
+};
+
+class BakeCubemapPipeline : public GraphicsPipeline {
+public:
+  using GraphicsPipeline::GraphicsPipeline;
+  BakeCubemapPipeline(VkRenderPass &renderpass, Shader &shader);
+};
 } // namespace renderer
 
 namespace renderer::pipeline {
