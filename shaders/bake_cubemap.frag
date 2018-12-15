@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 worldPos;
 
-layout(set = 1, binding = 1) uniform sampler2D equirectangularMap;
+layout(set = 0, binding = 1) uniform sampler2D equirectangularMap;
 
 layout(location = 0) out vec4 outColor;
 

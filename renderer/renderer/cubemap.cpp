@@ -283,64 +283,6 @@ static void bakeCubemap(
           glm::vec3(0.0f, -1.0f, 0.0f)),
   };
 
-  // TODO: use push constants instead
-  // Create cameraDescriptorSet
-  void *cameraUniformMappings[6];
-  VkDescriptorSet cameraDescriptorSets[6] = {};
-  renderer::Buffer cameraUniformBuffers[6] = {};
-
-  auto [cameraDescriptorPool, cameraDescriptorSetLayout] =
-      renderer::ctx().m_descriptorManager[renderer::DESC_CAMERA];
-
-  assert(
-      cameraDescriptorPool != nullptr && cameraDescriptorSetLayout != nullptr);
-
-  for (size_t i = 0; i < 6; i++) {
-    cameraUniformBuffers[i] =
-        renderer::Buffer{renderer::BufferType::eUniform, sizeof(CameraUniform)};
-
-    cameraUniformBuffers[i].mapMemory(&cameraUniformMappings[i]);
-
-    cameraUBO.view = cameraViews[i];
-
-    memcpy(cameraUniformMappings[i], &cameraUBO, sizeof(CameraUniform));
-
-    VkDescriptorSetAllocateInfo cameraDescriptorAllocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *cameraDescriptorPool,
-        1,
-        cameraDescriptorSetLayout,
-    };
-
-    vkAllocateDescriptorSets(
-        renderer::ctx().m_device,
-        &cameraDescriptorAllocateInfo,
-        &cameraDescriptorSets[i]);
-
-    VkDescriptorBufferInfo bufferInfo{
-        cameraUniformBuffers[i].getHandle(),
-        0,
-        sizeof(CameraUniform),
-    };
-
-    VkWriteDescriptorSet cameraDescriptorWrite = {
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        nullptr,
-        cameraDescriptorSets[i],           // dstSet
-        0,                                 // dstBinding
-        0,                                 // dstArrayElement
-        1,                                 // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        nullptr,                           // pImageInfo
-        &bufferInfo,                       // pBufferInfo
-        nullptr,                           // pTexelBufferView
-    };
-
-    vkUpdateDescriptorSets(
-        renderer::ctx().m_device, 1, &cameraDescriptorWrite, 0, nullptr);
-  }
-
   // Create renderpass
   VkRenderPass renderPass = VK_NULL_HANDLE;
 
@@ -475,6 +417,16 @@ static void bakeCubemap(
     vkCmdBeginRenderPass(
         commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+    cameraUBO.view = cameraViews[i];
+
+    vkCmdPushConstants(
+        commandBuffer,
+        pipeline.m_pipelineLayout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0,
+        sizeof(CameraUniform),
+        &cameraUBO);
+
     VkViewport viewport{
         0.0f,                                   // x
         0.0f,                                   // y
@@ -499,19 +451,9 @@ static void bakeCubemap(
           commandBuffer,
           VK_PIPELINE_BIND_POINT_GRAPHICS,
           pipeline.m_pipelineLayout,
-          1, // firstSet
-          1,
-          &hdrDescriptorSet,
-          0,
-          nullptr);
-
-      vkCmdBindDescriptorSets(
-          commandBuffer,
-          VK_PIPELINE_BIND_POINT_GRAPHICS,
-          pipeline.m_pipelineLayout,
           0, // firstSet
           1,
-          &cameraDescriptorSets[i],
+          &hdrDescriptorSet,
           0,
           nullptr);
 
@@ -617,17 +559,7 @@ static void bakeCubemap(
   vmaDestroyImage(renderer::ctx().m_allocator, hdrImage, hdrAllocation);
 
   vkFreeDescriptorSets(
-      renderer::ctx().m_device,
-      *cameraDescriptorPool,
-      ARRAYSIZE(cameraDescriptorSets),
-      cameraDescriptorSets);
-
-  vkFreeDescriptorSets(
       renderer::ctx().m_device, *hdrDescriptorPool, 1, &hdrDescriptorSet);
-
-  for (size_t i = 0; i < ARRAYSIZE(cameraUniformBuffers); i++) {
-    cameraUniformBuffers[i].destroy();
-  }
 
   vkFreeCommandBuffers(
       renderer::ctx().m_device,

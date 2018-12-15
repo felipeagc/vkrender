@@ -228,12 +228,27 @@ SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
 BakeCubemapPipeline::BakeCubemapPipeline(
     VkRenderPass &renderpass, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
   };
 
-  m_pipelineLayout = pipeline::createPipelineLayout(
-      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
+  VkPushConstantRange pushConstantRange = {};
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = 128;
+
+  // Create pipeline layout
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      nullptr,
+      0,
+      ARRAYSIZE(descriptorSetLayouts), // setLayoutCount
+      descriptorSetLayouts,            // pSetLayouts
+      1,                               // pushConstantRangeCount
+      &pushConstantRange,              // pPushConstantRanges
+  };
+
+  VK_CHECK(vkCreatePipelineLayout(
+      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout));
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
