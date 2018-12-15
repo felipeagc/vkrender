@@ -181,6 +181,8 @@ static void bakeCubemap(
       stbi_loadf(hdrFile.c_str(), &hdrWidth, &hdrHeight, &nrComponents, 4);
   stbi_set_flip_vertically_on_load(false);
 
+  assert(hdrData != nullptr);
+
   // Create HDR VkImage and stuff
   VkImage hdrImage = VK_NULL_HANDLE;
   VmaAllocation hdrAllocation = VK_NULL_HANDLE;
@@ -493,16 +495,6 @@ static void bakeCubemap(
         renderer::ctx().m_device, 1, &cameraDescriptorWrite, 0, nullptr);
   }
 
-  // Create Fence
-  VkFence fence = VK_NULL_HANDLE;
-
-  VkFenceCreateInfo fenceCreateInfo = {};
-  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceCreateInfo.flags = 0;
-
-  VK_CHECK(vkCreateFence(
-      renderer::ctx().m_device, &fenceCreateInfo, nullptr, &fence));
-
   // Create renderpass
   VkRenderPass renderPass = VK_NULL_HANDLE;
 
@@ -766,10 +758,8 @@ static void bakeCubemap(
       nullptr,                       // pSignalSemaphores
   };
 
-  vkQueueSubmit(renderer::ctx().m_graphicsQueue, 1, &submitInfo, fence);
-
-  VK_CHECK(vkWaitForFences(
-      renderer::ctx().m_device, 1, &fence, VK_TRUE, UINT64_MAX));
+  vkQueueSubmit(
+      renderer::ctx().m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
@@ -792,8 +782,6 @@ static void bakeCubemap(
   for (size_t i = 0; i < ARRAYSIZE(cameraUniformBuffers); i++) {
     cameraUniformBuffers[i].destroy();
   }
-
-  vkDestroyFence(renderer::ctx().m_device, fence, nullptr);
 
   vkFreeCommandBuffers(
       renderer::ctx().m_device,

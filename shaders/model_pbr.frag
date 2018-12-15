@@ -35,10 +35,16 @@ layout(set = 3, binding = 0) uniform LightingUniform {
   uint lightCount;
 } lighting;
 
+layout (set = 4, binding = 1) uniform samplerCube irradianceMap;
+
 layout (location = 0) out vec4 outColor;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
   return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
+  return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 float distributionGGX(vec3 N, vec3 H, float roughness) {
@@ -82,8 +88,8 @@ void main() {
 
   vec3 albedo = texture(albedoTexture, texCoords).rgb * material.albedo;
   vec2 metallicRoughness = texture(metallicRoughnessTexture, texCoords).bg;
-  float metallic = metallicRoughness.y;
-  float roughness = metallicRoughness.x;
+  float metallic = material.metallic * metallicRoughness.y;
+  float roughness = material.roughness * metallicRoughness.x;
 
   vec3 F0 = vec3(0.04); 
   F0 = mix(F0, albedo, metallic);
@@ -93,8 +99,7 @@ void main() {
     vec3 L = normalize(lighting.lights[i].pos - worldPos);
     vec3 H = normalize(V + L);
 
-    // TODO: figure out how to adjust the light distance factor
-    float distance = length(lighting.lights[i].pos - worldPos) / 3.0;
+    float distance = length(lighting.lights[i].pos - worldPos);
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance = lighting.lights[i].color * attenuation;
 
@@ -115,7 +120,15 @@ void main() {
     Lo += (kD * albedo / PI + specular) * radiance * NdotL;
   }
 
-  vec3 ambient = vec3(0.03) * albedo;
+  // vec3 ambient = texture(irradianceMap, N).rgb;
+
+  vec3 kS = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+  vec3 kD = 1.0 - kS;
+  vec3 irradiance = texture(irradianceMap, N).rgb;
+  vec3 diffuse = irradiance * albedo;
+  vec3 ambient = kD * diffuse;
+
+  // vec3 ambient = vec3(0.03) * albedo;
   vec3 color = ambient + Lo;
 
   color = color / (color + vec3(1.0));

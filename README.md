@@ -89,8 +89,7 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoords;
 ```
 
-### Descriptor set 0
-For the camera's stuff
+### Camera descriptor set layout
 ```glsl
 layout (set = 0, binding = 0) uniform CameraUniform {
     mat4 view;
@@ -98,7 +97,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 } camera;
 ```
 
-### Descriptor set 1
+### Material descriptor set layout
 For the material's stuff
 ```glsl
 layout (set = 1, binding = 0) uniform MaterialUniform {
@@ -112,16 +111,14 @@ layout (set = 1, binding = 1) uniform sampler2D albedoTexture;
 layout (set = 1, binding = 2) uniform sampler2D metallicRoughnessTexture;
 ```
 
-### Descriptor set 2
-For the model's mesh stuff
+### Mesh descriptor set layout
 ```glsl
 layout (set = 2, binding = 0) uniform ModelUniform {
     mat4 model;
 } model;
 ```
 
-### Descriptor set 3
-Lighting stuff
+### Lighting descriptor set layout
 ```glsl
 layout(set = 3, binding = 0) uniform LightingUniform {
     vec4 color;
@@ -129,5 +126,8 @@ layout(set = 3, binding = 0) uniform LightingUniform {
 } lighting;
 ```
 
-### Descriptor sets 3 and beyond
-For user-defined stuff
+### Environment descriptor set layout
+```glsl
+layout (set = 4, binding = 0) uniform samplerCube envMap;
+layout (set = 4, binding = 1) uniform samplerCube irradianceMap;
+```

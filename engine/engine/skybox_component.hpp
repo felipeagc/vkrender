@@ -1,14 +1,16 @@
 #pragma once
 #include <renderer/buffer.hpp>
-#include <renderer/pipeline.hpp>
 #include <renderer/cubemap.hpp>
+#include <renderer/pipeline.hpp>
 #include <renderer/window.hpp>
 
 namespace engine {
 class SkyboxComponent {
 public:
   // Creates an initialized Skybox with the given parameters
-  SkyboxComponent(const renderer::Cubemap &cubemap);
+  SkyboxComponent(
+      const renderer::Cubemap &envCubemap,
+      const renderer::Cubemap &irradianceCubemap);
 
   ~SkyboxComponent();
 
@@ -20,13 +22,17 @@ public:
   SkyboxComponent(SkyboxComponent &&rhs) = delete;
   SkyboxComponent &operator=(SkyboxComponent &&rhs) = delete;
 
-  void draw(
+  void bind(
       renderer::Window &window,
-      renderer::GraphicsPipeline &pipeline);
+      renderer::GraphicsPipeline &pipeline,
+      uint32_t setIndex);
+
+  void draw(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
 
 protected:
-  renderer::Cubemap m_cubemap;
+  renderer::Cubemap m_envCubemap;
+  renderer::Cubemap m_irradianceCubemap;
 
-  VkDescriptorSet m_materialDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet m_environmentDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace engine

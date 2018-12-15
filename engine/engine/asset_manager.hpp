@@ -44,19 +44,17 @@ public:
   const std::unordered_map<std::string, AssetInfo> &getAssetTable() const;
 
   template <typename Asset, typename... Args>
-  Asset &getAsset(const std::string &path, Args... args) {
+  Asset getAsset(const std::string &path, Args... args) {
     this->ensure<Asset>();
 
     auto id = AssetTypeId::type<Asset>;
+
+    assert(sizeof(Asset) == m_assetSizes[id]);
 
     if (m_assetTable.find(path) != m_assetTable.end()) {
       size_t assetIndex = m_assetTable[path].assetIndex;
       return *((Asset *)&m_assets[id][assetIndex * sizeof(Asset)]);
     }
-
-    fstl::log::debug("Loading asset: {}", path);
-
-    assert(sizeof(Asset) == m_assetSizes[id]);
 
     size_t assetIndex = 0;
 
@@ -69,9 +67,14 @@ public:
 
     if (m_assetsInUse[id].size() <= assetIndex) {
       m_assetsInUse[id].resize(assetIndex + 1);
+      // TODO: resize changes the addresses of stuff
+      // (Temporary) solution: just don't return addresses or references!
+      // Return copies instead.
       m_assets[id].resize((assetIndex + 1) * sizeof(Asset));
       assetIndex = m_assetsInUse[id].size() - 1;
     }
+
+    fstl::log::debug("Loading asset: {}, at index {}", path, assetIndex);
 
     Asset *asset = new (&m_assets[id][assetIndex * sizeof(Asset)])
         Asset{path, std::forward<Args>(args)...};

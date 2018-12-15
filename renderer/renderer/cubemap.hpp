@@ -11,9 +11,7 @@ class Cubemap {
 public:
   Cubemap(){};
   Cubemap(
-      const std::string &hdrPath,
-      const uint32_t width,
-      const uint32_t height);
+      const std::string &hdrPath, const uint32_t width, const uint32_t height);
   ~Cubemap(){};
 
   // Cubemap can be copied
@@ -30,9 +28,8 @@ public:
 
   void destroy();
 
-  VkImage m_image = VK_NULL_HANDLE;
-
 private:
+  VkImage m_image = VK_NULL_HANDLE;
   VmaAllocation m_allocation = VK_NULL_HANDLE;
   VkImageView m_imageView = VK_NULL_HANDLE;
   VkSampler m_sampler = VK_NULL_HANDLE;

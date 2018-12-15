@@ -44,7 +44,8 @@ void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
   for (auto &[name, info] : assetManager.getAssetTable()) {
-    ImGui::Selectable(name.c_str(), false);
+    std::string s = std::to_string(info.assetIndex) + ": " + name;
+    ImGui::Selectable(s.c_str(), false);
   }
 
   ImGui::End();

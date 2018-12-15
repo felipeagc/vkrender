@@ -42,15 +42,18 @@ int main() {
   ecs::World world;
 
   // Create skybox
-  {
-    ecs::Entity skybox = world.createEntity();
-    world.assign<engine::SkyboxComponent>(
-        skybox,
-        assetManager.getAsset<renderer::Cubemap>(
-            "../assets/ice_lake_ref.hdr",
-            static_cast<uint32_t>(1024),
-            static_cast<uint32_t>(1024)));
-  }
+  ecs::Entity skybox = world.createEntity();
+
+  world.assign<engine::SkyboxComponent>(
+      skybox,
+      assetManager.getAsset<renderer::Cubemap>(
+          "../assets/ice_lake_ref.hdr",
+          static_cast<uint32_t>(1024),
+          static_cast<uint32_t>(1024)),
+      assetManager.getAsset<renderer::Cubemap>(
+          "../assets/ice_lake_env.hdr",
+          static_cast<uint32_t>(1024),
+          static_cast<uint32_t>(1024)));
 
   // Create light manager
   engine::LightManager lightManager;
@@ -199,6 +202,9 @@ int main() {
 
     world.getComponent<engine::CameraComponent>(camera)->bind(
         window, shaderWatcher.pipeline());
+
+    world.getComponent<engine::SkyboxComponent>(skybox)->bind(
+        window, shaderWatcher.pipeline(), 4);
 
     world.each<engine::GltfModelComponent, engine::TransformComponent>(
         [&](ecs::Entity,

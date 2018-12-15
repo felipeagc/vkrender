@@ -52,6 +52,7 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MESH),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_LIGHTING),
+      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_ENVIRONMENT),
   };
 
   m_pipelineLayout = pipeline::createPipelineLayout(
@@ -165,7 +166,7 @@ BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
 SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
+      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_ENVIRONMENT),
   };
 
   m_pipelineLayout = pipeline::createPipelineLayout(

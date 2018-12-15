@@ -9,6 +9,7 @@ const uint32_t CAMERA_MAX_SETS = 20;
 const uint32_t MESH_MAX_SETS = 500;
 const uint32_t MATERIAL_MAX_SETS = 50;
 const uint32_t LIGHTING_MAX_SETS = 50;
+const uint32_t ENVIRONMENT_MAX_SETS = 10;
 
 const VkDescriptorSetLayoutBinding CAMERA_BINDINGS[] = {{
     0,                                 // binding
@@ -57,6 +58,23 @@ const VkDescriptorSetLayoutBinding LIGHTING_BINDINGS[] = {
         1,                                 // descriptorCount
         VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
         nullptr,                           // pImmutableSamplers
+    },
+};
+
+const VkDescriptorSetLayoutBinding ENVIRONMENT_BINDINGS[] = {
+    {
+        0,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
+    },
+    {
+        1,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
     },
 };
 
@@ -172,6 +190,7 @@ DescriptorManager::getDefaultSetLayouts() {
       *this->getSetLayout(renderer::DESC_MATERIAL),
       *this->getSetLayout(renderer::DESC_MESH),
       *this->getSetLayout(renderer::DESC_LIGHTING),
+      *this->getSetLayout(renderer::DESC_ENVIRONMENT),
   };
 }
 
@@ -209,6 +228,17 @@ void DescriptorManager::init() {
       DESC_LIGHTING,
       createDescriptorSetLayout(
           ARRAYSIZE(LIGHTING_BINDINGS), LIGHTING_BINDINGS));
+
+  this->addPool(
+      DESC_ENVIRONMENT,
+      createDescriptorPool(
+          ENVIRONMENT_MAX_SETS,
+          ARRAYSIZE(ENVIRONMENT_BINDINGS),
+          ENVIRONMENT_BINDINGS));
+  this->addSetLayout(
+      DESC_ENVIRONMENT,
+      createDescriptorSetLayout(
+          ARRAYSIZE(ENVIRONMENT_BINDINGS), ENVIRONMENT_BINDINGS));
 
   // Imgui
   {
