@@ -6,6 +6,7 @@ set(
   RENDERER_SOURCES
   renderer/context.cpp
   renderer/window.cpp
+  renderer/util.cpp
   renderer/buffer.cpp
   renderer/texture.cpp
   renderer/cubemap.cpp
