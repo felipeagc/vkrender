@@ -9,6 +9,7 @@
 - [x] Camera options
 - [x] Use quaternion for camera
 - [ ] First person camera
+- [ ] Use push constants for the camera
 
 ### Pipeline
 - [x] Figure out a way to pass more parameters to the pipeline on creation
@@ -128,6 +129,12 @@ layout(set = 3, binding = 0) uniform LightingUniform {
 
 ### Environment descriptor set layout
 ```glsl
-layout (set = 4, binding = 0) uniform samplerCube envMap;
-layout (set = 4, binding = 1) uniform samplerCube irradianceMap;
+layout (set = 4, binding = 0) uniform EnvironmentUniform {
+    float exposure;
+} environment;
+
+layout (set = 4, binding = 1) uniform samplerCube envMap;
+layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
+layout (set = 4, binding = 3) uniform samplerCube radianceMap;
+layout (set = 4, binding = 4) uniform sampler2D brdfLut;
 ```

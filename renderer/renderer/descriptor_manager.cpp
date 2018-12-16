@@ -63,14 +63,35 @@ const VkDescriptorSetLayoutBinding LIGHTING_BINDINGS[] = {
 
 const VkDescriptorSetLayoutBinding ENVIRONMENT_BINDINGS[] = {
     {
-        0,                                         // binding
+        0,                                 // binding
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        1,                                 // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
+        nullptr,                           // pImmutableSamplers
+    },
+    {
+        1,                                         // binding
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         1,                                         // descriptorCount
         VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
         nullptr,                                   // pImmutableSamplers
     },
     {
-        1,                                         // binding
+        2,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
+    },
+    {
+        3,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
+    },
+    {
+        4,                                         // binding
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         1,                                         // descriptorCount
         VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags

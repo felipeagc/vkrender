@@ -3,9 +3,7 @@
 #include <fstl/fixed_vector.hpp>
 #include <fstl/logging.hpp>
 #include <imgui/imgui.h>
-#include <mutex>
 #include <renderer/renderer.hpp>
-#include <thread>
 
 int main() {
   renderer::Context context;
@@ -47,13 +45,56 @@ int main() {
   world.assign<engine::SkyboxComponent>(
       skybox,
       assetManager.getAsset<renderer::Cubemap>(
-          "../assets/ice_lake_ref.hdr",
+          "../assets/ice_lake/skybox.hdr",
           static_cast<uint32_t>(1024),
           static_cast<uint32_t>(1024)),
       assetManager.getAsset<renderer::Cubemap>(
-          "../assets/ice_lake_env.hdr",
+          "../assets/ice_lake/irradiance.hdr",
           static_cast<uint32_t>(1024),
-          static_cast<uint32_t>(1024)));
+          static_cast<uint32_t>(1024)),
+      assetManager.getAsset<renderer::Cubemap>(
+          "mah radiance",
+          std::vector<std::string>{
+              "../assets/ice_lake/radiance_0_1600x800.hdr",
+              "../assets/ice_lake/radiance_1_800x400.hdr",
+              "../assets/ice_lake/radiance_2_400x200.hdr",
+              "../assets/ice_lake/radiance_3_200x100.hdr",
+              "../assets/ice_lake/radiance_4_100x50.hdr",
+              "../assets/ice_lake/radiance_5_50x25.hdr",
+              "../assets/ice_lake/radiance_6_25x12.hdr",
+              "../assets/ice_lake/radiance_7_12x6.hdr",
+              "../assets/ice_lake/radiance_8_6x3.hdr",
+          },
+          static_cast<uint32_t>(1024),
+          static_cast<uint32_t>(1024)),
+      assetManager.getAsset<renderer::Texture>("../assets/brdf_lut.png"));
+
+  // world.assign<engine::SkyboxComponent>(
+  //     skybox,
+  //     assetManager.getAsset<renderer::Cubemap>(
+  //         "../assets/park/skybox.hdr",
+  //         static_cast<uint32_t>(1024),
+  //         static_cast<uint32_t>(1024)),
+  //     assetManager.getAsset<renderer::Cubemap>(
+  //         "../assets/park/irradiance.hdr",
+  //         static_cast<uint32_t>(1024),
+  //         static_cast<uint32_t>(1024)),
+  //     assetManager.getAsset<renderer::Cubemap>(
+  //         "mah radiance",
+  //         std::vector<std::string>{
+  //             "../assets/park/radiance_0_2048x1024.hdr",
+  //             "../assets/park/radiance_1_1024x512.hdr",
+  //             "../assets/park/radiance_2_512x256.hdr",
+  //             "../assets/park/radiance_3_256x128.hdr",
+  //             "../assets/park/radiance_4_128x64.hdr",
+  //             "../assets/park/radiance_5_64x32.hdr",
+  //             "../assets/park/radiance_6_32x16.hdr",
+  //             "../assets/park/radiance_7_16x8.hdr",
+  //             "../assets/park/radiance_8_8x4.hdr",
+  //         },
+  //         static_cast<uint32_t>(1024),
+  //         static_cast<uint32_t>(1024)),
+  //     assetManager.getAsset<renderer::Texture>("../assets/brdf_lut.png"));
 
   // Create light manager
   engine::LightManager lightManager;
@@ -146,6 +187,11 @@ int main() {
         window, skyboxPipeline);
     world.each<engine::SkyboxComponent>(
         [&](ecs::Entity, engine::SkyboxComponent &skybox) {
+          ImGui::Begin("Environment");
+          ImGui::DragFloat("Exposure", &skybox.m_environmentUBO.exposure);
+          ImGui::End();
+
+          skybox.update(window);
           skybox.draw(window, skyboxPipeline);
         });
 

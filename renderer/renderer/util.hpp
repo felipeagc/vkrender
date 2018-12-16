@@ -28,5 +28,6 @@ void setImageLayout(
     VkImageLayout oldImageLayout,
     VkImageLayout newImageLayout,
     VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-    VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+    VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    uint32_t level = 0);
 } // namespace renderer

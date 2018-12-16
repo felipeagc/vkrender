@@ -35,7 +35,13 @@ layout(set = 3, binding = 0) uniform LightingUniform {
   uint lightCount;
 } lighting;
 
-layout (set = 4, binding = 1) uniform samplerCube irradianceMap;
+layout (set = 4, binding = 0) uniform EnvironmentUniform {
+  float exposure;
+} environment;
+
+layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
+layout (set = 4, binding = 3) uniform samplerCube radianceMap;
+layout (set = 4, binding = 4) uniform sampler2D brdfLut;
 
 layout (location = 0) out vec4 outColor;
 
@@ -85,32 +91,35 @@ void main() {
 
   vec3 N = normalize(normal);
   vec3 V = normalize(viewPos - worldPos);
+  vec3 R = reflect(V, N);
 
-  vec3 albedo = texture(albedoTexture, texCoords).rgb * material.albedo;
-  vec2 metallicRoughness = texture(metallicRoughnessTexture, texCoords).bg;
-  float metallic = material.metallic * metallicRoughness.y;
-  float roughness = material.roughness * metallicRoughness.x;
+  vec3 albedo = pow(texture(albedoTexture, texCoords).rgb, vec3(2.2)) * material.albedo;
+  vec4 metallicRoughness = texture(metallicRoughnessTexture, texCoords);
+  // float metallic = material.metallic * (1.0 - metallicRoughness.y);
+  // float roughness = material.roughness * (1.0 - metallicRoughness.x);
+  float metallic = material.metallic * metallicRoughness.b;
+  float roughness = material.roughness * metallicRoughness.g;
 
   vec3 F0 = vec3(0.04); 
   F0 = mix(F0, albedo, metallic);
 
   vec3 Lo = vec3(0.0);
   for (int i = 0; i < lighting.lightCount; i++) {
+    // Calculate per-light radiance
     vec3 L = normalize(lighting.lights[i].pos - worldPos);
     vec3 H = normalize(V + L);
-
     float distance = length(lighting.lights[i].pos - worldPos);
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance = lighting.lights[i].color * attenuation;
 
-    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
+    // Cook-Torrance BRDF
     float NDF = distributionGGX(N, H, roughness);
     float G = geometrySmith(N, V, L, roughness);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
-    vec3 numerator = NDF * G * F;
-    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-    vec3 specular = numerator / max(denominator, 0.001);
+    vec3 nominator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+    vec3 specular = nominator / denominator;
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
@@ -120,18 +129,29 @@ void main() {
     Lo += (kD * albedo / PI + specular) * radiance * NdotL;
   }
 
-  // vec3 ambient = texture(irradianceMap, N).rgb;
+  vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
-  vec3 kS = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+  vec3 kS = F;
   vec3 kD = 1.0 - kS;
-  vec3 irradiance = texture(irradianceMap, N).rgb;
-  vec3 diffuse = irradiance * albedo;
-  vec3 ambient = kD * diffuse;
+  kD *= 1.0 - metallic;
 
-  // vec3 ambient = vec3(0.03) * albedo;
+  vec3 irradiance = pow(texture(irradianceMap, N).rgb, vec3(2.2));
+  vec3 diffuse = irradiance * albedo;
+
+  const float MAX_REFLECTION_LOD = 9.0;
+  vec3 prefilteredColor = pow(textureLod(radianceMap, R, roughness * MAX_REFLECTION_LOD).rgb, vec3(2.2));
+  vec2 brdf = pow(texture(brdfLut, vec2(max(dot(N, V), 0.0), 1.0 - roughness)).rg, vec2(2.2));
+  vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+  vec3 ambient = kD * diffuse + specular;
+
   vec3 color = ambient + Lo;
 
-  color = color / (color + vec3(1.0));
+  // HDR tonemapping
+  // color = color / (color + vec3(1.0));
+  color = vec3(1.0) - exp(-color * environment.exposure);
+
+  // Gamma correct
   color = pow(color, vec3(1.0/2.2));
 
   outColor = vec4(color, 1.0);

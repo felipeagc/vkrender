@@ -138,10 +138,11 @@ void renderer::setImageLayout(
     VkImageLayout oldImageLayout,
     VkImageLayout newImageLayout,
     VkPipelineStageFlags srcStageMask,
-    VkPipelineStageFlags dstStageMask) {
+    VkPipelineStageFlags dstStageMask,
+    uint32_t level) {
   VkImageSubresourceRange subresourceRange = {};
   subresourceRange.aspectMask = aspectMask;
-  subresourceRange.baseMipLevel = 0;
+  subresourceRange.baseMipLevel = level;
   subresourceRange.levelCount = 1;
   subresourceRange.layerCount = 1;
 

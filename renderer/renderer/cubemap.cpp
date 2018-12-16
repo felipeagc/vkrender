@@ -196,7 +196,8 @@ static void copySideImageToCubemap(
     VkImage cubemapImage,
     uint32_t cubemapWidth,
     uint32_t cubemapHeight,
-    uint32_t layer) {
+    uint32_t layer,
+    uint32_t level) {
   setImageLayout(
       commandBuffer,
       sideImage,
@@ -206,7 +207,7 @@ static void copySideImageToCubemap(
 
   VkImageSubresourceRange cubeFaceSubresourceRange = {};
   cubeFaceSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  cubeFaceSubresourceRange.baseMipLevel = 0;
+  cubeFaceSubresourceRange.baseMipLevel = level;
   cubeFaceSubresourceRange.levelCount = 1;
   cubeFaceSubresourceRange.baseArrayLayer = layer;
   cubeFaceSubresourceRange.layerCount = 1;
@@ -228,7 +229,7 @@ static void copySideImageToCubemap(
 
   copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   copyRegion.dstSubresource.baseArrayLayer = layer;
-  copyRegion.dstSubresource.mipLevel = 0;
+  copyRegion.dstSubresource.mipLevel = level;
   copyRegion.dstSubresource.layerCount = 1;
   copyRegion.dstOffset = {0, 0, 0};
 
@@ -268,7 +269,8 @@ static void bakeCubemap(
     VkImage &cubemapImage,
     VkFormat cubemapImageFormat,
     uint32_t cubemapImageWidth,
-    uint32_t cubemapImageHeight) {
+    uint32_t cubemapImageHeight,
+    uint32_t level = 0) {
   // Load HDR image
   stbi_set_flip_vertically_on_load(true);
   int hdrWidth, hdrHeight, nrComponents;
@@ -443,7 +445,7 @@ static void bakeCubemap(
   {
     VkImageSubresourceRange cubeFaceSubresourceRange = {};
     cubeFaceSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    cubeFaceSubresourceRange.baseMipLevel = 0;
+    cubeFaceSubresourceRange.baseMipLevel = level;
     cubeFaceSubresourceRange.levelCount = 1;
     cubeFaceSubresourceRange.baseArrayLayer = 0;
     cubeFaceSubresourceRange.layerCount = 6; // all layers
@@ -511,7 +513,8 @@ static void bakeCubemap(
         cubemapImage,
         cubemapImageWidth,
         cubemapImageHeight,
-        i);
+        i,
+        level);
   }
 
   VK_CHECK(vkEndCommandBuffer(commandBuffer));
@@ -567,7 +570,8 @@ static void createCubemapImage(
     VkSampler *sampler,
     VkFormat format,
     uint32_t width,
-    uint32_t height) {
+    uint32_t height,
+    uint32_t levels = 1) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       nullptr,                             // pNext
@@ -579,7 +583,7 @@ static void createCubemapImage(
           height,              // height
           1,                   // depth
       },                       // extent
-      1,                       // mipLevels
+      levels,                  // mipLevels
       6,                       // arrayLayers
       VK_SAMPLE_COUNT_1_BIT,   // samples
       VK_IMAGE_TILING_OPTIMAL, // tiling
@@ -617,7 +621,7 @@ static void createCubemapImage(
       {
           VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
           0,                         // baseMipLevel
-          1,                         // levelCount
+          levels,                    // levelCount
           0,                         // baseArrayLayer
           6,                         // layerCount
       },                             // subresourceRange
@@ -642,7 +646,7 @@ static void createCubemapImage(
       VK_FALSE,                                // compareEnable
       VK_COMPARE_OP_NEVER,                     // compareOp
       0.0f,                                    // minLod
-      0.0f,                                    // maxLod
+      static_cast<float>(levels),              // maxLod
       VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, // borderColor
       VK_FALSE,                                // unnormalizedCoordinates
   };
@@ -666,6 +670,35 @@ Cubemap::Cubemap(
       height);
 
   bakeCubemap(hdrPath, m_image, VK_FORMAT_R32G32B32A32_SFLOAT, width, height);
+}
+
+Cubemap::Cubemap(
+    const std::string &,
+    const std::vector<std::string> &radiancePaths,
+    const uint32_t width,
+    const uint32_t height) {
+  m_width = width;
+  m_height = height;
+
+  createCubemapImage(
+      &m_image,
+      &m_allocation,
+      &m_imageView,
+      &m_sampler,
+      VK_FORMAT_R32G32B32A32_SFLOAT,
+      width,
+      height,
+      static_cast<uint32_t>(radiancePaths.size()));
+
+  for (size_t i = 0; i < radiancePaths.size(); i++) {
+    bakeCubemap(
+        radiancePaths[i],
+        m_image,
+        VK_FORMAT_R32G32B32A32_SFLOAT,
+        width / pow(2, i),
+        height / pow(2, i),
+        i);
+  }
 }
 
 Cubemap::operator bool() const { return m_image != VK_NULL_HANDLE; }
