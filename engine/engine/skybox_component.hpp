@@ -35,7 +35,7 @@ public:
   void update(renderer::Window &window);
 
   struct EnvironmentUniform {
-    float exposure = 1.0;
+    float exposure = 8.0;
   } m_environmentUBO;
 
 protected:

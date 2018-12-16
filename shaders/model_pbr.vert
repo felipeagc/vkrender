@@ -24,6 +24,6 @@ layout (location = 2) out vec3 normal0;
 void main() {
   texCoords0 = texCoords;
   worldPos = vec3(model_ubo.model * vec4(pos, 1.0));
-  normal0 = mat3(model_ubo.model) * normal;
+  normal0 = mat3(transpose(inverse(model_ubo.model))) * normal;
   gl_Position = camera_ubo.proj * camera_ubo.view * vec4(worldPos, 1.0);
 }

@@ -410,20 +410,16 @@ void Window::setRelativeMouse(bool relative) {
   SDL_SetRelativeMouseMode((SDL_bool)relative);
 }
 
-int Window::getMouseX() const {
-  int x;
-  SDL_GetMouseState(&x, nullptr);
-  return x;
-}
-
-int Window::getMouseY() const {
-  int y;
-  SDL_GetMouseState(nullptr, &y);
-  return y;
+void Window::getMouseState(int *x, int *y) const {
+  SDL_GetMouseState(x, y);
 }
 
 void Window::getRelativeMouseState(int *x, int *y) const {
   SDL_GetRelativeMouseState(x, y);
+}
+
+void Window::warpMouse(int x, int y) {
+  SDL_WarpMouseInWindow(m_window, x, y);
 }
 
 bool Window::isMouseLeftPressed() const {

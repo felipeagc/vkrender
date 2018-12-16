@@ -39,10 +39,10 @@ public:
   bool getRelativeMouse() const;
   void setRelativeMouse(bool relative = true);
 
-  int getMouseX() const;
-  int getMouseY() const;
-
+  void getMouseState(int *x, int* y) const;
   void getRelativeMouseState(int *x, int* y) const;
+
+  void warpMouse(int x, int y);
 
   bool isMouseLeftPressed() const;
   bool isMouseRightPressed() const;
