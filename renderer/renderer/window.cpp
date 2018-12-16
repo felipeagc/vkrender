@@ -422,16 +422,8 @@ int Window::getMouseY() const {
   return y;
 }
 
-int Window::getRelativeMouseX() const {
-  int x;
-  SDL_GetRelativeMouseState(&x, nullptr);
-  return x;
-}
-
-int Window::getRelativeMouseY() const {
-  int y;
-  SDL_GetRelativeMouseState(nullptr, &y);
-  return y;
+void Window::getRelativeMouseState(int *x, int *y) const {
+  SDL_GetRelativeMouseState(x, y);
 }
 
 bool Window::isMouseLeftPressed() const {
@@ -446,7 +438,7 @@ bool Window::isMouseRightPressed() const {
 
 bool Window::isScancodePressed(Scancode scancode) const {
   const Uint8 *state = SDL_GetKeyboardState(nullptr);
-  return (bool) state[(SDL_Scancode)scancode];
+  return (bool)state[(SDL_Scancode)scancode];
 }
 
 double Window::getDelta() const { return m_deltaTime; }

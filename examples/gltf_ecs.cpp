@@ -46,12 +46,12 @@ int main() {
       skybox,
       assetManager.getAsset<renderer::Cubemap>(
           "../assets/ice_lake/skybox.hdr",
-          static_cast<uint32_t>(1024),
-          static_cast<uint32_t>(1024)),
+          static_cast<uint32_t>(2048),
+          static_cast<uint32_t>(2048)),
       assetManager.getAsset<renderer::Cubemap>(
           "../assets/ice_lake/irradiance.hdr",
-          static_cast<uint32_t>(1024),
-          static_cast<uint32_t>(1024)),
+          static_cast<uint32_t>(2048),
+          static_cast<uint32_t>(2048)),
       assetManager.getAsset<renderer::Cubemap>(
           "mah radiance",
           std::vector<std::string>{
@@ -142,12 +142,9 @@ int main() {
   // Create camera
   ecs::Entity camera = world.createEntity();
   world.assign<engine::CameraComponent>(camera);
-  world.assign<engine::TransformComponent>(camera);
+  world.assign<engine::TransformComponent>(camera, glm::vec3{0.0, 0.0, -5.0});
 
   float time = 0.0;
-  float cameraAngle = 0;
-  float cameraHeightMultiplier = 0;
-  float cameraRadius = 6.0f;
 
   auto draw = [&]() {
     time += window.getDelta();
@@ -162,17 +159,16 @@ int main() {
           break;
         }
         break;
-      case SDL_MOUSEMOTION:
-        if (event.motion.state & SDL_BUTTON_LMASK &&
+      case SDL_MOUSEBUTTONDOWN:
+        if (event.button.button == SDL_BUTTON_RIGHT &&
             !ImGui::IsAnyItemActive()) {
-          cameraAngle -= (float)event.motion.xrel / 100.0f;
-          cameraHeightMultiplier -= (float)event.motion.yrel / 100.0f;
+          window.setRelativeMouse(true);
         }
         break;
-      case SDL_MOUSEWHEEL:
-        cameraRadius -= event.wheel.y;
-        if (cameraRadius < 0.0f) {
-          cameraRadius = 0.0f;
+      case SDL_MOUSEBUTTONUP:
+        if (event.button.button == SDL_BUTTON_RIGHT &&
+            !ImGui::IsAnyItemActive()) {
+          window.setRelativeMouse(false);
         }
         break;
       case SDL_QUIT:
@@ -197,20 +193,51 @@ int main() {
 
     shaderWatcher.lockPipeline();
 
-    // Change camera position and rotation
-    float camX = sin(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
-    float camZ = -cos(cameraAngle) * cameraRadius * cos(cameraHeightMultiplier);
+    // Camera control
     world.each<engine::CameraComponent, engine::TransformComponent>(
         [&](ecs::Entity,
             engine::CameraComponent &camera,
             engine::TransformComponent &transform) {
-          transform.position = {
-              camX, cameraRadius * sin(cameraHeightMultiplier), camZ};
+          // transform.position = {0.0, 0.0, -5.0};
 
-          transform.lookAt(
-              {0.0, 0.0, 0.0},
-              glm::normalize(
-                  glm::vec3{0.0, -cos(cameraHeightMultiplier), 0.0}));
+          static float sens = 0.07;
+
+          if (window.getRelativeMouse()) {
+            int mx, my;
+            window.getRelativeMouseState(&mx, &my);
+            camera.m_yaw -= glm::radians((float)mx) * sens;
+            camera.m_pitch -= glm::radians((float)my) * sens;
+            camera.m_pitch = glm::clamp(
+                camera.m_pitch, glm::radians(-89.0f), glm::radians(89.0f));
+          }
+
+          camera.m_front.x = cos(camera.m_yaw) * cos(camera.m_pitch);
+          camera.m_front.y = sin(camera.m_pitch);
+          camera.m_front.z = sin(camera.m_yaw) * cos(camera.m_pitch);
+          camera.m_front = glm::normalize(camera.m_front);
+
+          camera.m_right = glm::normalize(
+              glm::cross(camera.m_front, glm::vec3(0.0, -1.0, 0.0)));
+          camera.m_up =
+              glm::normalize(glm::cross(camera.m_right, camera.m_front));
+
+          // transform.lookAt(camera.m_front, camera.m_up);
+
+          float speed = 10.0f * window.getDelta();
+          glm::vec3 movement(0.0);
+
+          if (window.isScancodePressed(renderer::Scancode::eW))
+            movement += camera.m_front;
+          if (window.isScancodePressed(renderer::Scancode::eS))
+            movement -= camera.m_front;
+          if (window.isScancodePressed(renderer::Scancode::eA))
+            movement -= camera.m_right;
+          if (window.isScancodePressed(renderer::Scancode::eD))
+            movement += camera.m_right;
+
+          movement *= speed;
+
+          transform.position += movement;
 
           camera.update(window, transform.getMatrix());
         });
@@ -256,6 +283,7 @@ int main() {
         [&](ecs::Entity,
             engine::GltfModelComponent &model,
             engine::TransformComponent &transform) {
+          transform.rotation = glm::angleAxis(time, glm::vec3(0.0, 1.0, 0.0));
           model.draw(window, shaderWatcher.pipeline(), transform.getMatrix());
         });
 

@@ -83,7 +83,13 @@ void CameraComponent::update(
       m_near,
       m_far);
 
-  m_cameraUniform.view = transform;
+  glm::mat4 view = transform;
+  view[3][0] *= -1.0f;
+  view[3][1] *= -1.0f;
+  view[3][2] *= -1.0f;
+
+  m_cameraUniform.view =
+      glm::lookAt(glm::vec3(0.0f), m_front, m_up) * view;
 
   memcpy(m_mappings[i], &m_cameraUniform, sizeof(CameraUniform));
 }

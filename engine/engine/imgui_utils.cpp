@@ -31,11 +31,14 @@ void cameraWindow(CameraComponent *camera, TransformComponent *transform) {
 
   float camPos[] = {
       transform->position.x, transform->position.y, transform->position.z};
-  ImGui::DragFloat3("Camera position", camPos, -10.0f, 10.0f);
+  ImGui::DragFloat3("Camera position", camPos, 0.1f, -10.0f, 10.0f);
+  transform->position.x = camPos[0];
+  transform->position.y = camPos[1];
+  transform->position.z = camPos[2];
 
   glm::vec3 euler = glm::degrees(glm::eulerAngles(transform->rotation));
   float camRot[] = {euler.x, euler.y, euler.z};
-  ImGui::DragFloat3("Camera rotation", camRot, -180.0f, 180.0f);
+  ImGui::DragFloat3("Camera rotation", camRot, 1.0f, -180.0f, 180.0f);
 
   ImGui::End();
 }

@@ -42,8 +42,7 @@ public:
   int getMouseX() const;
   int getMouseY() const;
 
-  int getRelativeMouseX() const;
-  int getRelativeMouseY() const;
+  void getRelativeMouseState(int *x, int* y) const;
 
   bool isMouseLeftPressed() const;
   bool isMouseRightPressed() const;

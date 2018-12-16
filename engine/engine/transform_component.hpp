@@ -16,16 +16,15 @@ struct TransformComponent {
 
   inline glm::mat4 getMatrix() {
     glm::mat4 mat(1.0f);
-    mat = glm::translate(mat, this->position);
-    mat = glm::mat4_cast(this->rotation) * mat;
+    mat = glm::translate(mat, this->position) * glm::mat4_cast(this->rotation);
     mat = glm::scale(mat, this->scale);
 
     return mat;
   }
 
-  void lookAt(glm::vec3 point, glm::vec3 up) {
-    this->rotation = glm::conjugate(
-        glm::quatLookAt(glm::normalize(this->position - point), up));
+  void lookAt(glm::vec3 direction, glm::vec3 up) {
+    this->rotation =
+        glm::conjugate(glm::quatLookAt(glm::normalize(direction), up));
   }
 };
 } // namespace engine
