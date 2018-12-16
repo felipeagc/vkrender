@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm.hpp"
+#include "scancodes.hpp"
 #include <SDL2/SDL.h>
 #include <fstl/fixed_vector.hpp>
 #include <functional>
@@ -46,6 +47,8 @@ public:
 
   bool isMouseLeftPressed() const;
   bool isMouseRightPressed() const;
+
+  bool isScancodePressed(Scancode scancode) const;
 
   double getDelta() const;
 

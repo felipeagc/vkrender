@@ -444,6 +444,11 @@ bool Window::isMouseRightPressed() const {
   return (state & SDL_BUTTON(SDL_BUTTON_RIGHT));
 }
 
+bool Window::isScancodePressed(Scancode scancode) const {
+  const Uint8 *state = SDL_GetKeyboardState(nullptr);
+  return (bool) state[(SDL_Scancode)scancode];
+}
+
 double Window::getDelta() const { return m_deltaTime; }
 
 bool Window::getShouldClose() const { return m_shouldClose; }

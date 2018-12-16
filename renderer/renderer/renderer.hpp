@@ -6,6 +6,7 @@
 #include "descriptor_manager.hpp"
 #include "glm.hpp"
 #include "pipeline.hpp"
+#include "scancodes.hpp"
 #include "shader.hpp"
 #include "shader_compilation.hpp"
 #include "texture.hpp"
