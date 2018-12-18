@@ -101,7 +101,7 @@ int main() {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{1.0, 1.0, 0.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{5.0, 2.0, 5.0}, glm::vec3{0.5, 0.5, 0.5});
+        light, glm::vec3{6.0, 2.0, 6.0}, glm::vec3{0.5, 0.5, 0.5});
     world.assign<engine::BillboardComponent>(
         light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
@@ -109,7 +109,7 @@ int main() {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{1.0, 0.0, 0.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{-5.0, 2.0, -5.0}, glm::vec3{0.5, 0.5, 0.5});
+        light, glm::vec3{-6.0, 2.0, -6.0}, glm::vec3{0.5, 0.5, 0.5});
     world.assign<engine::BillboardComponent>(
         light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
@@ -141,6 +141,11 @@ int main() {
   ecs::Entity camera = world.createEntity();
   world.assign<engine::CameraComponent>(camera);
   world.assign<engine::TransformComponent>(camera, glm::vec3{0.0, 0.0, -5.0});
+  glm::vec3 camUp;
+  glm::vec3 camFront;
+  glm::vec3 camRight;
+  float camYaw = glm::radians(90.0f);
+  float camPitch = 0.0;
 
   float time = 0.0;
 
@@ -176,18 +181,16 @@ int main() {
         break;
       case SDL_MOUSEMOTION:
         if (event.motion.state & SDL_BUTTON_RMASK) {
-          auto *cameraComp =
-              world.getComponent<engine::CameraComponent>(camera);
           static float sens = 0.07;
 
           int dx = event.motion.xrel;
           int dy = event.motion.yrel;
 
           if (window.getRelativeMouse()) {
-            cameraComp->m_yaw += glm::radians((float)dx) * sens;
-            cameraComp->m_pitch -= glm::radians((float)dy) * sens;
-            cameraComp->m_pitch = glm::clamp(
-                cameraComp->m_pitch, glm::radians(-89.0f), glm::radians(89.0f));
+            camYaw += glm::radians((float)dx) * sens;
+            camPitch -= glm::radians((float)dy) * sens;
+            camPitch =
+                glm::clamp(camPitch, glm::radians(-89.0f), glm::radians(89.0f));
           }
         }
         break;
@@ -221,27 +224,26 @@ int main() {
             engine::TransformComponent &transform) {
           static glm::vec3 cameraTarget;
 
-          camera.m_front.x = cos(camera.m_yaw) * cos(camera.m_pitch);
-          camera.m_front.y = sin(camera.m_pitch);
-          camera.m_front.z = sin(camera.m_yaw) * cos(camera.m_pitch);
-          camera.m_front = glm::normalize(camera.m_front);
+          camFront.x = cos(camYaw) * cos(camPitch);
+          camFront.y = sin(camPitch);
+          camFront.z = sin(camYaw) * cos(camPitch);
+          camFront = glm::normalize(camFront);
 
-          camera.m_right = glm::normalize(
-              glm::cross(camera.m_front, glm::vec3(0.0, 1.0, 0.0)));
-          camera.m_up =
-              glm::normalize(glm::cross(camera.m_right, camera.m_front));
+          camRight =
+              glm::normalize(glm::cross(camFront, glm::vec3(0.0, 1.0, 0.0)));
+          camUp = glm::normalize(glm::cross(camRight, camFront));
 
           float speed = 10.0f * window.getDelta();
           glm::vec3 movement(0.0);
 
           if (window.isScancodePressed(renderer::Scancode::eW))
-            movement += camera.m_front;
+            movement += camFront;
           if (window.isScancodePressed(renderer::Scancode::eS))
-            movement -= camera.m_front;
+            movement -= camFront;
           if (window.isScancodePressed(renderer::Scancode::eA))
-            movement -= camera.m_right;
+            movement -= camRight;
           if (window.isScancodePressed(renderer::Scancode::eD))
-            movement += camera.m_right;
+            movement += camRight;
 
           movement *= speed;
 
@@ -249,6 +251,8 @@ int main() {
 
           transform.position =
               lerp(transform.position, cameraTarget, window.getDelta() * 10.0f);
+
+          transform.lookAt(camFront, camUp);
 
           camera.update(window, transform);
         });
@@ -294,8 +298,8 @@ int main() {
         [&](ecs::Entity,
             engine::GltfModelComponent &model,
             engine::TransformComponent &transform) {
-          // transform.rotation = glm::angleAxis(time / 10.0f,
-          // glm::vec3(0.0, 1.0, 0.0));
+          transform.rotation =
+              glm::angleAxis(time / 10.0f, glm::vec3(0.0, 1.0, 0.0));
           model.draw(
               window, modelShaderWatcher.pipeline(), transform.getMatrix());
         });

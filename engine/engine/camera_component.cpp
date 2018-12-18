@@ -84,18 +84,19 @@ void CameraComponent::update(
       m_far);
 
   // See: https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
-  glm::mat4 correction(1.0, 0.0, 0.0, 0.0,
-                       0.0, -1.0, 0.0, 0.0,
-                       0.0, 0.0, 0.5, 0.5,
-                       0.0, 0.0, 0.0, 1.0);
+  glm::mat4 correction(
+      {1.0, 0.0, 0.0, 0.0},
+      {0.0, -1.0, 0.0, 0.0},
+      {0.0, 0.0, 0.5, 0.5},
+      {0.0, 0.0, 0.0, 1.0});
 
   m_cameraUniform.proj = correction * m_cameraUniform.proj;
 
-  TransformComponent view = transform;
-  view.position *= glm::vec3(-1.0);
-
+  m_cameraUniform.view = glm::mat4(1.0);
   m_cameraUniform.view =
-    glm::lookAt(glm::vec3(0.0f), m_front, m_up) * view.getMatrix();
+      glm::mat4_cast(transform.rotation) *
+      glm::translate(m_cameraUniform.view, transform.position * -1.0f);
+  m_cameraUniform.view = glm::scale(m_cameraUniform.view, transform.scale);
 
   m_cameraUniform.pos = glm::vec4(transform.position, 1.0);
 

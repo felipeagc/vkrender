@@ -36,11 +36,11 @@ public:
 
   float m_fov;
 
-  glm::vec3 m_up;
-  glm::vec3 m_front;
-  glm::vec3 m_right;
-  float m_yaw = glm::radians(90.0f);
-  float m_pitch = 0.0;
+  // glm::vec3 m_up;
+  // glm::vec3 m_front;
+  // glm::vec3 m_right;
+  // float m_yaw = glm::radians(90.0f);
+  // float m_pitch = 0.0;
 
 protected:
   renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
