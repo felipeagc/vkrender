@@ -27,6 +27,12 @@
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
 - [ ] Animation
+- [ ] Alpha blending
+
+### PBR
+- [ ] Emissive maps
+- [ ] AO maps
+- [ ] Pass radiance mipmap count to shader at runtime
 
 ### Mesh generation
 - [ ] Mesh class
@@ -58,6 +64,7 @@
 ### ECS
 - [x] Basic ECS
 - [ ] Better storage solution (packed array)
+- [ ] More organized system abstraction
 
 #### ECS Components
 - [x] Transform component
@@ -66,6 +73,10 @@
 - [x] Billboard component
 
 ### Misc
+- [ ] Make standalone skybox baker
+- [ ] Optimize skybox rendering
+- [ ] Entities window
+- [ ] Better way to organize descriptor set layouts (unified? one pool?)
 - [ ] Specify which types can be copied (maybe with a Handle suffix)
       Also applies to asset types?
 - [x] Billboards

@@ -66,7 +66,7 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
   auto viewportStateCreateInfo = pipeline::defaultViewportState();
   auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
   rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
   auto multisampleStateCreateInfo =
       pipeline::defaultMultisampleState(window.getMSAASamples());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();

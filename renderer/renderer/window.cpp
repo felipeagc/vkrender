@@ -1285,15 +1285,15 @@ VkSurfaceTransformFlagBitsKHR Window::getSwapchainTransform(
 VkPresentModeKHR Window::getSwapchainPresentMode(
     const fstl::fixed_vector<VkPresentModeKHR> &presentModes) {
   for (const auto &presentMode : presentModes) {
-    if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
-      fstl::log::debug("Recreating swapchain using FIFO present mode");
+    if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+      fstl::log::debug("Recreating swapchain using immediate present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
-    if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-      fstl::log::debug("Recreating swapchain using immediate present mode");
+    if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
+      fstl::log::debug("Recreating swapchain using FIFO present mode");
       return presentMode;
     }
   }
