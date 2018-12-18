@@ -121,8 +121,7 @@ void GltfModelComponent::drawNode(
 
   auto i = window.getCurrentFrameIndex();
 
-  // TODO: matrices are fucked up
-  node.update(m_model, i);
+  // TODO: update animations here (when we implement them)
 
   if (node.meshIndex != -1) {
     vkCmdBindDescriptorSets(

@@ -28,7 +28,7 @@
 - [x] Figure out UV flipping of GltfModels
 - [ ] Animation
 - [ ] Alpha blending
-- [ ] Fix the mesh matrix stuff
+- [x] Fix the mesh matrix stuff
 
 ### PBR
 - [ ] Emissive maps

@@ -28,16 +28,12 @@ layout (location = 2) out vec3 normal0;
 void main() {
   texCoords0 = texCoords;
 
-  vec4 locPos;
+  mat4 model = model_ubo.matrix * mesh_ubo.matrix;
 
-  // mat4 model = model_ubo.matrix * mesh_ubo.matrix;
-
-  locPos = model_ubo.matrix * vec4(pos, 1.0);
-  normal0 = mat3(transpose(inverse(model_ubo.matrix))) * normal;
+  vec4 locPos = model * vec4(pos, 1.0);
+  normal0 = mat3(transpose(inverse(model))) * normal;
 
   worldPos = locPos.xyz / locPos.w;
 
-  // worldPos += vec3(5.0, 2.0, 2.0);
-  // gl_Position = camera_ubo.proj * vec4(worldPos, 1.0);
   gl_Position = camera_ubo.proj * camera_ubo.view * vec4(worldPos, 1.0);
 }

@@ -120,7 +120,11 @@ int main() {
       helmet,
       assetManager.getAsset<engine::GltfModel>(
           "../assets/DamagedHelmet.glb", true));
-  world.assign<engine::TransformComponent>(helmet, glm::vec3{5.0, 2.0, 5.0});
+  world.assign<engine::TransformComponent>(
+      helmet,
+      glm::vec3{5.0, 2.0, 5.0},
+      glm::vec3{1.0},
+      glm::angleAxis(glm::radians(-90.0f), glm::vec3{1.0, 0.0, 0.0}));
 
   ecs::Entity boombox = world.createEntity();
   world.assign<engine::GltfModelComponent>(

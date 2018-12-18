@@ -89,6 +89,9 @@ public:
 
     glm::mat4 localMatrix();
     glm::mat4 getMatrix(GltfModel &model);
+
+    // Call this after loading all nodes
+    // And after updating animations
     void update(GltfModel &model, uint32_t frameIndex);
   };
 

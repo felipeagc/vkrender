@@ -252,6 +252,13 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
     this->loadNode(-1, scene.nodes[i], model, indices, vertices, flipUVs);
   }
 
+  for (size_t i = 0; i < scene.nodes.size(); i++) {
+    for (uint32_t frameIndex = 0; frameIndex < renderer::MAX_FRAMES_IN_FLIGHT;
+         frameIndex++) {
+      m_nodes[i].update(*this, frameIndex);
+    }
+  }
+
   size_t vertexBufferSize = vertices.size() * sizeof(renderer::StandardVertex);
   // TODO: index buffer size could be larger than it needs to be
   // due to other index types
