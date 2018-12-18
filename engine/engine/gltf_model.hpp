@@ -22,28 +22,25 @@ class GltfModel {
 
 public:
   struct Material {
-    int albedoTextureIndex = -1;
+    int baseColorTextureIndex = -1;
     int metallicRoughnessTextureIndex = -1;
 
+    int normalTextureIndex = -1;
+    int emissiveTextureIndex = -1;
+    int occlusionTextureIndex = -1;
+
     struct MaterialUniform {
-      glm::vec4 albedo;
-      float metallic;
-      float roughness;
-      float ao;
+      glm::vec4 baseColorFactor = glm::vec4(1.0);
+      float metallic = 1.0;
+      float roughness = 1.0;
+      glm::vec4 emissiveFactor = glm::vec4(1.0);
     } ubo;
 
     renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
     void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
     VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
-    Material() {}
-    Material(
-        const GltfModel &model,
-        int albedoTextureIndex,
-        int metallicRoughnessTextureIndex,
-        glm::vec4 albedoColor,
-        float roughness,
-        float metallic);
+    void load(const GltfModel &model);
   };
 
   struct Primitive {
@@ -66,6 +63,17 @@ public:
 
   struct Mesh {
     std::vector<Primitive> primitives;
+
+    struct MeshUniform {
+      glm::mat4 matrix;
+    } ubo;
+
+    renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
+    void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
+    VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+
+    Mesh() {}
+    Mesh(glm::mat4 matrix);
   };
 
   struct Node {
@@ -81,6 +89,7 @@ public:
 
     glm::mat4 localMatrix();
     glm::mat4 getMatrix(GltfModel &model);
+    void update(GltfModel &model, uint32_t frameIndex);
   };
 
   struct Dimensions {

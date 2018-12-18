@@ -81,7 +81,9 @@ void GltfModelComponent::draw(
 
   auto i = window.getCurrentFrameIndex();
 
-  this->updateUniforms(i, transform);
+  // Update model matrix
+  m_ubo.model = transform;
+  memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
 
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
@@ -100,7 +102,7 @@ void GltfModelComponent::draw(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline.m_pipelineLayout,
-      2, // firstSet
+      3, // firstSet
       1,
       &m_descriptorSets[i],
       0,
@@ -111,13 +113,6 @@ void GltfModelComponent::draw(
   }
 }
 
-void GltfModelComponent::updateUniforms(
-    int frameIndex, const glm::mat4 &transform) {
-  m_ubo.model = transform;
-
-  memcpy(m_mappings[frameIndex], &m_ubo, sizeof(ModelUniform));
-}
-
 void GltfModelComponent::drawNode(
     GltfModel::Node &node,
     renderer::Window &window,
@@ -126,7 +121,20 @@ void GltfModelComponent::drawNode(
 
   auto i = window.getCurrentFrameIndex();
 
+  // TODO: matrices are fucked up
+  node.update(m_model, i);
+
   if (node.meshIndex != -1) {
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipeline.m_pipelineLayout,
+        2, // firstSet
+        1,
+        &m_model.m_meshes[node.meshIndex].descriptorSets[i],
+        0,
+        nullptr);
+
     for (GltfModel::Primitive &primitive :
          m_model.m_meshes[node.meshIndex].primitives) {
       if (primitive.materialIndex != -1 && m_model.m_materials.size() > 0) {

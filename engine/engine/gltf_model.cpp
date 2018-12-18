@@ -11,23 +11,11 @@
 
 using namespace engine;
 
-GltfModel::Material::Material(
-    const GltfModel &model,
-    int albedoTextureIndex,
-    int metallicRoughnessTextureIndex,
-    glm::vec4 albedoColor,
-    float metallic,
-    float roughness)
-    : albedoTextureIndex(albedoTextureIndex),
-      metallicRoughnessTextureIndex(metallicRoughnessTextureIndex) {
+void GltfModel::Material::load(const GltfModel &model) {
   auto [descriptorPool, descriptorSetLayout] =
       renderer::ctx().m_descriptorManager[renderer::DESC_MATERIAL];
 
   assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-  this->ubo.albedo = albedoColor;
-  this->ubo.metallic = metallic;
-  this->ubo.roughness = roughness;
 
   VkDescriptorSetAllocateInfo allocateInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -55,8 +43,8 @@ GltfModel::Material::Material(
     VkDescriptorImageInfo metallicRoughnessDescriptorInfo = {};
 
     // Albedo
-    if (this->albedoTextureIndex != -1) {
-      auto &albedoTexture = model.m_textures[this->albedoTextureIndex];
+    if (this->baseColorTextureIndex != -1) {
+      auto &albedoTexture = model.m_textures[this->baseColorTextureIndex];
       albedoDescriptorInfo = albedoTexture.getDescriptorInfo();
     } else {
       albedoDescriptorInfo =
@@ -136,57 +124,92 @@ GltfModel::Primitive::Primitive(
       indexCount(indexCount),
       materialIndex(materialIndex) {}
 
-// void GltfModel::Mesh::updateUniform(int frameIndex) {
-//   memcpy(this->mappings[frameIndex], &this->ubo, sizeof(MeshUniform));
-// }
+GltfModel::Mesh::Mesh(glm::mat4 matrix) {
+  this->ubo.matrix = matrix;
+
+  auto [descriptorPool, descriptorSetLayout] =
+      renderer::ctx().m_descriptorManager[renderer::DESC_MESH];
+
+  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
+
+  VkDescriptorSetAllocateInfo allocateInfo = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      nullptr,
+      *descriptorPool,
+      1,
+      descriptorSetLayout,
+  };
+
+  for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+    VK_CHECK(vkAllocateDescriptorSets(
+        renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
+
+    this->uniformBuffers[i] =
+        renderer::Buffer{renderer::BufferType::eUniform, sizeof(MeshUniform)};
+
+    // UniformBuffer
+    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+    memcpy(this->mappings[i], &this->ubo, sizeof(MeshUniform));
+
+    VkDescriptorBufferInfo bufferInfo = {
+        this->uniformBuffers[i].getHandle(), 0, sizeof(MeshUniform)};
+
+    VkWriteDescriptorSet descriptorWrites[] = {
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
+            this->descriptorSets[i],           // dstSet
+            0,                                 // dstBinding
+            0,                                 // dstArrayElement
+            1,                                 // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            nullptr,                           // pImageInfo
+            &bufferInfo,                       // pBufferInfo
+            nullptr,                           // pTexelBufferView
+        },
+    };
+
+    vkUpdateDescriptorSets(
+        renderer::ctx().m_device,
+        ARRAYSIZE(descriptorWrites),
+        descriptorWrites,
+        0,
+        nullptr);
+  }
+}
 
 glm::mat4 GltfModel::Node::localMatrix() {
   return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) *
-         glm::scale(glm::mat4(1.0f), scale) * matrix;
+         glm::scale(glm::mat4(1.0f), scale) * this->matrix;
 }
 
 glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   glm::mat4 m = localMatrix();
   int p = this->parentIndex;
   while (p != -1) {
-    m = model.m_nodes[this->parentIndex].localMatrix() * m;
-    p = model.m_nodes[this->parentIndex].parentIndex;
+    m = model.m_nodes[p].localMatrix() * m;
+    p = model.m_nodes[p].parentIndex;
   }
-
   return m;
 }
 
-GltfModel::GltfModel(const std::string &path, bool flipUVs) {
-  std::string ext = path.substr(path.find_last_of('.'), path.size());
-
-  std::string dir = path.substr(0, path.find_last_of('/') + 1);
-
-  // Load json asset descriptor
-  std::string gltfPath;
-  if (std::strncmp(ext.c_str(), ".json", ext.length()) == 0) {
-    std::ifstream file(path);
-    if (file.fail()) {
-      throw std::runtime_error("Failed to load asset json file");
-    }
-
-    rapidjson::IStreamWrapper isw(file);
-
-    rapidjson::Document doc;
-    doc.ParseStream(isw);
-
-    assert(doc["path"].IsString());
-
-    gltfPath = dir + doc["path"].GetString();
-
-    if (doc.HasMember("parameters") && doc["parameters"].HasMember("flipUVs") &&
-        doc["parameters"]["flipUVs"].IsBool()) {
-      flipUVs = doc["parameters"]["flipUVs"].GetBool();
-    }
-
-    file.close();
-  } else {
-    gltfPath = path;
+void GltfModel::Node::update(GltfModel &model, uint32_t frameIndex) {
+  if (this->meshIndex != -1) {
+    Mesh &mesh = model.m_meshes[this->meshIndex];
+    mesh.ubo.matrix = this->getMatrix(model);
+    memcpy(mesh.mappings[frameIndex], &mesh.ubo, sizeof(Mesh::MeshUniform));
   }
+
+  for (int childIndex : this->childrenIndices) {
+    // this if maybe isn't needed
+    if (childIndex != -1) {
+      model.m_nodes[childIndex].update(model, frameIndex);
+    }
+  }
+}
+
+GltfModel::GltfModel(const std::string &path, bool flipUVs) {
+  std::string dir = path.substr(0, path.find_last_of('/') + 1);
 
   tinygltf::TinyGLTF loader;
   tinygltf::Model model;
@@ -194,13 +217,12 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   std::string err, warn;
 
   // TODO: check file extension and load accordingly
-  std::string gltfExt =
-      gltfPath.substr(gltfPath.find_last_of('.'), path.size());
+  std::string gltfExt = path.substr(path.find_last_of('.'), path.size());
   bool ret;
   if (std::strncmp(gltfExt.c_str(), ".glb", gltfExt.length()) == 0) {
-    ret = loader.LoadBinaryFromFile(&model, &err, &warn, gltfPath);
+    ret = loader.LoadBinaryFromFile(&model, &err, &warn, path);
   } else {
-    ret = loader.LoadASCIIFromFile(&model, &err, &warn, gltfPath);
+    ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
   }
 
   if (!warn.empty()) {
@@ -263,6 +285,24 @@ void GltfModel::destroy() {
   m_vertexBuffer.destroy();
   m_indexBuffer.destroy();
 
+  for (auto &mesh : m_meshes) {
+    for (auto &uniformBuffer : mesh.uniformBuffers) {
+      uniformBuffer.unmapMemory();
+      uniformBuffer.destroy();
+    }
+
+    auto descriptorPool =
+        renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
+
+    assert(descriptorPool != nullptr);
+
+    vkFreeDescriptorSets(
+        renderer::ctx().m_device,
+        *descriptorPool,
+        ARRAYSIZE(mesh.descriptorSets),
+        mesh.descriptorSets);
+  }
+
   for (auto &material : m_materials) {
     for (auto &uniformBuffer : material.uniformBuffers) {
       uniformBuffer.unmapMemory();
@@ -296,44 +336,65 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
   for (size_t i = 0; i < model.materials.size(); i++) {
     auto &mat = model.materials[i];
 
-    int albedoTextureIndex = -1;
-    int metallicRoughnessTextureIndex = -1;
-    glm::vec4 baseColorFactor = glm::vec4(1.0, 1.0, 1.0, 1.0);
-    float metallicFactor = 1.0;
-    float roughnessFactor = 1.0;
+    Material material;
 
+    // Textures
     if (mat.values.find("baseColorTexture") != mat.values.end()) {
-      albedoTextureIndex =
+      material.baseColorTextureIndex =
           model.textures[mat.values["baseColorTexture"].TextureIndex()].source;
     }
 
     if (mat.values.find("metallicRoughnessTexture") != mat.values.end()) {
-      metallicRoughnessTextureIndex =
+      material.metallicRoughnessTextureIndex =
           model.textures[mat.values["metallicRoughnessTexture"].TextureIndex()]
               .source;
     }
 
+    if (mat.additionalValues.find("normalTexture") !=
+        mat.additionalValues.end()) {
+      material.normalTextureIndex =
+          mat.additionalValues["normalTexture"].TextureIndex();
+    }
+
+    if (mat.additionalValues.find("emissiveTexture") !=
+        mat.additionalValues.end()) {
+      material.emissiveTextureIndex =
+          mat.additionalValues["emissiveTexture"].TextureIndex();
+    }
+
+    if (mat.additionalValues.find("occlusionTexture") !=
+        mat.additionalValues.end()) {
+      material.occlusionTextureIndex =
+          mat.additionalValues["occlusionTexture"].TextureIndex();
+    }
+
+    // Factors
     if (mat.values.find("baseColorFactor") != mat.values.end()) {
-      baseColorFactor =
+      material.ubo.baseColorFactor =
           glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
     }
 
     if (mat.values.find("metallicFactor") != mat.values.end()) {
-      metallicFactor =
+      material.ubo.metallic =
           static_cast<float>(mat.values["metallicFactor"].Factor());
     }
 
     if (mat.values.find("roughnessFactor") != mat.values.end()) {
-      roughnessFactor =
+      material.ubo.roughness =
           static_cast<float>(mat.values["roughnessFactor"].Factor());
     }
 
-    m_materials[i] = Material{*this,
-                              albedoTextureIndex,
-                              metallicRoughnessTextureIndex,
-                              baseColorFactor,
-                              metallicFactor,
-                              roughnessFactor};
+    if (mat.additionalValues.find("emissiveFactor") !=
+        mat.additionalValues.end()) {
+      material.ubo.emissiveFactor = glm::vec4(
+          glm::make_vec3(
+              mat.additionalValues["emissiveFactor"].ColorFactor().data()),
+          1.0);
+    }
+
+    material.load(*this);
+
+    m_materials[i] = material;
   }
 }
 
@@ -363,7 +424,9 @@ void GltfModel::loadNode(
 
   Node &newNode = m_nodes[nodeIndex];
   newNode.index = nodeIndex;
-  newNode.parentIndex = parentIndex;
+  if (parentIndex != nodeIndex) {
+    newNode.parentIndex = parentIndex;
+  }
   newNode.name = node.name;
   newNode.matrix = glm::mat4(1.0f);
 
@@ -392,6 +455,7 @@ void GltfModel::loadNode(
   if (node.mesh > -1) {
     const tinygltf::Mesh mesh = model.meshes[node.mesh];
     Mesh &newMesh = m_meshes[node.mesh];
+    newMesh = Mesh{newNode.matrix};
 
     for (size_t j = 0; j < mesh.primitives.size(); j++) {
       const tinygltf::Primitive &primitive = mesh.primitives[j];
@@ -540,8 +604,8 @@ void GltfModel::loadNode(
     newNode.meshIndex = node.mesh;
   }
 
-  if (parentIndex != -1) {
-    m_nodes[parentIndex].childrenIndices.push_back(nodeIndex);
+  if (newNode.parentIndex != -1) {
+    m_nodes[newNode.parentIndex].childrenIndices.push_back(nodeIndex);
   }
 }
 

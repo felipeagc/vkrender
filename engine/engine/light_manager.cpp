@@ -82,7 +82,7 @@ void LightManager::bind(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline.m_pipelineLayout,
-      3, // firstSet
+      4, // firstSet
       1,
       &m_descriptorSets[window.getCurrentFrameIndex()],
       0,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "transform_component.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/glm.hpp>
 #include <renderer/pipeline.hpp>
@@ -11,6 +12,7 @@ public:
   struct CameraUniform {
     glm::mat4 view;
     glm::mat4 proj;
+    glm::vec4 pos;
   };
 
   // Creates an initialized camera with the given parameters
@@ -27,7 +29,7 @@ public:
   CameraComponent &operator=(CameraComponent &&) = delete;
 
   // Updates the GPU resources with the data in this Camera object
-  void update(renderer::Window &window, const glm::mat4 &transform);
+  void update(renderer::Window &window, const TransformComponent &transform);
 
   // Binds this camera to a pipeline
   void bind(renderer::Window &window, renderer::GraphicsPipeline &pipeline);

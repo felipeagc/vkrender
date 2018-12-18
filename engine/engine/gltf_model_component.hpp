@@ -35,10 +35,6 @@ private:
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
-  // Runs in every draw call to update the uniform transform matrix with
-  // updated position, scale and rotations
-  void updateUniforms(int frameIndex, const glm::mat4 &transform);
-
   void drawNode(
       GltfModel::Node &node,
       renderer::Window &window,

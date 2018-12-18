@@ -18,16 +18,6 @@ int main() {
   engine::AssetManager assetManager;
 
   // Create shaders & pipelines
-  renderer::Shader billboardShader{
-      "../shaders/billboard.vert",
-      "../shaders/billboard.frag",
-  };
-
-  renderer::GraphicsPipeline billboardPipeline =
-      renderer::BillboardPipeline(window, billboardShader);
-
-  billboardShader.destroy();
-
   renderer::Shader skyboxShader{
       "../shaders/skybox.vert",
       "../shaders/skybox.frag",
@@ -38,8 +28,11 @@ int main() {
 
   skyboxShader.destroy();
 
-  engine::ShaderWatcher<renderer::StandardPipeline> shaderWatcher(
+  engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
       window, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
+
+  engine::ShaderWatcher<renderer::StandardPipeline> billboardShaderWatcher(
+      window, "../shaders/billboard.vert", "../shaders/billboard.frag");
 
   ecs::World world;
 
@@ -108,15 +101,15 @@ int main() {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{1.0, 1.0, 0.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{3.0, 3.0, 3.0}, glm::vec3{0.5, 0.5, 0.5});
+        light, glm::vec3{5.0, 2.0, 5.0}, glm::vec3{0.5, 0.5, 0.5});
     world.assign<engine::BillboardComponent>(
         light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
   {
     ecs::Entity light = world.createEntity();
-    world.assign<engine::LightComponent>(light, glm::vec3{0.0, 0.0, 1.0});
+    world.assign<engine::LightComponent>(light, glm::vec3{1.0, 0.0, 0.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{-3.0, -3.0, -3.0}, glm::vec3{0.5, 0.5, 0.5});
+        light, glm::vec3{-5.0, 2.0, -5.0}, glm::vec3{0.5, 0.5, 0.5});
     world.assign<engine::BillboardComponent>(
         light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
   }
@@ -127,21 +120,22 @@ int main() {
       helmet,
       assetManager.getAsset<engine::GltfModel>(
           "../assets/DamagedHelmet.glb", true));
-  world.assign<engine::TransformComponent>(helmet, glm::vec3{2.0, 0.0, 0.0});
+  world.assign<engine::TransformComponent>(helmet, glm::vec3{5.0, 2.0, 5.0});
 
   ecs::Entity boombox = world.createEntity();
   world.assign<engine::GltfModelComponent>(
       boombox,
-      assetManager.getAsset<engine::GltfModel>("../assets/boombox/BoomBoxWithAxes.gltf"));
+      assetManager.getAsset<engine::GltfModel>(
+          "../assets/boombox/BoomBoxWithAxes.gltf"));
   world.assign<engine::TransformComponent>(
-      boombox, glm::vec3{-2.0, 0.0, 0.0}, glm::vec3{100.0});
+      boombox, glm::vec3{-5.0, 2.0, -5.0}, glm::vec3{100.0});
 
   ecs::Entity bottle = world.createEntity();
   world.assign<engine::GltfModelComponent>(
       bottle,
       assetManager.getAsset<engine::GltfModel>("../assets/WaterBottle.glb"));
   world.assign<engine::TransformComponent>(
-      bottle, glm::vec3{0.0, 1.0, 0.0}, glm::vec3{10.0});
+      bottle, glm::vec3{0.0, 0.0, 0.0}, glm::vec3{10.0});
 
   // Create camera
   ecs::Entity camera = world.createEntity();
@@ -190,7 +184,7 @@ int main() {
           int dy = event.motion.yrel;
 
           if (window.getRelativeMouse()) {
-            cameraComp->m_yaw -= glm::radians((float)dx) * sens;
+            cameraComp->m_yaw += glm::radians((float)dx) * sens;
             cameraComp->m_pitch -= glm::radians((float)dy) * sens;
             cameraComp->m_pitch = glm::clamp(
                 cameraComp->m_pitch, glm::radians(-89.0f), glm::radians(89.0f));
@@ -217,7 +211,8 @@ int main() {
           skybox.draw(window, skyboxPipeline);
         });
 
-    shaderWatcher.lockPipeline();
+    modelShaderWatcher.lockPipeline();
+    billboardShaderWatcher.lockPipeline();
 
     // Camera control
     world.each<engine::CameraComponent, engine::TransformComponent>(
@@ -232,7 +227,7 @@ int main() {
           camera.m_front = glm::normalize(camera.m_front);
 
           camera.m_right = glm::normalize(
-              glm::cross(camera.m_front, glm::vec3(0.0, -1.0, 0.0)));
+              glm::cross(camera.m_front, glm::vec3(0.0, 1.0, 0.0)));
           camera.m_up =
               glm::normalize(glm::cross(camera.m_right, camera.m_front));
 
@@ -255,7 +250,7 @@ int main() {
           transform.position =
               lerp(transform.position, cameraTarget, window.getDelta() * 10.0f);
 
-          camera.update(window, transform.getMatrix());
+          camera.update(window, transform);
         });
 
     lightManager.resetLights();
@@ -287,26 +282,28 @@ int main() {
         world.getComponent<engine::TransformComponent>(camera));
 
     // Draw models
-    lightManager.bind(window, shaderWatcher.pipeline());
+    lightManager.bind(window, modelShaderWatcher.pipeline());
 
     world.getComponent<engine::CameraComponent>(camera)->bind(
-        window, shaderWatcher.pipeline());
+        window, modelShaderWatcher.pipeline());
 
     world.getComponent<engine::SkyboxComponent>(skybox)->bind(
-        window, shaderWatcher.pipeline(), 4);
+        window, modelShaderWatcher.pipeline(), 5);
 
     world.each<engine::GltfModelComponent, engine::TransformComponent>(
         [&](ecs::Entity,
             engine::GltfModelComponent &model,
             engine::TransformComponent &transform) {
-          // transform.rotation = glm::angleAxis(time / 10.0f, glm::vec3(0.0, 1.0, 0.0));
-          model.draw(window, shaderWatcher.pipeline(), transform.getMatrix());
+          // transform.rotation = glm::angleAxis(time / 10.0f,
+          // glm::vec3(0.0, 1.0, 0.0));
+          model.draw(
+              window, modelShaderWatcher.pipeline(), transform.getMatrix());
         });
 
     // Draw billboards
     if (drawBillboards) {
       world.getComponent<engine::CameraComponent>(camera)->bind(
-          window, billboardPipeline);
+          window, billboardShaderWatcher.pipeline());
       glm::vec3 cameraPos =
           world.getComponent<engine::TransformComponent>(camera)->position;
       fstl::fixed_vector<std::pair<float, ecs::Entity>> billboards;
@@ -329,12 +326,16 @@ int main() {
         auto light = world.getComponent<engine::LightComponent>(entity);
         auto billboard = world.getComponent<engine::BillboardComponent>(entity);
         billboard->draw(
-            window, billboardPipeline, transform->getMatrix(), light->color);
+            window,
+            billboardShaderWatcher.pipeline(),
+            transform->getMatrix(),
+            light->color);
       }
     }
   };
 
-  shaderWatcher.startWatching();
+  modelShaderWatcher.startWatching();
+  billboardShaderWatcher.startWatching();
 
   while (!window.getShouldClose()) {
     window.present(draw);

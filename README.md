@@ -112,16 +112,23 @@ layout (set = 1, binding = 1) uniform sampler2D albedoTexture;
 layout (set = 1, binding = 2) uniform sampler2D metallicRoughnessTexture;
 ```
 
+### Node descriptor set layout
+```glsl
+layout (set = 2, binding = 0) uniform NodeUniform {
+    mat4 matrix;
+} node;
+```
+
 ### Mesh descriptor set layout
 ```glsl
-layout (set = 2, binding = 0) uniform ModelUniform {
-    mat4 model;
+layout (set = 3, binding = 0) uniform ModelUniform {
+    mat4 matrix;
 } model;
 ```
 
 ### Lighting descriptor set layout
 ```glsl
-layout(set = 3, binding = 0) uniform LightingUniform {
+layout(set = 4, binding = 0) uniform LightingUniform {
     vec4 color;
     vec4 pos;
 } lighting;
@@ -129,12 +136,12 @@ layout(set = 3, binding = 0) uniform LightingUniform {
 
 ### Environment descriptor set layout
 ```glsl
-layout (set = 4, binding = 0) uniform EnvironmentUniform {
+layout (set = 5, binding = 0) uniform EnvironmentUniform {
     float exposure;
 } environment;
 
-layout (set = 4, binding = 1) uniform samplerCube envMap;
-layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
-layout (set = 4, binding = 3) uniform samplerCube radianceMap;
-layout (set = 4, binding = 4) uniform sampler2D brdfLut;
+layout (set = 5, binding = 1) uniform samplerCube envMap;
+layout (set = 5, binding = 2) uniform samplerCube irradianceMap;
+layout (set = 5, binding = 3) uniform samplerCube radianceMap;
+layout (set = 5, binding = 4) uniform sampler2D brdfLut;
 ```

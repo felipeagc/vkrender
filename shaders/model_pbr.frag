@@ -10,11 +10,11 @@ layout (location = 2) in vec3 normal;
 layout (set = 0, binding = 0) uniform CameraUniform {
   mat4 view;
   mat4 proj;
+  vec4 pos;
 } camera;
 
 layout (set = 1, binding = 0) uniform MaterialUniform {
-  vec3 albedo;
-  float dummy1;
+  vec4 albedo;
   float metallic;
   float roughness;
   float ao;
@@ -24,24 +24,22 @@ layout (set = 1, binding = 1) uniform sampler2D albedoTexture;
 layout (set = 1, binding = 2) uniform sampler2D metallicRoughnessTexture;
 
 struct Light {
-  vec3 pos;
-  float dummy1;
-  vec3 color;
-  float dummy2;
+  vec4 pos;
+  vec4 color;
 };
 
-layout(set = 3, binding = 0) uniform LightingUniform {
+layout(set = 4, binding = 0) uniform LightingUniform {
   Light lights[MAX_LIGHTS];
   uint lightCount;
 } lighting;
 
-layout (set = 4, binding = 0) uniform EnvironmentUniform {
+layout (set = 5, binding = 0) uniform EnvironmentUniform {
   float exposure;
 } environment;
 
-layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
-layout (set = 4, binding = 3) uniform samplerCube radianceMap;
-layout (set = 4, binding = 4) uniform sampler2D brdfLut;
+layout (set = 5, binding = 2) uniform samplerCube irradianceMap;
+layout (set = 5, binding = 3) uniform samplerCube radianceMap;
+layout (set = 5, binding = 4) uniform sampler2D brdfLut;
 
 layout (location = 0) out vec4 outColor;
 
@@ -66,37 +64,21 @@ float distributionGGX(vec3 N, vec3 H, float roughness) {
   return nom / denom;
 }
 
-float geometrySchlickGGX(float NdotV, float roughness) {
-  float r = (roughness + 1.0);
-  float k = (r*r) / 8.0;
-
-  float num = NdotV;
-  float denom = NdotV * (1.0 - k) + k;
-
-  return num / denom;
-}
-
-float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
-  float NdotV = max(dot(N, V), 0.0);
-  float NdotL = max(dot(N, L), 0.0);
-
-  float ggx2 = geometrySchlickGGX(NdotV, roughness);
-  float ggx1 = geometrySchlickGGX(NdotL, roughness);
-
-  return ggx1 * ggx2;
+float geometrySchlickSmithGGX(float NdotL, float NdotV, float roughness) {
+	float r = (roughness + 1.0);
+	float k = (r*r) / 8.0;
+	float GL = NdotL / (NdotL * (1.0 - k) + k);
+	float GV = NdotV / (NdotV * (1.0 - k) + k);
+	return GL * GV;
 }
 
 void main() {
-  vec3 viewPos = vec3(camera.view[3][0], camera.view[3][1], camera.view[3][2]);
-
   vec3 N = normalize(normal);
-  vec3 V = normalize(viewPos - worldPos);
-  vec3 R = reflect(V, N);
+  vec3 V = normalize(camera.pos.xyz - worldPos);
+  vec3 R = -normalize(reflect(V, N));
 
-  vec3 albedo = pow(texture(albedoTexture, texCoords).rgb, vec3(2.2)) * material.albedo;
+  vec3 albedo = pow(texture(albedoTexture, texCoords).rgb, vec3(2.2)) * material.albedo.xyz;
   vec4 metallicRoughness = texture(metallicRoughnessTexture, texCoords);
-  // float metallic = material.metallic * (1.0 - metallicRoughness.y);
-  // float roughness = material.roughness * (1.0 - metallicRoughness.x);
   float metallic = material.metallic * metallicRoughness.b;
   float roughness = material.roughness * metallicRoughness.g;
 
@@ -106,26 +88,28 @@ void main() {
   vec3 Lo = vec3(0.0);
   for (int i = 0; i < lighting.lightCount; i++) {
     // Calculate per-light radiance
-    vec3 L = normalize(lighting.lights[i].pos - worldPos);
+    vec3 lightPos = lighting.lights[i].pos.xyz;
+    vec3 L = normalize(lightPos - worldPos);
     vec3 H = normalize(V + L);
-    float distance = length(lighting.lights[i].pos - worldPos);
+    float distance = length(lightPos - worldPos);
     float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = lighting.lights[i].color * attenuation;
+    vec3 radiance = lighting.lights[i].color.xyz * attenuation;
+
+    float NdotL = max(dot(N, L), 0.0);
 
     // Cook-Torrance BRDF
     float NDF = distributionGGX(N, H, roughness);
-    float G = geometrySmith(N, V, L, roughness);
+    float G = geometrySchlickSmithGGX(NdotL, max(dot(N, V), 0.0), roughness);
     vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
     vec3 nominator = NDF * G * F;
-    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.001;
     vec3 specular = nominator / denominator;
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;
 
-    float NdotL = max(dot(N, L), 0.0);
     Lo += (kD * albedo / PI + specular) * radiance * NdotL;
   }
 
@@ -148,7 +132,6 @@ void main() {
   vec3 color = ambient + Lo;
 
   // HDR tonemapping
-  // color = color / (color + vec3(1.0));
   color = vec3(1.0) - exp(-color * environment.exposure);
 
   // Gamma correct

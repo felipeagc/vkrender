@@ -52,10 +52,13 @@ void main() {
   vec3 cameraRightWorldSpace = vec3(invView[0][0], invView[0][1], invView[0][2]);
   vec3 cameraUpWorldSpace = -vec3(invView[1][0], invView[1][1], invView[1][2]);
 
-  vec3 billboardPosWorldSpace =
+  vec3 worldPos =
     cameraRightWorldSpace * pos[gl_VertexIndex].x +
     cameraUpWorldSpace * pos[gl_VertexIndex].y;
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * model_ubo.model * vec4(billboardPosWorldSpace, 1.0);
+  mat4 model = model_ubo.model;
+
+  gl_Position = camera_ubo.proj * camera_ubo.view * model * vec4(worldPos, 1.0);
   texCoords0 = texCoords[gl_VertexIndex];
+  texCoords0.y = 1.0 - texCoords0.y;
 }

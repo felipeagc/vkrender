@@ -27,7 +27,7 @@ BillboardComponent::BillboardComponent(const renderer::Texture &texture)
   // Allocate mesh descriptor sets
   {
     auto [descriptorPool, descriptorSetLayout] =
-        renderer::ctx().m_descriptorManager[renderer::DESC_MESH];
+        renderer::ctx().m_descriptorManager[renderer::DESC_MODEL];
 
     assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
 
@@ -131,7 +131,7 @@ BillboardComponent::~BillboardComponent() {
 
   VK_CHECK(vkFreeDescriptorSets(
       renderer::ctx().m_device,
-      *renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH),
+      *renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MODEL),
       ARRAYSIZE(m_meshDescriptorSets),
       m_meshDescriptorSets));
 

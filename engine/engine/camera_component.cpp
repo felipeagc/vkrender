@@ -73,7 +73,7 @@ CameraComponent::~CameraComponent() {
 }
 
 void CameraComponent::update(
-    renderer::Window &window, const glm::mat4 &transform) {
+    renderer::Window &window, const TransformComponent &transform) {
   auto i = window.getCurrentFrameIndex();
 
   m_cameraUniform.proj = glm::perspective(
@@ -83,13 +83,21 @@ void CameraComponent::update(
       m_near,
       m_far);
 
-  glm::mat4 view = transform;
-  view[3][0] *= -1.0f;
-  view[3][1] *= -1.0f;
-  view[3][2] *= -1.0f;
+  // See: https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
+  glm::mat4 correction(1.0, 0.0, 0.0, 0.0,
+                       0.0, -1.0, 0.0, 0.0,
+                       0.0, 0.0, 0.5, 0.5,
+                       0.0, 0.0, 0.0, 1.0);
+
+  m_cameraUniform.proj = correction * m_cameraUniform.proj;
+
+  TransformComponent view = transform;
+  view.position *= glm::vec3(-1.0);
 
   m_cameraUniform.view =
-      glm::lookAt(glm::vec3(0.0f), m_front, m_up) * view;
+    glm::lookAt(glm::vec3(0.0f), m_front, m_up) * view.getMatrix();
+
+  m_cameraUniform.pos = glm::vec4(transform.position, 1.0);
 
   memcpy(m_mappings[i], &m_cameraUniform, sizeof(CameraUniform));
 }
