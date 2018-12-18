@@ -42,8 +42,8 @@
 - [ ] Noise
 
 ### Lighting
-- [ ] Figure out blinn-phong lighting
 - [x] Multiple lights
+- [ ] Add directional light (sun)
 
 ### Window
 - [ ] Better event system

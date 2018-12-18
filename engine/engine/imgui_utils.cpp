@@ -86,7 +86,7 @@ void entitiesWindow(ecs::World &world) {
     if (camera != nullptr) {
       if (ImGui::CollapsingHeader("Camera component")) {
         ImGui::Indent();
-        ImGui::DragFloat("FOV", &camera->m_fov);
+        ImGui::DragFloat("FOV", &camera->m_fov, 1.0f, 0.0f, 180.0f);
         ImGui::Unindent();
       }
     }
@@ -95,7 +95,7 @@ void entitiesWindow(ecs::World &world) {
     if (skybox != nullptr) {
       if (ImGui::CollapsingHeader("Skybox component")) {
         ImGui::Indent();
-        ImGui::DragFloat("Exposure", &skybox->m_environmentUBO.exposure);
+        ImGui::DragFloat("Exposure", &skybox->m_environmentUBO.exposure, 0.5f, 0.0f, 1000.0f);
         ImGui::Unindent();
       }
     }
@@ -111,6 +111,8 @@ void entitiesWindow(ecs::World &world) {
         };
         ImGui::ColorEdit3("Color", color);
         light->color = {color[0], color[1], color[2]};
+
+        ImGui::DragFloat("Intensity", &light->intensity, 0.1f, 0.0f, 1000.0f);
         ImGui::Unindent();
       }
     }

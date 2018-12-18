@@ -268,7 +268,7 @@ int main() {
         [&](ecs::Entity,
             engine::TransformComponent &transform,
             engine::LightComponent &light) {
-          lightManager.addLight(transform.position, light.color);
+          lightManager.addLight(transform.position, light.color * light.intensity);
         });
 
     lightManager.update(window.getCurrentFrameIndex());
