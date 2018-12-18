@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ecs/entity.hpp>
+#include <ecs/world.hpp>
 
 namespace renderer {
 class Window;
@@ -16,11 +17,8 @@ class CameraComponent;
 namespace imgui {
 void statsWindow(renderer::Window &window);
 
-void cameraWindow(CameraComponent *camera, TransformComponent *transform);
-
 void assetsWindow(AssetManager &assetManager);
 
-void lightSection(
-    ecs::Entity entity, TransformComponent &transform, LightComponent &light);
+void entitiesWindow(ecs::World &world);
 } // namespace imgui
 } // namespace engine

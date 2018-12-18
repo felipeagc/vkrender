@@ -1,8 +1,9 @@
 #include "imgui_utils.hpp"
 #include "asset_manager.hpp"
 #include "camera_component.hpp"
+#include "gltf_model_component.hpp"
 #include "light_component.hpp"
-#include "light_manager.hpp"
+#include "skybox_component.hpp"
 #include "transform_component.hpp"
 #include <imgui/imgui.h>
 #include <renderer/context.hpp>
@@ -24,25 +25,6 @@ void statsWindow(renderer::Window &window) {
   ImGui::End();
 }
 
-void cameraWindow(CameraComponent *camera, TransformComponent *transform) {
-  ImGui::Begin("Camera");
-
-  ImGui::DragFloat("FOV", &camera->m_fov);
-
-  float camPos[] = {
-      transform->position.x, transform->position.y, transform->position.z};
-  ImGui::DragFloat3("Camera position", camPos, 0.1f, -10.0f, 10.0f);
-  transform->position.x = camPos[0];
-  transform->position.y = camPos[1];
-  transform->position.z = camPos[2];
-
-  glm::vec3 euler = glm::degrees(glm::eulerAngles(transform->rotation));
-  float camRot[] = {euler.x, euler.y, euler.z};
-  ImGui::DragFloat3("Camera rotation", camRot, 1.0f, -180.0f, 180.0f);
-
-  ImGui::End();
-}
-
 void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
@@ -54,29 +36,89 @@ void assetsWindow(AssetManager &assetManager) {
   ImGui::End();
 }
 
-void lightSection(
-    ecs::Entity entity, TransformComponent &transform, LightComponent &light) {
-  ImGui::PushID(entity);
-  ImGui::Text("Light entity %ld", entity);
+void entitiesWindow(ecs::World &world) {
+  ImGui::Begin("Entities");
+  world.each([&](ecs::Entity entity) {
+    ImGui::PushID(entity);
+    ImGui::Text("Entity #%ld", entity);
+    ImGui::Indent();
 
-  float pos[3] = {
-      transform.position.x,
-      transform.position.y,
-      transform.position.z,
-  };
-  ImGui::DragFloat3("Position", pos, 0.1f, -10.0f, 10.0f);
-  transform.position = {pos[0], pos[1], pos[2]};
+    auto transform = world.getComponent<TransformComponent>(entity);
+    if (transform != nullptr) {
+      if (ImGui::CollapsingHeader("Transform component")) {
+        ImGui::Indent();
+        float pos[] = {
+            transform->position.x,
+            transform->position.y,
+            transform->position.z,
+        };
+        ImGui::DragFloat3("Position", pos, 0.1f);
+        transform->position = glm::vec3(pos[0], pos[1], pos[2]);
 
-  float color[3] = {
-      light.color.x,
-      light.color.y,
-      light.color.z,
-  };
-  ImGui::ColorEdit3("Color", color);
-  light.color = {color[0], color[1], color[2]};
+        glm::vec3 euler = glm::degrees(glm::eulerAngles(transform->rotation));
+        float rot[] = {euler.x, euler.y, euler.z};
+        ImGui::DragFloat3("Rotation", rot, 1.0f);
+        euler = glm::radians(glm::vec3(rot[0], rot[1], rot[2]));
+        transform->rotation = glm::quat(euler);
 
-  ImGui::Separator();
-  ImGui::PopID();
+        float scale[] = {
+            transform->scale.x,
+            transform->scale.y,
+            transform->scale.z,
+        };
+        ImGui::DragFloat3("Scale", scale, 0.1f);
+        transform->scale = glm::vec3(scale[0], scale[1], scale[2]);
+
+        ImGui::Unindent();
+      }
+    }
+
+    auto gltfModel = world.getComponent<GltfModelComponent>(entity);
+    if (gltfModel != nullptr) {
+      if (ImGui::CollapsingHeader("Model component")) {
+        ImGui::Indent();
+        ImGui::Text("Test");
+        ImGui::Unindent();
+      }
+    }
+
+    auto camera = world.getComponent<CameraComponent>(entity);
+    if (camera != nullptr) {
+      if (ImGui::CollapsingHeader("Camera component")) {
+        ImGui::Indent();
+        ImGui::DragFloat("FOV", &camera->m_fov);
+        ImGui::Unindent();
+      }
+    }
+
+    auto skybox = world.getComponent<SkyboxComponent>(entity);
+    if (skybox != nullptr) {
+      if (ImGui::CollapsingHeader("Skybox component")) {
+        ImGui::Indent();
+        ImGui::DragFloat("Exposure", &skybox->m_environmentUBO.exposure);
+        ImGui::Unindent();
+      }
+    }
+
+    auto light = world.getComponent<LightComponent>(entity);
+    if (light != nullptr) {
+      if (ImGui::CollapsingHeader("Light component")) {
+        ImGui::Indent();
+        float color[3] = {
+            light->color.x,
+            light->color.y,
+            light->color.z,
+        };
+        ImGui::ColorEdit3("Color", color);
+        light->color = {color[0], color[1], color[2]};
+        ImGui::Unindent();
+      }
+    }
+
+    ImGui::Unindent();
+    ImGui::PopID();
+  });
+  ImGui::End();
 }
 
 } // namespace imgui

@@ -76,7 +76,7 @@
 ### Misc
 - [ ] Make standalone skybox baker
 - [ ] Optimize skybox rendering
-- [ ] Entities window
+- [x] Entities window
 - [ ] Better way to organize descriptor set layouts (unified? one pool?)
 - [ ] Specify which types can be copied (maybe with a Handle suffix)
       Also applies to asset types?
