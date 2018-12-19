@@ -64,7 +64,8 @@ public:
 
   DescriptorManager m_descriptorManager;
 
-  Texture m_defaultTexture;
+  Texture m_whiteTexture;
+  Texture m_blackTexture;
 
 private:
   void createInstance(

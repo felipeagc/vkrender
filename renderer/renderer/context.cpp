@@ -424,7 +424,8 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
 
   m_descriptorManager.init();
 
-  m_defaultTexture = Texture{{255, 255, 255, 255}, 1, 1};
+  m_whiteTexture = Texture{{255, 255, 255, 255}, 1, 1};
+  m_blackTexture = Texture{{0, 0, 0, 255}, 1, 1};
 }
 
 Context::~Context() {
@@ -432,7 +433,8 @@ Context::~Context() {
 
   VK_CHECK(vkDeviceWaitIdle(m_device));
 
-  m_defaultTexture.destroy();
+  m_whiteTexture.destroy();
+  m_blackTexture.destroy();
 
   m_descriptorManager.destroy();
 

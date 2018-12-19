@@ -29,20 +29,11 @@ public:
 protected:
   renderer::Texture m_texture;
 
-  struct MeshUniform {
+  struct BillboardUniform {
     glm::mat4 model = glm::mat4(1.0f);
-  } m_meshUbo;
-
-  struct MaterialUniform {
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-  } m_materialUbo;
+  } m_ubo;
 
-  renderer::Buffer m_meshUniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
-  void *m_meshMappings[renderer::MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet m_meshDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
-
-  renderer::Buffer m_materialUniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
-  void *m_materialMappings[renderer::MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet m_materialDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace engine

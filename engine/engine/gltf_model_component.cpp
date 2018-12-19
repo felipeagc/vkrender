@@ -137,13 +137,22 @@ void GltfModelComponent::drawNode(
     for (GltfModel::Primitive &primitive :
          m_model.m_meshes[node.meshIndex].primitives) {
       if (primitive.materialIndex != -1 && m_model.m_materials.size() > 0) {
+        auto &mat = m_model.m_materials[primitive.materialIndex];
+        vkCmdPushConstants(
+            commandBuffer,
+            pipeline.m_pipelineLayout,
+            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+            0,
+            sizeof(mat.ubo),
+            &mat.ubo);
+
         vkCmdBindDescriptorSets(
             commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.m_pipelineLayout,
             1, // firstSet
             1,
-            &m_model.m_materials[primitive.materialIndex].descriptorSets[i],
+            &mat.descriptorSets[i],
             0,
             nullptr);
       }

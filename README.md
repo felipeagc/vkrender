@@ -9,12 +9,12 @@
 - [x] Camera options
 - [x] Use quaternion for camera
 - [ ] First person camera
-- [ ] Use push constants for the camera
 
 ### Pipeline
 - [x] Figure out a way to pass more parameters to the pipeline on creation
 - [x] Multisampling
 - [x] Make multisampling configurable
+- [ ] Have a single global PipelineLayout?
 
 ### Descriptor sets
 - [x] Free descriptor sets after destruction of resources
@@ -31,8 +31,9 @@
 - [x] Fix the mesh matrix stuff
 
 ### PBR
-- [ ] Emissive maps
-- [ ] AO maps
+- [x] Emissive maps
+- [x] Occlusion maps
+- [ ] Normal maps
 - [ ] Pass radiance mipmap count to shader at runtime
 
 ### Mesh generation
@@ -107,31 +108,28 @@ layout (location = 2) in vec2 texCoords;
 layout (set = 0, binding = 0) uniform CameraUniform {
     mat4 view;
     mat4 proj;
+    vec4 pos;
 } camera;
 ```
 
 ### Material descriptor set layout
 For the material's stuff
 ```glsl
-layout (set = 1, binding = 0) uniform MaterialUniform {
-    vec4 albedo;
-    float metallic;
-    float roughness;
-    float ao;
-} material;
-
-layout (set = 1, binding = 1) uniform sampler2D albedoTexture;
+layout (set = 1, binding = 0) uniform sampler2D albedoTexture;
+layout (set = 1, binding = 1) uniform sampler2D normalTexture;
 layout (set = 1, binding = 2) uniform sampler2D metallicRoughnessTexture;
-```
-
-### Node descriptor set layout
-```glsl
-layout (set = 2, binding = 0) uniform NodeUniform {
-    mat4 matrix;
-} node;
+layout (set = 1, binding = 3) uniform sampler2D occlusionTexture;
+layout (set = 1, binding = 4) uniform sampler2D emissiveTexture;
 ```
 
 ### Mesh descriptor set layout
+```glsl
+layout (set = 2, binding = 0) uniform MeshUniform {
+    mat4 matrix;
+} mesh;
+```
+
+### Model descriptor set layout
 ```glsl
 layout (set = 3, binding = 0) uniform ModelUniform {
     mat4 matrix;

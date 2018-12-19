@@ -56,8 +56,25 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_ENVIRONMENT),
   };
 
-  m_pipelineLayout = pipeline::createPipelineLayout(
-      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
+  VkPushConstantRange pushConstantRange = {};
+  pushConstantRange.stageFlags =
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = 128;
+
+  // Create pipeline layout
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      nullptr,
+      0,
+      ARRAYSIZE(descriptorSetLayouts), // setLayoutCount
+      descriptorSetLayouts,            // pSetLayouts
+      1,                               // pushConstantRangeCount
+      &pushConstantRange,              // pPushConstantRanges
+  };
+
+  VK_CHECK(vkCreatePipelineLayout(
+      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout));
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
@@ -111,8 +128,25 @@ BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MODEL),
   };
 
-  m_pipelineLayout = pipeline::createPipelineLayout(
-      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
+  VkPushConstantRange pushConstantRange = {};
+  pushConstantRange.stageFlags =
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = 128;
+
+  // Create pipeline layout
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      nullptr,
+      0,
+      ARRAYSIZE(descriptorSetLayouts), // setLayoutCount
+      descriptorSetLayouts,            // pSetLayouts
+      1,                               // pushConstantRangeCount
+      &pushConstantRange,              // pPushConstantRanges
+  };
+
+  VK_CHECK(vkCreatePipelineLayout(
+      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout));
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 

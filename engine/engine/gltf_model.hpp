@@ -33,11 +33,10 @@ public:
       glm::vec4 baseColorFactor = glm::vec4(1.0);
       float metallic = 1.0;
       float roughness = 1.0;
-      glm::vec4 emissiveFactor = glm::vec4(1.0);
+      glm::vec4 emissiveFactor = glm::vec4(0.0);
+      float hasNormalTexture = 0.0f;
     } ubo;
 
-    renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
-    void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
     VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
     void load(const GltfModel &model);

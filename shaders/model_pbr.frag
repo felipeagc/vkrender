@@ -13,15 +13,19 @@ layout (set = 0, binding = 0) uniform CameraUniform {
   vec4 pos;
 } camera;
 
-layout (set = 1, binding = 0) uniform MaterialUniform {
-  vec4 albedo;
+layout (push_constant) uniform MaterialPushConstant {
+  vec4 baseColor;
   float metallic;
   float roughness;
-  float ao;
+  vec4 emissive;
+  float hasNormalTexture;
 } material;
 
-layout (set = 1, binding = 1) uniform sampler2D albedoTexture;
+layout (set = 1, binding = 0) uniform sampler2D albedoTexture;
+layout (set = 1, binding = 1) uniform sampler2D normalTexture;
 layout (set = 1, binding = 2) uniform sampler2D metallicRoughnessTexture;
+layout (set = 1, binding = 3) uniform sampler2D occlusionTexture;
+layout (set = 1, binding = 4) uniform sampler2D emissiveTexture;
 
 struct Light {
   vec4 pos;
@@ -42,6 +46,8 @@ layout (set = 5, binding = 3) uniform samplerCube radianceMap;
 layout (set = 5, binding = 4) uniform sampler2D brdfLut;
 
 layout (location = 0) out vec4 outColor;
+
+const float MAX_REFLECTION_LOD = 9.0;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
   return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
@@ -77,7 +83,9 @@ void main() {
   vec3 V = normalize(camera.pos.xyz - worldPos);
   vec3 R = -normalize(reflect(V, N));
 
-  vec3 albedo = pow(texture(albedoTexture, texCoords).rgb, vec3(2.2)) * material.albedo.xyz;
+  vec4 albedoColor = texture(albedoTexture, texCoords);
+
+  vec3 albedo = pow(albedoColor.rgb, vec3(2.2));
   vec4 metallicRoughness = texture(metallicRoughnessTexture, texCoords);
   float metallic = material.metallic * metallicRoughness.b;
   float roughness = material.roughness * metallicRoughness.g;
@@ -122,14 +130,17 @@ void main() {
   vec3 irradiance = pow(texture(irradianceMap, N).rgb, vec3(2.2));
   vec3 diffuse = irradiance * albedo;
 
-  const float MAX_REFLECTION_LOD = 9.0;
   vec3 prefilteredColor = pow(textureLod(radianceMap, R, roughness * MAX_REFLECTION_LOD).rgb, vec3(2.2));
   vec2 brdf = pow(texture(brdfLut, vec2(max(dot(N, V), 0.0), 1.0 - roughness)).rg, vec2(2.2));
   vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
   vec3 ambient = kD * diffuse + specular;
 
-  vec3 color = ambient + Lo;
+  vec3 occlusion = texture(occlusionTexture, texCoords).rgb;
+  vec3 emissive = texture(emissiveTexture, texCoords).rgb;
+
+  vec3 color = (ambient + Lo) * occlusion.r;
+
 
   // HDR tonemapping
   color = vec3(1.0) - exp(-color * environment.exposure);
@@ -137,5 +148,7 @@ void main() {
   // Gamma correct
   color = pow(color, vec3(1.0/2.2));
 
-  outColor = vec4(color, 1.0);
+  color += emissive * material.emissive.xyz;
+
+  outColor = vec4(color, albedoColor.a) * material.baseColor;
 }

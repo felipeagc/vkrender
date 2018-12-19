@@ -42,9 +42,10 @@ layout (set = 0, binding = 0) uniform CameraUniform {
   vec3 pos;
 } camera_ubo;
 
-layout (set = 2, binding = 0) uniform ModelUniform {
+layout (push_constant) uniform BillboardUniform {
   mat4 model;
-} model_ubo;
+  vec4 color;
+} billboard;
 
 layout (location = 0) out vec2 texCoords0;
 
@@ -57,7 +58,7 @@ void main() {
     cameraRightWorldSpace * pos[gl_VertexIndex].x +
     cameraUpWorldSpace * pos[gl_VertexIndex].y;
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * model_ubo.model * vec4(worldPos, 1.0);
+  gl_Position = camera_ubo.proj * camera_ubo.view * billboard.model * vec4(worldPos, 1.0);
   texCoords0 = texCoords[gl_VertexIndex];
   texCoords0.y = 1.0 - texCoords0.y;
 }

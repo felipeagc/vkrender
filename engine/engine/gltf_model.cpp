@@ -29,26 +29,25 @@ void GltfModel::Material::load(const GltfModel &model) {
     VK_CHECK(vkAllocateDescriptorSets(
         renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
 
-    this->uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
-                                               sizeof(MaterialUniform)};
-
-    // UniformBuffer
-    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
-    memcpy(this->mappings[i], &this->ubo, sizeof(MaterialUniform));
-
-    VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers[i].getHandle(), 0, sizeof(MaterialUniform)};
-
     VkDescriptorImageInfo albedoDescriptorInfo = {};
+    VkDescriptorImageInfo normalDescriptorInfo = {};
     VkDescriptorImageInfo metallicRoughnessDescriptorInfo = {};
+    VkDescriptorImageInfo occlusionDescriptorInfo = {};
+    VkDescriptorImageInfo emissiveDescriptorInfo = {};
 
     // Albedo
     if (this->baseColorTextureIndex != -1) {
       auto &albedoTexture = model.m_textures[this->baseColorTextureIndex];
       albedoDescriptorInfo = albedoTexture.getDescriptorInfo();
     } else {
-      albedoDescriptorInfo =
-          renderer::ctx().m_defaultTexture.getDescriptorInfo();
+      albedoDescriptorInfo = renderer::ctx().m_whiteTexture.getDescriptorInfo();
+    }
+
+    if (this->normalTextureIndex != -1) {
+      auto &normalTexture = model.m_textures[this->normalTextureIndex];
+      normalDescriptorInfo = normalTexture.getDescriptorInfo();
+    } else {
+      normalDescriptorInfo = renderer::ctx().m_whiteTexture.getDescriptorInfo();
     }
 
     // Metallic/roughness
@@ -59,21 +58,39 @@ void GltfModel::Material::load(const GltfModel &model) {
           metallicRoughnessTexture.getDescriptorInfo();
     } else {
       metallicRoughnessDescriptorInfo =
-          renderer::ctx().m_defaultTexture.getDescriptorInfo();
+          renderer::ctx().m_whiteTexture.getDescriptorInfo();
+    }
+
+    // Occlusion
+    if (this->occlusionTextureIndex != -1) {
+      auto &occlusionTexture = model.m_textures[this->occlusionTextureIndex];
+      occlusionDescriptorInfo = occlusionTexture.getDescriptorInfo();
+    } else {
+      occlusionDescriptorInfo =
+          renderer::ctx().m_whiteTexture.getDescriptorInfo();
+    }
+
+    // Emissive
+    if (this->emissiveTextureIndex != -1) {
+      auto &emissiveTexture = model.m_textures[this->emissiveTextureIndex];
+      emissiveDescriptorInfo = emissiveTexture.getDescriptorInfo();
+    } else {
+      emissiveDescriptorInfo =
+          renderer::ctx().m_blackTexture.getDescriptorInfo();
     }
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],           // dstSet
-            0,                                 // dstBinding
-            0,                                 // dstArrayElement
-            1,                                 // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            nullptr,                           // pImageInfo
-            &bufferInfo,                       // pBufferInfo
-            nullptr,                           // pTexelBufferView
+            this->descriptorSets[i],                   // dstSet
+            0,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &albedoDescriptorInfo,                     // pImageInfo
+            nullptr,                                   // pBufferInfo
+            nullptr,                                   // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -83,7 +100,7 @@ void GltfModel::Material::load(const GltfModel &model) {
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &albedoDescriptorInfo,                     // pImageInfo
+            &normalDescriptorInfo,                     // pImageInfo
             nullptr,                                   // pBufferInfo
             nullptr,                                   // pTexelBufferView
         },
@@ -96,6 +113,30 @@ void GltfModel::Material::load(const GltfModel &model) {
             1,                                         // descriptorCount
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
             &metallicRoughnessDescriptorInfo,          // pImageInfo
+            nullptr,                                   // pBufferInfo
+            nullptr,                                   // pTexelBufferView
+        },
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
+            this->descriptorSets[i],                   // dstSet
+            3,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &occlusionDescriptorInfo,                  // pImageInfo
+            nullptr,                                   // pBufferInfo
+            nullptr,                                   // pTexelBufferView
+        },
+        VkWriteDescriptorSet{
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            nullptr,
+            this->descriptorSets[i],                   // dstSet
+            4,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &emissiveDescriptorInfo,                   // pImageInfo
             nullptr,                                   // pBufferInfo
             nullptr,                                   // pTexelBufferView
         },
@@ -311,11 +352,6 @@ void GltfModel::destroy() {
   }
 
   for (auto &material : m_materials) {
-    for (auto &uniformBuffer : material.uniformBuffers) {
-      uniformBuffer.unmapMemory();
-      uniformBuffer.destroy();
-    }
-
     auto descriptorPool =
         renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MATERIAL);
 
@@ -359,6 +395,7 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
 
     if (mat.additionalValues.find("normalTexture") !=
         mat.additionalValues.end()) {
+      material.ubo.hasNormalTexture = 1.0f;
       material.normalTextureIndex =
           mat.additionalValues["normalTexture"].TextureIndex();
     }

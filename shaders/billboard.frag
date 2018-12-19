@@ -2,14 +2,15 @@
 
 layout (location = 0) in vec2 texCoords;
 
-layout (set = 1, binding = 0) uniform MaterialUniform {
+layout (push_constant) uniform BillboardUniform {
+  mat4 model;
   vec4 color;
-} material;
+} billboard;
 
-layout (set = 1, binding = 1) uniform sampler2D albedo;
+layout (set = 1, binding = 0) uniform sampler2D albedo;
 
 layout (location = 0) out vec4 outColor;
 
 void main() {
-  outColor = material.color * texture(albedo, texCoords);
+  outColor = billboard.color * texture(albedo, texCoords);
 }
