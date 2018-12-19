@@ -1,15 +1,21 @@
 set(
   ENGINE_SOURCES
   engine/gltf_model.cpp
-  engine/light_manager.cpp
   engine/asset_manager.cpp
   engine/imgui_utils.cpp
   engine/file_watcher.cpp
 
-  engine/camera_component.cpp
-  engine/gltf_model_component.cpp
-  engine/billboard_component.cpp
-  engine/skybox_component.cpp
+  engine/components/camera_component.cpp
+  engine/components/gltf_model_component.cpp
+  engine/components/billboard_component.cpp
+  engine/components/environment_component.cpp
+
+  engine/systems/gltf_model_system.cpp
+  engine/systems/fps_camera_system.cpp
+  engine/systems/billboard_system.cpp
+  engine/systems/skybox_system.cpp
+  engine/systems/lighting_system.cpp
+  engine/systems/entity_inspector_system.cpp
   )
 
 add_library(

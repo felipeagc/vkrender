@@ -10,7 +10,6 @@ const char *const DESC_CAMERA = "camera";
 const char *const DESC_MESH = "mesh";
 const char *const DESC_MODEL = "model";
 const char *const DESC_MATERIAL = "material";
-const char *const DESC_LIGHTING = "lighting";
 const char *const DESC_ENVIRONMENT = "environment";
 const char *const DESC_IMGUI = "imgui";
 

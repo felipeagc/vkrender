@@ -6,39 +6,55 @@
 #include <renderer/window.hpp>
 
 namespace engine {
-class SkyboxComponent {
+const uint32_t MAX_LIGHTS = 20;
+
+class EnvironmentComponent {
 public:
   // Creates an initialized Skybox with the given parameters
-  SkyboxComponent(
+  EnvironmentComponent(
       const renderer::Cubemap &envCubemap,
       const renderer::Cubemap &irradianceCubemap,
       const renderer::Cubemap &radianceCubemap,
       const renderer::Texture &brdfLut);
 
-  ~SkyboxComponent();
+  ~EnvironmentComponent();
 
-  // Skybox can't be copied
-  SkyboxComponent(const SkyboxComponent &) = delete;
-  SkyboxComponent &operator=(const SkyboxComponent &) = delete;
+  // Environment can't be copied
+  EnvironmentComponent(const EnvironmentComponent &) = delete;
+  EnvironmentComponent &operator=(const EnvironmentComponent &) = delete;
 
-  // Skybox can be moved
-  SkyboxComponent(SkyboxComponent &&rhs) = delete;
-  SkyboxComponent &operator=(SkyboxComponent &&rhs) = delete;
+  // Environment can't be moved
+  EnvironmentComponent(EnvironmentComponent &&rhs) = delete;
+  EnvironmentComponent &operator=(EnvironmentComponent &&rhs) = delete;
 
   void bind(
       renderer::Window &window,
       renderer::GraphicsPipeline &pipeline,
       uint32_t setIndex);
 
-  void draw(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
+  void
+  drawSkybox(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
 
   void update(renderer::Window &window);
 
-  struct EnvironmentUniform {
-    float exposure = 8.0;
-  } m_environmentUBO;
+  void setExposure(float exposure);
+  float getExposure();
+
+  void addLight(const glm::vec3 &pos, const glm::vec3 &color);
+  void resetLights();
 
 protected:
+  struct Light {
+    glm::vec4 pos;
+    glm::vec4 color;
+  };
+
+  struct EnvironmentUniform {
+    Light lights[MAX_LIGHTS];
+    float exposure = 8.0;
+    uint lightCount = 0.0;
+  } m_ubo;
+
   renderer::Cubemap m_envCubemap;
   renderer::Cubemap m_irradianceCubemap;
   renderer::Cubemap m_radianceCubemap;

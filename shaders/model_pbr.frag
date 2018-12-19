@@ -32,18 +32,15 @@ struct Light {
   vec4 color;
 };
 
-layout(set = 4, binding = 0) uniform LightingUniform {
+layout (set = 4, binding = 0) uniform EnvironmentUniform {
   Light lights[MAX_LIGHTS];
-  uint lightCount;
-} lighting;
-
-layout (set = 5, binding = 0) uniform EnvironmentUniform {
   float exposure;
+  uint lightCount;
 } environment;
 
-layout (set = 5, binding = 2) uniform samplerCube irradianceMap;
-layout (set = 5, binding = 3) uniform samplerCube radianceMap;
-layout (set = 5, binding = 4) uniform sampler2D brdfLut;
+layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
+layout (set = 4, binding = 3) uniform samplerCube radianceMap;
+layout (set = 4, binding = 4) uniform sampler2D brdfLut;
 
 layout (location = 0) out vec4 outColor;
 
@@ -94,14 +91,14 @@ void main() {
   F0 = mix(F0, albedo, metallic);
 
   vec3 Lo = vec3(0.0);
-  for (int i = 0; i < lighting.lightCount; i++) {
+  for (int i = 0; i < environment.lightCount; i++) {
     // Calculate per-light radiance
-    vec3 lightPos = lighting.lights[i].pos.xyz;
+    vec3 lightPos = environment.lights[i].pos.xyz;
     vec3 L = normalize(lightPos - worldPos);
     vec3 H = normalize(V + L);
     float distance = length(lightPos - worldPos);
     float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = lighting.lights[i].color.xyz * attenuation;
+    vec3 radiance = environment.lights[i].color.xyz * attenuation;
 
     float NdotL = max(dot(N, L), 0.0);
 

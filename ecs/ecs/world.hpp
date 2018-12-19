@@ -165,6 +165,26 @@ public:
     }
   }
 
+  /*
+    Returns the first entity with the required components.
+   */
+  template <typename... Components>
+  Entity
+  first() {
+    auto mask = componentMask<Components...>();
+
+    for (Entity entity = 0; entity < m_entityComponentMasks.size(); entity++) {
+      auto entityMask = m_entityComponentMasks[entity];
+
+      if ((mask & entityMask) == mask) {
+        return entity;
+      }
+    }
+
+    throw std::runtime_error("Couldn't find entity with required components.");
+  }
+
+
 protected:
   std::array<std::vector<uint8_t>, MAX_COMPONENTS> m_componentVectors;
   std::array<std::function<void(const void *)>, MAX_COMPONENTS>

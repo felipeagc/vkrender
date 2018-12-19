@@ -18,7 +18,5 @@ namespace imgui {
 void statsWindow(renderer::Window &window);
 
 void assetsWindow(AssetManager &assetManager);
-
-void entitiesWindow(ecs::World &world);
 } // namespace imgui
 } // namespace engine

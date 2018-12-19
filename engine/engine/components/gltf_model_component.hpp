@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gltf_model.hpp"
+#include "../gltf_model.hpp"
 
 namespace engine {
 

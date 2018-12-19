@@ -9,7 +9,6 @@ const uint32_t CAMERA_MAX_SETS = 20;
 const uint32_t MESH_MAX_SETS = 500;
 const uint32_t MODEL_MAX_SETS = 500;
 const uint32_t MATERIAL_MAX_SETS = 50;
-const uint32_t LIGHTING_MAX_SETS = 50;
 const uint32_t ENVIRONMENT_MAX_SETS = 10;
 
 const VkDescriptorSetLayoutBinding CAMERA_BINDINGS[] = {{
@@ -71,16 +70,6 @@ const VkDescriptorSetLayoutBinding MATERIAL_BINDINGS[] = {
         1,                                         // descriptorCount
         VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
         nullptr,                                   // pImmutableSamplers
-    },
-};
-
-const VkDescriptorSetLayoutBinding LIGHTING_BINDINGS[] = {
-    {
-        0,                                 // binding
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        1,                                 // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
-        nullptr,                           // pImmutableSamplers
     },
 };
 
@@ -234,7 +223,6 @@ DescriptorManager::getDefaultSetLayouts() {
       *this->getSetLayout(renderer::DESC_MATERIAL),
       *this->getSetLayout(renderer::DESC_MESH),
       *this->getSetLayout(renderer::DESC_MODEL),
-      *this->getSetLayout(renderer::DESC_LIGHTING),
       *this->getSetLayout(renderer::DESC_ENVIRONMENT),
   };
 }
@@ -272,15 +260,6 @@ void DescriptorManager::init() {
   this->addSetLayout(
       DESC_MODEL,
       createDescriptorSetLayout(ARRAYSIZE(MODEL_BINDINGS), MODEL_BINDINGS));
-
-  this->addPool(
-      DESC_LIGHTING,
-      createDescriptorPool(
-          LIGHTING_MAX_SETS, ARRAYSIZE(LIGHTING_BINDINGS), LIGHTING_BINDINGS));
-  this->addSetLayout(
-      DESC_LIGHTING,
-      createDescriptorSetLayout(
-          ARRAYSIZE(LIGHTING_BINDINGS), LIGHTING_BINDINGS));
 
   this->addPool(
       DESC_ENVIRONMENT,

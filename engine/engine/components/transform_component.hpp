@@ -15,9 +15,9 @@ struct TransformComponent {
       : position(position), scale(scale), rotation(rotation) {}
 
   inline glm::mat4 getMatrix() const {
-    glm::mat4 mat(1.0f);
-    mat = glm::translate(mat, this->position) * glm::mat4_cast(this->rotation);
-    mat = glm::scale(mat, this->scale);
+    glm::mat4 mat = glm::translate(glm::mat4(1.0f), this->position) *
+                    glm::mat4_cast(this->rotation) *
+                    glm::scale(glm::mat4(1.0f), this->scale);
 
     return mat;
   }

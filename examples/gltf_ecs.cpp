@@ -5,10 +5,6 @@
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
 
-inline glm::vec3 lerp(glm::vec3 v1, glm::vec3 v2, float t) {
-  return v1 + t * (v2 - v1);
-}
-
 int main() {
   renderer::Context context;
   renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
@@ -16,6 +12,14 @@ int main() {
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
   engine::AssetManager assetManager;
+
+  ecs::World world;
+  engine::GltfModelSystem gltfModelSystem;
+  engine::FPSCameraSystem fpsCameraSystem;
+  engine::BillboardSystem billboardSystem;
+  engine::SkyboxSystem skyboxSystem;
+  engine::LightingSystem lightingSystem;
+  engine::EntityInspectorSystem entityInspectorSystem;
 
   // Create shaders & pipelines
   renderer::Shader skyboxShader{
@@ -34,13 +38,11 @@ int main() {
   engine::ShaderWatcher<renderer::StandardPipeline> billboardShaderWatcher(
       window, "../shaders/billboard.vert", "../shaders/billboard.frag");
 
-  ecs::World world;
-
   // Create skybox
-  ecs::Entity skybox = world.createEntity();
+  ecs::Entity environment = world.createEntity();
 
-  world.assign<engine::SkyboxComponent>(
-      skybox,
+  world.assign<engine::EnvironmentComponent>(
+      environment,
       assetManager.getAsset<renderer::Cubemap>(
           "../assets/ice_lake/skybox.hdr",
           static_cast<uint32_t>(2048),
@@ -66,7 +68,7 @@ int main() {
           static_cast<uint32_t>(1024)),
       assetManager.getAsset<renderer::Texture>("../assets/brdf_lut.png"));
 
-  // world.assign<engine::SkyboxComponent>(
+  // world.assign<engine::EnvironmentComponent>(
   //     skybox,
   //     assetManager.getAsset<renderer::Cubemap>(
   //         "../assets/park/skybox.hdr",
@@ -92,9 +94,6 @@ int main() {
   //         static_cast<uint32_t>(1024),
   //         static_cast<uint32_t>(1024)),
   //     assetManager.getAsset<renderer::Texture>("../assets/brdf_lut.png"));
-
-  // Create light manager
-  engine::LightManager lightManager;
 
   // Create lights
   {
@@ -145,16 +144,8 @@ int main() {
   ecs::Entity camera = world.createEntity();
   world.assign<engine::CameraComponent>(camera);
   world.assign<engine::TransformComponent>(camera, glm::vec3{0.0, 0.0, -5.0});
-  glm::vec3 camUp;
-  glm::vec3 camFront;
-  glm::vec3 camRight;
-  float camYaw = glm::radians(90.0f);
-  float camPitch = 0.0;
 
   float time = 0.0;
-
-  int prevMouseX = 0;
-  int prevMouseY = 0;
 
   modelShaderWatcher.startWatching();
   billboardShaderWatcher.startWatching();
@@ -166,36 +157,9 @@ int main() {
 
     SDL_Event event;
     while (window.pollEvent(&event)) {
+      fpsCameraSystem.processEvent(window, event);
+
       switch (event.type) {
-      case SDL_MOUSEBUTTONDOWN:
-        if (event.button.button == SDL_BUTTON_RIGHT &&
-            !ImGui::IsAnyItemActive()) {
-          window.getMouseState(&prevMouseX, &prevMouseY);
-          window.setRelativeMouse(true);
-        }
-        break;
-      case SDL_MOUSEBUTTONUP:
-        if (event.button.button == SDL_BUTTON_RIGHT &&
-            !ImGui::IsAnyItemActive()) {
-          window.setRelativeMouse(false);
-          window.warpMouse(prevMouseX, prevMouseY);
-        }
-        break;
-      case SDL_MOUSEMOTION:
-        if (event.motion.state & SDL_BUTTON_RMASK) {
-          static float sens = 0.07;
-
-          int dx = event.motion.xrel;
-          int dy = event.motion.yrel;
-
-          if (window.getRelativeMouse()) {
-            camYaw += glm::radians((float)dx) * sens;
-            camPitch -= glm::radians((float)dy) * sens;
-            camPitch =
-                glm::clamp(camPitch, glm::radians(-89.0f), glm::radians(89.0f));
-          }
-        }
-        break;
       case SDL_QUIT:
         fstl::log::info("Goodbye");
         window.setShouldClose(true);
@@ -206,121 +170,16 @@ int main() {
     // Show ImGui windows
     engine::imgui::statsWindow(window);
     engine::imgui::assetsWindow(assetManager);
-    engine::imgui::entitiesWindow(world);
-
-    // Draw skybox
-    world.getComponent<engine::CameraComponent>(camera)->bind(
-        window, skyboxPipeline);
-    world.each<engine::SkyboxComponent>(
-        [&](ecs::Entity, engine::SkyboxComponent &skybox) {
-          skybox.update(window);
-          skybox.draw(window, skyboxPipeline);
-        });
 
     modelShaderWatcher.lockPipeline();
     billboardShaderWatcher.lockPipeline();
 
-    // Camera control
-    world.each<engine::CameraComponent, engine::TransformComponent>(
-        [&](ecs::Entity,
-            engine::CameraComponent &camera,
-            engine::TransformComponent &transform) {
-          static glm::vec3 cameraTarget;
-
-          camFront.x = cos(camYaw) * cos(camPitch);
-          camFront.y = sin(camPitch);
-          camFront.z = sin(camYaw) * cos(camPitch);
-          camFront = glm::normalize(camFront);
-
-          camRight =
-              glm::normalize(glm::cross(camFront, glm::vec3(0.0, 1.0, 0.0)));
-          camUp = glm::normalize(glm::cross(camRight, camFront));
-
-          float speed = 10.0f * window.getDelta();
-          glm::vec3 movement(0.0);
-
-          if (window.isScancodePressed(renderer::Scancode::eW))
-            movement += camFront;
-          if (window.isScancodePressed(renderer::Scancode::eS))
-            movement -= camFront;
-          if (window.isScancodePressed(renderer::Scancode::eA))
-            movement -= camRight;
-          if (window.isScancodePressed(renderer::Scancode::eD))
-            movement += camRight;
-
-          movement *= speed;
-
-          cameraTarget += movement;
-
-          transform.position =
-              lerp(transform.position, cameraTarget, window.getDelta() * 10.0f);
-
-          transform.lookAt(camFront, camUp);
-
-          camera.update(window, transform);
-        });
-
-    lightManager.resetLights();
-
-    world.each<engine::TransformComponent, engine::LightComponent>(
-        [&](ecs::Entity,
-            engine::TransformComponent &transform,
-            engine::LightComponent &light) {
-          lightManager.addLight(
-              transform.position, light.color * light.intensity);
-        });
-
-    lightManager.update(window.getCurrentFrameIndex());
-
-    // Draw models
-    lightManager.bind(window, modelShaderWatcher.pipeline());
-
-    world.getComponent<engine::CameraComponent>(camera)->bind(
-        window, modelShaderWatcher.pipeline());
-
-    world.getComponent<engine::SkyboxComponent>(skybox)->bind(
-        window, modelShaderWatcher.pipeline(), 5);
-
-    world.each<engine::GltfModelComponent, engine::TransformComponent>(
-        [&](ecs::Entity,
-            engine::GltfModelComponent &model,
-            engine::TransformComponent &transform) {
-          // transform.rotation =
-          //     glm::angleAxis(time / 10.0f, glm::vec3(0.0, 1.0, 0.0));
-          model.draw(
-              window, modelShaderWatcher.pipeline(), transform.getMatrix());
-        });
-
-    // Draw billboards
-    world.getComponent<engine::CameraComponent>(camera)->bind(
-        window, billboardShaderWatcher.pipeline());
-    glm::vec3 cameraPos =
-        world.getComponent<engine::TransformComponent>(camera)->position;
-    fstl::fixed_vector<std::pair<float, ecs::Entity>> billboards;
-    world.each<
-        engine::TransformComponent,
-        engine::LightComponent,
-        engine::BillboardComponent>([&](ecs::Entity entity,
-                                        engine::TransformComponent &transform,
-                                        engine::LightComponent &,
-                                        engine::BillboardComponent &) {
-      billboards.push_back(
-          {glm::distance(cameraPos, transform.position), entity});
-    });
-
-    // Sort draw calls
-    std::sort(billboards.begin(), billboards.end());
-
-    for (auto &[dist, entity] : billboards) {
-      auto transform = world.getComponent<engine::TransformComponent>(entity);
-      auto light = world.getComponent<engine::LightComponent>(entity);
-      auto billboard = world.getComponent<engine::BillboardComponent>(entity);
-      billboard->draw(
-          window,
-          billboardShaderWatcher.pipeline(),
-          transform->getMatrix(),
-          light->color);
-    }
+    entityInspectorSystem.process(world);
+    lightingSystem.process(window, world);
+    skyboxSystem.process(window, world, skyboxPipeline);
+    fpsCameraSystem.process(window, world);
+    gltfModelSystem.process(window, world, modelShaderWatcher.pipeline());
+    billboardSystem.process(window, world, billboardShaderWatcher.pipeline());
 
     window.endPresent();
   }
