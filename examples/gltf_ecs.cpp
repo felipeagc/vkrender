@@ -156,19 +156,17 @@ int main() {
   int prevMouseX = 0;
   int prevMouseY = 0;
 
-  auto draw = [&]() {
+  modelShaderWatcher.startWatching();
+  billboardShaderWatcher.startWatching();
+
+  while (!window.getShouldClose()) {
+    window.beginPresent();
+
     time += window.getDelta();
 
     SDL_Event event;
     while (window.pollEvent(&event)) {
       switch (event.type) {
-      case SDL_WINDOWEVENT:
-        switch (event.window.type) {
-        case SDL_WINDOWEVENT_RESIZED:
-          window.updateSize();
-          break;
-        }
-        break;
       case SDL_MOUSEBUTTONDOWN:
         if (event.button.button == SDL_BUTTON_RIGHT &&
             !ImGui::IsAnyItemActive()) {
@@ -201,7 +199,7 @@ int main() {
       case SDL_QUIT:
         fstl::log::info("Goodbye");
         window.setShouldClose(true);
-        return;
+        break;
       }
     }
 
@@ -268,7 +266,8 @@ int main() {
         [&](ecs::Entity,
             engine::TransformComponent &transform,
             engine::LightComponent &light) {
-          lightManager.addLight(transform.position, light.color * light.intensity);
+          lightManager.addLight(
+              transform.position, light.color * light.intensity);
         });
 
     lightManager.update(window.getCurrentFrameIndex());
@@ -322,13 +321,8 @@ int main() {
           transform->getMatrix(),
           light->color);
     }
-  };
 
-  modelShaderWatcher.startWatching();
-  billboardShaderWatcher.startWatching();
-
-  while (!window.getShouldClose()) {
-    window.present(draw);
+    window.endPresent();
   }
 
   return 0;

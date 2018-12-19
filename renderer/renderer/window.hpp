@@ -3,6 +3,7 @@
 #include "glm.hpp"
 #include "scancodes.hpp"
 #include <SDL2/SDL.h>
+#include <chrono>
 #include <fstl/fixed_vector.hpp>
 #include <functional>
 #include <string>
@@ -28,10 +29,8 @@ public:
 
   bool pollEvent(SDL_Event *event);
 
-  void present(std::function<void()> drawFunction);
-
-  // TODO: remove this function and automate its behaviour
-  void updateSize();
+  void beginPresent();
+  void endPresent();
 
   uint32_t getWidth() const;
   uint32_t getHeight() const;
@@ -39,8 +38,8 @@ public:
   bool getRelativeMouse() const;
   void setRelativeMouse(bool relative = true);
 
-  void getMouseState(int *x, int* y) const;
-  void getRelativeMouseState(int *x, int* y) const;
+  void getMouseState(int *x, int *y) const;
+  void getRelativeMouseState(int *x, int *y) const;
 
   void warpMouse(int x, int y);
 
@@ -73,6 +72,7 @@ protected:
   SDL_Window *m_window{nullptr};
 
   double m_deltaTime = 0.0f;
+  std::chrono::time_point<std::chrono::high_resolution_clock> m_timeBefore;
 
   VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
@@ -153,6 +153,9 @@ protected:
 
   void regenImguiFramebuffer(
       VkFramebuffer &framebuffer, VkImageView &swapchainImageView);
+
+  // When window gets resized, call this.
+  void updateSize();
 
   void destroyResizables();
 

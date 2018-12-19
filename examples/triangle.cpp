@@ -109,7 +109,18 @@ int main() {
     stagingBuffer.destroy();
   }
 
-  auto draw = [&]() {
+  while (!window.getShouldClose()) {
+    window.beginPresent();
+
+    SDL_Event event;
+    while (window.pollEvent(&event)) {
+      switch (event.type) {
+      case SDL_QUIT:
+        window.setShouldClose(true);
+        break;
+      }
+    }
+
     VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
     vkCmdBindPipeline(
@@ -120,19 +131,8 @@ int main() {
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vbuffer, &offset);
 
     vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
-  };
 
-  while (!window.getShouldClose()) {
-    SDL_Event event;
-    while (window.pollEvent(&event)) {
-      switch (event.type) {
-      case SDL_QUIT:
-        window.setShouldClose(true);
-        break;
-      }
-    }
-
-    window.present(draw);
+    window.endPresent();
   }
 
   vertexBuffer.destroy();

@@ -123,14 +123,24 @@ Window::~Window() {
 bool Window::pollEvent(SDL_Event *event) {
   bool result = SDL_PollEvent(event);
 
+  switch (event->type) {
+  case SDL_WINDOWEVENT:
+    switch (event->window.type) {
+    case SDL_WINDOWEVENT_RESIZED:
+      this->updateSize();
+      break;
+    }
+    break;
+  }
+
   if (result)
     ImGui_ImplSDL2_ProcessEvent(event);
 
   return result;
 }
 
-void Window::present(std::function<void()> drawFunction) {
-  auto timeBefore = std::chrono::high_resolution_clock::now();
+void Window::beginPresent() {
+  m_timeBefore = std::chrono::high_resolution_clock::now();
 
   // Begin
   vkWaitForFences(
@@ -257,7 +267,11 @@ void Window::present(std::function<void()> drawFunction) {
   this->imguiBeginFrame();
 
   // Draw
-  drawFunction();
+  // drawFunction();
+}
+
+void Window::endPresent() {
+  auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
 
   this->imguiEndFrame();
 
@@ -296,6 +310,14 @@ void Window::present(std::function<void()> drawFunction) {
 
     vkCmdEndRenderPass(commandBuffer);
   }
+
+  VkImageSubresourceRange imageSubresourceRange{
+      VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+      0,                         // baseMipLevel
+      1,                         // levelCount
+      0,                         // baseArrayLayer
+      1,                         // layerCount
+  };
 
   if (ctx().m_presentQueue != ctx().m_graphicsQueue) {
     VkImageMemoryBarrier barrierFromDrawToPresent{
@@ -374,7 +396,7 @@ void Window::present(std::function<void()> drawFunction) {
   auto timeAfter = std::chrono::high_resolution_clock::now();
 
   auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(
-                         timeAfter - timeBefore)
+                         timeAfter - m_timeBefore)
                          .count();
 
   m_deltaTime = (double)elapsedTime / 1000000.0f;
@@ -410,17 +432,13 @@ void Window::setRelativeMouse(bool relative) {
   SDL_SetRelativeMouseMode((SDL_bool)relative);
 }
 
-void Window::getMouseState(int *x, int *y) const {
-  SDL_GetMouseState(x, y);
-}
+void Window::getMouseState(int *x, int *y) const { SDL_GetMouseState(x, y); }
 
 void Window::getRelativeMouseState(int *x, int *y) const {
   SDL_GetRelativeMouseState(x, y);
 }
 
-void Window::warpMouse(int x, int y) {
-  SDL_WarpMouseInWindow(m_window, x, y);
-}
+void Window::warpMouse(int x, int y) { SDL_WarpMouseInWindow(m_window, x, y); }
 
 bool Window::isMouseLeftPressed() const {
   auto state = SDL_GetMouseState(nullptr, nullptr);
