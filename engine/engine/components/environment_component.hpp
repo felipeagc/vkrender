@@ -50,9 +50,9 @@ protected:
   };
 
   struct EnvironmentUniform {
-    Light lights[MAX_LIGHTS];
     float exposure = 8.0;
-    uint lightCount = 0.0;
+    uint32_t lightCount = 0;
+    alignas(16) Light lights[MAX_LIGHTS];
   } m_ubo;
 
   renderer::Cubemap m_envCubemap;

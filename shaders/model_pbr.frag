@@ -33,9 +33,9 @@ struct Light {
 };
 
 layout (set = 4, binding = 0) uniform EnvironmentUniform {
-  Light lights[MAX_LIGHTS];
   float exposure;
   uint lightCount;
+  layout (offset = 16) Light lights[MAX_LIGHTS];
 } environment;
 
 layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
