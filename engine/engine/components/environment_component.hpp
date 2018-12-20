@@ -1,4 +1,7 @@
 #pragma once
+
+#include "../asset_manager.hpp"
+#include "../assets/environment_asset.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/cubemap.hpp>
 #include <renderer/pipeline.hpp>
@@ -11,11 +14,7 @@ const uint32_t MAX_LIGHTS = 20;
 class EnvironmentComponent {
 public:
   // Creates an initialized Skybox with the given parameters
-  EnvironmentComponent(
-      const renderer::Cubemap &envCubemap,
-      const renderer::Cubemap &irradianceCubemap,
-      const renderer::Cubemap &radianceCubemap,
-      const renderer::Texture &brdfLut);
+  EnvironmentComponent(const EnvironmentAsset &environmentAsset);
 
   ~EnvironmentComponent();
 
@@ -55,10 +54,7 @@ protected:
     alignas(16) Light lights[MAX_LIGHTS];
   } m_ubo;
 
-  renderer::Cubemap m_envCubemap;
-  renderer::Cubemap m_irradianceCubemap;
-  renderer::Cubemap m_radianceCubemap;
-  renderer::Texture m_brdfLut;
+  AssetIndex m_environmentAssetIndex;
 
   renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];

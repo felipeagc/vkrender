@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <functional>
 
 namespace engine {
 class FileWatcher {

@@ -1,6 +1,5 @@
 set(
   ENGINE_SOURCES
-  engine/gltf_model.cpp
   engine/asset_manager.cpp
   engine/imgui_utils.cpp
   engine/file_watcher.cpp
@@ -16,6 +15,8 @@ set(
   engine/systems/skybox_system.cpp
   engine/systems/lighting_system.cpp
   engine/systems/entity_inspector_system.cpp
+
+  engine/assets/gltf_model_asset.cpp
   )
 
 add_library(

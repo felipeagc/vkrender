@@ -13,7 +13,6 @@ public:
   Cubemap(
       const std::string &hdrPath, const uint32_t width, const uint32_t height);
   Cubemap(
-      const std::string &ident,
       const std::vector<std::string> &radiancePaths,
       const uint32_t width,
       const uint32_t height);

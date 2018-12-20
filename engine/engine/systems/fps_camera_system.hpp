@@ -2,6 +2,7 @@
 
 #include <ecs/world.hpp>
 #include <renderer/pipeline.hpp>
+#include <renderer/window.hpp>
 
 namespace engine {
 class FPSCameraSystem {

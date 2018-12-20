@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -9,7 +9,7 @@ namespace renderer {
 class Texture {
 public:
   Texture(){};
-  Texture(const std::string_view &path);
+  Texture(const std::string &path);
   Texture(
       const std::vector<unsigned char> &data,
       const uint32_t width,

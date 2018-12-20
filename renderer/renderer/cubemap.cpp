@@ -673,7 +673,6 @@ Cubemap::Cubemap(
 }
 
 Cubemap::Cubemap(
-    const std::string &,
     const std::vector<std::string> &radiancePaths,
     const uint32_t width,
     const uint32_t height) {

@@ -1,16 +1,30 @@
 #pragma once
 
-#include "gltf_model.hpp"
 #include <atomic>
 #include <fstl/logging.hpp>
+#include <functional>
 #include <renderer/texture.hpp>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace engine {
 
 const size_t MAX_ASSET_TYPES = 20;
+using AssetIndex = size_t;
+
+class Asset {
+  friend class AssetManager;
+
+public:
+  Asset(){};
+
+  inline AssetIndex index() const noexcept { return m_assetIndex; }
+  inline const char *identifier() { return m_identifier; }
+
+protected:
+  AssetIndex m_assetIndex = -1;
+  char m_identifier[128] = "";
+};
 
 namespace detail {
 template <typename...> class TypeId {
@@ -41,22 +55,26 @@ public:
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
 
-  const std::unordered_map<std::string, AssetInfo> &getAssetTable() const;
+  template <typename A> A &getAsset(const AssetIndex assetIndex) {
+    auto id = AssetTypeId::type<A>;
+    assert(sizeof(A) == m_assetSizes[id]);
+    assert(m_assets[id].size() > assetIndex * sizeof(A));
+    return *((A *)&m_assets[id][assetIndex * sizeof(A)]);
+  }
 
-  template <typename Asset, typename... Args>
-  Asset getAsset(const std::string &path, Args... args) {
-    this->ensure<Asset>();
+  template <typename A, typename... Args> A &loadAsset(Args... args) {
+    this->ensure<A>();
 
-    auto id = AssetTypeId::type<Asset>;
+    auto id = AssetTypeId::type<A>;
 
-    assert(sizeof(Asset) == m_assetSizes[id]);
+    assert(sizeof(A) == m_assetSizes[id]);
 
-    if (m_assetTable.find(path) != m_assetTable.end()) {
-      size_t assetIndex = m_assetTable[path].assetIndex;
-      return *((Asset *)&m_assets[id][assetIndex * sizeof(Asset)]);
-    }
+    // if (m_assetTable.find(path) != m_assetTable.end()) {
+    //   AssetIndex assetIndex = m_assetTable[path].assetIndex;
+    //   return *((A*)&m_assets[id][assetIndex * sizeof(A)]);
+    // }
 
-    size_t assetIndex = 0;
+    AssetIndex assetIndex = 0;
 
     for (size_t i = 0; i < m_assetsInUse[id].size(); i++) {
       assetIndex = i + 1;
@@ -67,43 +85,45 @@ public:
 
     if (m_assetsInUse[id].size() <= assetIndex) {
       m_assetsInUse[id].resize(assetIndex + 1);
-      // TODO: resize changes the addresses of stuff
-      // (Temporary) solution: just don't return addresses or references!
-      // Return copies instead.
-      m_assets[id].resize((assetIndex + 1) * sizeof(Asset));
+      // IMPORTANT: resize changes the addresses of stuff
+      // Never store asset references
+      m_assets[id].resize((assetIndex + 1) * sizeof(A));
       assetIndex = m_assetsInUse[id].size() - 1;
     }
 
-    fstl::log::debug("Loading asset: {}, at index {}", path, assetIndex);
+    // fstl::log::debug("Loading asset: {}, at index {}", path, assetIndex);
 
-    Asset *asset = new (&m_assets[id][assetIndex * sizeof(Asset)])
-        Asset{path, std::forward<Args>(args)...};
+    A *asset = new (&m_assets[id][assetIndex * sizeof(A)])
+        A{std::forward<Args>(args)...};
+    asset->m_assetIndex = assetIndex;
 
     m_assetsInUse[id][assetIndex] = true;
-
-    m_assetTable[path] = AssetInfo{assetIndex, id};
 
     return *asset;
   }
 
-  template <typename Asset> void unloadAsset(const std::string &path) {
-    this->ensure<Asset>();
-    if (m_assetTable.find(path) == m_assetTable.end()) {
-      throw std::runtime_error("Tried to unload unloaded asset");
-    }
+  template <typename A> void unloadAsset(const AssetIndex assetIndex) {
+    fstl::log::debug("Unloading asset #{}", assetIndex);
 
-    fstl::log::debug("Unloading asset: {}", path);
+    this->ensure<A>();
+    auto id = AssetTypeId::type<A>;
 
-    auto id = AssetTypeId::type<Asset>;
+    assert(sizeof(A) == m_assetSizes[id]);
 
-    assert(sizeof(Asset) == m_assetSizes[id]);
-
-    auto assetIndex = m_assetTable[path].assetIndex;
-    m_assetDestructors[id]((void *)&m_assets[id][assetIndex * sizeof(Asset)]);
-
-    m_assetTable.erase(path);
+    m_assetDestructors[id]((void *)&m_assets[id][assetIndex * sizeof(A)]);
 
     m_assetsInUse[id][assetIndex] = false;
+  }
+
+  void each(std::function<void(Asset *)> callback) {
+    for (size_t id = 0; id < MAX_ASSET_TYPES; id++) {
+      for (size_t i = 0; i < m_assetsInUse[id].size(); i++) {
+        if (m_assetsInUse[id][i]) {
+          Asset *asset = (Asset *)&m_assets[id][i * m_assetSizes[id]];
+          callback(asset);
+        }
+      }
+    }
   }
 
 private:
@@ -112,20 +132,16 @@ private:
   std::array<std::function<void(void *)>, MAX_ASSET_TYPES> m_assetDestructors;
   std::array<size_t, MAX_ASSET_TYPES> m_assetSizes;
 
-  std::unordered_map<std::string, AssetInfo> m_assetTable;
-
   /*
     Ensures that a component has all of its information initialized.
    */
-  template <typename Asset> void ensure() {
-    auto id = AssetTypeId::type<Asset>;
+  template <typename A> void ensure() {
+    auto id = AssetTypeId::type<A>;
     if (!m_assetDestructors[id]) {
-      m_assetDestructors[id] = [](void *x) {
-        static_cast<Asset *>(x)->destroy();
-      };
+      m_assetDestructors[id] = [](void *x) { static_cast<A *>(x)->~A(); };
     }
 
-    m_assetSizes[id] = sizeof(Asset);
+    m_assetSizes[id] = sizeof(A);
 
     // TODO: error when id is MAX_ASSET_TYPES
   }

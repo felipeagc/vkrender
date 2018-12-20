@@ -1,13 +1,14 @@
 #pragma once
 
-#include "../gltf_model.hpp"
+#include "../asset_manager.hpp"
+#include "../assets/gltf_model_asset.hpp"
 
 namespace engine {
 
 class GltfModelComponent {
 public:
   // Creates an initialized GltfModelInstance with the given model
-  GltfModelComponent(const GltfModel &model);
+  GltfModelComponent(const GltfModelAsset &modelAsset);
 
   ~GltfModelComponent();
 
@@ -21,11 +22,12 @@ public:
 
   void draw(
       renderer::Window &window,
+      engine::AssetManager &assetManager,
       renderer::GraphicsPipeline &pipeline,
       const glm::mat4 &transform);
 
 private:
-  GltfModel m_model;
+  AssetIndex m_modelIndex;
 
   struct ModelUniform {
     glm::mat4 model{1.0};
@@ -36,7 +38,8 @@ private:
   VkDescriptorSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
   void drawNode(
-      GltfModel::Node &node,
+      GltfModelAsset &model,
+      GltfModelAsset::Node &node,
       renderer::Window &window,
       renderer::GraphicsPipeline &pipeline);
 };

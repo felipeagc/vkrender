@@ -98,7 +98,7 @@ static void createImage(
 }
 
 static std::vector<unsigned char>
-loadImage(const std::string_view &path, uint32_t *width, uint32_t *height) {
+loadImage(const std::string &path, uint32_t *width, uint32_t *height) {
   int iwidth, iheight, channels;
   stbi_uc *pixels =
       stbi_load(path.data(), &iwidth, &iheight, &channels, STBI_rgb_alpha);
@@ -119,7 +119,7 @@ loadImage(const std::string_view &path, uint32_t *width, uint32_t *height) {
   return result;
 }
 
-Texture::Texture(const std::string_view &path) {
+Texture::Texture(const std::string &path) {
   uint32_t width, height;
   auto pixels = loadImage(path, &width, &height);
 
@@ -135,10 +135,7 @@ Texture::Texture(
 
   createImage(&m_image, &m_allocation, &m_imageView, &m_sampler, width, height);
 
-  Buffer stagingBuffer{
-    BufferType::eStaging,
-    data.size()
-  };
+  Buffer stagingBuffer{BufferType::eStaging, data.size()};
 
   void *stagingMemoryPointer;
   stagingBuffer.mapMemory(&stagingMemoryPointer);

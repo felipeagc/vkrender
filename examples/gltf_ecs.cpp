@@ -7,7 +7,7 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
+  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
@@ -43,16 +43,11 @@ int main() {
 
   world.assign<engine::EnvironmentComponent>(
       environment,
-      assetManager.getAsset<renderer::Cubemap>(
-          "../assets/ice_lake/skybox.hdr",
-          static_cast<uint32_t>(2048),
-          static_cast<uint32_t>(2048)),
-      assetManager.getAsset<renderer::Cubemap>(
+      assetManager.loadAsset<engine::EnvironmentAsset>(
+          static_cast<uint32_t>(1024),
+          static_cast<uint32_t>(1024),
           "../assets/ice_lake/irradiance.hdr",
-          static_cast<uint32_t>(2048),
-          static_cast<uint32_t>(2048)),
-      assetManager.getAsset<renderer::Cubemap>(
-          "mah radiance",
+          "../assets/ice_lake/irradiance.hdr",
           std::vector<std::string>{
               "../assets/ice_lake/radiance_0_1600x800.hdr",
               "../assets/ice_lake/radiance_1_800x400.hdr",
@@ -64,21 +59,19 @@ int main() {
               "../assets/ice_lake/radiance_7_12x6.hdr",
               "../assets/ice_lake/radiance_8_6x3.hdr",
           },
-          static_cast<uint32_t>(1024),
-          static_cast<uint32_t>(1024)),
-      assetManager.getAsset<renderer::Texture>("../assets/brdf_lut.png"));
+          "../assets/brdf_lut.png"));
 
   // world.assign<engine::EnvironmentComponent>(
   //     skybox,
-  //     assetManager.getAsset<renderer::Cubemap>(
+  //     assetManager.getAsset<engine::CubemapAsset>(
   //         "../assets/park/skybox.hdr",
   //         static_cast<uint32_t>(1024),
   //         static_cast<uint32_t>(1024)),
-  //     assetManager.getAsset<renderer::Cubemap>(
+  //     assetManager.getAsset<engine::CubemapAsset>(
   //         "../assets/park/irradiance.hdr",
   //         static_cast<uint32_t>(1024),
   //         static_cast<uint32_t>(1024)),
-  //     assetManager.getAsset<renderer::Cubemap>(
+  //     assetManager.getAsset<engine::CubemapAsset>(
   //         "mah radiance",
   //         std::vector<std::string>{
   //             "../assets/park/radiance_0_2048x1024.hdr",
@@ -93,52 +86,55 @@ int main() {
   //         },
   //         static_cast<uint32_t>(1024),
   //         static_cast<uint32_t>(1024)),
-  //     assetManager.getAsset<renderer::Texture>("../assets/brdf_lut.png"));
+  //     assetManager.getAsset<engine::TextureAsset>("../assets/brdf_lut.png"));
 
   // Create lights
+  auto &lightAsset =
+      assetManager.loadAsset<engine::TextureAsset>("../assets/light.png");
   {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{1.0, 1.0, 0.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{6.0, 2.0, 6.0}, glm::vec3{0.5, 0.5, 0.5});
-    world.assign<engine::BillboardComponent>(
-        light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
+        light, glm::vec3{3.0, 2.0, 3.0}, glm::vec3{0.5, 0.5, 0.5});
+    world.assign<engine::BillboardComponent>(light, lightAsset);
   }
   {
     ecs::Entity light = world.createEntity();
     world.assign<engine::LightComponent>(light, glm::vec3{1.0, 0.0, 0.0});
     world.assign<engine::TransformComponent>(
-        light, glm::vec3{-6.0, 2.0, -6.0}, glm::vec3{0.5, 0.5, 0.5});
-    world.assign<engine::BillboardComponent>(
-        light, assetManager.getAsset<renderer::Texture>("../assets/light.png"));
+        light, glm::vec3{-3.0, 2.0, -3.0}, glm::vec3{0.5, 0.5, 0.5});
+    world.assign<engine::BillboardComponent>(light, lightAsset);
   }
 
   // Create models
-  ecs::Entity helmet = world.createEntity();
+  ecs::Entity bunny = world.createEntity();
   world.assign<engine::GltfModelComponent>(
-      helmet,
-      assetManager.getAsset<engine::GltfModel>(
-          "../assets/DamagedHelmet.glb", true));
+      bunny,
+      assetManager.loadAsset<engine::GltfModelAsset>("../assets/bunny.glb"));
   world.assign<engine::TransformComponent>(
-      helmet,
-      glm::vec3{5.0, 2.0, 5.0},
+      bunny,
+      glm::vec3{0.0, -1.0, -0.5},
       glm::vec3{1.0},
       glm::angleAxis(glm::radians(-90.0f), glm::vec3{1.0, 0.0, 0.0}));
 
-  ecs::Entity boombox = world.createEntity();
+  ecs::Entity helmet = world.createEntity();
   world.assign<engine::GltfModelComponent>(
-      boombox,
-      assetManager.getAsset<engine::GltfModel>(
-          "../assets/boombox/BoomBoxWithAxes.gltf"));
+      helmet,
+      assetManager.loadAsset<engine::GltfModelAsset>(
+          "../assets/DamagedHelmet.glb", true));
   world.assign<engine::TransformComponent>(
-      boombox, glm::vec3{-5.0, 2.0, -5.0}, glm::vec3{100.0});
+      helmet,
+      glm::vec3{3.0, 0.0, 0.0},
+      glm::vec3{1.0},
+      glm::angleAxis(glm::radians(-90.0f), glm::vec3{1.0, 0.0, 0.0}));
 
   ecs::Entity bottle = world.createEntity();
   world.assign<engine::GltfModelComponent>(
       bottle,
-      assetManager.getAsset<engine::GltfModel>("../assets/WaterBottle.glb"));
+      assetManager.loadAsset<engine::GltfModelAsset>(
+          "../assets/WaterBottle.glb"));
   world.assign<engine::TransformComponent>(
-      bottle, glm::vec3{0.0, 0.0, 0.0}, glm::vec3{10.0});
+      bottle, glm::vec3{-3.0, 0.0, 0.0}, glm::vec3{10.0});
 
   // Create camera
   ecs::Entity camera = world.createEntity();
@@ -178,7 +174,8 @@ int main() {
     lightingSystem.process(window, world);
     skyboxSystem.process(window, world, skyboxPipeline);
     fpsCameraSystem.process(window, world);
-    gltfModelSystem.process(window, world, modelShaderWatcher.pipeline());
+    gltfModelSystem.process(
+        window, assetManager, world, modelShaderWatcher.pipeline());
     billboardSystem.process(window, world, billboardShaderWatcher.pipeline());
 
     window.endPresent();

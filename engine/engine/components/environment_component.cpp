@@ -1,4 +1,7 @@
 #include "environment_component.hpp"
+
+#include "../assets/environment_asset.hpp"
+#include "../assets/texture_asset.hpp"
 #include <fstl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
@@ -6,14 +9,8 @@
 using namespace engine;
 
 EnvironmentComponent::EnvironmentComponent(
-    const renderer::Cubemap &envCubemap,
-    const renderer::Cubemap &irradianceCubemap,
-    const renderer::Cubemap &radianceCubemap,
-    const renderer::Texture &brdfLut)
-    : m_envCubemap(envCubemap),
-      m_irradianceCubemap(irradianceCubemap),
-      m_radianceCubemap(radianceCubemap),
-      m_brdfLut(brdfLut) {
+    const EnvironmentAsset &environmentAsset)
+    : m_environmentAssetIndex(environmentAsset.index()) {
   // Allocate material descriptor sets
   {
     auto [descriptorPool, descriptorSetLayout] =
@@ -48,10 +45,13 @@ EnvironmentComponent::EnvironmentComponent(
         sizeof(EnvironmentUniform),
     };
 
-    auto envDescriptorInfo = m_envCubemap.getDescriptorInfo();
-    auto irradianceDescriptorInfo = m_irradianceCubemap.getDescriptorInfo();
-    auto radianceDescriptorInfo = m_radianceCubemap.getDescriptorInfo();
-    auto brdfLutDescriptorInfo = m_brdfLut.getDescriptorInfo();
+    auto skyboxDescriptorInfo =
+        environmentAsset.skyboxCubemap().getDescriptorInfo();
+    auto irradianceDescriptorInfo =
+        environmentAsset.irradianceCubemap().getDescriptorInfo();
+    auto radianceDescriptorInfo =
+        environmentAsset.radianceCubemap().getDescriptorInfo();
+    auto brdfLutDescriptorInfo = environmentAsset.brdfLut().getDescriptorInfo();
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
@@ -74,7 +74,7 @@ EnvironmentComponent::EnvironmentComponent(
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &envDescriptorInfo,                        // pImageInfo
+            &skyboxDescriptorInfo,                     // pImageInfo
             nullptr,                                   // pBufferInfo
             nullptr,                                   // pTexelBufferView
         },

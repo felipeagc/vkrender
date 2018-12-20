@@ -1,14 +1,16 @@
 #pragma once
+
+#include "../asset_manager.hpp"
+#include "../assets/texture_asset.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/pipeline.hpp>
-#include <renderer/texture.hpp>
 #include <renderer/window.hpp>
 
 namespace engine {
 class BillboardComponent {
 public:
   // Creates an initialized Billboard with the given parameters
-  BillboardComponent(const renderer::Texture &texture);
+  BillboardComponent(const TextureAsset &textureAsset);
 
   ~BillboardComponent();
 
@@ -27,7 +29,7 @@ public:
       const glm::vec3 &color);
 
 protected:
-  renderer::Texture m_texture;
+  AssetIndex m_textureIndex;
 
   struct BillboardUniform {
     glm::mat4 model = glm::mat4(1.0f);

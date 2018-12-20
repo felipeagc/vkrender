@@ -1,9 +1,9 @@
 #include "imgui_utils.hpp"
 #include "asset_manager.hpp"
 #include "components/camera_component.hpp"
+#include "components/environment_component.hpp"
 #include "components/gltf_model_component.hpp"
 #include "components/light_component.hpp"
-#include "components/environment_component.hpp"
 #include "components/transform_component.hpp"
 #include <imgui/imgui.h>
 #include <renderer/context.hpp>
@@ -28,10 +28,10 @@ void statsWindow(renderer::Window &window) {
 void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
-  for (auto &[name, info] : assetManager.getAssetTable()) {
-    std::string s = std::to_string(info.assetIndex) + ": " + name;
+  assetManager.each([&](Asset *asset) {
+    std::string s = std::to_string(asset->index()) + ": " + asset->identifier();
     ImGui::Selectable(s.c_str(), false);
-  }
+  });
 
   ImGui::End();
 }

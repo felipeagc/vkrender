@@ -5,8 +5,8 @@
 
 using namespace engine;
 
-BillboardComponent::BillboardComponent(const renderer::Texture &texture)
-    : m_texture(texture) {
+BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
+    : m_textureIndex(textureAsset.index()) {
   // Allocate material descriptor sets
   {
     auto [descriptorPool, descriptorSetLayout] =
@@ -32,7 +32,7 @@ BillboardComponent::BillboardComponent(const renderer::Texture &texture)
 
   // Update descriptor sets
   for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
-    auto albedoDescriptorInfo = m_texture.getDescriptorInfo();
+    auto albedoDescriptorInfo = textureAsset.texture().getDescriptorInfo();
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{

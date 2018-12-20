@@ -1,9 +1,9 @@
 #include "gltf_model_system.hpp"
 
-#include "../components/gltf_model_component.hpp"
-#include "../components/transform_component.hpp"
 #include "../components/camera_component.hpp"
 #include "../components/environment_component.hpp"
+#include "../components/gltf_model_component.hpp"
+#include "../components/transform_component.hpp"
 
 using namespace engine;
 
@@ -13,6 +13,7 @@ GltfModelSystem::~GltfModelSystem() {}
 
 void GltfModelSystem::process(
     renderer::Window &window,
+    AssetManager &assetManager,
     ecs::World &world,
     renderer::GraphicsPipeline &pipeline) {
   // Draw models
@@ -28,6 +29,6 @@ void GltfModelSystem::process(
       [&](ecs::Entity,
           engine::GltfModelComponent &model,
           engine::TransformComponent &transform) {
-        model.draw(window, pipeline, transform.getMatrix());
+        model.draw(window, assetManager, pipeline, transform.getMatrix());
       });
 }

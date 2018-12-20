@@ -8,7 +8,7 @@
 ### Camera
 - [x] Camera options
 - [x] Use quaternion for camera
-- [ ] First person camera
+- [x] First person camera
 
 ### Pipeline
 - [x] Figure out a way to pass more parameters to the pipeline on creation
@@ -49,14 +49,14 @@
 ### Window
 - [ ] Better event system
 - [ ] Input handling
-- [ ] Get state of a key
+- [x] Get state of a key
 
 ### Libraries
 - [ ] Figure out how to add vulkan SDK as a submodule
 
 ### Assets
 - [x] Asset management system
-- [ ] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
+- [x] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
 - [x] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
       Maybe handle this in the asset constructor itself.
 - [x] More flexible asset manager (use constructor instead of json for extra parameters)
@@ -65,22 +65,14 @@
 
 ### ECS
 - [x] Basic ECS
-- [ ] Better storage solution (packed array)
-- [ ] More organized system abstraction
-
-#### ECS Components
-- [x] Transform component
-- [x] glTF model component
-- [x] Light component
-- [x] Billboard component
+- [ ] Better storage solution (packed array -- arena allocator)
+- [x] More organized system abstraction
 
 ### Misc
 - [ ] Make standalone skybox baker
 - [ ] Optimize skybox rendering
 - [x] Entities window
 - [ ] Better way to organize descriptor set layouts (unified? one pool?)
-- [ ] Specify which types can be copied (maybe with a Handle suffix)
-      Also applies to asset types?
 - [x] Billboards
 - [ ] Object picking
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)

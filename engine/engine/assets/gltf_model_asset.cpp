@@ -1,4 +1,4 @@
-#include "gltf_model.hpp"
+#include "gltf_model_asset.hpp"
 #include <algorithm>
 #include <fstl/logging.hpp>
 #include <fstream>
@@ -11,7 +11,7 @@
 
 using namespace engine;
 
-void GltfModel::Material::load(const GltfModel &model) {
+void GltfModelAsset::Material::load(const GltfModelAsset &model) {
   auto [descriptorPool, descriptorSetLayout] =
       renderer::ctx().m_descriptorManager[renderer::DESC_MATERIAL];
 
@@ -151,7 +151,7 @@ void GltfModel::Material::load(const GltfModel &model) {
   }
 }
 
-void GltfModel::Primitive::setDimensions(glm::vec3 min, glm::vec3 max) {
+void GltfModelAsset::Primitive::setDimensions(glm::vec3 min, glm::vec3 max) {
   dimensions.min = min;
   dimensions.max = max;
   dimensions.size = max - min;
@@ -159,13 +159,13 @@ void GltfModel::Primitive::setDimensions(glm::vec3 min, glm::vec3 max) {
   dimensions.radius = glm::distance(min, max) / 2.0f;
 }
 
-GltfModel::Primitive::Primitive(
+GltfModelAsset::Primitive::Primitive(
     uint32_t firstIndex, uint32_t indexCount, int materialIndex)
     : firstIndex(firstIndex),
       indexCount(indexCount),
       materialIndex(materialIndex) {}
 
-GltfModel::Mesh::Mesh(glm::mat4 matrix) {
+GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
   this->ubo.matrix = matrix;
 
   auto [descriptorPool, descriptorSetLayout] =
@@ -219,12 +219,12 @@ GltfModel::Mesh::Mesh(glm::mat4 matrix) {
   }
 }
 
-glm::mat4 GltfModel::Node::localMatrix() {
+glm::mat4 GltfModelAsset::Node::localMatrix() {
   return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) *
          glm::scale(glm::mat4(1.0f), scale) * this->matrix;
 }
 
-glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
+glm::mat4 GltfModelAsset::Node::getMatrix(GltfModelAsset &model) {
   glm::mat4 m = localMatrix();
   int p = this->parentIndex;
   while (p != -1) {
@@ -234,7 +234,7 @@ glm::mat4 GltfModel::Node::getMatrix(GltfModel &model) {
   return m;
 }
 
-void GltfModel::Node::update(GltfModel &model, uint32_t frameIndex) {
+void GltfModelAsset::Node::update(GltfModelAsset &model, uint32_t frameIndex) {
   if (this->meshIndex != -1) {
     Mesh &mesh = model.m_meshes[this->meshIndex];
     mesh.ubo.matrix = this->getMatrix(model);
@@ -249,7 +249,9 @@ void GltfModel::Node::update(GltfModel &model, uint32_t frameIndex) {
   }
 }
 
-GltfModel::GltfModel(const std::string &path, bool flipUVs) {
+GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
+  strncpy(m_identifier, path.c_str(), sizeof(m_identifier));
+
   std::string dir = path.substr(0, path.find_last_of('/') + 1);
 
   tinygltf::TinyGLTF loader;
@@ -329,7 +331,7 @@ GltfModel::GltfModel(const std::string &path, bool flipUVs) {
   stagingBuffer.destroy();
 }
 
-void GltfModel::destroy() {
+GltfModelAsset::~GltfModelAsset() {
   m_vertexBuffer.destroy();
   m_indexBuffer.destroy();
 
@@ -374,7 +376,7 @@ void GltfModel::destroy() {
   m_textures.clear();
 }
 
-void GltfModel::loadMaterials(tinygltf::Model &model) {
+void GltfModelAsset::loadMaterials(tinygltf::Model &model) {
   m_materials.resize(model.materials.size());
   for (size_t i = 0; i < model.materials.size(); i++) {
     auto &mat = model.materials[i];
@@ -442,7 +444,7 @@ void GltfModel::loadMaterials(tinygltf::Model &model) {
   }
 }
 
-void GltfModel::loadTextures(tinygltf::Model &model) {
+void GltfModelAsset::loadTextures(tinygltf::Model &model) {
   m_textures.resize(model.images.size());
   for (size_t i = 0; i < model.images.size(); i++) {
     if (model.images[i].component != 4) {
@@ -457,7 +459,7 @@ void GltfModel::loadTextures(tinygltf::Model &model) {
   }
 }
 
-void GltfModel::loadNode(
+void GltfModelAsset::loadNode(
     int parentIndex,
     int nodeIndex,
     const tinygltf::Model &model,
@@ -653,7 +655,8 @@ void GltfModel::loadNode(
   }
 }
 
-void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
+void GltfModelAsset::getNodeDimensions(
+    Node &node, glm::vec3 &min, glm::vec3 &max) {
   if (node.meshIndex != -1) {
     for (Primitive &primitive : m_meshes[node.meshIndex].primitives) {
       glm::vec4 locMin =
@@ -685,7 +688,7 @@ void GltfModel::getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max) {
   }
 }
 
-void GltfModel::getSceneDimensions() {
+void GltfModelAsset::getSceneDimensions() {
   dimensions.min = glm::vec3(FLT_MAX);
   dimensions.max = glm::vec3(-FLT_MAX);
   for (auto node : m_nodes) {

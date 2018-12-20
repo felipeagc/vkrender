@@ -4,8 +4,8 @@
 
 using namespace engine;
 
-GltfModelComponent::GltfModelComponent(const GltfModel &model)
-    : m_model(model) {
+GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
+    : m_modelIndex(modelAsset.index()) {
   // Create uniform buffers and descriptors
   {
     auto [descriptorPool, descriptorSetLayout] =
@@ -75,6 +75,7 @@ GltfModelComponent::~GltfModelComponent() {
 
 void GltfModelComponent::draw(
     renderer::Window &window,
+    engine::AssetManager &assetManager,
     renderer::GraphicsPipeline &pipeline,
     const glm::mat4 &transform) {
   auto commandBuffer = window.getCurrentCommandBuffer();
@@ -88,13 +89,15 @@ void GltfModelComponent::draw(
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
 
+  auto &gltfModel = assetManager.getAsset<GltfModelAsset>(m_modelIndex);
+
   VkDeviceSize offset = 0;
-  VkBuffer vertexBuffer = m_model.m_vertexBuffer.getHandle();
+  VkBuffer vertexBuffer = gltfModel.m_vertexBuffer.getHandle();
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
       commandBuffer,
-      m_model.m_indexBuffer.getHandle(),
+      gltfModel.m_indexBuffer.getHandle(),
       0,
       VK_INDEX_TYPE_UINT32);
 
@@ -108,13 +111,14 @@ void GltfModelComponent::draw(
       0,
       nullptr);
 
-  for (auto &node : m_model.m_nodes) {
-    drawNode(node, window, pipeline);
+  for (auto &node : gltfModel.m_nodes) {
+    drawNode(gltfModel, node, window, pipeline);
   }
 }
 
 void GltfModelComponent::drawNode(
-    GltfModel::Node &node,
+    GltfModelAsset &model,
+    GltfModelAsset::Node &node,
     renderer::Window &window,
     renderer::GraphicsPipeline &pipeline) {
   VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
@@ -130,14 +134,14 @@ void GltfModelComponent::drawNode(
         pipeline.m_pipelineLayout,
         2, // firstSet
         1,
-        &m_model.m_meshes[node.meshIndex].descriptorSets[i],
+        &model.m_meshes[node.meshIndex].descriptorSets[i],
         0,
         nullptr);
 
-    for (GltfModel::Primitive &primitive :
-         m_model.m_meshes[node.meshIndex].primitives) {
-      if (primitive.materialIndex != -1 && m_model.m_materials.size() > 0) {
-        auto &mat = m_model.m_materials[primitive.materialIndex];
+    for (GltfModelAsset::Primitive &primitive :
+         model.m_meshes[node.meshIndex].primitives) {
+      if (primitive.materialIndex != -1 && model.m_materials.size() > 0) {
+        auto &mat = model.m_materials[primitive.materialIndex];
         vkCmdPushConstants(
             commandBuffer,
             pipeline.m_pipelineLayout,
@@ -163,6 +167,6 @@ void GltfModelComponent::drawNode(
   }
 
   for (auto &childIndex : node.childrenIndices) {
-    drawNode(m_model.m_nodes[childIndex], window, pipeline);
+    drawNode(model, model.m_nodes[childIndex], window, pipeline);
   }
 }

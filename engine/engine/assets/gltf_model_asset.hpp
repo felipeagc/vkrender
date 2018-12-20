@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../asset_manager.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/glm.hpp>
 #include <renderer/pipeline.hpp>
@@ -17,7 +18,7 @@ namespace engine {
 // Represents a glTF model asset
 // Can be treated as a handle to the resource
 
-class GltfModel {
+class GltfModelAsset : public Asset {
   friend class GltfModelComponent;
 
 public:
@@ -39,7 +40,7 @@ public:
 
     VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
-    void load(const GltfModel &model);
+    void load(const GltfModelAsset &model);
   };
 
   struct Primitive {
@@ -87,11 +88,11 @@ public:
     glm::quat rotation{};
 
     glm::mat4 localMatrix();
-    glm::mat4 getMatrix(GltfModel &model);
+    glm::mat4 getMatrix(GltfModelAsset &model);
 
     // Call this after loading all nodes
     // And after updating animations
-    void update(GltfModel &model, uint32_t frameIndex);
+    void update(GltfModelAsset &model, uint32_t frameIndex);
   };
 
   struct Dimensions {
@@ -102,12 +103,20 @@ public:
     float radius;
   } dimensions;
 
-  GltfModel(){};
-  GltfModel(const std::string &path, bool flipUVs = false);
+  GltfModelAsset(){};
+  GltfModelAsset(const std::string &path, bool flipUVs = false);
+
+  ~GltfModelAsset();
+
+  // GltfModelAsset cannot be copied
+  GltfModelAsset(const GltfModelAsset &) = delete;
+  GltfModelAsset &operator=(const GltfModelAsset &) = delete;
+
+  // GltfModelAsset cannot be moved
+  GltfModelAsset(GltfModelAsset &&) = delete;
+  GltfModelAsset &operator=(GltfModelAsset &&) = delete;
 
   operator bool() const;
-
-  void destroy();
 
 protected:
   std::vector<Node> m_nodes;
