@@ -119,6 +119,7 @@ public:
   operator bool() const;
 
 protected:
+  // TODO: these vectors are bad for data locality
   std::vector<Node> m_nodes;
   std::vector<Mesh> m_meshes;
   std::vector<renderer::Texture> m_textures;

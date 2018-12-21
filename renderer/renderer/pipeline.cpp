@@ -227,6 +227,7 @@ SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
   auto multisampleStateCreateInfo =
       pipeline::defaultMultisampleState(window.getMSAASamples());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
+  depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
 

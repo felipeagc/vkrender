@@ -172,10 +172,10 @@ int main() {
 
     entityInspectorSystem.process(world);
     lightingSystem.process(window, world);
-    skyboxSystem.process(window, world, skyboxPipeline);
     fpsCameraSystem.process(window, world);
     gltfModelSystem.process(
         window, assetManager, world, modelShaderWatcher.pipeline());
+    skyboxSystem.process(window, world, skyboxPipeline);
     billboardSystem.process(window, world, billboardShaderWatcher.pipeline());
 
     window.endPresent();
