@@ -7,7 +7,7 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_4_BIT);
+  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
@@ -110,31 +110,31 @@ int main() {
   ecs::Entity bunny = world.createEntity();
   world.assign<engine::GltfModelComponent>(
       bunny,
-      assetManager.loadAsset<engine::GltfModelAsset>("../assets/bunny.glb"));
+      assetManager.loadAsset<engine::GltfModelAsset>("../assets/armadillo.glb"));
   world.assign<engine::TransformComponent>(
       bunny,
       glm::vec3{0.0, -1.0, -0.5},
       glm::vec3{1.0},
       glm::angleAxis(glm::radians(-90.0f), glm::vec3{1.0, 0.0, 0.0}));
 
-  ecs::Entity helmet = world.createEntity();
-  world.assign<engine::GltfModelComponent>(
-      helmet,
-      assetManager.loadAsset<engine::GltfModelAsset>(
-          "../assets/DamagedHelmet.glb", true));
-  world.assign<engine::TransformComponent>(
-      helmet,
-      glm::vec3{3.0, 0.0, 0.0},
-      glm::vec3{1.0},
-      glm::angleAxis(glm::radians(-90.0f), glm::vec3{1.0, 0.0, 0.0}));
+  // ecs::Entity helmet = world.createEntity();
+  // world.assign<engine::GltfModelComponent>(
+  //     helmet,
+  //     assetManager.loadAsset<engine::GltfModelAsset>(
+  //         "../assets/DamagedHelmet.glb", true));
+  // world.assign<engine::TransformComponent>(
+  //     helmet,
+  //     glm::vec3{3.0, 0.0, 0.0},
+  //     glm::vec3{1.0},
+  //     glm::angleAxis(glm::radians(-90.0f), glm::vec3{1.0, 0.0, 0.0}));
 
-  ecs::Entity bottle = world.createEntity();
-  world.assign<engine::GltfModelComponent>(
-      bottle,
-      assetManager.loadAsset<engine::GltfModelAsset>(
-          "../assets/WaterBottle.glb"));
-  world.assign<engine::TransformComponent>(
-      bottle, glm::vec3{-3.0, 0.0, 0.0}, glm::vec3{10.0});
+  // ecs::Entity bottle = world.createEntity();
+  // world.assign<engine::GltfModelComponent>(
+  //     bottle,
+  //     assetManager.loadAsset<engine::GltfModelAsset>(
+  //         "../assets/WaterBottle.glb"));
+  // world.assign<engine::TransformComponent>(
+  //     bottle, glm::vec3{-3.0, 0.0, 0.0}, glm::vec3{10.0});
 
   // Create camera
   ecs::Entity camera = world.createEntity();

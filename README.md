@@ -37,7 +37,7 @@
 - [ ] Pass radiance mipmap count to shader at runtime
 
 ### Mesh generation
-- [ ] Mesh class
+- [ ] MeshComponent class
 
 ### Utilities
 - [ ] Noise
@@ -62,6 +62,7 @@
 - [x] More flexible asset manager (use constructor instead of json for extra parameters)
 - [x] Allow for arbitrary assets
 - [ ] Multi-threaded asset loading
+- [x] Assets window with editable asset properties, etc
 
 ### ECS
 - [x] Basic ECS
@@ -74,7 +75,7 @@
 - [x] Entities window
 - [ ] Better way to organize descriptor set layouts (unified? one pool?)
 - [x] Billboards
-- [ ] Object picking
+- [ ] Object picking (use AABB testing with bouding box provided by gltf)
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [ ] Fullscreen post process shader
 - [ ] Document as much as possible

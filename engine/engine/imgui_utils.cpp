@@ -1,5 +1,8 @@
 #include "imgui_utils.hpp"
 #include "asset_manager.hpp"
+#include "assets/environment_asset.hpp"
+#include "assets/gltf_model_asset.hpp"
+#include "assets/texture_asset.hpp"
 #include "components/camera_component.hpp"
 #include "components/environment_component.hpp"
 #include "components/gltf_model_component.hpp"
@@ -29,8 +32,51 @@ void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
   assetManager.each([&](Asset *asset) {
-    std::string s = std::to_string(asset->index()) + ": " + asset->identifier();
-    ImGui::Selectable(s.c_str(), false);
+    ImGui::PushID(asset->index());
+
+    if (asset->type() == AssetManager::getAssetType<GltfModelAsset>()) {
+      auto str = fmt::format(
+          "GLTF Model #{}: {}", asset->index(), asset->identifier());
+
+      if (ImGui::CollapsingHeader(str.c_str())) {
+        auto *gltfModelAsset = (GltfModelAsset *)asset;
+
+        for (size_t i = 0; i < gltfModelAsset->m_materials.size(); i++) {
+          ImGui::PushID(i);
+          ImGui::Indent();
+
+          auto &mat = gltfModelAsset->m_materials[i];
+
+          if (ImGui::CollapsingHeader(fmt::format("Material #{}", i).c_str())) {
+            ImGui::ColorEdit4("Base color factor", &mat.ubo.baseColorFactor.x);
+            ImGui::SliderFloat("Metallic", &mat.ubo.metallic, 0.0f, 1.0f);
+            ImGui::SliderFloat("Roughness", &mat.ubo.roughness, 0.0f, 1.0f);
+          }
+
+          ImGui::Unindent();
+          ImGui::PopID();
+        }
+      }
+    } else if (
+        asset->type() == AssetManager::getAssetType<EnvironmentAsset>()) {
+      auto str = fmt::format(
+          "Environment #{}: {}", asset->index(), asset->identifier());
+
+      if (ImGui::CollapsingHeader(str.c_str())) {
+        auto *environmentAsset = (EnvironmentAsset *)asset;
+        ImGui::Text("Environment asset");
+      }
+    } else if (asset->type() == AssetManager::getAssetType<TextureAsset>()) {
+      auto str =
+          fmt::format("Texture #{}: {}", asset->index(), asset->identifier());
+
+      if (ImGui::CollapsingHeader(str.c_str())) {
+        auto *textureAsset = (TextureAsset *)asset;
+        ImGui::Text("Texture asset");
+      }
+    }
+
+    ImGui::PopID();
   });
 
   ImGui::End();
