@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 wc -l \
 	./engine/**/*.hpp \
 	./engine/**/*.cpp \
