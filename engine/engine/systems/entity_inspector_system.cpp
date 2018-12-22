@@ -24,27 +24,50 @@ void EntityInspectorSystem::process(ecs::World &world) {
     if (transform != nullptr) {
       if (ImGui::CollapsingHeader("Transform component")) {
         ImGui::Indent();
-        float pos[] = {
-            transform->position.x,
-            transform->position.y,
-            transform->position.z,
-        };
-        ImGui::DragFloat3("Position", pos, 0.1f);
-        transform->position = glm::vec3(pos[0], pos[1], pos[2]);
+        ImGui::DragFloat3("Position", &transform->position.x, 0.1f);
 
-        glm::vec3 euler = glm::degrees(glm::eulerAngles(transform->rotation));
-        float rot[] = {euler.x, euler.y, euler.z};
-        ImGui::DragFloat3("Rotation", rot, 1.0f);
-        euler = glm::radians(glm::vec3(rot[0], rot[1], rot[2]));
-        transform->rotation = glm::quat(euler);
-
-        float scale[] = {
-            transform->scale.x,
-            transform->scale.y,
-            transform->scale.z,
+        float quat[] = {
+            transform->rotation.w,
+            transform->rotation.x,
+            transform->rotation.y,
+            transform->rotation.z,
         };
-        ImGui::DragFloat3("Scale", scale, 0.1f);
-        transform->scale = glm::vec3(scale[0], scale[1], scale[2]);
+        ImGui::DragFloat4("Quaternion", quat);
+
+        if (ImGui::Button("Reset rotation")) {
+          transform->rotation = glm::quat(1.0, 0.0, 0.0, 0.0f);
+        }
+
+        ImGui::SameLine();
+
+        static float angle;
+        static glm::vec3 axis;
+        static glm::quat prevQuat;
+
+        if (ImGui::Button("Apply rotation")) {
+          ImGui::OpenPopup("Apply rotation");
+          prevQuat = transform->rotation;
+          angle = 0.0f;
+          axis = glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+
+        if (ImGui::BeginPopup("Apply rotation")) {
+
+          ImGui::DragFloat("Angle", &angle, 1.0f);
+          ImGui::SameLine();
+          ImGui::DragFloat3("Rotation axis", &axis.x, 0.1f, -1.0f, 1.0f);
+
+          transform->rotation =
+            glm::rotate(prevQuat, glm::radians(angle), glm::normalize(axis));
+
+          if (ImGui::Button("Apply")) {
+            ImGui::CloseCurrentPopup();
+          }
+
+          ImGui::EndPopup();
+        }
+
+        ImGui::DragFloat3("Scale", &transform->scale.x, 0.1f);
 
         ImGui::Unindent();
       }
