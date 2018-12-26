@@ -24,6 +24,7 @@ public:
   inline AssetIndex index() const noexcept { return m_assetIndex; }
   inline const char *identifier() { return m_identifier; }
 
+
 protected:
   AssetType m_assetType = -1;
   AssetIndex m_assetIndex = -1;
@@ -55,25 +56,23 @@ public:
   AssetManager &operator=(const AssetManager &) = delete;
 
   template <typename A> A &getAsset(const AssetIndex assetIndex) {
-    auto id = AssetTypeId::type<A>;
-    assert(sizeof(A) == m_assetSizes[id]);
-    assert(m_assets[id].size() > assetIndex * sizeof(A));
-    return *((A *)&m_assets[id][assetIndex * sizeof(A)]);
+    // auto id = AssetTypeId::type<A>;
+    ensureAssetType<A>();
+    return (A &)*m_assets[assetIndex];
   }
 
   template <typename A, typename... Args> A &loadAsset(Args... args) {
-    this->ensure<A>();
     auto id = getAssetType<A>();
-    assert(sizeof(A) == m_assetSizes[id]);
+    ensureAssetType<A>();
 
     AssetIndex assetIndex = -1;
 
-    if (m_assetsInUse[id].size() == 0) {
+    if (m_assets.size() == 0) {
       assetIndex = 0;
     } else {
-      for (AssetIndex i = 0; i < m_assetsInUse[id].size(); i++) {
+      for (AssetIndex i = 0; i < m_assets.size(); i++) {
         assetIndex = i;
-        if (!m_assetsInUse[id][i]) {
+        if (!m_assets[i]) {
           break;
         }
       }
@@ -86,44 +85,35 @@ public:
 
   template <typename A, typename... Args>
   A &loadAssetIntoIndex(AssetIndex assetIndex, Args... args) {
-    this->ensure<A>();
     auto id = getAssetType<A>();
-    assert(sizeof(A) == m_assetSizes[id]);
+    ensureAssetType<A>();
 
     if (!this->ensureAssetIndex<A>(assetIndex)) {
       throw std::runtime_error("Asset index is in use");
     }
 
-    A *asset = new (&m_assets[id][assetIndex * sizeof(A)])
-        A{std::forward<Args>(args)...};
-    asset->m_assetType = id;
-    asset->m_assetIndex = assetIndex;
+    m_assets[assetIndex] = new A(std::forward<Args>(args)...);
 
-    m_assetsInUse[id][assetIndex] = true;
+    m_assets[assetIndex]->m_assetType = id;
+    m_assets[assetIndex]->m_assetIndex = assetIndex;
 
-    return *asset;
+    return (A &)*m_assets[assetIndex];
   }
 
   template <typename A> void unloadAsset(const AssetIndex assetIndex) {
     fstl::log::debug("Unloading asset #{}", assetIndex);
 
-    this->ensure<A>();
     auto id = getAssetType<A>();
+    ensureAssetType<A>();
 
-    assert(sizeof(A) == m_assetSizes[id]);
-
-    m_assetDestructors[id]((void *)&m_assets[id][assetIndex * sizeof(A)]);
-
-    m_assetsInUse[id][assetIndex] = false;
+    m_assetDestructors[id](m_assets[assetIndex]);
+    m_assets[assetIndex] = nullptr;
   }
 
   void each(std::function<void(Asset *)> callback) {
-    for (AssetType id = 0; id < MAX_ASSET_TYPES; id++) {
-      for (AssetIndex i = 0; i < m_assetsInUse[id].size(); i++) {
-        if (m_assetsInUse[id][i]) {
-          Asset *asset = (Asset *)&m_assets[id][i * m_assetSizes[id]];
-          callback(asset);
-        }
+    for (AssetIndex i = 0; i < m_assets.size(); i++) {
+      if (m_assets[i]) {
+        callback(m_assets[i]);
       }
     }
   }
@@ -134,44 +124,38 @@ public:
   }
 
 private:
-  std::array<std::vector<uint8_t>, MAX_ASSET_TYPES> m_assets;
-  std::array<std::vector<bool>, MAX_ASSET_TYPES> m_assetsInUse;
-  std::array<std::function<void(void *)>, MAX_ASSET_TYPES> m_assetDestructors;
-  std::array<size_t, MAX_ASSET_TYPES> m_assetSizes;
+  // Indexed by asset index
+  std::vector<Asset *> m_assets;
+  // Indexed by asset type
+  std::vector<std::function<void(Asset *)>> m_assetDestructors;
 
-  template <typename A> bool ensureAssetIndex(AssetIndex assetIndex) {
-    this->ensure<A>();
-
+  template <typename A> void ensureAssetType() {
     auto id = getAssetType<A>();
 
-    if (m_assetsInUse[id].size() > assetIndex) {
-      return !m_assetsInUse[id][assetIndex];
+    if (m_assetDestructors.size() <= id) {
+      m_assetDestructors.resize(id + 1);
+    }
+    if (!m_assetDestructors[id]) {
+      m_assetDestructors[id] = [](Asset *asset) { delete ((A *)asset); };
+    }
+  }
+
+  template <typename A> bool ensureAssetIndex(AssetIndex assetIndex) {
+    // auto id = getAssetType<A>();
+
+    if (m_assets.size() > assetIndex) {
+      return !m_assets[assetIndex];
     } else {
-      while (m_assetsInUse[id].size() <= assetIndex) {
-        if (m_assetsInUse[id].size() == 0) {
+      while (m_assets.size() <= assetIndex) {
+        if (m_assets.size() == 0) {
           // Initial asset allocation
-          m_assetsInUse[id].resize(4);
+          m_assets.resize(4);
         } else {
-          m_assetsInUse[id].resize(m_assetsInUse[id].size() * 2);
+          m_assets.resize(m_assets.size() * 2);
         }
-        m_assets[id].resize((m_assetsInUse.size()) * sizeof(A));
       }
     }
     return true;
-  }
-
-  /*
-    Ensures that a component has all of its information initialized.
-   */
-  template <typename A> void ensure() {
-    auto id = getAssetType<A>();
-    if (!m_assetDestructors[id]) {
-      m_assetDestructors[id] = [](void *x) { static_cast<A *>(x)->~A(); };
-    }
-
-    m_assetSizes[id] = sizeof(A);
-
-    // TODO: error when id is MAX_ASSET_TYPES
   }
 };
 } // namespace engine

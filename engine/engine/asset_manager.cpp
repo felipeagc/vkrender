@@ -3,13 +3,10 @@
 using namespace engine;
 
 AssetManager::~AssetManager() {
-  for (size_t typeId = 0; typeId < MAX_ASSET_TYPES; typeId++) {
-    for (size_t assetId = 0; assetId < m_assetsInUse[typeId].size();
-         assetId++) {
-      if (m_assetsInUse[typeId][assetId]) {
-        void *asset = &m_assets[typeId][assetId * m_assetSizes[typeId]];
-        m_assetDestructors[typeId](asset);
-      }
+  for (size_t assetId = 0; assetId < m_assets.size(); assetId++) {
+    if (m_assets[assetId] != nullptr) {
+      Asset *asset = m_assets[assetId];
+      m_assetDestructors[asset->type()](asset);
     }
   }
 }
