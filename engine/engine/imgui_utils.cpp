@@ -31,12 +31,16 @@ void statsWindow(renderer::Window &window) {
 void assetsWindow(AssetManager &assetManager) {
   ImGui::Begin("Assets");
 
-  assetManager.each([&](Asset *asset) {
-    ImGui::PushID(asset->index());
+  auto &assets = assetManager.getAssets();
+  for (size_t assetIndex = 0; assetIndex < assets.size(); assetIndex++) {
+    Asset *asset = assets[assetIndex];
+    if (asset == nullptr) continue;
+
+    ImGui::PushID(assetIndex);
 
     if (asset->type() == AssetManager::getAssetType<GltfModelAsset>()) {
-      auto str = fmt::format(
-          "GLTF Model #{}: {}", asset->index(), asset->identifier());
+      auto str =
+          fmt::format("GLTF Model #{}: {}", assetIndex, asset->identifier());
 
       if (ImGui::CollapsingHeader(str.c_str())) {
         auto *gltfModelAsset = (GltfModelAsset *)asset;
@@ -59,25 +63,25 @@ void assetsWindow(AssetManager &assetManager) {
       }
     } else if (
         asset->type() == AssetManager::getAssetType<EnvironmentAsset>()) {
-      auto str = fmt::format(
-          "Environment #{}: {}", asset->index(), asset->identifier());
+      auto str =
+          fmt::format("Environment #{}: {}", assetIndex, asset->identifier());
 
       if (ImGui::CollapsingHeader(str.c_str())) {
-        auto *environmentAsset = (EnvironmentAsset *)asset;
+        // auto *environmentAsset = (EnvironmentAsset *)asset;
         ImGui::Text("Environment asset");
       }
     } else if (asset->type() == AssetManager::getAssetType<TextureAsset>()) {
       auto str =
-          fmt::format("Texture #{}: {}", asset->index(), asset->identifier());
+          fmt::format("Texture #{}: {}", assetIndex, asset->identifier());
 
       if (ImGui::CollapsingHeader(str.c_str())) {
-        auto *textureAsset = (TextureAsset *)asset;
+        // auto *textureAsset = (TextureAsset *)asset;
         ImGui::Text("Texture asset");
       }
     }
 
     ImGui::PopID();
-  });
+  }
 
   ImGui::End();
 }

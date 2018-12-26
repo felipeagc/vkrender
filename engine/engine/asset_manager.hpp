@@ -20,10 +20,9 @@ class Asset {
 public:
   Asset(){};
 
-  inline AssetIndex type() const noexcept { return m_assetType; }
+  inline AssetType type() const noexcept { return m_assetType; }
   inline AssetIndex index() const noexcept { return m_assetIndex; }
   inline const std::string& identifier() { return m_identifier; }
-
 
 protected:
   AssetType m_assetType = -1;
@@ -54,6 +53,10 @@ public:
   // No copying AssetManager
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
+
+  const std::vector<Asset*> &getAssets() {
+    return m_assets;
+  }
 
   template <typename A> A &getAsset(const AssetIndex assetIndex) {
     // auto id = AssetTypeId::type<A>;
@@ -108,14 +111,6 @@ public:
 
     m_assetDestructors[id](m_assets[assetIndex]);
     m_assets[assetIndex] = nullptr;
-  }
-
-  void each(std::function<void(Asset *)> callback) {
-    for (AssetIndex i = 0; i < m_assets.size(); i++) {
-      if (m_assets[i]) {
-        callback(m_assets[i]);
-      }
-    }
   }
 
   template <typename A> static constexpr AssetType getAssetType() {
