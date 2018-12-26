@@ -9,7 +9,7 @@ public:
   TextureAsset() {}
 
   TextureAsset(const std::string &path) {
-    strncpy(m_identifier, path.c_str(), sizeof(m_identifier));
+    m_identifier = path;
     m_texture = renderer::Texture(path);
   }
 

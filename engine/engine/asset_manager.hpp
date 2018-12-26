@@ -22,13 +22,13 @@ public:
 
   inline AssetIndex type() const noexcept { return m_assetType; }
   inline AssetIndex index() const noexcept { return m_assetIndex; }
-  inline const char *identifier() { return m_identifier; }
+  inline const std::string& identifier() { return m_identifier; }
 
 
 protected:
   AssetType m_assetType = -1;
   AssetIndex m_assetIndex = -1;
-  char m_identifier[128] = "";
+  std::string m_identifier = "";
 };
 
 namespace detail {

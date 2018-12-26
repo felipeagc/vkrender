@@ -250,7 +250,7 @@ void GltfModelAsset::Node::update(GltfModelAsset &model, uint32_t frameIndex) {
 }
 
 GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
-  strncpy(m_identifier, path.c_str(), sizeof(m_identifier));
+  m_identifier = path;
 
   std::string dir = path.substr(0, path.find_last_of('/') + 1);
 
