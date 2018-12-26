@@ -46,7 +46,7 @@ class Driver;
 %%
 
 scene:
-  | EOL
+  | scene EOL
   | scene scene_section
   | scene assets_section
   | scene entities_section

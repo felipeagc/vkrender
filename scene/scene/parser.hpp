@@ -786,7 +786,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -911,9 +911,9 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 76,     ///< Last index in yytable_.
+      yylast_ = 79,     ///< Last index in yytable_.
       yynnts_ = 19,  ///< Number of nonterminal symbols.
-      yyfinal_ = 3, ///< Termination state number.
+      yyfinal_ = 2, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 17  ///< Number of tokens.

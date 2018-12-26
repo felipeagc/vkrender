@@ -17,6 +17,8 @@ NAME [a-zA-Z][a-zA-Z0-9_]*
   # define YY_USER_ACTION  loc.columns (yyleng);
 %}
 
+%x MULTILINE_COMMENT
+
 %%
 
 %{
@@ -53,6 +55,13 @@ NAME [a-zA-Z][a-zA-Z0-9_]*
 {NAME} {
   return yy::parser::make_NAME(std::string(yytext), loc);
 }
+
+"//".* {}
+
+"/*"            { BEGIN(MULTILINE_COMMENT); }
+<MULTILINE_COMMENT>"*/" { BEGIN(INITIAL); }
+<MULTILINE_COMMENT>\n   {}
+<MULTILINE_COMMENT>.    {}
 
 . {
   throw yy::parser::syntax_error(loc, "invalid character: " + std::string(yytext));

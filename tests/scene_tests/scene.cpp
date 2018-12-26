@@ -13,6 +13,13 @@ TEST(scene, empty_scene) {
 
 TEST(scene, scene_properties) {
   std::string text = R"(
+
+
+
+
+// This is a comment
+
+
 Scene:
 a 1 2 3
 
@@ -22,11 +29,22 @@ c [
 1 2
 ]
 
+// Hey hey hey
+
+/*
+Multiline comment 
+babyy
+
+Woohoo
+*/
+
 d [
 1 2]
 )";
 
   scene::Driver drv;
+  drv.m_traceScanning = true;
+  drv.m_traceParsing = true;
   EXPECT_EQ(drv.parseText(text), 0);
   EXPECT_EQ(drv.m_scene.properties.size(), 4);
   EXPECT_EQ(drv.m_scene.assets.size(), 0);
