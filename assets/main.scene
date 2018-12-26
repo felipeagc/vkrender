@@ -1,0 +1,68 @@
+Scene:
+
+
+Assets:
+
+#0 Environment
+skybox "../assets/ice_lake/skybox.hdr"
+irradiance "../assets/ice_lake/irradiance.hdr"
+radiance [
+  "../assets/ice_lake/radiance_0_1600x800.hdr"
+  "../assets/ice_lake/radiance_1_800x400.hdr"
+  "../assets/ice_lake/radiance_2_400x200.hdr"
+  "../assets/ice_lake/radiance_3_200x100.hdr"
+  "../assets/ice_lake/radiance_4_100x50.hdr"
+  "../assets/ice_lake/radiance_5_50x25.hdr"
+  "../assets/ice_lake/radiance_6_25x12.hdr"
+  "../assets/ice_lake/radiance_7_12x6.hdr"
+  "../assets/ice_lake/radiance_8_6x3.hdr"
+]
+
+#1 Texture
+path "../assets/light.png"
+
+#2 GltfModel
+path "../assets/Duck.glb"
+
+
+Entities:
+
+#
+Transform {
+  position 3.0 2.0 3.0
+  scale 0.5 0.5 0.5
+}
+
+Light {
+  color 1.0 1.0 0.0
+}
+
+Billboard {
+  asset 1
+}
+
+#
+Transform {
+  position 3.0 2.0 3.0
+  scale 0.5 0.5 0.5
+}
+
+Light {
+
+}
+
+Billboard {
+  asset 1
+}
+
+#
+Transform {
+
+}
+
+GltfModel {
+  asset 2
+}
+
+
+

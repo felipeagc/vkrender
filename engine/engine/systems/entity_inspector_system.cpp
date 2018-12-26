@@ -60,10 +60,6 @@ void EntityInspectorSystem::process(ecs::World &world) {
           transform->rotation =
             glm::rotate(prevQuat, glm::radians(angle), glm::normalize(axis));
 
-          if (ImGui::Button("Apply")) {
-            ImGui::CloseCurrentPopup();
-          }
-
           ImGui::EndPopup();
         }
 

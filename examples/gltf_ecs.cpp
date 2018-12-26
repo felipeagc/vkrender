@@ -46,7 +46,7 @@ int main() {
       assetManager.loadAsset<engine::EnvironmentAsset>(
           static_cast<uint32_t>(1024),
           static_cast<uint32_t>(1024),
-          "../assets/ice_lake/irradiance.hdr",
+          "../assets/ice_lake/skybox.hdr",
           "../assets/ice_lake/irradiance.hdr",
           std::vector<std::string>{
               "../assets/ice_lake/radiance_0_1600x800.hdr",
