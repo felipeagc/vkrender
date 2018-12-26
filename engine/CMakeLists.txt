@@ -32,6 +32,7 @@ target_link_libraries(
   fstl
   renderer
   ecs
+  scene
 
   PRIVATE
   tinygltf

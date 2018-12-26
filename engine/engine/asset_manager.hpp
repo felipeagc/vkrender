@@ -63,34 +63,36 @@ public:
 
   template <typename A, typename... Args> A &loadAsset(Args... args) {
     this->ensure<A>();
-
     auto id = getAssetType<A>();
-
     assert(sizeof(A) == m_assetSizes[id]);
 
-    // if (m_assetTable.find(path) != m_assetTable.end()) {
-    //   AssetIndex assetIndex = m_assetTable[path].assetIndex;
-    //   return *((A*)&m_assets[id][assetIndex * sizeof(A)]);
-    // }
+    AssetIndex assetIndex = -1;
 
-    AssetIndex assetIndex = 0;
-
-    for (AssetIndex i = 0; i < m_assetsInUse[id].size(); i++) {
-      assetIndex = i + 1;
-      if (!m_assetsInUse[id][i]) {
-        break;
+    if (m_assetsInUse[id].size() == 0) {
+      assetIndex = 0;
+    } else {
+      for (AssetIndex i = 0; i < m_assetsInUse[id].size(); i++) {
+        assetIndex = i;
+        if (!m_assetsInUse[id][i]) {
+          break;
+        }
       }
     }
 
-    if (m_assetsInUse[id].size() <= assetIndex) {
-      m_assetsInUse[id].resize(assetIndex + 1);
-      // IMPORTANT: resize changes the addresses of stuff
-      // Never store asset references
-      m_assets[id].resize((assetIndex + 1) * sizeof(A));
-      assetIndex = m_assetsInUse[id].size() - 1;
-    }
+    this->ensureAssetIndex<A>(assetIndex);
 
-    // fstl::log::debug("Loading asset: {}, at index {}", path, assetIndex);
+    return this->loadAssetIntoIndex<A>(assetIndex, args...);
+  }
+
+  template <typename A, typename... Args>
+  A &loadAssetIntoIndex(AssetIndex assetIndex, Args... args) {
+    this->ensure<A>();
+    auto id = getAssetType<A>();
+    assert(sizeof(A) == m_assetSizes[id]);
+
+    if (!this->ensureAssetIndex<A>(assetIndex)) {
+      throw std::runtime_error("Asset index is in use");
+    }
 
     A *asset = new (&m_assets[id][assetIndex * sizeof(A)])
         A{std::forward<Args>(args)...};
@@ -136,6 +138,27 @@ private:
   std::array<std::vector<bool>, MAX_ASSET_TYPES> m_assetsInUse;
   std::array<std::function<void(void *)>, MAX_ASSET_TYPES> m_assetDestructors;
   std::array<size_t, MAX_ASSET_TYPES> m_assetSizes;
+
+  template <typename A> bool ensureAssetIndex(AssetIndex assetIndex) {
+    this->ensure<A>();
+
+    auto id = getAssetType<A>();
+
+    if (m_assetsInUse[id].size() > assetIndex) {
+      return !m_assetsInUse[id][assetIndex];
+    } else {
+      while (m_assetsInUse[id].size() <= assetIndex) {
+        if (m_assetsInUse[id].size() == 0) {
+          // Initial asset allocation
+          m_assetsInUse[id].resize(4);
+        } else {
+          m_assetsInUse[id].resize(m_assetsInUse[id].size() * 2);
+        }
+        m_assets[id].resize((m_assetsInUse.size()) * sizeof(A));
+      }
+    }
+    return true;
+  }
 
   /*
     Ensures that a component has all of its information initialized.

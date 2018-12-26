@@ -4,6 +4,7 @@ Scene:
 Assets:
 
 #0 Environment
+size 1024 1024
 skybox "../assets/ice_lake/skybox.hdr"
 irradiance "../assets/ice_lake/irradiance.hdr"
 radiance
@@ -16,52 +17,72 @@ radiance
   "../assets/ice_lake/radiance_6_25x12.hdr"
   "../assets/ice_lake/radiance_7_12x6.hdr"
   "../assets/ice_lake/radiance_8_6x3.hdr"
+brdfLut "../assets/brdf_lut.png"
 
 #1 Texture
 path "../assets/light.png"
 
 #2 GltfModel
+path "../assets/armadillo.glb"
+
+#3 GltfModel
+path "../assets/DamagedHelmet.glb"
+flip_uvs
+
+#4 GltfModel
 path "../assets/Duck.glb"
 
 
 Entities:
 
+// Camera
+#
+Transform {
+  position 0.0 0.0 -5.0
+}
+Camera {}
+
+// Environment
+#
+Environment { asset 0 }
+
+// Lights
 #
 Transform {
   position 3.0 2.0 3.0
   scale 0.5 0.5 0.5
 }
-
-Light {
-  color 1.0 1.0 0.0
-}
-
-Billboard {
-  asset 1
-}
+Light { color 1.0 1.0 0.0 }
+Billboard { asset 1 }
 
 #
 Transform {
   position 3.0 2.0 3.0
   scale 0.5 0.5 0.5
 }
+Light { color 0.0 1.0 1.0 }
+Billboard { asset 1 }
 
-Light {
 
-}
-
-Billboard {
-  asset 1
-}
-
+// Armadillo
 #
 Transform {
-
+  position 0.0 -1.0 -0.5
+  scale 1.0
+  rotation 1.0 .0 .0 .0
 }
+GltfModel { asset 2 }
 
-GltfModel {
-  asset 2
+// Damaged helmet
+#
+Transform {
+  rotation .707 -.707 .0 .0
 }
+GltfModel { asset 3 }
 
-
-
+// Duck
+#
+Transform {
+  scale 100.0
+}
+GltfModel { asset 4 }

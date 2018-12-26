@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -95,6 +96,38 @@ struct Value {
 struct Property {
   std::vector<Value> values;
 
+  inline std::string getString() {
+    if (values.size() >= 1) {
+      return values[0].getString();
+    }
+
+    throw std::runtime_error("Could not get string from property");
+  }
+
+  inline float getFloat() {
+    if (values.size() >= 1) {
+      return values[0].getFloat();
+    }
+
+    throw std::runtime_error("Could not get float from property");
+  }
+
+  inline int getInt() {
+    if (values.size() >= 1) {
+      return values[0].getInt();
+    }
+
+    throw std::runtime_error("Could not get int from property");
+  }
+
+  inline uint32_t getUint32() {
+    if (values.size() >= 1) {
+      return static_cast<uint32_t>(values[0].getInt());
+    }
+
+    throw std::runtime_error("Could not get uint32_t from property");
+  }
+
   inline glm::vec3 getVec3() {
     if (values.size() == 1) {
       return glm::vec3(values[0].getFloat());
@@ -120,6 +153,18 @@ struct Property {
     }
 
     throw std::runtime_error("Could not get vec4 from property");
+  }
+
+  inline glm::quat getQuat() {
+    if (values.size() == 4) {
+      return glm::quat(
+          values[0].getFloat(),
+          values[1].getFloat(),
+          values[2].getFloat(),
+          values[3].getFloat());
+    }
+
+    throw std::runtime_error("Could not get quat from property");
   }
 };
 
