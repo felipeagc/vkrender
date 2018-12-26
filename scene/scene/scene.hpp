@@ -23,6 +23,35 @@ struct Value {
     ~InternalValue() {};
   } value;
 
+  inline float getFloat() {
+    if (this->type == ValueType::eFloat) {
+      return this->value.fval;
+    } else if (this->type == ValueType::eInt) {
+      return static_cast<float>(this->value.ival);
+    }
+    throw std::runtime_error("Tried to get float from incompatible value type");
+  }
+
+  inline int getInt() {
+    if (this->type == ValueType::eFloat) {
+      return static_cast<int>(this->value.fval);
+    } else if (this->type == ValueType::eInt) {
+      return this->value.ival;
+    }
+    throw std::runtime_error("Tried to get int from incompatible value type");
+  }
+
+  inline std::string getString() {
+    if (this->type == ValueType::eString) {
+      return this->value.sval;
+    } else if (this->type == ValueType::eInt) {
+      return std::to_string(this->value.ival);
+    } else if (this->type == ValueType::eFloat) {
+      return std::to_string(this->value.fval);
+    }
+    throw std::runtime_error("Tried to get string from incompatible value type");
+  }
+
   Value(int ival) {
     type = ValueType::eInt;
     value.ival = ival;
