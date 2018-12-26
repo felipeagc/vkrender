@@ -36,8 +36,7 @@ class Driver;
 %token <int> INTEGER
 %token <float> FLOAT
 %token <std::string> NAME STRING
-%token OPEN_CURLY CLOSE_CURLY OPEN_SQUARE CLOSE_SQUARE POUND
-%token EOL SPACE
+%token OPEN_CURLY CLOSE_CURLY POUND
 
 %type <int> id
 
@@ -46,7 +45,6 @@ class Driver;
 %%
 
 scene:
-  | scene EOL
   | scene scene_section
   | scene assets_section
   | scene entities_section
@@ -54,41 +52,35 @@ scene:
 
 scene_section:
   SCENE_HEADER { drv.setSection(Driver::Section::eScene); }
-  | scene_section EOL
-  | scene_section EOL property
+  | scene_section property
   ;
 
 assets_section:
   ASSETS_HEADER { drv.setSection(Driver::Section::eAssets); }
-  | assets_section EOL
-  | assets_section EOL asset_name
-  | assets_section EOL property
+  | assets_section asset_name
+  | assets_section property
   ;
 
 asset_name: id NAME { drv.addAsset($1, $2); };
 
 entities_section:
   ENTITIES_HEADER { drv.setSection(Driver::Section::eEntities); }
-  | entities_section EOL
-  | entities_section EOL entity_id
-  | entities_section EOL component
+  | entities_section entity_id
+  | entities_section component
   ;
 
 entity_id: id { drv.addEntity($1); };
 
 component:
   component_name OPEN_CURLY CLOSE_CURLY
-  | component_name OPEN_CURLY EOL CLOSE_CURLY
   | component_name OPEN_CURLY component_properties CLOSE_CURLY
-  | component_name OPEN_CURLY EOL component_properties CLOSE_CURLY
-  | component_name OPEN_CURLY EOL component_properties EOL CLOSE_CURLY
   ;
 
 component_name: NAME { drv.addComponent($1); };
 
 component_properties:
   property
-  | component_properties EOL property
+  | component_properties property
   ;
 
 id:
@@ -98,30 +90,10 @@ id:
 
 property:
   property_name
-  | OPEN_SQUARE {
-    throw yy::parser::syntax_error(drv.m_location,
-                                   "bracketed values must start at "
-                                   "the same line as the property name");
-  }
-  | property_name property_name {
-    throw yy::parser::syntax_error(drv.m_location,
-                                   "property name cannot be used as a value");
-  }
   | property_name values
-  | property_name OPEN_SQUARE CLOSE_SQUARE
-  | property_name OPEN_SQUARE EOL CLOSE_SQUARE
-  | property_name OPEN_SQUARE bracketed_values CLOSE_SQUARE
-  | property_name OPEN_SQUARE EOL bracketed_values CLOSE_SQUARE
-  | property_name OPEN_SQUARE EOL bracketed_values EOL CLOSE_SQUARE
   ;
 
 property_name: NAME { drv.addProperty($1); };
-
-bracketed_values:
-  value
-  | bracketed_values EOL value
-  | bracketed_values value
-  ;
 
 values:
   value

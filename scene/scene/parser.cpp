@@ -248,7 +248,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         value.YY_MOVE_OR_COPY< int > (YY_MOVE (that.value));
         break;
 
@@ -277,7 +277,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         value.move< int > (YY_MOVE (that.value));
         break;
 
@@ -306,7 +306,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         value.move< int > (that.value);
         break;
 
@@ -354,35 +354,35 @@ namespace yy {
     {
             case 6: // INTEGER
 
-#line 44 "parser.y" // lalr1.cc:671
+#line 43 "parser.y" // lalr1.cc:671
         { yyo << yysym.value.template as< int > (); }
 #line 360 "parser.cpp" // lalr1.cc:671
         break;
 
       case 7: // FLOAT
 
-#line 44 "parser.y" // lalr1.cc:671
+#line 43 "parser.y" // lalr1.cc:671
         { yyo << yysym.value.template as< float > (); }
 #line 367 "parser.cpp" // lalr1.cc:671
         break;
 
       case 8: // NAME
 
-#line 44 "parser.y" // lalr1.cc:671
+#line 43 "parser.y" // lalr1.cc:671
         { yyo << yysym.value.template as< std::string > (); }
 #line 374 "parser.cpp" // lalr1.cc:671
         break;
 
       case 9: // STRING
 
-#line 44 "parser.y" // lalr1.cc:671
+#line 43 "parser.y" // lalr1.cc:671
         { yyo << yysym.value.template as< std::string > (); }
 #line 381 "parser.cpp" // lalr1.cc:671
         break;
 
-      case 27: // id
+      case 23: // id
 
-#line 44 "parser.y" // lalr1.cc:671
+#line 43 "parser.y" // lalr1.cc:671
         { yyo << yysym.value.template as< int > (); }
 #line 388 "parser.cpp" // lalr1.cc:671
         break;
@@ -599,7 +599,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         yylhs.value.emplace< int > ();
         break;
 
@@ -628,99 +628,80 @@ namespace yy {
         {
           switch (yyn)
             {
-  case 7:
-#line 56 "parser.y" // lalr1.cc:906
+  case 6:
+#line 54 "parser.y" // lalr1.cc:906
     { drv.setSection(Driver::Section::eScene); }
 #line 635 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 10:
-#line 62 "parser.y" // lalr1.cc:906
+  case 8:
+#line 59 "parser.y" // lalr1.cc:906
     { drv.setSection(Driver::Section::eAssets); }
 #line 641 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 14:
-#line 68 "parser.y" // lalr1.cc:906
+  case 11:
+#line 64 "parser.y" // lalr1.cc:906
     { drv.addAsset(yystack_[1].value.as< int > (), yystack_[0].value.as< std::string > ()); }
 #line 647 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 15:
-#line 71 "parser.y" // lalr1.cc:906
+  case 12:
+#line 67 "parser.y" // lalr1.cc:906
     { drv.setSection(Driver::Section::eEntities); }
 #line 653 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 19:
-#line 77 "parser.y" // lalr1.cc:906
+  case 15:
+#line 72 "parser.y" // lalr1.cc:906
     { drv.addEntity(yystack_[0].value.as< int > ()); }
 #line 659 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 25:
-#line 87 "parser.y" // lalr1.cc:906
+  case 18:
+#line 79 "parser.y" // lalr1.cc:906
     { drv.addComponent(yystack_[0].value.as< std::string > ()); }
 #line 665 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 28:
-#line 95 "parser.y" // lalr1.cc:906
+  case 21:
+#line 87 "parser.y" // lalr1.cc:906
     { yylhs.value.as< int > () = yystack_[0].value.as< int > (); }
 #line 671 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 29:
-#line 96 "parser.y" // lalr1.cc:906
+  case 22:
+#line 88 "parser.y" // lalr1.cc:906
     { yylhs.value.as< int > () = -1; }
 #line 677 "parser.cpp" // lalr1.cc:906
     break;
 
+  case 25:
+#line 96 "parser.y" // lalr1.cc:906
+    { drv.addProperty(yystack_[0].value.as< std::string > ()); }
+#line 683 "parser.cpp" // lalr1.cc:906
+    break;
+
   case 31:
-#line 101 "parser.y" // lalr1.cc:906
-    {
-    throw yy::parser::syntax_error(drv.m_location,
-                                   "bracketed values must start at "
-                                   "the same line as the property name");
-  }
-#line 687 "parser.cpp" // lalr1.cc:906
+#line 109 "parser.y" // lalr1.cc:906
+    { drv.addValue(yystack_[0].value.as< int > ()); }
+#line 689 "parser.cpp" // lalr1.cc:906
     break;
 
   case 32:
-#line 106 "parser.y" // lalr1.cc:906
-    {
-    throw yy::parser::syntax_error(drv.m_location,
-                                   "property name cannot be used as a value");
-  }
-#line 696 "parser.cpp" // lalr1.cc:906
-    break;
-
-  case 39:
-#line 118 "parser.y" // lalr1.cc:906
-    { drv.addProperty(yystack_[0].value.as< std::string > ()); }
-#line 702 "parser.cpp" // lalr1.cc:906
-    break;
-
-  case 48:
-#line 137 "parser.y" // lalr1.cc:906
-    { drv.addValue(yystack_[0].value.as< int > ()); }
-#line 708 "parser.cpp" // lalr1.cc:906
-    break;
-
-  case 49:
-#line 138 "parser.y" // lalr1.cc:906
+#line 110 "parser.y" // lalr1.cc:906
     { drv.addValue(yystack_[0].value.as< float > ()); }
-#line 714 "parser.cpp" // lalr1.cc:906
+#line 695 "parser.cpp" // lalr1.cc:906
     break;
 
-  case 50:
-#line 139 "parser.y" // lalr1.cc:906
+  case 33:
+#line 111 "parser.y" // lalr1.cc:906
     { drv.addValue(yystack_[0].value.as< std::string > ()); }
-#line 720 "parser.cpp" // lalr1.cc:906
+#line 701 "parser.cpp" // lalr1.cc:906
     break;
 
 
-#line 724 "parser.cpp" // lalr1.cc:906
+#line 705 "parser.cpp" // lalr1.cc:906
             default:
               break;
             }
@@ -978,106 +959,83 @@ namespace yy {
   }
 
 
-  const signed char parser::yypact_ninf_ = -15;
+  const signed char parser::yypact_ninf_ = -8;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-     -15,     3,   -15,   -15,   -15,   -15,   -15,    -1,    17,    28,
-       8,    -3,    -4,   -15,   -15,   -15,    60,    41,   -15,    42,
-     -15,   -15,   -15,   -15,    45,   -15,   -15,   -15,   -15,     6,
-     -15,    32,   -15,   -15,   -15,   -15,   -15,   -15,    37,   -15,
-      47,    16,   -15,   -15,   -15,    62,    13,   -15,   -15,    27,
-     -15,    32,   -15,   -15,    15,   -15,     8,   -15,    52,   -15,
-     -15,    67,   -15,   -15,   -15
+      -8,     1,    -8,    -8,    -8,    -8,    -6,    -5,     0,    -8,
+      -8,     4,     3,    -8,     8,    -8,    -8,    -8,    -8,     9,
+      -8,    -8,    -8,    -8,     4,    -8,    -8,    -8,    -8,    -8,
+      -8,     6,    -8,    -8,     7,    -8,    -8,    -8
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       2,     0,     1,     7,    10,    15,     3,     4,     5,     6,
-       8,    11,    16,    39,    31,     9,    30,    29,    12,     0,
-      13,    25,    17,    18,     0,    19,    48,    49,    50,     0,
-      32,    33,    43,    45,    46,    47,    28,    14,     0,    34,
-       0,     0,    40,    44,    20,     0,     0,    26,    35,     0,
-      36,     0,    42,    21,     0,    22,     0,    37,     0,    41,
-      23,     0,    27,    38,    24
+       2,     0,     1,     6,     8,    12,     3,     4,     5,    25,
+       7,    23,    22,     9,     0,    10,    18,    13,    14,     0,
+      15,    31,    32,    33,    24,    26,    28,    29,    30,    21,
+      11,     0,    27,    16,     0,    19,    17,    20
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-     -15,   -15,   -15,   -15,   -15,   -15,   -15,   -15,   -15,    12,
-      50,   -10,    48,    23,   -15,   -14,   -15,   -15,   -15
+      -8,    -8,    -8,    -8,    -8,    -8,    -8,    -8,    -8,    -8,
+      12,    -7,    -8,    -8,    -3,    -8,    -8,    -8
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     1,     7,     8,    18,     9,    22,    23,    24,    46,
-      19,    47,    16,    41,    31,    42,    33,    34,    35
+      -1,     1,     6,     7,    13,     8,    17,    18,    19,    34,
+      14,    10,    11,    24,    25,    26,    27,    28
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-      15,    20,    32,     2,    21,    13,     3,     4,     5,    14,
-      17,    17,    26,    27,    10,    28,    13,    43,     6,    39,
-      14,    40,    26,    27,    55,    28,    60,    52,    56,    50,
-      61,    51,    11,    26,    27,    52,    28,    59,    26,    27,
-      57,    28,    58,    12,    59,    13,    62,    36,    44,    14,
-      37,    62,    45,    26,    27,    38,    28,    54,    26,    27,
-      48,    28,    25,    49,    30,    63,    26,    27,    13,    28,
-      13,     0,    29,    53,    14,    13,     0,     0,    64,    14
+      15,     2,     9,     9,     3,     4,     5,    12,    16,    29,
+      21,    22,    12,    23,     9,     9,    30,    33,    36,    31,
+      20,    32,     0,     0,    35,     0,     0,    37
   };
 
   const signed char
   parser::yycheck_[] =
   {
-      10,    11,    16,     0,     8,     8,     3,     4,     5,    12,
-      14,    14,     6,     7,    15,     9,     8,    31,    15,    13,
-      12,    15,     6,     7,    11,     9,    11,    41,    15,    13,
-      15,    15,    15,     6,     7,    49,     9,    51,     6,     7,
-      13,     9,    15,    15,    58,     8,    56,     6,    11,    12,
-       8,    61,    15,     6,     7,    10,     9,    45,     6,     7,
-      13,     9,    12,    40,    16,    13,     6,     7,     8,     9,
-       8,    -1,    12,    11,    12,     8,    -1,    -1,    11,    12
+       7,     0,     8,     8,     3,     4,     5,    12,     8,     6,
+       6,     7,    12,     9,     8,     8,     8,    11,    11,    10,
+       8,    24,    -1,    -1,    31,    -1,    -1,    34
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,    18,     0,     3,     4,     5,    15,    19,    20,    22,
-      15,    15,    15,     8,    12,    28,    29,    14,    21,    27,
-      28,     8,    23,    24,    25,    27,     6,     7,     9,    12,
-      29,    31,    32,    33,    34,    35,     6,     8,    10,    13,
-      15,    30,    32,    32,    11,    15,    26,    28,    13,    30,
-      13,    15,    32,    11,    26,    11,    15,    13,    15,    32,
-      11,    15,    28,    13,    11
+       0,    14,     0,     3,     4,     5,    15,    16,    18,     8,
+      24,    25,    12,    17,    23,    24,     8,    19,    20,    21,
+      23,     6,     7,     9,    26,    27,    28,    29,    30,     6,
+       8,    10,    27,    11,    22,    24,    11,    24
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,    17,    18,    18,    18,    18,    18,    19,    19,    19,
-      20,    20,    20,    20,    21,    22,    22,    22,    22,    23,
-      24,    24,    24,    24,    24,    25,    26,    26,    27,    27,
-      28,    28,    28,    28,    28,    28,    28,    28,    28,    29,
-      30,    30,    30,    31,    31,    32,    32,    32,    33,    34,
-      35
+       0,    13,    14,    14,    14,    14,    15,    15,    16,    16,
+      16,    17,    18,    18,    18,    19,    20,    20,    21,    22,
+      22,    23,    23,    24,    24,    25,    26,    26,    27,    27,
+      27,    28,    29,    30
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     0,     2,     2,     2,     2,     1,     2,     3,
-       1,     2,     3,     3,     2,     1,     2,     3,     3,     1,
-       3,     4,     4,     5,     6,     1,     1,     3,     2,     1,
-       1,     1,     2,     2,     3,     4,     4,     5,     6,     1,
-       1,     3,     2,     1,     2,     1,     1,     1,     1,     1,
-       1
+       0,     2,     0,     2,     2,     2,     1,     2,     1,     2,
+       2,     2,     1,     2,     2,     1,     3,     4,     1,     1,
+       2,     2,     1,     1,     2,     1,     1,     2,     1,     1,
+       1,     1,     1,     1
   };
 
 
@@ -1089,11 +1047,10 @@ namespace yy {
   {
   "\"end of file\"", "error", "$undefined", "SCENE_HEADER",
   "ASSETS_HEADER", "ENTITIES_HEADER", "INTEGER", "FLOAT", "NAME", "STRING",
-  "OPEN_CURLY", "CLOSE_CURLY", "OPEN_SQUARE", "CLOSE_SQUARE", "POUND",
-  "EOL", "SPACE", "$accept", "scene", "scene_section", "assets_section",
-  "asset_name", "entities_section", "entity_id", "component",
-  "component_name", "component_properties", "id", "property",
-  "property_name", "bracketed_values", "values", "value", "int_value",
+  "OPEN_CURLY", "CLOSE_CURLY", "POUND", "$accept", "scene",
+  "scene_section", "assets_section", "asset_name", "entities_section",
+  "entity_id", "component", "component_name", "component_properties", "id",
+  "property", "property_name", "values", "value", "int_value",
   "float_value", "string_value", YY_NULLPTR
   };
 
@@ -1101,12 +1058,10 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    48,    48,    49,    50,    51,    52,    56,    57,    58,
-      62,    63,    64,    65,    68,    71,    72,    73,    74,    77,
-      80,    81,    82,    83,    84,    87,    90,    91,    95,    96,
-     100,   101,   106,   110,   111,   112,   113,   114,   115,   118,
-     121,   122,   123,   127,   128,   132,   133,   134,   137,   138,
-     139
+       0,    47,    47,    48,    49,    50,    54,    55,    59,    60,
+      61,    64,    67,    68,    69,    72,    75,    76,    79,    82,
+      83,    87,    88,    92,    93,    96,    99,   100,   104,   105,
+     106,   109,   110,   111
   };
 
   // Print the state stack on the debug stream.
@@ -1141,8 +1096,8 @@ namespace yy {
 
 
 } // yy
-#line 1145 "parser.cpp" // lalr1.cc:1217
-#line 141 "parser.y" // lalr1.cc:1218
+#line 1100 "parser.cpp" // lalr1.cc:1217
+#line 113 "parser.y" // lalr1.cc:1218
 
 
 void yy::parser::error (const location_type& l, const std::string& m) {

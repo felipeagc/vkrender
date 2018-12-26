@@ -6,7 +6,7 @@ Assets:
 #0 Environment
 skybox "../assets/ice_lake/skybox.hdr"
 irradiance "../assets/ice_lake/irradiance.hdr"
-radiance [
+radiance
   "../assets/ice_lake/radiance_0_1600x800.hdr"
   "../assets/ice_lake/radiance_1_800x400.hdr"
   "../assets/ice_lake/radiance_2_400x200.hdr"
@@ -16,7 +16,6 @@ radiance [
   "../assets/ice_lake/radiance_6_25x12.hdr"
   "../assets/ice_lake/radiance_7_12x6.hdr"
   "../assets/ice_lake/radiance_8_6x3.hdr"
-]
 
 #1 Texture
 path "../assets/light.png"

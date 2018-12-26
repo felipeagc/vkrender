@@ -32,16 +32,14 @@ NAME [a-zA-Z][a-zA-Z0-9_]*
 \n+ {
   loc.lines(yyleng);
   loc.step();
-  return yy::parser::make_EOL(loc);
+  /* return yy::parser::make_EOL(loc); */
 }
 
-"Scene:" return yy::parser::make_SCENE_HEADER(loc);
-"Assets:" return yy::parser::make_ASSETS_HEADER(loc);
-"Entities:" return yy::parser::make_ENTITIES_HEADER(loc);
+"Scene:\n" return yy::parser::make_SCENE_HEADER(loc);
+"Assets:\n" return yy::parser::make_ASSETS_HEADER(loc);
+"Entities:\n" return yy::parser::make_ENTITIES_HEADER(loc);
 "{" return yy::parser::make_OPEN_CURLY(loc);
 "}" return yy::parser::make_CLOSE_CURLY(loc);
-"[" return yy::parser::make_OPEN_SQUARE(loc);
-"]" return yy::parser::make_CLOSE_SQUARE(loc);
 "#" return yy::parser::make_POUND(loc);
 
 [+-]?{DIGIT}+ return yy::parser::make_INTEGER(atoi(yytext), loc);
@@ -58,10 +56,10 @@ NAME [a-zA-Z][a-zA-Z0-9_]*
 
 "//".* {}
 
-"/*"            { BEGIN(MULTILINE_COMMENT); }
+"/*" { BEGIN(MULTILINE_COMMENT); }
 <MULTILINE_COMMENT>"*/" { BEGIN(INITIAL); }
-<MULTILINE_COMMENT>\n   {}
-<MULTILINE_COMMENT>.    {}
+<MULTILINE_COMMENT>\n {}
+<MULTILINE_COMMENT>. {}
 
 . {
   throw yy::parser::syntax_error(loc, "invalid character: " + std::string(yytext));

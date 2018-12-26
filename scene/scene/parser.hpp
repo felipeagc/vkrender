@@ -527,11 +527,7 @@ namespace yy {
         TOK_STRING = 264,
         TOK_OPEN_CURLY = 265,
         TOK_CLOSE_CURLY = 266,
-        TOK_OPEN_SQUARE = 267,
-        TOK_CLOSE_SQUARE = 268,
-        TOK_POUND = 269,
-        TOK_EOL = 270,
-        TOK_SPACE = 271
+        TOK_POUND = 267
       };
     };
 
@@ -712,23 +708,7 @@ namespace yy {
 
     static
     symbol_type
-    make_OPEN_SQUARE (YY_COPY (location_type) l);
-
-    static
-    symbol_type
-    make_CLOSE_SQUARE (YY_COPY (location_type) l);
-
-    static
-    symbol_type
     make_POUND (YY_COPY (location_type) l);
-
-    static
-    symbol_type
-    make_EOL (YY_COPY (location_type) l);
-
-    static
-    symbol_type
-    make_SPACE (YY_COPY (location_type) l);
 
 
 
@@ -911,12 +891,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 79,     ///< Last index in yytable_.
-      yynnts_ = 19,  ///< Number of nonterminal symbols.
+      yylast_ = 27,     ///< Last index in yytable_.
+      yynnts_ = 18,  ///< Number of nonterminal symbols.
       yyfinal_ = 2, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 17  ///< Number of tokens.
+      yyntokens_ = 13  ///< Number of tokens.
     };
 
 
@@ -959,10 +939,9 @@ namespace yy {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16
+       5,     6,     7,     8,     9,    10,    11,    12
     };
-    const unsigned user_token_number_max_ = 271;
+    const unsigned user_token_number_max_ = 267;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -999,7 +978,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         value.YY_MOVE_OR_COPY< int > (YY_MOVE (other.value));
         break;
 
@@ -1073,7 +1052,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         value.template destroy< int > ();
         break;
 
@@ -1108,7 +1087,7 @@ namespace yy {
         break;
 
       case 6: // INTEGER
-      case 27: // id
+      case 23: // id
         value.move< int > (YY_MOVE (s.value));
         break;
 
@@ -1173,7 +1152,7 @@ namespace yy {
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271
+     265,   266,   267
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1251,43 +1230,15 @@ namespace yy {
 
   inline
   parser::symbol_type
-  parser::make_OPEN_SQUARE (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOK_OPEN_SQUARE, YY_MOVE (l));
-  }
-
-  inline
-  parser::symbol_type
-  parser::make_CLOSE_SQUARE (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOK_CLOSE_SQUARE, YY_MOVE (l));
-  }
-
-  inline
-  parser::symbol_type
   parser::make_POUND (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOK_POUND, YY_MOVE (l));
   }
 
-  inline
-  parser::symbol_type
-  parser::make_EOL (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOK_EOL, YY_MOVE (l));
-  }
-
-  inline
-  parser::symbol_type
-  parser::make_SPACE (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOK_SPACE, YY_MOVE (l));
-  }
-
 
 
 } // yy
-#line 1291 "parser.hpp" // lalr1.cc:403
+#line 1242 "parser.hpp" // lalr1.cc:403
 
 
 
