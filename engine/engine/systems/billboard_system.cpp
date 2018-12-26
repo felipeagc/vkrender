@@ -37,7 +37,7 @@ void BillboardSystem::process(
                                       engine::LightComponent &,
                                       engine::BillboardComponent &) {
     billboards.push_back(
-        {glm::distance(cameraPos, transform.position), entity});
+        {-glm::distance(cameraPos, transform.position), entity});
   });
 
   // Sort draw calls
