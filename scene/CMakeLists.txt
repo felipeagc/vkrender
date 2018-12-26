@@ -22,6 +22,7 @@ target_link_libraries(
 
   PRIVATE
   m
+  glm
   )
 
 cotire(scene)

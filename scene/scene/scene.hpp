@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,8 +21,8 @@ struct Value {
     int ival;
     float fval;
 
-    InternalValue() {};
-    ~InternalValue() {};
+    InternalValue(){};
+    ~InternalValue(){};
   } value;
 
   inline float getFloat() {
@@ -49,7 +51,8 @@ struct Value {
     } else if (this->type == ValueType::eFloat) {
       return std::to_string(this->value.fval);
     }
-    throw std::runtime_error("Tried to get string from incompatible value type");
+    throw std::runtime_error(
+        "Tried to get string from incompatible value type");
   }
 
   Value(int ival) {
@@ -64,7 +67,7 @@ struct Value {
 
   Value(std::string sval) {
     type = ValueType::eString;
-    new(&value.sval) std::string(sval);
+    new (&value.sval) std::string(sval);
   }
 
   Value(const Value &other) : type(other.type) {
@@ -91,6 +94,33 @@ struct Value {
 
 struct Property {
   std::vector<Value> values;
+
+  inline glm::vec3 getVec3() {
+    if (values.size() == 1) {
+      return glm::vec3(values[0].getFloat());
+    }
+    if (values.size() == 3) {
+      return glm::vec3(
+          values[0].getFloat(), values[1].getFloat(), values[2].getFloat());
+    }
+
+    throw std::runtime_error("Could not get vec3 from property");
+  }
+
+  inline glm::vec4 getVec4() {
+    if (values.size() == 1) {
+      return glm::vec4(values[0].getFloat());
+    }
+    if (values.size() == 4) {
+      return glm::vec4(
+          values[0].getFloat(),
+          values[1].getFloat(),
+          values[2].getFloat(),
+          values[3].getFloat());
+    }
+
+    throw std::runtime_error("Could not get vec4 from property");
+  }
 };
 
 struct Asset {
