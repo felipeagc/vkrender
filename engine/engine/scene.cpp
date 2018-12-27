@@ -57,7 +57,7 @@ Scene::Scene(const std::string &path) {
   scene::Driver drv;
   FILE *file = fopen(path.c_str(), "r");
   if (file != nullptr) {
-    drv.parseFile("", file);
+    drv.parseFile(path, file);
     fclose(file);
   } else {
     throw std::runtime_error("Failed to open scene file");
