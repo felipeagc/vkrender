@@ -44,23 +44,31 @@ Camera {}
 
 // Environment
 #
-Environment { asset 0 }
+Environment {
+  asset 0
+}
 
 // Lights
 #
 Transform {
   position 3.0 2.0 3.0
-  scale 0.5 0.5 0.5
+  scale 0.5
 }
-Light { color 1.0 1.0 0.0 }
+Light {
+  color 1.0 1.0 0.0
+  intensity 4
+}
 Billboard { asset 1 }
 
 #
 Transform {
-  position 3.0 2.0 3.0
-  scale 0.5 0.5 0.5
+  position -3.0 2.0 -3.0
+  scale 0.5
 }
-Light { color 0.0 1.0 1.0 }
+Light {
+  color 0.0 1.0 1.0
+  intensity 4
+}
 Billboard { asset 1 }
 
 
@@ -69,20 +77,22 @@ Billboard { asset 1 }
 Transform {
   position 0.0 -1.0 -0.5
   scale 1.0
-  rotation 1.0 .0 .0 .0
+  rotation -90 0 0
 }
 GltfModel { asset 2 }
 
 // Damaged helmet
 #
 Transform {
-  rotation .707 -.707 .0 .0
+  position 4 0 4
+  rotation -90 0 0
 }
 GltfModel { asset 3 }
 
 // Duck
 #
 Transform {
+  position -4 0 -4
   scale 100.0
 }
 GltfModel { asset 4 }

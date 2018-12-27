@@ -1,8 +1,21 @@
 #include "gltf_model_component.hpp"
+#include "../scene.hpp"
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 
 using namespace engine;
+
+template <>
+void engine::loadComponent<GltfModelComponent>(
+    const scene::Component &comp,
+    ecs::World &world,
+    AssetManager &assetManager,
+    ecs::Entity entity) {
+  world.assign<GltfModelComponent>(
+      entity,
+      assetManager.getAsset<engine::GltfModelAsset>(
+          comp.properties.at("asset").getUint32()));
+}
 
 GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
     : m_modelIndex(modelAsset.index()) {

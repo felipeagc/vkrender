@@ -1,9 +1,19 @@
 #include "camera_component.hpp"
+#include "../scene.hpp"
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
 
 using namespace engine;
+
+template <>
+void engine::loadComponent<CameraComponent>(
+    const scene::Component &,
+    ecs::World &world,
+    AssetManager &,
+    ecs::Entity entity) {
+  world.assign<engine::CameraComponent>(entity);
+}
 
 CameraComponent::CameraComponent(float fov) : m_fov(fov) {
   auto [descriptorPool, descriptorSetLayout] =

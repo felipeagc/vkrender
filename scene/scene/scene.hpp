@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -26,7 +26,7 @@ struct Value {
     ~InternalValue(){};
   } value;
 
-  inline float getFloat() {
+  inline float getFloat() const {
     if (this->type == ValueType::eFloat) {
       return this->value.fval;
     } else if (this->type == ValueType::eInt) {
@@ -35,7 +35,7 @@ struct Value {
     throw std::runtime_error("Tried to get float from incompatible value type");
   }
 
-  inline int getInt() {
+  inline int getInt() const {
     if (this->type == ValueType::eFloat) {
       return static_cast<int>(this->value.fval);
     } else if (this->type == ValueType::eInt) {
@@ -44,7 +44,7 @@ struct Value {
     throw std::runtime_error("Tried to get int from incompatible value type");
   }
 
-  inline std::string getString() {
+  inline std::string getString() const {
     if (this->type == ValueType::eString) {
       return this->value.sval;
     } else if (this->type == ValueType::eInt) {
@@ -96,7 +96,7 @@ struct Value {
 struct Property {
   std::vector<Value> values;
 
-  inline std::string getString() {
+  inline std::string getString() const {
     if (values.size() >= 1) {
       return values[0].getString();
     }
@@ -104,7 +104,7 @@ struct Property {
     throw std::runtime_error("Could not get string from property");
   }
 
-  inline float getFloat() {
+  inline float getFloat() const {
     if (values.size() >= 1) {
       return values[0].getFloat();
     }
@@ -112,7 +112,7 @@ struct Property {
     throw std::runtime_error("Could not get float from property");
   }
 
-  inline int getInt() {
+  inline int getInt() const {
     if (values.size() >= 1) {
       return values[0].getInt();
     }
@@ -120,7 +120,7 @@ struct Property {
     throw std::runtime_error("Could not get int from property");
   }
 
-  inline uint32_t getUint32() {
+  inline uint32_t getUint32() const {
     if (values.size() >= 1) {
       return static_cast<uint32_t>(values[0].getInt());
     }
@@ -128,7 +128,7 @@ struct Property {
     throw std::runtime_error("Could not get uint32_t from property");
   }
 
-  inline glm::vec3 getVec3() {
+  inline glm::vec3 getVec3() const {
     if (values.size() == 1) {
       return glm::vec3(values[0].getFloat());
     }
@@ -140,7 +140,7 @@ struct Property {
     throw std::runtime_error("Could not get vec3 from property");
   }
 
-  inline glm::vec4 getVec4() {
+  inline glm::vec4 getVec4() const {
     if (values.size() == 1) {
       return glm::vec4(values[0].getFloat());
     }
@@ -155,13 +155,18 @@ struct Property {
     throw std::runtime_error("Could not get vec4 from property");
   }
 
-  inline glm::quat getQuat() {
+  inline glm::quat getQuat() const {
     if (values.size() == 4) {
-      return glm::quat(
-          values[0].getFloat(),
-          values[1].getFloat(),
-          values[2].getFloat(),
-          values[3].getFloat());
+      return glm::angleAxis(
+          glm::radians(values[0].getFloat()),
+          glm::normalize(glm::vec3(
+              values[1].getFloat(),
+              values[2].getFloat(),
+              values[3].getFloat())));
+    }
+    if (values.size() == 3) {
+      return glm::quat(glm::radians(glm::vec3(
+          values[0].getFloat(), values[1].getFloat(), values[2].getFloat())));
     }
 
     throw std::runtime_error("Could not get quat from property");

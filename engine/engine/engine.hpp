@@ -4,6 +4,7 @@
 #include "file_watcher.hpp"
 #include "imgui_utils.hpp"
 #include "shader_watcher.hpp"
+#include "scene.hpp"
 
 #include "components/billboard_component.hpp"
 #include "components/camera_component.hpp"

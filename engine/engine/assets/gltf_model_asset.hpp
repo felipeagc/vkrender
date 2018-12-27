@@ -6,6 +6,7 @@
 #include <renderer/pipeline.hpp>
 #include <renderer/texture.hpp>
 #include <renderer/window.hpp>
+#include <scene/scene.hpp>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.h>

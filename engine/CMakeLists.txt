@@ -3,11 +3,14 @@ set(
   engine/asset_manager.cpp
   engine/imgui_utils.cpp
   engine/file_watcher.cpp
+  engine/scene.cpp
 
   engine/components/camera_component.cpp
   engine/components/gltf_model_component.cpp
   engine/components/billboard_component.cpp
   engine/components/environment_component.cpp
+  engine/components/transform_component.cpp
+  engine/components/light_component.cpp
 
   engine/systems/gltf_model_system.cpp
   engine/systems/fps_camera_system.cpp
@@ -17,6 +20,8 @@ set(
   engine/systems/entity_inspector_system.cpp
 
   engine/assets/gltf_model_asset.cpp
+  engine/assets/texture_asset.cpp
+  engine/assets/environment_asset.cpp
   )
 
 add_library(

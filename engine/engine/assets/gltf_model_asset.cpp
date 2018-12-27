@@ -1,15 +1,24 @@
 #include "gltf_model_asset.hpp"
-#include <algorithm>
+#include "../scene.hpp"
 #include <fstl/logging.hpp>
-#include <fstream>
-#include <rapidjson/document.h>
-#include <rapidjson/istreamwrapper.h>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
 #include <tiny_gltf.h>
 
 using namespace engine;
+
+template <>
+void engine::loadAsset<GltfModelAsset>(
+    const scene::Asset &asset, AssetManager &assetManager) {
+  const std::string &path = asset.properties.at("path").getString();
+  bool flipUVs = false;
+  if (asset.properties.find("flip_uvs") != asset.properties.end()) {
+    flipUVs = true;
+  }
+
+  assetManager.loadAssetIntoIndex<GltfModelAsset>(asset.id, path, flipUVs);
+}
 
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
   auto [descriptorPool, descriptorSetLayout] =

@@ -2,11 +2,24 @@
 
 #include "../assets/environment_asset.hpp"
 #include "../assets/texture_asset.hpp"
+#include "../scene.hpp"
 #include <fstl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 
 using namespace engine;
+
+template <>
+void engine::loadComponent<EnvironmentComponent>(
+    const scene::Component &comp,
+    ecs::World &world,
+    AssetManager &assetManager,
+    ecs::Entity entity) {
+  world.assign<engine::EnvironmentComponent>(
+      entity,
+      assetManager.getAsset<engine::EnvironmentAsset>(
+          comp.properties.at("asset").getUint32()));
+}
 
 EnvironmentComponent::EnvironmentComponent(
     const EnvironmentAsset &environmentAsset)

@@ -1,9 +1,22 @@
 #include "billboard_component.hpp"
+#include "../scene.hpp"
 #include <fstl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 
 using namespace engine;
+
+template <>
+void engine::loadComponent<BillboardComponent>(
+    const scene::Component &comp,
+    ecs::World &world,
+    AssetManager &assetManager,
+    ecs::Entity entity) {
+  world.assign<engine::BillboardComponent>(
+      entity,
+      assetManager.getAsset<engine::TextureAsset>(
+          comp.properties.at("asset").getUint32()));
+}
 
 BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
     : m_textureIndex(textureAsset.index()) {
