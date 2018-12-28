@@ -46,7 +46,9 @@ int main() {
   billboardShaderWatcher.startWatching();
 
   while (!window.getShouldClose()) {
-    window.beginPresent();
+    window.beginFrame();
+
+    window.beginRenderPass();
 
     time += window.getDelta();
 
@@ -77,7 +79,9 @@ int main() {
     skyboxSystem.process(window, world, skyboxPipeline);
     billboardSystem.process(window, world, billboardShaderWatcher.pipeline());
 
-    window.endPresent();
+    window.endRenderPass();
+
+    window.endFrame();
   }
 
   return 0;

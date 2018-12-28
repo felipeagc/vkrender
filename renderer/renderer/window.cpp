@@ -124,7 +124,7 @@ bool Window::pollEvent(SDL_Event *event) {
   return result;
 }
 
-void Window::beginPresent() {
+void Window::beginFrame() {
   m_timeBefore = std::chrono::high_resolution_clock::now();
 
   // Begin
@@ -146,6 +146,8 @@ void Window::beginPresent() {
           &m_currentImageIndex) == VK_ERROR_OUT_OF_DATE_KHR) {
     this->updateSize();
   }
+
+  this->imguiBeginFrame();
 
   VkImageSubresourceRange imageSubresourceRange{
       VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
@@ -198,60 +200,10 @@ void Window::beginPresent() {
         1,
         &barrierFromPresentToDraw);
   }
-
-  VkClearValue clearColor = {{{
-      this->clearColor.x,
-      this->clearColor.y,
-      this->clearColor.z,
-      this->clearColor.w,
-  }}};
-
-  std::array<VkClearValue, 2> clearValues{
-      clearColor,
-      VkClearValue{{{1.0f, 0}}},
-  };
-
-  VkRenderPassBeginInfo renderPassBeginInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,     // sType
-      nullptr,                                      // pNext
-      m_renderPass,                                 // renderPass
-      m_frameResources[m_currentFrame].framebuffer, // framebuffer
-      {{0, 0}, m_swapchainExtent},                  // renderArea
-      static_cast<uint32_t>(clearValues.size()),    // clearValueCount
-      clearValues.data(),                           // pClearValues
-  };
-
-  vkCmdBeginRenderPass(
-      commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-  VkViewport viewport{
-      0.0f,                                         // x
-      0.0f,                                         // y
-      static_cast<float>(m_swapchainExtent.width),  // width
-      static_cast<float>(m_swapchainExtent.height), // height
-      0.0f,                                         // minDepth
-      1.0f,                                         // maxDepth
-  };
-
-  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-  VkRect2D scissor{{0, 0}, m_swapchainExtent};
-
-  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-  this->imguiBeginFrame();
-
-  // Draw
-  // drawFunction();
 }
 
-void Window::endPresent() {
+void Window::endFrame() {
   auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
-
-  this->imguiEndFrame();
-
-  // End
-  vkCmdEndRenderPass(commandBuffer);
 
   {
     VkRenderPassBeginInfo imguiRenderPassBeginInfo = {
@@ -375,6 +327,59 @@ void Window::endPresent() {
                          .count();
 
   m_deltaTime = (double)elapsedTime / 1000000.0f;
+}
+
+void Window::beginRenderPass() {
+  auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
+
+  VkClearValue clearColor = {{{
+      this->clearColor.x,
+      this->clearColor.y,
+      this->clearColor.z,
+      this->clearColor.w,
+  }}};
+
+  std::array<VkClearValue, 2> clearValues{
+      clearColor,
+      VkClearValue{{{1.0f, 0}}},
+  };
+
+  VkRenderPassBeginInfo renderPassBeginInfo = {
+      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,     // sType
+      nullptr,                                      // pNext
+      m_renderPass,                                 // renderPass
+      m_frameResources[m_currentFrame].framebuffer, // framebuffer
+      {{0, 0}, m_swapchainExtent},                  // renderArea
+      static_cast<uint32_t>(clearValues.size()),    // clearValueCount
+      clearValues.data(),                           // pClearValues
+  };
+
+  vkCmdBeginRenderPass(
+      commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  VkViewport viewport{
+      0.0f,                                         // x
+      0.0f,                                         // y
+      static_cast<float>(m_swapchainExtent.width),  // width
+      static_cast<float>(m_swapchainExtent.height), // height
+      0.0f,                                         // minDepth
+      1.0f,                                         // maxDepth
+  };
+
+  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+  VkRect2D scissor{{0, 0}, m_swapchainExtent};
+
+  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
+
+void Window::endRenderPass() {
+  auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
+
+  this->imguiEndFrame();
+
+  // End
+  vkCmdEndRenderPass(commandBuffer);
 }
 
 void Window::updateSize() {

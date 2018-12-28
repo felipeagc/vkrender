@@ -110,7 +110,8 @@ int main() {
   }
 
   while (!window.getShouldClose()) {
-    window.beginPresent();
+    window.beginFrame();
+    window.beginRenderPass();
 
     SDL_Event event;
     while (window.pollEvent(&event)) {
@@ -132,7 +133,8 @@ int main() {
 
     vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
 
-    window.endPresent();
+    window.endRenderPass();
+    window.endFrame();
   }
 
   vertexBuffer.destroy();

@@ -25,8 +25,11 @@ public:
 
   bool pollEvent(SDL_Event *event);
 
-  void beginPresent();
-  void endPresent();
+  void beginFrame();
+  void endFrame();
+
+  void beginRenderPass();
+  void endRenderPass();
 
   uint32_t getWidth() const;
   uint32_t getHeight() const;
@@ -77,6 +80,7 @@ protected:
 
   VkFormat m_depthImageFormat;
 
+  // @note: might wanna make one of these per frame
   struct {
     VkImage image = VK_NULL_HANDLE;
     VmaAllocation allocation = VK_NULL_HANDLE;
