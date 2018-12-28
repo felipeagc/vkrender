@@ -1,7 +1,10 @@
 #pragma once
 
 #include <ecs/world.hpp>
-#include <renderer/window.hpp>
+
+namespace renderer {
+class Window;
+}
 
 namespace engine {
 class LightingSystem {

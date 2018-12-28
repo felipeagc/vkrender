@@ -2,7 +2,6 @@
 #include "context.hpp"
 #include "shader.hpp"
 #include "util.hpp"
-#include "window.hpp"
 
 namespace renderer {
 
@@ -46,7 +45,8 @@ GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
   return *this;
 }
 
-StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
+StandardPipeline::StandardPipeline(
+    BaseRenderTarget &renderTarget, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
@@ -84,7 +84,7 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
   rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getSampleCount());
+      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
@@ -105,7 +105,7 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
       m_pipelineLayout,              // pipelineLayout
-      window.getRenderPass(),        // renderPass
+      renderTarget.getRenderPass(),  // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex
@@ -120,7 +120,8 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
       &m_pipeline));
 }
 
-BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
+BillboardPipeline::BillboardPipeline(
+    BaseRenderTarget &renderTarget, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
@@ -162,8 +163,10 @@ BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
   auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
   auto viewportStateCreateInfo = pipeline::defaultViewportState();
   auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
+  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getSampleCount());
+      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
@@ -184,7 +187,7 @@ BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
       m_pipelineLayout,              // pipelineLayout
-      window.getRenderPass(),        // renderPass
+      renderTarget.getRenderPass(),  // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex
@@ -199,7 +202,7 @@ BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
       &m_pipeline));
 }
 
-SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
+SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
   VkDescriptorSetLayout descriptorSetLayouts[] = {
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
       *ctx().m_descriptorManager.getSetLayout(renderer::DESC_ENVIRONMENT),
@@ -225,7 +228,7 @@ SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
   auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
   rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getSampleCount());
+      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
@@ -247,7 +250,94 @@ SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
       &colorBlendStateCreateInfo,    // pColorBlendState
       &dynamicStateCreateInfo,       // pDynamicState
       m_pipelineLayout,              // pipelineLayout
-      window.getRenderPass(),        // renderPass
+      renderTarget.getRenderPass(),  // renderPass
+      0,                             // subpass
+      {},                            // basePipelineHandle
+      -1                             // basePipelineIndex
+  };
+
+  VK_CHECK(vkCreateGraphicsPipelines(
+      ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &m_pipeline));
+}
+
+FullscreenPipeline::FullscreenPipeline(
+    BaseRenderTarget &renderTarget, Shader &shader) {
+  VkDescriptorSetLayout descriptorSetLayouts[] = {
+      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_FULLSCREEN),
+  };
+
+  m_pipelineLayout = pipeline::createPipelineLayout(
+      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
+
+  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
+
+  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
+      nullptr,                                                   // pNext
+      0,                                                         // flags
+      0,       // vertexBindingDescriptionCount
+      nullptr, // pVertexBindingDescriptions
+      0,       // vertexAttributeDescriptionCount
+      nullptr, // pVertexAttributeDescriptions
+  };
+
+  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
+  auto viewportStateCreateInfo = pipeline::defaultViewportState();
+  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
+  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  auto multisampleStateCreateInfo =
+      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
+  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
+  depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+
+  VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
+      VK_FALSE,                            // blendEnable
+      VK_BLEND_FACTOR_SRC_ALPHA,           // srcColorBlendFactor
+      VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // dstColorBlendFactor
+      VK_BLEND_OP_ADD,                     // colorBlendOp
+      VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // srcAlphaBlendFactor
+      VK_BLEND_FACTOR_ZERO,                // dstAlphaBlendFactor
+      VK_BLEND_OP_ADD,                     // alphaBlendOp
+      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, // colorWriteMask
+  };
+
+  VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+      nullptr,
+      0,                          // flags
+      VK_FALSE,                   // logicOpEnable
+      VK_LOGIC_OP_COPY,           // logicOp
+      1,                          // attachmentCount
+      &colorBlendAttachmentState, // pAttachments
+      {0.0f, 0.0f, 0.0f, 0.0f},   // blendConstants
+  };
+
+  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
+      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      nullptr,
+      0,                                                    // flags
+      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
+      shaderStageCreateInfos.data(),                        // pStages
+      &vertexInputStateCreateInfo,                          // pVertexInputState
+      &inputAssemblyStateCreateInfo, // pInputAssemblyState
+      nullptr,                       // pTesselationState
+      &viewportStateCreateInfo,      // pViewportState
+      &rasterizationStateCreateInfo, // pRasterizationState
+      &multisampleStateCreateInfo,   // multisampleState
+      &depthStencilStateCreateInfo,  // pDepthStencilState
+      &colorBlendStateCreateInfo,    // pColorBlendState
+      &dynamicStateCreateInfo,       // pDynamicState
+      m_pipelineLayout,              // pipelineLayout
+      renderTarget.getRenderPass(),  // renderPass
       0,                             // subpass
       {},                            // basePipelineHandle
       -1                             // basePipelineIndex

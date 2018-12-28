@@ -10,6 +10,7 @@ const uint32_t MESH_MAX_SETS = 500;
 const uint32_t MODEL_MAX_SETS = 500;
 const uint32_t MATERIAL_MAX_SETS = 50;
 const uint32_t ENVIRONMENT_MAX_SETS = 10;
+const uint32_t FULLSCREEN_MAX_SETS = 20;
 
 const VkDescriptorSetLayoutBinding CAMERA_BINDINGS[] = {{
     0,                                 // binding
@@ -104,6 +105,16 @@ const VkDescriptorSetLayoutBinding ENVIRONMENT_BINDINGS[] = {
     },
     {
         4,                                         // binding
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+        1,                                         // descriptorCount
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        nullptr,                                   // pImmutableSamplers
+    },
+};
+
+const VkDescriptorSetLayoutBinding FULLSCREEN_BINDINGS[] = {
+    {
+        0,                                         // binding
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         1,                                         // descriptorCount
         VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
@@ -260,6 +271,17 @@ void DescriptorManager::init() {
   this->addSetLayout(
       DESC_MODEL,
       createDescriptorSetLayout(ARRAYSIZE(MODEL_BINDINGS), MODEL_BINDINGS));
+
+  this->addPool(
+      DESC_FULLSCREEN,
+      createDescriptorPool(
+          FULLSCREEN_MAX_SETS,
+          ARRAYSIZE(FULLSCREEN_BINDINGS),
+          FULLSCREEN_BINDINGS));
+  this->addSetLayout(
+      DESC_FULLSCREEN,
+      createDescriptorSetLayout(
+          ARRAYSIZE(FULLSCREEN_BINDINGS), FULLSCREEN_BINDINGS));
 
   this->addPool(
       DESC_ENVIRONMENT,

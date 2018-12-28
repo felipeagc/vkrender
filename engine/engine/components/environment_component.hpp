@@ -3,10 +3,14 @@
 #include "../asset_manager.hpp"
 #include "../assets/environment_asset.hpp"
 #include <renderer/buffer.hpp>
+#include <renderer/common.hpp>
 #include <renderer/cubemap.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/texture.hpp>
-#include <renderer/window.hpp>
+
+namespace renderer {
+class Window;
+}
 
 namespace engine {
 const uint32_t MAX_LIGHTS = 20;

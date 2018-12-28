@@ -2,10 +2,10 @@
 
 #include "../asset_manager.hpp"
 #include <renderer/buffer.hpp>
+#include <renderer/common.hpp>
 #include <renderer/glm.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/texture.hpp>
-#include <renderer/window.hpp>
 #include <scene/scene.hpp>
 #include <string>
 #include <vector>

@@ -1,6 +1,7 @@
 #include "billboard_component.hpp"
 #include "../scene.hpp"
 #include <fstl/logging.hpp>
+#include <renderer/window.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 
@@ -80,7 +81,7 @@ BillboardComponent::~BillboardComponent() {
       ARRAYSIZE(m_materialDescriptorSets),
       m_materialDescriptorSets));
 
-  for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     m_materialDescriptorSets[i] = VK_NULL_HANDLE;
   }
 }

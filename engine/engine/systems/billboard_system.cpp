@@ -3,6 +3,7 @@
 #include "../components/billboard_component.hpp"
 #include "../components/camera_component.hpp"
 #include "../components/light_component.hpp"
+#include <fstl/fixed_vector.hpp>
 
 using namespace engine;
 

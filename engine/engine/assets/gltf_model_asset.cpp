@@ -4,6 +4,7 @@
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
+#include <renderer/window.hpp>
 #include <tiny_gltf.h>
 
 using namespace engine;
@@ -34,7 +35,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
       descriptorSetLayout,
   };
 
-  for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     VK_CHECK(vkAllocateDescriptorSets(
         renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
 
@@ -190,7 +191,7 @@ GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
       descriptorSetLayout,
   };
 
-  for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     VK_CHECK(vkAllocateDescriptorSets(
         renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
 

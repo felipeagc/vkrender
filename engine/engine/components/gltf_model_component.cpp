@@ -2,6 +2,7 @@
 #include "../scene.hpp"
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
+#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -34,7 +35,7 @@ GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
         descriptorSetLayout,
     };
 
-    for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
       m_uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
                                              sizeof(ModelUniform)};
 

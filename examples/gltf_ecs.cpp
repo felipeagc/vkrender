@@ -23,33 +23,37 @@ int main() {
   engine::LightingSystem lightingSystem;
   engine::EntityInspectorSystem entityInspectorSystem;
 
+  renderer::RenderTarget renderTarget(window.getWidth(), window.getHeight());
+
   // Create shaders & pipelines
-  renderer::Shader skyboxShader{
-      "../shaders/skybox.vert",
-      "../shaders/skybox.frag",
-  };
+  renderer::Shader skyboxShader{"../shaders/skybox.vert",
+                                "../shaders/skybox.frag"};
+  renderer::Shader billboardShader{"../shaders/billboard.vert",
+                                   "../shaders/billboard.frag"};
+  renderer::Shader fullscreenShader{"../shaders/fullscreen.vert",
+                                    "../shaders/fullscreen.frag"};
+
+  renderer::GraphicsPipeline billboardPipeline =
+      renderer::BillboardPipeline(renderTarget, billboardShader);
 
   renderer::GraphicsPipeline skyboxPipeline =
-      renderer::SkyboxPipeline(window, skyboxShader);
+      renderer::SkyboxPipeline(renderTarget, skyboxShader);
 
+  renderer::GraphicsPipeline fullscreenPipeline =
+      renderer::FullscreenPipeline(window, fullscreenShader);
+
+  billboardShader.destroy();
   skyboxShader.destroy();
+  fullscreenShader.destroy();
 
   engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
-      window, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
-
-  engine::ShaderWatcher<renderer::StandardPipeline> billboardShaderWatcher(
-      window, "../shaders/billboard.vert", "../shaders/billboard.frag");
+      renderTarget, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
 
   float time = 0.0;
 
   modelShaderWatcher.startWatching();
-  billboardShaderWatcher.startWatching();
 
   while (!window.getShouldClose()) {
-    window.beginFrame();
-
-    window.beginRenderPass();
-
     time += window.getDelta();
 
     SDL_Event event;
@@ -57,6 +61,13 @@ int main() {
       fpsCameraSystem.processEvent(window, event);
 
       switch (event.type) {
+      case SDL_WINDOWEVENT:
+        if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+          renderTarget.resize(
+              static_cast<uint32_t>(event.window.data1),
+              static_cast<uint32_t>(event.window.data2));
+        }
+        break;
       case SDL_QUIT:
         fstl::log::info("Goodbye");
         window.setShouldClose(true);
@@ -64,22 +75,37 @@ int main() {
       }
     }
 
-    // Show ImGui windows
+    window.beginFrame();
+
     engine::imgui::statsWindow(window);
     engine::imgui::assetsWindow(assetManager);
-
-    modelShaderWatcher.lockPipeline();
-    billboardShaderWatcher.lockPipeline();
 
     entityInspectorSystem.process(world);
     lightingSystem.process(window, world);
     fpsCameraSystem.process(window, world);
-    gltfModelSystem.process(
-        window, assetManager, world, modelShaderWatcher.pipeline());
-    skyboxSystem.process(window, world, skyboxPipeline);
-    billboardSystem.process(window, world, billboardShaderWatcher.pipeline());
 
-    window.endRenderPass();
+    modelShaderWatcher.lockPipeline();
+
+    // Render target pass
+    {
+      renderTarget.beginRenderPass(window);
+
+      gltfModelSystem.process(
+          window, assetManager, world, modelShaderWatcher.pipeline());
+      skyboxSystem.process(window, world, skyboxPipeline);
+      billboardSystem.process(window, world, billboardPipeline);
+
+      renderTarget.endRenderPass(window);
+    }
+
+    // Window pass
+    {
+      window.beginRenderPass();
+
+      renderTarget.draw(window, fullscreenPipeline);
+
+      window.endRenderPass();
+    }
 
     window.endFrame();
   }

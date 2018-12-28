@@ -3,6 +3,7 @@
 #include "../components/camera_component.hpp"
 #include "../components/transform_component.hpp"
 #include <imgui/imgui.h>
+#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -16,7 +17,8 @@ FPSCameraSystem::FPSCameraSystem() {}
 
 FPSCameraSystem::~FPSCameraSystem() {}
 
-void FPSCameraSystem::processEvent(renderer::Window &window, SDL_Event event) {
+void FPSCameraSystem::processEvent(
+    renderer::Window &window, const SDL_Event &event) {
   switch (event.type) {
   case SDL_MOUSEBUTTONDOWN:
     if (event.button.button == SDL_BUTTON_RIGHT && !ImGui::IsAnyItemActive()) {
@@ -53,7 +55,10 @@ void FPSCameraSystem::process(renderer::Window &window, ecs::World &world) {
   auto camera = world.getComponent<engine::CameraComponent>(cameraEntity);
   auto transform = world.getComponent<engine::TransformComponent>(cameraEntity);
 
-  static glm::vec3 cameraTarget;
+  if (m_firstFrame) {
+    m_firstFrame = false;
+    m_camTarget = transform->position;
+  }
 
   m_camFront.x = cos(m_camYaw) * cos(m_camPitch);
   m_camFront.y = sin(m_camPitch);
@@ -77,10 +82,10 @@ void FPSCameraSystem::process(renderer::Window &window, ecs::World &world) {
 
   movement *= speed;
 
-  cameraTarget += movement;
+  m_camTarget += movement;
 
   transform->position =
-      lerp(transform->position, cameraTarget, window.getDelta() * 10.0f);
+      lerp(transform->position, m_camTarget, window.getDelta() * 10.0f);
 
   transform->lookAt(m_camFront, m_camUp);
 

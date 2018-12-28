@@ -4,6 +4,7 @@
 #include <fstl/logging.hpp>
 #include <functional>
 #include <mutex>
+#include <renderer/base_render_target.hpp>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/shader.hpp>
@@ -19,18 +20,18 @@ namespace engine {
 template <class Pipeline> class ShaderWatcher {
 public:
   ShaderWatcher(
-      renderer::Window &window,
+      renderer::BaseRenderTarget &renderTarget,
       const std::string &vertexPath,
       const std::string &fragmentPath)
       : m_vertexPath(vertexPath),
         m_fragmentPath(fragmentPath),
-        m_window(window) {
+        m_renderTarget(renderTarget) {
     renderer::Shader shader{
         m_vertexPath,
         m_fragmentPath,
     };
 
-    m_pipeline = Pipeline{m_window, shader};
+    m_pipeline = Pipeline{m_renderTarget, shader};
 
     shader.destroy();
 
@@ -49,7 +50,7 @@ public:
             m_fragmentPath,
         };
 
-        m_pipeline = Pipeline{m_window, shader};
+        m_pipeline = Pipeline{m_renderTarget, shader};
 
         shader.destroy();
       } catch (const std::exception &exception) {
@@ -83,6 +84,6 @@ private:
   std::mutex m_mutex;
   Pipeline m_pipeline;
   FileWatcher m_watcher;
-  renderer::Window &m_window;
+  renderer::BaseRenderTarget &m_renderTarget;
 };
 } // namespace engine

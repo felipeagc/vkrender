@@ -15,6 +15,7 @@ set(
   renderer/vertex_format.cpp
   renderer/shader.cpp
   renderer/pipeline.cpp
+  renderer/render_target.cpp
   )
 
 add_library(

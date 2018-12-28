@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base_render_target.hpp"
+#include "common.hpp"
 #include "glm.hpp"
 #include "scancodes.hpp"
 #include <SDL2/SDL.h>
@@ -12,9 +14,7 @@
 
 namespace renderer {
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
-
-class Window {
+class Window : public BaseRenderTarget {
 public:
   Window(const char *title, uint32_t width = 800, uint32_t height = 600);
   ~Window();
@@ -52,7 +52,6 @@ public:
   bool getShouldClose() const;
   void setShouldClose(bool shouldClose);
 
-  VkSampleCountFlagBits getSampleCount() const;
   VkSampleCountFlagBits getMaxSampleCount() const;
 
   int getCurrentFrameIndex() const;
@@ -60,8 +59,6 @@ public:
 
   void imguiBeginFrame();
   void imguiEndFrame();
-
-  VkRenderPass getRenderPass();
 
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -75,7 +72,6 @@ protected:
 
   VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 
-  const VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
   VkSampleCountFlagBits m_maxSampleCount = VK_SAMPLE_COUNT_1_BIT;
 
   VkFormat m_depthImageFormat;
@@ -111,7 +107,6 @@ protected:
   fstl::fixed_vector<VkImage> m_swapchainImages;
   fstl::fixed_vector<VkImageView> m_swapchainImageViews;
 
-  VkRenderPass m_renderPass = VK_NULL_HANDLE;
   VkRenderPass m_imguiRenderPass = VK_NULL_HANDLE;
 
   void createVulkanSurface();

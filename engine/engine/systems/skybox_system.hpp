@@ -1,8 +1,11 @@
 #pragma once
 
 #include <ecs/world.hpp>
-#include <renderer/window.hpp>
 #include <renderer/pipeline.hpp>
+
+namespace renderer {
+class Window;
+}
 
 namespace engine {
 class SkyboxSystem {

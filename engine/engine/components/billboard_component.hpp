@@ -3,8 +3,8 @@
 #include "../asset_manager.hpp"
 #include "../assets/texture_asset.hpp"
 #include <renderer/buffer.hpp>
+#include <renderer/common.hpp>
 #include <renderer/pipeline.hpp>
-#include <renderer/window.hpp>
 
 namespace engine {
 class BillboardComponent {

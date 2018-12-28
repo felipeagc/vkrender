@@ -6,6 +6,7 @@
 #include <fstl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
+#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -152,7 +153,7 @@ EnvironmentComponent::~EnvironmentComponent() {
       ARRAYSIZE(m_descriptorSets),
       m_descriptorSets));
 
-  for (int i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     m_descriptorSets[i] = VK_NULL_HANDLE;
   }
 }

@@ -110,7 +110,7 @@ bool Window::pollEvent(SDL_Event *event) {
 
   switch (event->type) {
   case SDL_WINDOWEVENT:
-    switch (event->window.type) {
+    switch (event->window.event) {
     case SDL_WINDOWEVENT_RESIZED:
       this->updateSize();
       break;
@@ -332,17 +332,14 @@ void Window::endFrame() {
 void Window::beginRenderPass() {
   auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
 
-  VkClearValue clearColor = {{{
+  VkClearValue clearValues[2] = {};
+  clearValues[0].color = {{
       this->clearColor.x,
       this->clearColor.y,
       this->clearColor.z,
       this->clearColor.w,
-  }}};
-
-  std::array<VkClearValue, 2> clearValues{
-      clearColor,
-      VkClearValue{{{1.0f, 0}}},
-  };
+  }};
+  clearValues[1].depthStencil = {1.0f, 0};
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,     // sType
@@ -350,8 +347,8 @@ void Window::beginRenderPass() {
       m_renderPass,                                 // renderPass
       m_frameResources[m_currentFrame].framebuffer, // framebuffer
       {{0, 0}, m_swapchainExtent},                  // renderArea
-      static_cast<uint32_t>(clearValues.size()),    // clearValueCount
-      clearValues.data(),                           // pClearValues
+      ARRAYSIZE(clearValues),                       // clearValueCount
+      clearValues,                                  // pClearValues
   };
 
   vkCmdBeginRenderPass(
@@ -440,8 +437,6 @@ bool Window::getShouldClose() const { return m_shouldClose; }
 
 void Window::setShouldClose(bool shouldClose) { m_shouldClose = shouldClose; }
 
-VkSampleCountFlagBits Window::getSampleCount() const { return m_sampleCount; }
-
 VkSampleCountFlagBits Window::getMaxSampleCount() const {
   return m_maxSampleCount;
 }
@@ -459,8 +454,6 @@ void Window::imguiBeginFrame() {
 }
 
 void Window::imguiEndFrame() { ImGui::Render(); }
-
-VkRenderPass Window::getRenderPass() { return m_renderPass; }
 
 void Window::createVulkanSurface() {
   if (!SDL_Vulkan_CreateSurface(m_window, ctx().m_instance, &m_surface)) {
@@ -676,7 +669,7 @@ void Window::createDepthStencilResources() {
 }
 
 void Window::createRenderPass() {
-  VkAttachmentDescription attachmentDescriptions[2] = {
+  VkAttachmentDescription attachmentDescriptions[] = {
       // Resolved color attachment
       VkAttachmentDescription{
           0,                                // flags
@@ -727,7 +720,7 @@ void Window::createRenderPass() {
       nullptr,                         // pPreserveAttachments
   };
 
-  VkSubpassDependency dependencies[2] = {
+  VkSubpassDependency dependencies[] = {
       VkSubpassDependency{
           VK_SUBPASS_EXTERNAL,                           // srcSubpass
           0,                                             // dstSubpass

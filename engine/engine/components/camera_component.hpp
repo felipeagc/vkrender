@@ -2,9 +2,13 @@
 
 #include "transform_component.hpp"
 #include <renderer/buffer.hpp>
+#include <renderer/common.hpp>
 #include <renderer/glm.hpp>
 #include <renderer/pipeline.hpp>
-#include <renderer/window.hpp>
+
+namespace renderer {
+class Window;
+}
 
 namespace engine {
 class CameraComponent {
