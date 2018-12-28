@@ -10,11 +10,7 @@
 
 using namespace renderer;
 
-Window::Window(
-    const char *title,
-    uint32_t width,
-    uint32_t height,
-    VkSampleCountFlagBits sampleCount) {
+Window::Window(const char *title, uint32_t width, uint32_t height) {
   auto subsystems = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER;
   if (subsystems == SDL_WasInit(0)) {
     SDL_Init(subsystems);
@@ -60,16 +56,7 @@ Window::Window(
         "Selected present queue does not support this window's surface");
   }
 
-  m_maxMsaaSamples = ctx().getMaxUsableSampleCount();
-
-  if (sampleCount <= m_maxMsaaSamples) {
-    m_msaaSamples = sampleCount;
-  } else {
-    fstl::log::error(
-        "Invalid MSAA sample count: {}, max is {}",
-        (int)sampleCount,
-        (int)m_maxMsaaSamples);
-  }
+  m_maxSampleCount = ctx().getMaxUsableSampleCount();
 
   this->createSyncObjects();
 
@@ -79,8 +66,6 @@ Window::Window(
   this->allocateGraphicsCommandBuffers();
 
   this->createDepthStencilResources();
-
-  this->createMultisampleTargets();
 
   this->createRenderPass();
 
@@ -221,20 +206,10 @@ void Window::beginPresent() {
       this->clearColor.w,
   }}};
 
-  std::array<VkClearValue, 4> clearValues{
-      VkClearValue{},
+  std::array<VkClearValue, 2> clearValues{
       clearColor,
-      VkClearValue{},
       VkClearValue{{{1.0f, 0}}},
   };
-
-  if (m_msaaSamples != VK_SAMPLE_COUNT_1_BIT) {
-    clearValues = {
-        clearColor,
-        clearColor,
-        VkClearValue{{{1.0f, 0}}},
-    };
-  }
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,     // sType
@@ -408,7 +383,6 @@ void Window::updateSize() {
   this->createSwapchain(this->getWidth(), this->getHeight());
   this->createSwapchainImageViews();
   this->createDepthStencilResources();
-  this->createMultisampleTargets();
   this->createRenderPass();
   this->createImguiRenderPass();
   this->allocateGraphicsCommandBuffers();
@@ -461,11 +435,11 @@ bool Window::getShouldClose() const { return m_shouldClose; }
 
 void Window::setShouldClose(bool shouldClose) { m_shouldClose = shouldClose; }
 
-VkSampleCountFlagBits Window::getMaxMSAASamples() const {
-  return m_maxMsaaSamples;
-}
+VkSampleCountFlagBits Window::getSampleCount() const { return m_sampleCount; }
 
-VkSampleCountFlagBits Window::getMSAASamples() const { return m_msaaSamples; }
+VkSampleCountFlagBits Window::getMaxSampleCount() const {
+  return m_maxSampleCount;
+}
 
 int Window::getCurrentFrameIndex() const { return m_currentFrame; }
 
@@ -634,26 +608,7 @@ void Window::allocateGraphicsCommandBuffers() {
 }
 
 void Window::createDepthStencilResources() {
-  VkFormat depthFormats[5] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
-                              VK_FORMAT_D32_SFLOAT,
-                              VK_FORMAT_D24_UNORM_S8_UINT,
-                              VK_FORMAT_D16_UNORM_S8_UINT,
-                              VK_FORMAT_D16_UNORM};
-
-  bool validDepthFormat = false;
-  for (auto &format : depthFormats) {
-    VkFormatProperties formatProps;
-    vkGetPhysicalDeviceFormatProperties(
-        ctx().m_physicalDevice, format, &formatProps);
-
-    if (formatProps.optimalTilingFeatures &
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-      m_depthImageFormat = format;
-      validDepthFormat = true;
-      break;
-    }
-  }
-  assert(validDepthFormat);
+  assert(ctx().getSupportedDepthFormat(&m_depthImageFormat));
 
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
@@ -715,160 +670,14 @@ void Window::createDepthStencilResources() {
       ctx().m_device, &imageViewCreateInfo, nullptr, &m_depthStencil.view));
 }
 
-void Window::createMultisampleTargets() {
-  // Color target
-  {
-    VkImageCreateInfo imageCreateInfo = {
-        VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-        nullptr,                             // pNext
-        0,                                   // flags
-        VK_IMAGE_TYPE_2D,                    // imageType
-        m_swapchainImageFormat,              // format
-        {
-            m_swapchainExtent.width,  // width
-            m_swapchainExtent.height, // height
-            1,                        // depth
-        },                            // extent
-        1,                            // mipLevels
-        1,                            // arrayLayers
-        m_msaaSamples,                // samples
-        VK_IMAGE_TILING_OPTIMAL,      // tiling
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
-        VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
-        0,                                       // queueFamilyIndexCount
-        nullptr,                                 // pQueueFamilyIndices
-        VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
-    };
-
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    VK_CHECK(vmaCreateImage(
-        ctx().m_allocator,
-        &imageCreateInfo,
-        &allocInfo,
-        &m_multiSampleTargets.color.image,
-        &m_multiSampleTargets.color.allocation,
-        nullptr));
-
-    VkImageViewCreateInfo imageViewCreateInfo = {
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        nullptr,                                  // pNext
-        0,                                        // flags
-        m_multiSampleTargets.color.image,         // image
-        VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-        m_swapchainImageFormat,                   // format
-        {
-            VK_COMPONENT_SWIZZLE_R, // r
-            VK_COMPONENT_SWIZZLE_G, // g
-            VK_COMPONENT_SWIZZLE_B, // b
-            VK_COMPONENT_SWIZZLE_A, // a
-        },                          // components
-        {
-            VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
-            {},                        // baseMipLevel
-            1,                         // levelCount
-            {},                        // baseArrayLayer
-            1,                         // layerCount
-        },                             // subresourceRange
-    };
-
-    VK_CHECK(vkCreateImageView(
-        ctx().m_device,
-        &imageViewCreateInfo,
-        nullptr,
-        &m_multiSampleTargets.color.view));
-  }
-
-  // Depth Target
-  {
-    VkImageCreateInfo imageCreateInfo = {
-        VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-        nullptr,                             // pNext
-        0,                                   // flags
-        VK_IMAGE_TYPE_2D,                    // imageType
-        m_depthImageFormat,                  // format
-        {
-            m_swapchainExtent.width,  // width
-            m_swapchainExtent.height, // height
-            1,                        // depth
-        },                            // extent
-        1,                            // mipLevels
-        1,                            // arrayLayers
-        m_msaaSamples,                // samples
-        VK_IMAGE_TILING_OPTIMAL,      // tiling
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, // usage
-        VK_SHARING_MODE_EXCLUSIVE,                       // sharingMode
-        0,                         // queueFamilyIndexCount
-        nullptr,                   // pQueueFamilyIndices
-        VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
-    };
-
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    VK_CHECK(vmaCreateImage(
-        ctx().m_allocator,
-        &imageCreateInfo,
-        &allocInfo,
-        &m_multiSampleTargets.depth.image,
-        &m_multiSampleTargets.depth.allocation,
-        nullptr));
-
-    VkImageViewCreateInfo imageViewCreateInfo = {
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        nullptr,                                  // pNext
-        0,                                        // flags
-        m_multiSampleTargets.depth.image,         // image
-        VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-        m_depthImageFormat,                       // format
-        {
-            VK_COMPONENT_SWIZZLE_R, // r
-            VK_COMPONENT_SWIZZLE_G, // g
-            VK_COMPONENT_SWIZZLE_B, // b
-            VK_COMPONENT_SWIZZLE_A, // a
-        },                          // components
-        {
-            VK_IMAGE_ASPECT_DEPTH_BIT |
-                VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
-            {},                              // baseMipLevel
-            1,                               // levelCount
-            {},                              // baseArrayLayer
-            1,                               // layerCount
-        },                                   // subresourceRange
-    };
-
-    VK_CHECK(vkCreateImageView(
-        ctx().m_device,
-        &imageViewCreateInfo,
-        nullptr,
-        &m_multiSampleTargets.depth.view));
-  }
-}
-
 void Window::createRenderPass() {
-  VkAttachmentDescription attachmentDescriptions[4] = {
-      // Multisampled color attachment
-      VkAttachmentDescription{
-          0,                                        // flags
-          m_swapchainImageFormat,                   // format
-          m_msaaSamples,                            // samples
-          VK_ATTACHMENT_LOAD_OP_CLEAR,              // loadOp
-          VK_ATTACHMENT_STORE_OP_STORE,             // storeOp
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,          // stencilLoadOp
-          VK_ATTACHMENT_STORE_OP_DONT_CARE,         // stencilStoreOp
-          VK_IMAGE_LAYOUT_UNDEFINED,                // initialLayout
-          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // finalLayout
-      },
-
+  VkAttachmentDescription attachmentDescriptions[2] = {
       // Resolved color attachment
       VkAttachmentDescription{
           0,                                // flags
           m_swapchainImageFormat,           // format
           VK_SAMPLE_COUNT_1_BIT,            // samples
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // loadOp
+          VK_ATTACHMENT_LOAD_OP_CLEAR,      // loadOp
           VK_ATTACHMENT_STORE_OP_STORE,     // storeOp
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // stencilLoadOp
           VK_ATTACHMENT_STORE_OP_DONT_CARE, // stencilStoreOp
@@ -876,25 +685,12 @@ void Window::createRenderPass() {
           VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,  // finalLayout
       },
 
-      // Multisampled depth attachment
-      VkAttachmentDescription{
-          0,                                                // flags
-          m_depthImageFormat,                               // format
-          m_msaaSamples,                                    // samples
-          VK_ATTACHMENT_LOAD_OP_CLEAR,                      // loadOp
-          VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // storeOp
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
-          VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // stencilStoreOp
-          VK_IMAGE_LAYOUT_UNDEFINED,                        // initialLayout
-          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // finalLayout
-      },
-
       // Resolved depth attachment
       VkAttachmentDescription{
           0,                                                // flags
           m_depthImageFormat,                               // format
           VK_SAMPLE_COUNT_1_BIT,                            // samples
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // loadOp
+          VK_ATTACHMENT_LOAD_OP_CLEAR,                      // loadOp
           VK_ATTACHMENT_STORE_OP_STORE,                     // storeOp
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
           VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // stencilStoreOp
@@ -909,13 +705,8 @@ void Window::createRenderPass() {
   };
 
   VkAttachmentReference depthAttachmentReference = {
-      2,                                                // attachment
+      1,                                                // attachment
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // layout
-  };
-
-  VkAttachmentReference resolveAttachmentReference = {
-      1,                                        // attachment
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
   };
 
   VkSubpassDescription subpassDescription = {
@@ -925,33 +716,11 @@ void Window::createRenderPass() {
       nullptr,                         // pInputAttachments
       1,                               // colorAttachmentCount
       &colorAttachmentReference,       // pColorAttachments
-      &resolveAttachmentReference,     // pResolveAttachments
+      nullptr,                         // pResolveAttachments
       &depthAttachmentReference,       // pDepthStencilAttachment
       0,                               // preserveAttachmentCount
       nullptr,                         // pPreserveAttachments
   };
-
-  if (m_msaaSamples == VK_SAMPLE_COUNT_1_BIT) {
-    // Disable multisampled color clearing
-    attachmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-    // Enable resolve color clearing
-    attachmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-
-    // Disable multisampled depth clearing
-    attachmentDescriptions[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachmentDescriptions[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-    // Enable resolve depth clearing
-    attachmentDescriptions[3].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachmentDescriptions[3].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-    colorAttachmentReference.attachment = 1;
-    depthAttachmentReference.attachment = 3;
-    subpassDescription.pResolveAttachments = nullptr;
-  }
 
   VkSubpassDependency dependencies[2] = {
       VkSubpassDependency{
@@ -1102,10 +871,8 @@ void Window::regenFramebuffer(
     VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
   vkDestroyFramebuffer(ctx().m_device, framebuffer, nullptr);
 
-  VkImageView attachments[4]{
-      m_multiSampleTargets.color.view,
+  VkImageView attachments[]{
       swapchainImageView,
-      m_multiSampleTargets.depth.view,
       m_depthStencil.view,
   };
 
@@ -1162,28 +929,6 @@ void Window::destroyResizables() {
         ctx().m_allocator, m_depthStencil.image, m_depthStencil.allocation);
     m_depthStencil.image = nullptr;
     m_depthStencil.allocation = VK_NULL_HANDLE;
-  }
-
-  if (m_multiSampleTargets.color.image) {
-    vkDestroyImageView(
-        ctx().m_device, m_multiSampleTargets.color.view, nullptr);
-    vmaDestroyImage(
-        ctx().m_allocator,
-        m_multiSampleTargets.color.image,
-        m_multiSampleTargets.color.allocation);
-    m_multiSampleTargets.color.image = nullptr;
-    m_multiSampleTargets.color.allocation = VK_NULL_HANDLE;
-  }
-
-  if (m_multiSampleTargets.depth.image) {
-    vkDestroyImageView(
-        ctx().m_device, m_multiSampleTargets.depth.view, nullptr);
-    vmaDestroyImage(
-        ctx().m_allocator,
-        m_multiSampleTargets.depth.image,
-        m_multiSampleTargets.depth.allocation);
-    m_multiSampleTargets.depth.image = nullptr;
-    m_multiSampleTargets.depth.allocation = VK_NULL_HANDLE;
   }
 
   vkDestroyRenderPass(ctx().m_device, m_imguiRenderPass, nullptr);

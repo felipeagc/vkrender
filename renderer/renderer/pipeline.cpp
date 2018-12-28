@@ -84,7 +84,7 @@ StandardPipeline::StandardPipeline(Window &window, Shader &shader) {
   rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getMSAASamples());
+      pipeline::defaultMultisampleState(window.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
@@ -163,7 +163,7 @@ BillboardPipeline::BillboardPipeline(Window &window, Shader &shader) {
   auto viewportStateCreateInfo = pipeline::defaultViewportState();
   auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getMSAASamples());
+      pipeline::defaultMultisampleState(window.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
@@ -225,7 +225,7 @@ SkyboxPipeline::SkyboxPipeline(Window &window, Shader &shader) {
   auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
   rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getMSAASamples());
+      pipeline::defaultMultisampleState(window.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();

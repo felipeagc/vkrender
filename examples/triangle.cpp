@@ -29,7 +29,7 @@ createTrianglePipeline(renderer::Window &window, renderer::Shader &shader) {
   auto viewportStateCreateInfo = pipeline::defaultViewportState();
   auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
   auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(window.getMSAASamples());
+      pipeline::defaultMultisampleState(window.getSampleCount());
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();

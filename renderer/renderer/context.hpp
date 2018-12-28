@@ -43,6 +43,8 @@ public:
 
   VkSampleCountFlagBits getMaxUsableSampleCount();
 
+  bool getSupportedDepthFormat(VkFormat *depthFormat);
+
   VkInstance m_instance = VK_NULL_HANDLE;
   VkDevice m_device = VK_NULL_HANDLE;
   VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;

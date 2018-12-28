@@ -505,3 +505,24 @@ VkSampleCountFlagBits Context::getMaxUsableSampleCount() {
 
   return VK_SAMPLE_COUNT_1_BIT;
 }
+
+bool Context::getSupportedDepthFormat(VkFormat *depthFormat) {
+  VkFormat depthFormats[] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
+                             VK_FORMAT_D32_SFLOAT,
+                             VK_FORMAT_D24_UNORM_S8_UINT,
+                             VK_FORMAT_D16_UNORM_S8_UINT,
+                             VK_FORMAT_D16_UNORM};
+  for (auto &format : depthFormats) {
+    VkFormatProperties formatProps;
+    vkGetPhysicalDeviceFormatProperties(
+        ctx().m_physicalDevice, format, &formatProps);
+
+    if (formatProps.optimalTilingFeatures &
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+      *depthFormat = format;
+      return format;
+      return true;
+    }
+  }
+  return false;
+}

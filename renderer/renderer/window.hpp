@@ -16,11 +16,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Window {
 public:
-  Window(
-      const char *title,
-      uint32_t width = 800,
-      uint32_t height = 600,
-      VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
+  Window(const char *title, uint32_t width = 800, uint32_t height = 600);
   ~Window();
 
   // No copying Window
@@ -53,8 +49,8 @@ public:
   bool getShouldClose() const;
   void setShouldClose(bool shouldClose);
 
-  VkSampleCountFlagBits getMaxMSAASamples() const;
-  VkSampleCountFlagBits getMSAASamples() const;
+  VkSampleCountFlagBits getSampleCount() const;
+  VkSampleCountFlagBits getMaxSampleCount() const;
 
   int getCurrentFrameIndex() const;
   VkCommandBuffer getCurrentCommandBuffer();
@@ -69,64 +65,50 @@ public:
 protected:
   bool m_shouldClose = false;
 
-  SDL_Window *m_window{nullptr};
+  SDL_Window *m_window = nullptr;
 
   double m_deltaTime = 0.0f;
   std::chrono::time_point<std::chrono::high_resolution_clock> m_timeBefore;
 
-  VkSurfaceKHR m_surface{VK_NULL_HANDLE};
+  VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 
-  VkSampleCountFlagBits m_msaaSamples{VK_SAMPLE_COUNT_1_BIT};
-  VkSampleCountFlagBits m_maxMsaaSamples{VK_SAMPLE_COUNT_1_BIT};
+  const VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
+  VkSampleCountFlagBits m_maxSampleCount = VK_SAMPLE_COUNT_1_BIT;
 
   VkFormat m_depthImageFormat;
 
   struct {
-    VkImage image{VK_NULL_HANDLE};
-    VmaAllocation allocation{VK_NULL_HANDLE};
-    VkImageView view{VK_NULL_HANDLE};
+    VkImage image = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
+    VkImageView view = VK_NULL_HANDLE;
   } m_depthStencil;
 
   struct FrameResources {
-    VkSemaphore imageAvailableSemaphore{VK_NULL_HANDLE};
-    VkSemaphore renderingFinishedSemaphore{VK_NULL_HANDLE};
-    VkFence fence{VK_NULL_HANDLE};
+    VkSemaphore imageAvailableSemaphore = VK_NULL_HANDLE;
+    VkSemaphore renderingFinishedSemaphore = VK_NULL_HANDLE;
+    VkFence fence = VK_NULL_HANDLE;
 
-    VkFramebuffer framebuffer{VK_NULL_HANDLE};
-    VkFramebuffer imguiFramebuffer{VK_NULL_HANDLE};
+    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+    VkFramebuffer imguiFramebuffer = VK_NULL_HANDLE;
 
-    VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
+    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   };
 
   fstl::fixed_vector<FrameResources> m_frameResources{MAX_FRAMES_IN_FLIGHT};
-
-  struct {
-    struct {
-      VkImage image{VK_NULL_HANDLE};
-      VmaAllocation allocation{VK_NULL_HANDLE};
-      VkImageView view{VK_NULL_HANDLE};
-    } depth;
-
-    struct {
-      VkImage image{VK_NULL_HANDLE};
-      VmaAllocation allocation{VK_NULL_HANDLE};
-      VkImageView view{VK_NULL_HANDLE};
-    } color;
-  } m_multiSampleTargets;
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
   int m_currentFrame = 0;
   // Index of the current swapchain image
   uint32_t m_currentImageIndex;
 
-  VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
+  VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
   VkFormat m_swapchainImageFormat;
   VkExtent2D m_swapchainExtent;
   fstl::fixed_vector<VkImage> m_swapchainImages;
   fstl::fixed_vector<VkImageView> m_swapchainImageViews;
 
-  VkRenderPass m_renderPass{VK_NULL_HANDLE};
-  VkRenderPass m_imguiRenderPass{VK_NULL_HANDLE};
+  VkRenderPass m_renderPass = VK_NULL_HANDLE;
+  VkRenderPass m_imguiRenderPass = VK_NULL_HANDLE;
 
   void createVulkanSurface();
 
@@ -138,9 +120,6 @@ protected:
 
   // Populates the depthStencil member struct
   void createDepthStencilResources();
-
-  // Populates the multiSampleTargets struct
-  void createMultisampleTargets();
 
   void createRenderPass();
 

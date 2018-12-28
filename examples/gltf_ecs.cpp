@@ -8,7 +8,7 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 800, 600, VK_SAMPLE_COUNT_1_BIT);
+  renderer::Window window("GLTF models", 800, 600);
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
