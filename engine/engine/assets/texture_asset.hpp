@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../asset_manager.hpp"
+#include <fstl/logging.hpp>
 #include <renderer/texture.hpp>
 
 namespace engine {
@@ -10,6 +11,7 @@ public:
 
   TextureAsset(const std::string &path) {
     m_identifier = path;
+    fstl::log::debug("Loading Texture asset: \"{}\"", m_identifier);
     m_texture = renderer::Texture(path);
   }
 

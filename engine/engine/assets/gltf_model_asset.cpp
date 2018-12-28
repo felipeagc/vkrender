@@ -261,6 +261,8 @@ void GltfModelAsset::Node::update(GltfModelAsset &model, uint32_t frameIndex) {
 GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
   m_identifier = path;
 
+  fstl::log::debug("Loading GltfModel asset: \"{}\"", m_identifier);
+
   std::string dir = path.substr(0, path.find_last_of('/') + 1);
 
   tinygltf::TinyGLTF loader;

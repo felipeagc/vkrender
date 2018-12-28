@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../asset_manager.hpp"
+#include <fstl/logging.hpp>
 #include <renderer/cubemap.hpp>
 
 namespace engine {
@@ -16,6 +17,9 @@ public:
       const std::vector<std::string> &radiancePaths,
       const std::string &brdfLutPath) {
     m_identifier = skyboxPath;
+
+    fstl::log::debug("Loading Environment asset: \"{}\"", m_identifier);
+
     m_skyboxCubemap = renderer::Cubemap(skyboxPath, width, height);
     m_irradianceCubemap = renderer::Cubemap(irradiancePath, width, height);
     m_radianceCubemap = renderer::Cubemap(radiancePaths, width, height);
