@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstring>
-#include <stdexcept>
 #include <initializer_list>
+#include <stdexcept>
 
 namespace fstl {
 template <typename T, size_t N = 8> class fixed_vector {
@@ -128,8 +128,7 @@ public:
 
     T *newStorage = new T[newCapacity];
 
-    size_t minCapacity =
-        newCapacity <= m_capacity ? newCapacity : m_capacity;
+    size_t minCapacity = newCapacity <= m_capacity ? newCapacity : m_capacity;
 
     for (size_t i = 0; i < minCapacity; i++) {
       newStorage[i] = m_heapVector[i];
@@ -147,9 +146,7 @@ public:
     m_capacity = newCapacity;
   }
 
-  void clear() noexcept {
-    this->resize(0);
-  }
+  void clear() noexcept { this->resize(0); }
 
   size_t size() const noexcept { return m_size; }
 
@@ -157,7 +154,7 @@ public:
 
   T *begin() const noexcept { return &m_heapVector[0]; }
 
-  T *end() const noexcept { return &m_heapVector[m_size]; }
+  T *const end() const noexcept { return &m_heapVector[m_size]; }
 
 protected:
   T m_array[N];

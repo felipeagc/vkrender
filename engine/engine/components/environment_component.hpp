@@ -6,6 +6,7 @@
 #include <renderer/common.hpp>
 #include <renderer/cubemap.hpp>
 #include <renderer/pipeline.hpp>
+#include <renderer/resource_manager.hpp>
 #include <renderer/texture.hpp>
 
 namespace renderer {
@@ -62,6 +63,6 @@ protected:
 
   renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+  renderer::ResourceSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace engine

@@ -17,10 +17,7 @@ void engine::loadComponent<CameraComponent>(
 }
 
 CameraComponent::CameraComponent(float fov) : m_fov(fov) {
-  auto [descriptorPool, descriptorSetLayout] =
-      renderer::ctx().m_descriptorManager[renderer::DESC_CAMERA];
-
-  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.camera;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     m_uniformBuffers[i] =
@@ -28,16 +25,7 @@ CameraComponent::CameraComponent(float fov) : m_fov(fov) {
 
     m_uniformBuffers[i].mapMemory(&m_mappings[i]);
 
-    VkDescriptorSetAllocateInfo allocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *descriptorPool,
-        1,
-        descriptorSetLayout,
-    };
-
-    vkAllocateDescriptorSets(
-        renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]);
+    this->m_descriptorSets[i] = setLayout.allocate();
 
     VkDescriptorBufferInfo bufferInfo{
         m_uniformBuffers[i].getHandle(),
@@ -71,16 +59,11 @@ CameraComponent::~CameraComponent() {
     m_uniformBuffers[i].destroy();
   }
 
-  auto descriptorPool =
-      renderer::ctx().m_descriptorManager.getPool(renderer::DESC_CAMERA);
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.camera;
 
-  assert(descriptorPool != nullptr);
-
-  vkFreeDescriptorSets(
-      renderer::ctx().m_device,
-      *descriptorPool,
-      ARRAYSIZE(m_descriptorSets),
-      m_descriptorSets);
+  for (auto &set : this->m_descriptorSets) {
+    setLayout.free(set);
+  }
 }
 
 void CameraComponent::update(
@@ -125,7 +108,7 @@ void CameraComponent::bind(
       pipeline.m_pipelineLayout,
       0,
       1,
-      &m_descriptorSets[i],
+      m_descriptorSets[i],
       0,
       nullptr);
 }

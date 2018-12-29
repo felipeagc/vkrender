@@ -22,22 +22,10 @@ void engine::loadAsset<GltfModelAsset>(
 }
 
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
-  auto [descriptorPool, descriptorSetLayout] =
-      renderer::ctx().m_descriptorManager[renderer::DESC_MATERIAL];
-
-  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-  VkDescriptorSetAllocateInfo allocateInfo = {
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      nullptr,
-      *descriptorPool,
-      1,
-      descriptorSetLayout,
-  };
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    VK_CHECK(vkAllocateDescriptorSets(
-        renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
+    this->descriptorSets[i] = setLayout.allocate();
 
     VkDescriptorImageInfo albedoDescriptorInfo = {};
     VkDescriptorImageInfo normalDescriptorInfo = {};
@@ -178,22 +166,10 @@ GltfModelAsset::Primitive::Primitive(
 GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
   this->ubo.matrix = matrix;
 
-  auto [descriptorPool, descriptorSetLayout] =
-      renderer::ctx().m_descriptorManager[renderer::DESC_MESH];
-
-  assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-  VkDescriptorSetAllocateInfo allocateInfo = {
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      nullptr,
-      *descriptorPool,
-      1,
-      descriptorSetLayout,
-  };
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    VK_CHECK(vkAllocateDescriptorSets(
-        renderer::ctx().m_device, &allocateInfo, &this->descriptorSets[i]));
+    this->descriptorSets[i] = setLayout.allocate();
 
     this->uniformBuffers[i] =
         renderer::Buffer{renderer::BufferType::eUniform, sizeof(MeshUniform)};
@@ -353,29 +329,17 @@ GltfModelAsset::~GltfModelAsset() {
       uniformBuffer.destroy();
     }
 
-    auto descriptorPool =
-        renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
-
-    assert(descriptorPool != nullptr);
-
-    vkFreeDescriptorSets(
-        renderer::ctx().m_device,
-        *descriptorPool,
-        ARRAYSIZE(mesh.descriptorSets),
-        mesh.descriptorSets);
+    auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+    for (auto &set : mesh.descriptorSets) {
+      setLayout.free(set);
+    }
   }
 
   for (auto &material : m_materials) {
-    auto descriptorPool =
-        renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MATERIAL);
-
-    assert(descriptorPool != nullptr);
-
-    vkFreeDescriptorSets(
-        renderer::ctx().m_device,
-        *descriptorPool,
-        ARRAYSIZE(material.descriptorSets),
-        material.descriptorSets);
+    auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+    for (auto &set : material.descriptorSets) {
+      setLayout.free(set);
+    }
   }
 
   m_materials.clear();

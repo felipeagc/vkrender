@@ -2,6 +2,7 @@
 
 #include "base_render_target.hpp"
 #include "common.hpp"
+#include "resource_manager.hpp"
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -52,7 +53,7 @@ protected:
     VkFramebuffer framebuffer = VK_NULL_HANDLE;
 
     // For rendering this render target's image to another render target
-    VkDescriptorSet descriptorSet;
+    ResourceSet resourceSet;
   } m_resources[1];
 
 private:

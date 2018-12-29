@@ -5,6 +5,7 @@
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
 #include <renderer/pipeline.hpp>
+#include <renderer/resource_manager.hpp>
 
 namespace engine {
 class BillboardComponent {
@@ -36,6 +37,7 @@ protected:
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
   } m_ubo;
 
-  VkDescriptorSet m_materialDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+  renderer::ResourceSet
+      m_materialDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace engine

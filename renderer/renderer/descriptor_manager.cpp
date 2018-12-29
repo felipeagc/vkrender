@@ -5,123 +5,6 @@
 
 using namespace renderer;
 
-const uint32_t CAMERA_MAX_SETS = 20;
-const uint32_t MESH_MAX_SETS = 500;
-const uint32_t MODEL_MAX_SETS = 500;
-const uint32_t MATERIAL_MAX_SETS = 50;
-const uint32_t ENVIRONMENT_MAX_SETS = 10;
-const uint32_t FULLSCREEN_MAX_SETS = 20;
-
-const VkDescriptorSetLayoutBinding CAMERA_BINDINGS[] = {{
-    0,                                 // binding
-    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-    1,                                 // descriptorCount
-    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
-    nullptr, // pImmutableSamplers
-}};
-
-const VkDescriptorSetLayoutBinding MESH_BINDINGS[] = {{
-    0,                                 // binding
-    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-    1,                                 // descriptorCount
-    VK_SHADER_STAGE_VERTEX_BIT,        // stageFlags
-    nullptr,                           // pImmutableSamplers
-}};
-
-const VkDescriptorSetLayoutBinding MODEL_BINDINGS[] = {{
-    0,                                 // binding
-    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-    1,                                 // descriptorCount
-    VK_SHADER_STAGE_VERTEX_BIT,        // stageFlags
-    nullptr,                           // pImmutableSamplers
-}};
-
-const VkDescriptorSetLayoutBinding MATERIAL_BINDINGS[] = {
-    {
-        0,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        1,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        2,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        3,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        4,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-};
-
-const VkDescriptorSetLayoutBinding ENVIRONMENT_BINDINGS[] = {
-    {
-        0,                                 // binding
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        1,                                 // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
-        nullptr,                           // pImmutableSamplers
-    },
-    {
-        1,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        2,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        3,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-    {
-        4,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-};
-
-const VkDescriptorSetLayoutBinding FULLSCREEN_BINDINGS[] = {
-    {
-        0,                                         // binding
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-        1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-        nullptr,                                   // pImmutableSamplers
-    },
-};
-
 VkDescriptorSetLayout createDescriptorSetLayout(
     uint32_t bindingCount, const VkDescriptorSetLayoutBinding *pBindings) {
   VkDescriptorSetLayout setLayout;
@@ -187,22 +70,9 @@ VkDescriptorPool createDescriptorPool(
   return descriptorPool;
 }
 
-std::pair<VkDescriptorPool *, VkDescriptorSetLayout *> DescriptorManager::
-operator[](const std::string &key) {
-  return {this->getPool(key), this->getSetLayout(key)};
-}
-
 VkDescriptorPool *DescriptorManager::getPool(const std::string &key) {
   if (m_pools.find(key) != m_pools.end()) {
     return &m_pools[key];
-  }
-
-  return nullptr;
-}
-
-VkDescriptorSetLayout *DescriptorManager::getSetLayout(const std::string &key) {
-  if (m_setLayouts.find(key) != m_setLayouts.end()) {
-    return &m_setLayouts[key];
   }
 
   return nullptr;
@@ -217,83 +87,7 @@ bool DescriptorManager::addPool(const std::string &key, VkDescriptorPool pool) {
   return true;
 }
 
-bool DescriptorManager::addSetLayout(
-    const std::string &key, VkDescriptorSetLayout setLayout) {
-  if (this->getSetLayout(key)) {
-    return false;
-  }
-
-  m_setLayouts[key] = setLayout;
-  return true;
-}
-
-fstl::fixed_vector<VkDescriptorSetLayout>
-DescriptorManager::getDefaultSetLayouts() {
-  return fstl::fixed_vector<VkDescriptorSetLayout>{
-      *this->getSetLayout(renderer::DESC_CAMERA),
-      *this->getSetLayout(renderer::DESC_MATERIAL),
-      *this->getSetLayout(renderer::DESC_MESH),
-      *this->getSetLayout(renderer::DESC_MODEL),
-      *this->getSetLayout(renderer::DESC_ENVIRONMENT),
-  };
-}
-
 void DescriptorManager::init() {
-  this->addPool(
-      DESC_CAMERA,
-      createDescriptorPool(
-          CAMERA_MAX_SETS, ARRAYSIZE(CAMERA_BINDINGS), CAMERA_BINDINGS));
-  this->addSetLayout(
-      DESC_CAMERA,
-      createDescriptorSetLayout(ARRAYSIZE(CAMERA_BINDINGS), CAMERA_BINDINGS));
-
-  this->addPool(
-      DESC_MATERIAL,
-      createDescriptorPool(
-          MATERIAL_MAX_SETS, ARRAYSIZE(MATERIAL_BINDINGS), MATERIAL_BINDINGS));
-  this->addSetLayout(
-      DESC_MATERIAL,
-      createDescriptorSetLayout(
-          ARRAYSIZE(MATERIAL_BINDINGS), MATERIAL_BINDINGS));
-
-  this->addPool(
-      DESC_MESH,
-      createDescriptorPool(
-          MESH_MAX_SETS, ARRAYSIZE(MESH_BINDINGS), MESH_BINDINGS));
-  this->addSetLayout(
-      DESC_MESH,
-      createDescriptorSetLayout(ARRAYSIZE(MESH_BINDINGS), MESH_BINDINGS));
-
-  this->addPool(
-      DESC_MODEL,
-      createDescriptorPool(
-          MODEL_MAX_SETS, ARRAYSIZE(MODEL_BINDINGS), MODEL_BINDINGS));
-  this->addSetLayout(
-      DESC_MODEL,
-      createDescriptorSetLayout(ARRAYSIZE(MODEL_BINDINGS), MODEL_BINDINGS));
-
-  this->addPool(
-      DESC_FULLSCREEN,
-      createDescriptorPool(
-          FULLSCREEN_MAX_SETS,
-          ARRAYSIZE(FULLSCREEN_BINDINGS),
-          FULLSCREEN_BINDINGS));
-  this->addSetLayout(
-      DESC_FULLSCREEN,
-      createDescriptorSetLayout(
-          ARRAYSIZE(FULLSCREEN_BINDINGS), FULLSCREEN_BINDINGS));
-
-  this->addPool(
-      DESC_ENVIRONMENT,
-      createDescriptorPool(
-          ENVIRONMENT_MAX_SETS,
-          ARRAYSIZE(ENVIRONMENT_BINDINGS),
-          ENVIRONMENT_BINDINGS));
-  this->addSetLayout(
-      DESC_ENVIRONMENT,
-      createDescriptorSetLayout(
-          ARRAYSIZE(ENVIRONMENT_BINDINGS), ENVIRONMENT_BINDINGS));
-
   // Imgui
   {
     VkDescriptorPoolSize imguiPoolSizes[] = {
@@ -333,9 +127,5 @@ void DescriptorManager::destroy() {
 
   for (auto &p : m_pools) {
     vkDestroyDescriptorPool(ctx().m_device, p.second, nullptr);
-  }
-
-  for (auto &p : m_setLayouts) {
-    vkDestroyDescriptorSetLayout(ctx().m_device, p.second, nullptr);
   }
 }

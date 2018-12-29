@@ -21,50 +21,36 @@ void engine::loadComponent<GltfModelComponent>(
 GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
     : m_modelIndex(modelAsset.index()) {
   // Create uniform buffers and descriptors
-  {
-    auto [descriptorPool, descriptorSetLayout] =
-        renderer::ctx().m_descriptorManager[renderer::DESC_MESH];
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
 
-    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
+  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+    m_uniformBuffers[i] =
+        renderer::Buffer{renderer::BufferType::eUniform, sizeof(ModelUniform)};
 
-    VkDescriptorSetAllocateInfo allocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+    m_uniformBuffers[i].mapMemory(&m_mappings[i]);
+
+    memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
+
+    VkDescriptorBufferInfo bufferInfo = {
+        m_uniformBuffers[i].getHandle(), 0, sizeof(ModelUniform)};
+
+    this->m_descriptorSets[i] = setLayout.allocate();
+
+    VkWriteDescriptorSet descriptorWrite = {
+        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        *descriptorPool,
-        1,
-        descriptorSetLayout,
+        m_descriptorSets[i],               // dstSet
+        0,                                 // dstBinding
+        0,                                 // dstArrayElement
+        1,                                 // descriptorCount
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        nullptr,                           // pImageInfo
+        &bufferInfo,                       // pBufferInfo
+        nullptr,                           // pTexelBufferView
     };
 
-    for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-      m_uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
-                                             sizeof(ModelUniform)};
-
-      m_uniformBuffers[i].mapMemory(&m_mappings[i]);
-
-      memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
-
-      VkDescriptorBufferInfo bufferInfo = {
-          m_uniformBuffers[i].getHandle(), 0, sizeof(ModelUniform)};
-
-      VK_CHECK(vkAllocateDescriptorSets(
-          renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]));
-
-      VkWriteDescriptorSet descriptorWrite = {
-          VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          nullptr,
-          m_descriptorSets[i],               // dstSet
-          0,                                 // dstBinding
-          0,                                 // dstArrayElement
-          1,                                 // descriptorCount
-          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-          nullptr,                           // pImageInfo
-          &bufferInfo,                       // pBufferInfo
-          nullptr,                           // pTexelBufferView
-      };
-
-      vkUpdateDescriptorSets(
-          renderer::ctx().m_device, 1, &descriptorWrite, 0, nullptr);
-    }
+    vkUpdateDescriptorSets(
+        renderer::ctx().m_device, 1, &descriptorWrite, 0, nullptr);
   }
 }
 
@@ -76,15 +62,10 @@ GltfModelComponent::~GltfModelComponent() {
     m_uniformBuffers[i].destroy();
   }
 
-  auto descriptorPool =
-      renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MESH);
-  assert(descriptorPool != nullptr);
-
-  vkFreeDescriptorSets(
-      renderer::ctx().m_device,
-      *descriptorPool,
-      ARRAYSIZE(m_descriptorSets),
-      m_descriptorSets);
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
+  for (auto &set : this->m_descriptorSets) {
+    setLayout.free(set);
+  }
 }
 
 void GltfModelComponent::draw(
@@ -121,7 +102,7 @@ void GltfModelComponent::draw(
       pipeline.m_pipelineLayout,
       3, // firstSet
       1,
-      &m_descriptorSets[i],
+      m_descriptorSets[i],
       0,
       nullptr);
 
@@ -148,7 +129,7 @@ void GltfModelComponent::drawNode(
         pipeline.m_pipelineLayout,
         2, // firstSet
         1,
-        &model.m_meshes[node.meshIndex].descriptorSets[i],
+        model.m_meshes[node.meshIndex].descriptorSets[i],
         0,
         nullptr);
 
@@ -170,7 +151,7 @@ void GltfModelComponent::drawNode(
             pipeline.m_pipelineLayout,
             1, // firstSet
             1,
-            &mat.descriptorSets[i],
+            mat.descriptorSets[i],
             0,
             nullptr);
       }

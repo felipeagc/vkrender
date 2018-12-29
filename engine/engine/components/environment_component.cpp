@@ -25,25 +25,11 @@ void engine::loadComponent<EnvironmentComponent>(
 EnvironmentComponent::EnvironmentComponent(
     const EnvironmentAsset &environmentAsset)
     : m_environmentAssetIndex(environmentAsset.index()) {
-  // Allocate material descriptor sets
-  {
-    auto [descriptorPool, descriptorSetLayout] =
-        renderer::ctx().m_descriptorManager[renderer::DESC_ENVIRONMENT];
+  // Allocate descriptor sets
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
 
-    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-    VkDescriptorSetAllocateInfo allocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *descriptorPool,
-        1,
-        descriptorSetLayout,
-    };
-
-    for (size_t i = 0; i < ARRAYSIZE(m_descriptorSets); i++) {
-      VK_CHECK(vkAllocateDescriptorSets(
-          renderer::ctx().m_device, &allocateInfo, &m_descriptorSets[i]));
-    }
+  for (size_t i = 0; i < ARRAYSIZE(m_descriptorSets); i++) {
+    this->m_descriptorSets[i] = setLayout.allocate();
   }
 
   // Update descriptor sets
@@ -147,14 +133,10 @@ EnvironmentComponent::~EnvironmentComponent() {
     m_uniformBuffers[i].destroy();
   }
 
-  VK_CHECK(vkFreeDescriptorSets(
-      renderer::ctx().m_device,
-      *renderer::ctx().m_descriptorManager.getPool(renderer::DESC_ENVIRONMENT),
-      ARRAYSIZE(m_descriptorSets),
-      m_descriptorSets));
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    m_descriptorSets[i] = VK_NULL_HANDLE;
+    setLayout.free(m_descriptorSets[i]);
   }
 }
 
@@ -175,7 +157,7 @@ void EnvironmentComponent::bind(
       pipeline.m_pipelineLayout,
       setIndex, // firstSet
       1,
-      &m_descriptorSets[i],
+      m_descriptorSets[i],
       0,
       nullptr);
 }
@@ -197,7 +179,7 @@ void EnvironmentComponent::drawSkybox(
       pipeline.m_pipelineLayout,
       1, // firstSet
       1,
-      &m_descriptorSets[i],
+      m_descriptorSets[i],
       0,
       nullptr);
 

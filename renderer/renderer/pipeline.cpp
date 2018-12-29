@@ -12,9 +12,6 @@ GraphicsPipeline::GraphicsPipeline(
 GraphicsPipeline::~GraphicsPipeline() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_pipelineLayout != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(ctx().m_device, m_pipelineLayout, nullptr);
-  }
   if (m_pipeline != VK_NULL_HANDLE) {
     vkDestroyPipeline(ctx().m_device, m_pipeline, nullptr);
   }
@@ -30,9 +27,6 @@ GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&rhs) {
 GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_pipelineLayout != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(ctx().m_device, m_pipelineLayout, nullptr);
-  }
   if (m_pipeline != VK_NULL_HANDLE) {
     vkDestroyPipeline(ctx().m_device, m_pipeline, nullptr);
   }
@@ -47,33 +41,11 @@ GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
 
 StandardPipeline::StandardPipeline(
     BaseRenderTarget &renderTarget, Shader &shader) {
-  VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MESH),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MODEL),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_ENVIRONMENT),
-  };
-
   VkPushConstantRange pushConstantRange = {};
   pushConstantRange.stageFlags =
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = 128;
-
-  // Create pipeline layout
-  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      nullptr,
-      0,
-      ARRAYSIZE(descriptorSetLayouts), // setLayoutCount
-      descriptorSetLayouts,            // pSetLayouts
-      1,                               // pushConstantRangeCount
-      &pushConstantRange,              // pPushConstantRanges
-  };
-
-  VK_CHECK(vkCreatePipelineLayout(
-      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout));
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
@@ -88,6 +60,8 @@ StandardPipeline::StandardPipeline(
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  m_pipelineLayout = ctx().m_resourceManager.m_providers.standard.pipelineLayout;
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -122,31 +96,11 @@ StandardPipeline::StandardPipeline(
 
 BillboardPipeline::BillboardPipeline(
     BaseRenderTarget &renderTarget, Shader &shader) {
-  VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MODEL),
-  };
-
   VkPushConstantRange pushConstantRange = {};
   pushConstantRange.stageFlags =
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = 128;
-
-  // Create pipeline layout
-  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      nullptr,
-      0,
-      ARRAYSIZE(descriptorSetLayouts), // setLayoutCount
-      descriptorSetLayouts,            // pSetLayouts
-      1,                               // pushConstantRangeCount
-      &pushConstantRange,              // pPushConstantRanges
-  };
-
-  VK_CHECK(vkCreatePipelineLayout(
-      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout));
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
@@ -170,6 +124,8 @@ BillboardPipeline::BillboardPipeline(
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  m_pipelineLayout = ctx().m_resourceManager.m_providers.billboard.pipelineLayout;
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -203,14 +159,6 @@ BillboardPipeline::BillboardPipeline(
 }
 
 SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
-  VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_CAMERA),
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_ENVIRONMENT),
-  };
-
-  m_pipelineLayout = pipeline::createPipelineLayout(
-      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
-
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
@@ -233,6 +181,8 @@ SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
   depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  m_pipelineLayout = ctx().m_resourceManager.m_providers.skybox.pipelineLayout;
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -267,13 +217,6 @@ SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
 
 FullscreenPipeline::FullscreenPipeline(
     BaseRenderTarget &renderTarget, Shader &shader) {
-  VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_FULLSCREEN),
-  };
-
-  m_pipelineLayout = pipeline::createPipelineLayout(
-      ARRAYSIZE(descriptorSetLayouts), descriptorSetLayouts);
-
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
@@ -321,6 +264,8 @@ FullscreenPipeline::FullscreenPipeline(
 
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
 
+  m_pipelineLayout = ctx().m_resourceManager.m_providers.fullscreen.pipelineLayout;
+
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       nullptr,
@@ -354,28 +299,10 @@ FullscreenPipeline::FullscreenPipeline(
 
 BakeCubemapPipeline::BakeCubemapPipeline(
     VkRenderPass &renderpass, Shader &shader) {
-  VkDescriptorSetLayout descriptorSetLayouts[] = {
-      *ctx().m_descriptorManager.getSetLayout(renderer::DESC_MATERIAL),
-  };
-
   VkPushConstantRange pushConstantRange = {};
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = 128;
-
-  // Create pipeline layout
-  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      nullptr,
-      0,
-      ARRAYSIZE(descriptorSetLayouts), // setLayoutCount
-      descriptorSetLayouts,            // pSetLayouts
-      1,                               // pushConstantRangeCount
-      &pushConstantRange,              // pPushConstantRanges
-  };
-
-  VK_CHECK(vkCreatePipelineLayout(
-      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout));
 
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
@@ -397,6 +324,8 @@ BakeCubemapPipeline::BakeCubemapPipeline(
   auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  m_pipelineLayout = ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,

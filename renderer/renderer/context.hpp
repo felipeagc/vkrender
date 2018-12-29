@@ -1,8 +1,8 @@
 #pragma once
 
 #include "descriptor_manager.hpp"
+#include "resource_manager.hpp"
 #include "texture.hpp"
-#include <functional>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -65,6 +65,7 @@ public:
   VkCommandPool m_transientCommandPool = VK_NULL_HANDLE;
 
   DescriptorManager m_descriptorManager;
+  ResourceManager m_resourceManager;
 
   Texture m_whiteTexture;
   Texture m_blackTexture;

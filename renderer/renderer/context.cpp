@@ -423,6 +423,7 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
   this->createTransientCommandPool();
 
   m_descriptorManager.init();
+  m_resourceManager.initialize();
 
   m_whiteTexture = Texture{{255, 255, 255, 255}, 1, 1};
   m_blackTexture = Texture{{0, 0, 0, 255}, 1, 1};
@@ -437,6 +438,7 @@ Context::~Context() {
   m_blackTexture.destroy();
 
   m_descriptorManager.destroy();
+  m_resourceManager.destroy();
 
   if (m_transientCommandPool) {
     vkDestroyCommandPool(m_device, m_transientCommandPool, nullptr);

@@ -1,9 +1,9 @@
 #include "billboard_component.hpp"
 #include "../scene.hpp"
 #include <fstl/logging.hpp>
-#include <renderer/window.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
+#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -22,26 +22,9 @@ void engine::loadComponent<BillboardComponent>(
 BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
     : m_textureIndex(textureAsset.index()) {
   // Allocate material descriptor sets
-  {
-    auto [descriptorPool, descriptorSetLayout] =
-        renderer::ctx().m_descriptorManager[renderer::DESC_MATERIAL];
-
-    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-    VkDescriptorSetAllocateInfo allocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *descriptorPool,
-        1,
-        descriptorSetLayout,
-    };
-
-    for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
-      VK_CHECK(vkAllocateDescriptorSets(
-          renderer::ctx().m_device,
-          &allocateInfo,
-          &m_materialDescriptorSets[i]));
-    }
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+  for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
+    m_materialDescriptorSets[i] = setLayout.allocate();
   }
 
   // Update descriptor sets
@@ -75,14 +58,9 @@ BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
 BillboardComponent::~BillboardComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  VK_CHECK(vkFreeDescriptorSets(
-      renderer::ctx().m_device,
-      *renderer::ctx().m_descriptorManager.getPool(renderer::DESC_MATERIAL),
-      ARRAYSIZE(m_materialDescriptorSets),
-      m_materialDescriptorSets));
-
-  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    m_materialDescriptorSets[i] = VK_NULL_HANDLE;
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+  for (auto &set : m_materialDescriptorSets) {
+    setLayout.free(set);
   }
 }
 
@@ -115,7 +93,7 @@ void BillboardComponent::draw(
       pipeline.m_pipelineLayout,
       1, // firstSet
       1,
-      &m_materialDescriptorSets[i],
+      m_materialDescriptorSets[i],
       0,
       nullptr);
 

@@ -83,7 +83,7 @@ void RenderTarget::draw(Window &window, GraphicsPipeline &pipeline) {
       pipeline.m_pipelineLayout,
       0, // firstSet
       1,
-      &resource.descriptorSet,
+      resource.resourceSet,
       0,
       nullptr);
 
@@ -314,21 +314,8 @@ void RenderTarget::createDescriptorSet() {
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
 
-    auto [descriptorPool, descriptorSetLayout] =
-        ctx().m_descriptorManager[DESC_FULLSCREEN];
-
-    assert(descriptorPool != nullptr && descriptorSetLayout != nullptr);
-
-    VkDescriptorSetAllocateInfo allocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *descriptorPool,
-        1,
-        descriptorSetLayout,
-    };
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        renderer::ctx().m_device, &allocateInfo, &resource.descriptorSet));
+    auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.fullscreen;
+    resource.resourceSet = setLayout.allocate();
 
     VkDescriptorImageInfo descriptor = {
         resource.color.sampler,
@@ -340,7 +327,7 @@ void RenderTarget::createDescriptorSet() {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            resource.descriptorSet,                    // dstSet
+            resource.resourceSet,                      // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -363,14 +350,11 @@ void RenderTarget::createDescriptorSet() {
 void RenderTarget::destroyDescriptorSet() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.fullscreen;
+
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
-
-    VK_CHECK(vkFreeDescriptorSets(
-        renderer::ctx().m_device,
-        *renderer::ctx().m_descriptorManager.getPool(renderer::DESC_FULLSCREEN),
-        1,
-        &resource.descriptorSet));
+    setLayout.free(resource.resourceSet);
   }
 }
 

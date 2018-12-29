@@ -14,13 +14,8 @@
 - [x] Figure out a way to pass more parameters to the pipeline on creation
 - [x] Multisampling
 - [x] Make multisampling configurable
-- [ ] Have a single global PipelineLayout?
 
 ### Descriptor sets
-- [x] Free descriptor sets after destruction of resources
-- [x] Make more flexible DescriptorManager with customizable pools and sets
-- [ ] Default bound descriptor sets for assets that don't have defined
-      properties (like textures) -- maybe not needed
 - [ ] Make a better abstraction for updating descriptor sets
 
 ### GLTF models
@@ -28,7 +23,6 @@
 - [x] Figure out UV flipping of GltfModels
 - [ ] Animation
 - [ ] Alpha blending
-- [x] Fix the mesh matrix stuff
 
 ### PBR
 - [x] Emissive maps
@@ -48,39 +42,24 @@
 
 ### Window
 - [ ] Better event system
-- [ ] Input handling
-- [x] Get state of a key
 
 ### Libraries
 - [ ] Figure out how to add vulkan SDK as a submodule
 
 ### Assets
-- [x] Asset management system
-- [x] Clearly specify which types are assets (maybe naming things like TextureAsset, GltfModelAsset, etc)
-- [x] Json files for assets as a way of passing additional parameters (maybe treat this as just an option)
-      Maybe handle this in the asset constructor itself.
-- [x] More flexible asset manager (use constructor instead of json for extra parameters)
-- [x] Allow for arbitrary assets
 - [ ] Multi-threaded asset loading
-- [x] Assets window with editable asset properties, etc
 
 ### ECS
-- [x] Basic ECS
 - [ ] Better storage solution (packed array -- arena allocator)
 - [x] More organized system abstraction
 
 ### Misc
 - [ ] Make standalone skybox baker
-- [ ] Optimize skybox rendering
-- [x] Entities window
-- [ ] Better way to organize descriptor set layouts (unified? one pool?)
-- [x] Billboards
 - [ ] Object picking (use AABB testing with bouding box provided by gltf)
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
-- [ ] Fullscreen post process shader
+- [x] Fullscreen post process shader
 - [ ] Document as much as possible
 - [x] Imgui
-- [ ] Imgui shader uniform menu
 
 ## Assets
 Async loading:

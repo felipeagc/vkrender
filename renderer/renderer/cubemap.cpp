@@ -332,24 +332,9 @@ static void bakeCubemap(
   }
 
   // Create hdrDescriptorSet
-  VkDescriptorSet hdrDescriptorSet;
-  auto [hdrDescriptorPool, hdrDescriptorSetLayout] =
-      renderer::ctx().m_descriptorManager[renderer::DESC_MATERIAL];
-  assert(hdrDescriptorPool != nullptr && hdrDescriptorSetLayout != nullptr);
+  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+  ResourceSet hdrDescriptorSet = setLayout.allocate();
   {
-    VkDescriptorSetAllocateInfo hdrDescriptorSetAllocateInfo = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
-        *hdrDescriptorPool,
-        1,
-        hdrDescriptorSetLayout,
-    };
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        renderer::ctx().m_device,
-        &hdrDescriptorSetAllocateInfo,
-        &hdrDescriptorSet));
-
     VkDescriptorImageInfo hdrImageDescriptor = {
         hdrSampler,
         hdrImageView,
@@ -467,7 +452,7 @@ static void bakeCubemap(
     vkCmdPushConstants(
         commandBuffer,
         pipeline.m_pipelineLayout,
-        VK_SHADER_STAGE_VERTEX_BIT,
+        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         0,
         sizeof(CameraUniform),
         &cameraUBO);
@@ -498,7 +483,7 @@ static void bakeCubemap(
           pipeline.m_pipelineLayout,
           0, // firstSet
           1,
-          &hdrDescriptorSet,
+          hdrDescriptorSet,
           0,
           nullptr);
 
@@ -540,15 +525,14 @@ static void bakeCubemap(
 
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
+  setLayout.free(hdrDescriptorSet);
+
   vkDestroyImageView(renderer::ctx().m_device, sideImageView, nullptr);
   vmaDestroyImage(renderer::ctx().m_allocator, sideImage, sideAllocation);
 
   vkDestroyImageView(renderer::ctx().m_device, hdrImageView, nullptr);
   vkDestroySampler(renderer::ctx().m_device, hdrSampler, nullptr);
   vmaDestroyImage(renderer::ctx().m_allocator, hdrImage, hdrAllocation);
-
-  vkFreeDescriptorSets(
-      renderer::ctx().m_device, *hdrDescriptorPool, 1, &hdrDescriptorSet);
 
   vkFreeCommandBuffers(
       renderer::ctx().m_device,

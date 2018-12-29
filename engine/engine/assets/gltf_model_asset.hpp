@@ -5,6 +5,7 @@
 #include <renderer/common.hpp>
 #include <renderer/glm.hpp>
 #include <renderer/pipeline.hpp>
+#include <renderer/resource_manager.hpp>
 #include <renderer/texture.hpp>
 #include <scene/scene.hpp>
 #include <string>
@@ -39,7 +40,7 @@ public:
       float hasNormalTexture = 0.0f;
     } ubo;
 
-    VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+    renderer::ResourceSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
     void load(const GltfModelAsset &model);
   };
@@ -71,7 +72,7 @@ public:
 
     renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
     void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
-    VkDescriptorSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+    renderer::ResourceSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
     Mesh() {}
     Mesh(glm::mat4 matrix);
