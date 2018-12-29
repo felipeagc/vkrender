@@ -9,6 +9,7 @@
 int main() {
   renderer::Context context;
   renderer::Window window("GLTF models", 800, 600);
+  renderer::ImGuiRenderer imgui(window);
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
@@ -58,6 +59,7 @@ int main() {
 
     SDL_Event event;
     while (window.pollEvent(&event)) {
+      imgui.processEvent(&event);
       fpsCameraSystem.processEvent(window, event);
 
       switch (event.type) {
@@ -76,6 +78,8 @@ int main() {
     }
 
     window.beginFrame();
+
+    imgui.begin();
 
     engine::imgui::statsWindow(window);
     engine::imgui::assetsWindow(assetManager);
@@ -98,11 +102,14 @@ int main() {
       renderTarget.endRenderPass(window);
     }
 
+    imgui.end();
+
     // Window pass
     {
       window.beginRenderPass();
 
       renderTarget.draw(window, fullscreenPipeline);
+      imgui.draw();
 
       window.endRenderPass();
     }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "descriptor_manager.hpp"
 #include "resource_manager.hpp"
 #include "texture.hpp"
 #include <vector>
@@ -64,7 +63,6 @@ public:
   VkCommandPool m_graphicsCommandPool = VK_NULL_HANDLE;
   VkCommandPool m_transientCommandPool = VK_NULL_HANDLE;
 
-  DescriptorManager m_descriptorManager;
   ResourceManager m_resourceManager;
 
   Texture m_whiteTexture;

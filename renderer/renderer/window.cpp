@@ -4,9 +4,6 @@
 #include <SDL2/SDL_vulkan.h>
 #include <chrono>
 #include <fstl/logging.hpp>
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_sdl.h>
-#include <imgui/imgui_impl_vulkan.h>
 
 using namespace renderer;
 
@@ -68,18 +65,10 @@ Window::Window(const char *title, uint32_t width, uint32_t height) {
   this->createDepthStencilResources();
 
   this->createRenderPass();
-
-  this->createImguiRenderPass();
-
-  this->initImgui();
 }
 
 Window::~Window() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-
-  ImGui_ImplVulkan_Shutdown();
-  ImGui_ImplSDL2_Shutdown();
-  ImGui::DestroyContext();
 
   this->destroyResizables();
 
@@ -91,8 +80,6 @@ Window::~Window() {
 
   for (auto &frameResource : m_frameResources) {
     vkDestroyFramebuffer(ctx().m_device, frameResource.framebuffer, nullptr);
-    vkDestroyFramebuffer(
-        ctx().m_device, frameResource.imguiFramebuffer, nullptr);
     vkDestroySemaphore(
         ctx().m_device, frameResource.imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(
@@ -117,9 +104,6 @@ bool Window::pollEvent(SDL_Event *event) {
     }
     break;
   }
-
-  if (result)
-    ImGui_ImplSDL2_ProcessEvent(event);
 
   return result;
 }
@@ -147,8 +131,6 @@ void Window::beginFrame() {
     this->updateSize();
   }
 
-  this->imguiBeginFrame();
-
   VkImageSubresourceRange imageSubresourceRange{
       VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
       0,                         // baseMipLevel
@@ -159,10 +141,6 @@ void Window::beginFrame() {
 
   this->regenFramebuffer(
       m_frameResources[m_currentFrame].framebuffer,
-      m_swapchainImageViews[m_currentImageIndex]);
-
-  this->regenImguiFramebuffer(
-      m_frameResources[m_currentFrame].imguiFramebuffer,
       m_swapchainImageViews[m_currentImageIndex]);
 
   VkCommandBufferBeginInfo beginInfo = {};
@@ -204,39 +182,6 @@ void Window::beginFrame() {
 
 void Window::endFrame() {
   auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
-
-  {
-    VkRenderPassBeginInfo imguiRenderPassBeginInfo = {
-        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,          // sType
-        nullptr,                                           // pNext
-        m_imguiRenderPass,                                 // renderPass
-        m_frameResources[m_currentFrame].imguiFramebuffer, // framebuffer
-        {{0, 0}, m_swapchainExtent},                       // renderArea
-        0,                                                 // clearValueCount
-        nullptr,                                           // pClearValues
-    };
-
-    vkCmdBeginRenderPass(
-        commandBuffer, &imguiRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    VkViewport viewport{
-        0.0f,                                         // x
-        0.0f,                                         // y
-        static_cast<float>(m_swapchainExtent.width),  // width
-        static_cast<float>(m_swapchainExtent.height), // height
-        0.0f,                                         // minDepth
-        1.0f,                                         // maxDepth
-    };
-
-    VkRect2D scissor{{0, 0}, m_swapchainExtent};
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
-
-    vkCmdEndRenderPass(commandBuffer);
-  }
 
   VkImageSubresourceRange imageSubresourceRange{
       VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
@@ -373,8 +318,6 @@ void Window::beginRenderPass() {
 void Window::endRenderPass() {
   auto &commandBuffer = m_frameResources[m_currentFrame].commandBuffer;
 
-  this->imguiEndFrame();
-
   // End
   vkCmdEndRenderPass(commandBuffer);
 }
@@ -386,7 +329,6 @@ void Window::updateSize() {
   this->createSwapchainImageViews();
   this->createDepthStencilResources();
   this->createRenderPass();
-  this->createImguiRenderPass();
   this->allocateGraphicsCommandBuffers();
 }
 
@@ -446,14 +388,6 @@ int Window::getCurrentFrameIndex() const { return m_currentFrame; }
 VkCommandBuffer Window::getCurrentCommandBuffer() {
   return m_frameResources[m_currentFrame].commandBuffer;
 }
-
-void Window::imguiBeginFrame() {
-  ImGui_ImplVulkan_NewFrame();
-  ImGui_ImplSDL2_NewFrame(m_window);
-  ImGui::NewFrame();
-}
-
-void Window::imguiEndFrame() { ImGui::Render(); }
 
 void Window::createVulkanSurface() {
   if (!SDL_Vulkan_CreateSurface(m_window, ctx().m_instance, &m_surface)) {
@@ -760,111 +694,6 @@ void Window::createRenderPass() {
       ctx().m_device, &renderPassCreateInfo, nullptr, &m_renderPass));
 }
 
-void Window::createImguiRenderPass() {
-  VkAttachmentDescription attachment = {};
-  attachment.format = m_swapchainImageFormat;
-  attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-  VkAttachmentReference color_attachment = {};
-  color_attachment.attachment = 0;
-  color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkSubpassDescription subpass = {};
-  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &color_attachment;
-
-  VkSubpassDependency dependency = {};
-  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependency.dstSubpass = 0;
-  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.srcAccessMask = 0;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-  VkRenderPassCreateInfo renderPassCreateInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-      nullptr,     // pNext
-      0,           // flags
-      1,           // attachmentCount
-      &attachment, // pAttachments
-      1,           // subpassCount
-      &subpass,    // pSubpasses
-      1,           // dependencyCount
-      &dependency, // pDependencies
-  };
-
-  VK_CHECK(vkCreateRenderPass(
-      ctx().m_device, &renderPassCreateInfo, nullptr, &m_imguiRenderPass));
-}
-
-void Window::initImgui() {
-  ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
-  (void)io;
-
-  ImGui_ImplSDL2_InitForVulkan(m_window);
-
-  // Setup Vulkan binding
-  ImGui_ImplVulkan_InitInfo init_info = {};
-  init_info.Instance = ctx().m_instance;
-  init_info.PhysicalDevice = ctx().m_physicalDevice;
-  init_info.Device = ctx().m_device;
-  init_info.QueueFamily = ctx().m_graphicsQueueFamilyIndex;
-  init_info.Queue = ctx().m_graphicsQueue;
-  init_info.PipelineCache = VK_NULL_HANDLE;
-  init_info.DescriptorPool = *ctx().m_descriptorManager.getPool(DESC_IMGUI);
-  init_info.Allocator = nullptr;
-  init_info.CheckVkResultFn = [](VkResult result) {
-    if (result != VK_SUCCESS) {
-      throw std::runtime_error("Failed to initialize IMGUI!");
-    }
-  };
-  ImGui_ImplVulkan_Init(&init_info, m_imguiRenderPass);
-
-  // Setup style
-  ImGui::StyleColorsDark();
-
-  // Upload Fonts
-  {
-    // Use any command queue
-    VkCommandPool commandPool = ctx().m_graphicsCommandPool;
-    VkCommandBuffer commandBuffer =
-        m_frameResources[m_currentFrame].commandBuffer;
-
-    VK_CHECK(vkResetCommandPool(ctx().m_device, commandPool, 0));
-    VkCommandBufferBeginInfo beginInfo = {
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
-        nullptr,                                     // pNext
-        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-        nullptr,                                     // pInheritanceInfo
-    };
-
-    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-
-    ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-
-    VkSubmitInfo endInfo = {};
-    endInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    endInfo.commandBufferCount = 1;
-    endInfo.pCommandBuffers = &commandBuffer;
-
-    VK_CHECK(vkEndCommandBuffer(commandBuffer));
-
-    VK_CHECK(vkQueueSubmit(ctx().m_graphicsQueue, 1, &endInfo, VK_NULL_HANDLE));
-
-    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-
-    ImGui_ImplVulkan_InvalidateFontUploadObjects();
-  }
-}
-
 void Window::regenFramebuffer(
     VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
   vkDestroyFramebuffer(ctx().m_device, framebuffer, nullptr);
@@ -890,26 +719,6 @@ void Window::regenFramebuffer(
       vkCreateFramebuffer(ctx().m_device, &createInfo, nullptr, &framebuffer));
 }
 
-void Window::regenImguiFramebuffer(
-    VkFramebuffer &framebuffer, VkImageView &swapchainImageView) {
-  vkDestroyFramebuffer(ctx().m_device, framebuffer, nullptr);
-
-  VkFramebufferCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
-      nullptr,                                   // pNext
-      0,                                         // flags
-      m_imguiRenderPass,                         // renderPass
-      1,                                         // attachmentCount
-      &swapchainImageView,                       // pAttachments
-      m_swapchainExtent.width,                   // width
-      m_swapchainExtent.height,                  // height
-      1,                                         // layers
-  };
-
-  VK_CHECK(
-      vkCreateFramebuffer(ctx().m_device, &createInfo, nullptr, &framebuffer));
-}
-
 void Window::destroyResizables() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
@@ -929,7 +738,6 @@ void Window::destroyResizables() {
     m_depthStencil.allocation = VK_NULL_HANDLE;
   }
 
-  vkDestroyRenderPass(ctx().m_device, m_imguiRenderPass, nullptr);
   vkDestroyRenderPass(ctx().m_device, m_renderPass, nullptr);
 }
 

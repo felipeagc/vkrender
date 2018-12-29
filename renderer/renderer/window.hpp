@@ -15,6 +15,8 @@
 namespace renderer {
 
 class Window : public BaseRenderTarget {
+  friend class ImGuiRenderer;
+
 public:
   Window(const char *title, uint32_t width = 800, uint32_t height = 600);
   ~Window();
@@ -57,9 +59,6 @@ public:
   int getCurrentFrameIndex() const;
   VkCommandBuffer getCurrentCommandBuffer();
 
-  void imguiBeginFrame();
-  void imguiEndFrame();
-
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
 
 protected:
@@ -89,7 +88,6 @@ protected:
     VkFence fence = VK_NULL_HANDLE;
 
     VkFramebuffer framebuffer = VK_NULL_HANDLE;
-    VkFramebuffer imguiFramebuffer = VK_NULL_HANDLE;
 
     VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   };
@@ -107,8 +105,6 @@ protected:
   fstl::fixed_vector<VkImage> m_swapchainImages;
   fstl::fixed_vector<VkImageView> m_swapchainImageViews;
 
-  VkRenderPass m_imguiRenderPass = VK_NULL_HANDLE;
-
   void createVulkanSurface();
 
   void createSyncObjects();
@@ -122,15 +118,8 @@ protected:
 
   void createRenderPass();
 
-  void createImguiRenderPass();
-
-  void initImgui();
-
   void
   regenFramebuffer(VkFramebuffer &framebuffer, VkImageView &swapchainImageView);
-
-  void regenImguiFramebuffer(
-      VkFramebuffer &framebuffer, VkImageView &swapchainImageView);
 
   // When window gets resized, call this.
   void updateSize();
