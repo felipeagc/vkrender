@@ -3,6 +3,7 @@
 using namespace engine;
 
 AssetManager::~AssetManager() {
+  std::scoped_lock<std::mutex> lock(m_mutex);
   for (size_t assetId = 0; assetId < m_assets.size(); assetId++) {
     if (m_assets[assetId] != nullptr) {
       Asset *asset = m_assets[assetId];

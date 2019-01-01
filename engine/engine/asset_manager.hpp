@@ -3,8 +3,10 @@
 #include <atomic>
 #include <fstl/logging.hpp>
 #include <functional>
+#include <mutex>
 #include <renderer/texture.hpp>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace engine {
@@ -22,7 +24,7 @@ public:
 
   inline AssetType type() const noexcept { return m_assetType; }
   inline AssetIndex index() const noexcept { return m_assetIndex; }
-  inline const std::string& identifier() { return m_identifier; }
+  inline const std::string &identifier() { return m_identifier; }
 
 protected:
   AssetType m_assetType = -1;
@@ -54,9 +56,7 @@ public:
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
 
-  const std::vector<Asset*> &getAssets() {
-    return m_assets;
-  }
+  const std::vector<Asset *> &getAssets() { return m_assets; }
 
   template <typename A> A &getAsset(const AssetIndex assetIndex) {
     // auto id = AssetTypeId::type<A>;
@@ -69,14 +69,17 @@ public:
     ensureAssetType<A>();
 
     AssetIndex assetIndex = -1;
+    {
+      std::scoped_lock<std::mutex> lock(m_mutex);
 
-    if (m_assets.size() == 0) {
-      assetIndex = 0;
-    } else {
-      for (AssetIndex i = 0; i < m_assets.size(); i++) {
-        assetIndex = i;
-        if (!m_assets[i]) {
-          break;
+      if (m_assets.size() == 0) {
+        assetIndex = 0;
+      } else {
+        for (AssetIndex i = 0; i < m_assets.size(); i++) {
+          assetIndex = i;
+          if (!m_assets[i]) {
+            break;
+          }
         }
       }
     }
@@ -95,7 +98,11 @@ public:
       throw std::runtime_error("Asset index is in use");
     }
 
-    m_assets[assetIndex] = new A(std::forward<Args>(args)...);
+    A* asset = new A(std::forward<Args>(args)...);
+
+    std::scoped_lock<std::mutex> lock(m_mutex);
+
+    m_assets[assetIndex] = asset;
 
     m_assets[assetIndex]->m_assetType = id;
     m_assets[assetIndex]->m_assetIndex = assetIndex;
@@ -124,8 +131,12 @@ private:
   // Indexed by asset type
   std::vector<std::function<void(Asset *)>> m_assetDestructors;
 
+  std::mutex m_mutex;
+
   template <typename A> void ensureAssetType() {
     auto id = getAssetType<A>();
+
+    std::scoped_lock<std::mutex> lock(m_mutex);
 
     if (m_assetDestructors.size() <= id) {
       m_assetDestructors.resize(id + 1);
@@ -136,7 +147,7 @@ private:
   }
 
   template <typename A> bool ensureAssetIndex(AssetIndex assetIndex) {
-    // auto id = getAssetType<A>();
+    std::scoped_lock<std::mutex> lock(m_mutex);
 
     if (m_assets.size() > assetIndex) {
       return !m_assets[assetIndex];
