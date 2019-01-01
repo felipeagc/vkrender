@@ -3,7 +3,9 @@
 layout (location = 0) in vec3 texCoords;
 
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
+  vec3 sunDirection;
   float exposure;
+  vec4 sunColor;
 } environment;
 
 layout (set = 1, binding = 1) uniform samplerCube envMap;

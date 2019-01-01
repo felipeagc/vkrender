@@ -58,7 +58,7 @@ void EntityInspectorSystem::process(ecs::World &world) {
           ImGui::DragFloat3("Rotation axis", &axis.x, 0.1f, -1.0f, 1.0f);
 
           transform->rotation =
-            glm::rotate(prevQuat, glm::radians(angle), glm::normalize(axis));
+              glm::rotate(prevQuat, glm::radians(angle), glm::normalize(axis));
 
           ImGui::EndPopup();
         }
@@ -91,9 +91,16 @@ void EntityInspectorSystem::process(ecs::World &world) {
     if (environment != nullptr) {
       if (ImGui::CollapsingHeader("Environment component")) {
         ImGui::Indent();
-        float exposure = environment->getExposure();
-        ImGui::DragFloat("Exposure", &exposure, 0.5f, 0.0f, 1000.0f);
-        environment->setExposure(exposure);
+        ImGui::DragFloat(
+            "Exposure", &environment->m_ubo.exposure, 0.5f, 0.0f, 1000.0f);
+        ImGui::DragFloat3(
+            "Sun direction",
+            &environment->m_ubo.sunDirection[0],
+            0.01f,
+            0.0f,
+            1.0f);
+        ImGui::ColorEdit3("Sun color", &environment->m_ubo.sunColor[0]);
+        ImGui::DragFloat("Sun intensity", &environment->m_ubo.sunIntensity, 0.01f, 0.0f, 100.0f);
         ImGui::Unindent();
       }
     }

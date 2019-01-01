@@ -22,12 +22,12 @@ brdfLut "../assets/brdf_lut.png"
 #1 Texture
 path "../assets/light.png"
 
-#2 GltfModel
-path "../assets/armadillo.glb"
+// #2 GltfModel
+// path "../assets/armadillo.glb"
 
-#3 GltfModel
-path "../assets/DamagedHelmet.glb"
-flip_uvs
+// #3 GltfModel
+// path "../assets/DamagedHelmet.glb"
+// flip_uvs
 
 #4 GltfModel
 path "../assets/Duck.glb"
@@ -73,21 +73,21 @@ Billboard { asset 1 }
 
 
 // Armadillo
-#
-Transform {
-  position 0.0 -1.0 -0.5
-  scale 1.0
-  rotation -90 0 0
-}
-GltfModel { asset 2 }
+// #
+// Transform {
+//   position 0.0 -1.0 -0.5
+//   scale 1.0
+//   rotation -90 0 0
+// }
+// GltfModel { asset 2 }
 
 // Damaged helmet
-#
-Transform {
-  position 4 0 4
-  rotation -90 0 0
-}
-GltfModel { asset 3 }
+// #
+// Transform {
+//   position 4 0 4
+//   rotation -90 0 0
+// }
+// GltfModel { asset 3 }
 
 // Duck
 #

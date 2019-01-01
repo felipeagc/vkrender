@@ -41,24 +41,24 @@ public:
 
   void update(renderer::Window &window);
 
-  void setExposure(float exposure);
-  float getExposure();
-
   void addLight(const glm::vec3 &pos, const glm::vec3 &color);
   void resetLights();
 
-protected:
   struct Light {
     glm::vec4 pos;
     glm::vec4 color;
   };
 
   struct EnvironmentUniform {
-    float exposure = 8.0;
+    glm::vec3 sunDirection{0.0, -1.0, 0.0};
+    float exposure = 8.0f;
+    glm::vec3 sunColor{1.0};
+    float sunIntensity = 1.0f;
     uint32_t lightCount = 0;
     alignas(16) Light lights[MAX_LIGHTS];
   } m_ubo;
 
+protected:
   AssetIndex m_environmentAssetIndex;
 
   renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];

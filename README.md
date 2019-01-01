@@ -24,6 +24,12 @@
 - [ ] Animation
 - [ ] Alpha blending
 
+### Graphics
+- [ ] Bloom
+- [ ] Shadow mapping
+- [ ] Forward+ lighting
+- [ ] Global illumination
+
 ### PBR
 - [x] Emissive maps
 - [x] Occlusion maps
@@ -31,6 +37,7 @@
 - [ ] Pass radiance mipmap count to shader at runtime
 
 ### Mesh generation
+- [ ] Shape asset
 - [ ] MeshComponent class
 
 ### Utilities
@@ -38,15 +45,17 @@
 
 ### Lighting
 - [x] Multiple lights
-- [ ] Add directional light (sun)
+- [x] Add directional light (sun)
 
 ### Window
 - [ ] Better event system
 
 ### Libraries
 - [ ] Figure out how to add vulkan SDK as a submodule
+- [ ] Add SDL2 as a git submodule
 
 ### Assets
+- [ ] Make AssetManager thread safe
 - [ ] Multi-threaded asset loading
 
 ### ECS

@@ -33,9 +33,12 @@ struct Light {
 };
 
 layout (set = 4, binding = 0) uniform EnvironmentUniform {
+  vec3 sunDirection;
   float exposure;
+  vec3 sunColor;
+  float sunIntensity;
   uint lightCount;
-  layout (offset = 16) Light lights[MAX_LIGHTS];
+  layout(offset = 48) Light lights[MAX_LIGHTS];
 } environment;
 
 layout (set = 4, binding = 2) uniform samplerCube irradianceMap;
@@ -91,6 +94,32 @@ void main() {
   F0 = mix(F0, albedo, metallic);
 
   vec3 Lo = vec3(0.0);
+
+  // Directional light (sun)
+  {
+    vec3 L = normalize(-environment.sunDirection);
+    vec3 H = normalize(V + L);
+    vec3 radiance = environment.sunColor * environment.sunIntensity;
+
+    float NdotL = max(dot(N, L), 0.0);
+
+    // Cook-Torrance BRDF
+    float NDF = distributionGGX(N, H, roughness);
+    float G = geometrySchlickSmithGGX(NdotL, max(dot(N, V), 0.0), roughness);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    vec3 nominator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.001;
+    vec3 specular = nominator / denominator;
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;
+
+    Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+  }
+
+  // Point lights
   for (int i = 0; i < environment.lightCount; i++) {
     // Calculate per-light radiance
     vec3 lightPos = environment.lights[i].pos.xyz;

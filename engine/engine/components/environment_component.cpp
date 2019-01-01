@@ -191,12 +191,6 @@ void EnvironmentComponent::update(renderer::Window &window) {
   memcpy(m_mappings[i], &m_ubo, sizeof(EnvironmentUniform));
 }
 
-void EnvironmentComponent::setExposure(float exposure) {
-  m_ubo.exposure = exposure;
-}
-
-float EnvironmentComponent::getExposure() { return m_ubo.exposure; }
-
 void EnvironmentComponent::addLight(
     const glm::vec3 &pos, const glm::vec3 &color) {
   m_ubo.lights[m_ubo.lightCount] =
