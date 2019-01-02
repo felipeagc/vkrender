@@ -70,11 +70,6 @@
 - [ ] Document as much as possible
 - [x] Imgui
 
-## Assets
-Async loading:
-- diskLoad();
-- gpuLoad();
-
 
 ## Shaders
 ### Vertex format
