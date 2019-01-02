@@ -286,6 +286,10 @@ void ResourceManager::initialize() {
       {&m_setLayouts.camera, &m_setLayouts.material, &m_setLayouts.model},
   };
 
+  m_providers.box = ResourceSetProvider{
+      {&m_setLayouts.camera, &m_setLayouts.model},
+  };
+
   m_providers.skybox = ResourceSetProvider{
       {&m_setLayouts.camera, &m_setLayouts.environment},
   };
@@ -302,6 +306,7 @@ void ResourceManager::initialize() {
 void ResourceManager::destroy() {
   m_providers.standard.destroy();
   m_providers.billboard.destroy();
+  m_providers.box.destroy();
   m_providers.skybox.destroy();
   m_providers.fullscreen.destroy();
   m_providers.bakeCubemap.destroy();

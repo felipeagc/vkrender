@@ -96,7 +96,7 @@ public:
     auto id = getAssetType<A>();
     ensureAssetType<A>();
 
-    fstl::log::debug("Loading asset #{}", assetIndex);
+    // fstl::log::debug("Loading asset #{}", assetIndex);
 
     if (!this->ensureAssetIndex<A>(assetIndex)) {
       throw std::runtime_error(

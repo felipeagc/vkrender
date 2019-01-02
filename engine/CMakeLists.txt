@@ -22,6 +22,7 @@ set(
   engine/assets/gltf_model_asset.cpp
   engine/assets/texture_asset.cpp
   engine/assets/environment_asset.cpp
+  engine/assets/shape_asset.cpp
   )
 
 add_library(

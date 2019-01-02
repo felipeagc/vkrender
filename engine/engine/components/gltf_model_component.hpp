@@ -26,16 +26,17 @@ public:
       renderer::GraphicsPipeline &pipeline,
       const glm::mat4 &transform);
 
-private:
   AssetIndex m_modelIndex;
 
   struct ModelUniform {
     glm::mat4 model{1.0};
   } m_ubo;
 
-  renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
-  void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
   renderer::ResourceSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+
+private:
+  void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
+  renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
 
   void drawNode(
       GltfModelAsset &model,

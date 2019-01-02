@@ -23,3 +23,4 @@
 #include "assets/environment_asset.hpp"
 #include "assets/gltf_model_asset.hpp"
 #include "assets/texture_asset.hpp"
+#include "assets/shape_asset.hpp"

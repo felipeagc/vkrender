@@ -38,6 +38,9 @@ path "../assets/WaterBottle.glb"
 #6 GltfModel
 path "../assets/BoomBox.glb"
 
+#7 GltfModel
+path "../assets/bunny.glb"
+
 
 Entities:
 
@@ -118,3 +121,10 @@ Transform {
   scale 100.0
 }
 GltfModel { asset 6 }
+
+// Bunny
+#
+Transform {
+  position 0 0 4
+}
+GltfModel { asset 7 }

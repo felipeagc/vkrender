@@ -107,6 +107,7 @@ public:
   struct {
     ResourceSetProvider standard;
     ResourceSetProvider billboard;
+    ResourceSetProvider box;
     ResourceSetProvider skybox;
     ResourceSetProvider fullscreen;
     ResourceSetProvider bakeCubemap;

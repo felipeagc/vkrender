@@ -318,6 +318,8 @@ GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
 
   stagingBuffer.unmapMemory();
   stagingBuffer.destroy();
+
+  this->getSceneDimensions();
 }
 
 GltfModelAsset::~GltfModelAsset() {
@@ -632,9 +634,9 @@ void GltfModelAsset::getNodeDimensions(
   if (node.meshIndex != -1) {
     for (Primitive &primitive : m_meshes[node.meshIndex].primitives) {
       glm::vec4 locMin =
-          glm::vec4(primitive.dimensions.min, 1.0f) * node.getMatrix(*this);
+          node.getMatrix(*this) * glm::vec4(primitive.dimensions.min, 1.0f);
       glm::vec4 locMax =
-          glm::vec4(primitive.dimensions.max, 1.0f) * node.getMatrix(*this);
+          node.getMatrix(*this) * glm::vec4(primitive.dimensions.max, 1.0f);
       if (locMin.x < min.x) {
         min.x = locMin.x;
       }

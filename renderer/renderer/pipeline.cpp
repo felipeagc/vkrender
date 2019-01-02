@@ -146,6 +146,57 @@ BillboardPipeline::BillboardPipeline(
       &m_pipeline));
 }
 
+BoxPipeline::BoxPipeline(
+    BaseRenderTarget &renderTarget, Shader &shader) {
+  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
+
+  auto vertexInputStateCreateInfo = pipeline::defaultVertexInputState();
+  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
+  auto viewportStateCreateInfo = pipeline::defaultViewportState();
+  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
+  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_LINE;
+  rasterizationStateCreateInfo.lineWidth = 2.0f;
+  auto multisampleStateCreateInfo =
+      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
+  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
+  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
+  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
+
+  m_pipelineLayout = ctx().m_resourceManager.m_providers.box.pipelineLayout;
+
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
+      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      nullptr,
+      0,                                                    // flags
+      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
+      shaderStageCreateInfos.data(),                        // pStages
+      &vertexInputStateCreateInfo,                          // pVertexInputState
+      &inputAssemblyStateCreateInfo, // pInputAssemblyState
+      nullptr,                       // pTesselationState
+      &viewportStateCreateInfo,      // pViewportState
+      &rasterizationStateCreateInfo, // pRasterizationState
+      &multisampleStateCreateInfo,   // multisampleState
+      &depthStencilStateCreateInfo,  // pDepthStencilState
+      &colorBlendStateCreateInfo,    // pColorBlendState
+      &dynamicStateCreateInfo,       // pDynamicState
+      m_pipelineLayout,              // pipelineLayout
+      renderTarget.getRenderPass(),  // renderPass
+      0,                             // subpass
+      {},                            // basePipelineHandle
+      -1                             // basePipelineIndex
+  };
+
+  VK_CHECK(vkCreateGraphicsPipelines(
+      ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &m_pipeline));
+}
+
 SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 

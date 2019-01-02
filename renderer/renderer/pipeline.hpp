@@ -46,6 +46,12 @@ public:
   BillboardPipeline(BaseRenderTarget &renderTarget, Shader &shader);
 };
 
+class BoxPipeline : public GraphicsPipeline {
+public:
+  using GraphicsPipeline::GraphicsPipeline;
+  BoxPipeline(BaseRenderTarget &renderTarget, Shader &shader);
+};
+
 class SkyboxPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
