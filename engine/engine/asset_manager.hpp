@@ -59,16 +59,14 @@ public:
   const std::vector<Asset *> &getAssets() { return m_assets; }
 
   template <typename A> A &getAsset(const AssetIndex assetIndex) {
-    // auto id = AssetTypeId::type<A>;
     ensureAssetType<A>();
     return (A &)*m_assets[assetIndex];
   }
 
   template <typename A, typename... Args> A &loadAsset(Args... args) {
-    auto id = getAssetType<A>();
     ensureAssetType<A>();
 
-    AssetIndex assetIndex = -1;
+    AssetIndex assetIndex = SIZE_MAX;
     {
       std::scoped_lock<std::mutex> lock(m_mutex);
 
@@ -76,11 +74,15 @@ public:
         assetIndex = 0;
       } else {
         for (AssetIndex i = 0; i < m_assets.size(); i++) {
-          assetIndex = i;
           if (!m_assets[i]) {
+            assetIndex = i;
             break;
           }
         }
+      }
+
+      if (assetIndex == SIZE_MAX) {
+        assetIndex = m_assets.size();
       }
     }
 
@@ -94,11 +96,14 @@ public:
     auto id = getAssetType<A>();
     ensureAssetType<A>();
 
+    fstl::log::debug("Loading asset #{}", assetIndex);
+
     if (!this->ensureAssetIndex<A>(assetIndex)) {
-      throw std::runtime_error("Asset index is in use");
+      throw std::runtime_error(
+          "Asset index is in use: " + std::to_string(assetIndex));
     }
 
-    A* asset = new A(std::forward<Args>(args)...);
+    A *asset = new A(std::forward<Args>(args)...);
 
     std::scoped_lock<std::mutex> lock(m_mutex);
 
