@@ -32,6 +32,12 @@ flip_uvs
 #4 GltfModel
 path "../assets/Duck.glb"
 
+#5 GltfModel
+path "../assets/WaterBottle.glb"
+
+#6 GltfModel
+path "../assets/BoomBox.glb"
+
 
 Entities:
 
@@ -76,8 +82,8 @@ Billboard { asset 1 }
 #
 Transform {
   position 0.0 -1.0 -0.5
-  scale 1.0
-  rotation -90 0 0
+  scale 0.1
+  rotation 0 0 0
 }
 GltfModel { asset 2 }
 
@@ -85,7 +91,7 @@ GltfModel { asset 2 }
 #
 Transform {
   position 4 0 4
-  rotation -90 0 0
+  rotation 0 0 0
 }
 GltfModel { asset 3 }
 
@@ -93,6 +99,22 @@ GltfModel { asset 3 }
 #
 Transform {
   position -4 0 -4
-  scale 100.0
+  scale 1.0
 }
 GltfModel { asset 4 }
+
+// Bottle
+#
+Transform {
+  position -4 0 0
+  scale 10.0
+}
+GltfModel { asset 5 }
+
+// Boombox
+#
+Transform {
+  position 4 0 0
+  scale 100.0
+}
+GltfModel { asset 6 }

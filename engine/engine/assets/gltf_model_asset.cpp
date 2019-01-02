@@ -547,15 +547,10 @@ void GltfModelAsset::loadNode(
         for (size_t v = 0; v < posAccessor.count; v++) {
           renderer::StandardVertex vert{};
 
-          // TODO: fix rendundancies and see if it works?
-          // TODO: this is a mess.
-          vert.pos = glm::vec3(
-              newNode.getMatrix(*this) *
-              glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0));
+          vert.pos =
+              glm::vec3(glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0));
           vert.normal = glm::normalize(
-              bufferNormals ? glm::mat3(glm::transpose(
-                                  glm::inverse(newNode.getMatrix(*this)))) *
-                                  glm::make_vec3(&bufferNormals[v * 3])
+              bufferNormals ? glm::make_vec3(&bufferNormals[v * 3])
                             : glm::vec3(0.0f));
           vert.uv = bufferTexCoords ? glm::make_vec2(&bufferTexCoords[v * 2])
                                     : glm::vec2(0.0f);
