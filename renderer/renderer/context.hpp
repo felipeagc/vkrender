@@ -2,6 +2,7 @@
 
 #include "resource_manager.hpp"
 #include "texture.hpp"
+#include <mutex>
 #include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -11,6 +12,8 @@
 #endif
 
 namespace renderer {
+
+const uint32_t VKR_THREAD_COUNT = 4;
 
 class Context;
 
@@ -54,6 +57,7 @@ public:
   uint32_t m_presentQueueFamilyIndex = -1;
   uint32_t m_transferQueueFamilyIndex = -1;
 
+  std::mutex m_queueMutex;
   VkQueue m_graphicsQueue = VK_NULL_HANDLE;
   VkQueue m_presentQueue = VK_NULL_HANDLE;
   VkQueue m_transferQueue = VK_NULL_HANDLE;
@@ -62,6 +66,8 @@ public:
 
   VkCommandPool m_graphicsCommandPool = VK_NULL_HANDLE;
   VkCommandPool m_transientCommandPool = VK_NULL_HANDLE;
+
+  VkCommandPool m_threadCommandPools[VKR_THREAD_COUNT];
 
   ResourceManager m_resourceManager;
 
@@ -77,6 +83,7 @@ private:
   void setupMemoryAllocator();
   void createGraphicsCommandPool();
   void createTransientCommandPool();
+  void createThreadCommandPools();
 };
 
 } // namespace renderer

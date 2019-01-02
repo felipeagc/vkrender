@@ -396,6 +396,19 @@ void Context::createTransientCommandPool() {
       m_device, &createInfo, nullptr, &m_transientCommandPool));
 }
 
+void Context::createThreadCommandPools() {
+  for (uint32_t i = 0; i < VKR_THREAD_COUNT; i++) {
+    VkCommandPoolCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    createInfo.pNext = 0;
+    createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    createInfo.queueFamilyIndex = m_graphicsQueueFamilyIndex;
+
+    VK_CHECK(vkCreateCommandPool(
+        m_device, &createInfo, nullptr, &m_threadCommandPools[i]));
+  }
+}
+
 void Context::preInitialize(
     const std::vector<const char *> &requiredWindowVulkanExtensions) {
   if (m_instance != VK_NULL_HANDLE) {
@@ -421,6 +434,7 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
 
   this->createGraphicsCommandPool();
   this->createTransientCommandPool();
+  this->createThreadCommandPools();
 
   m_resourceManager.initialize();
 
@@ -444,6 +458,10 @@ Context::~Context() {
 
   if (m_graphicsCommandPool) {
     vkDestroyCommandPool(m_device, m_graphicsCommandPool, nullptr);
+  }
+
+  for (auto &commandPool : m_threadCommandPools) {
+    vkDestroyCommandPool(m_device, commandPool, nullptr);
   }
 
   if (m_allocator != VK_NULL_HANDLE) {

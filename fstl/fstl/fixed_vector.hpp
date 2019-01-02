@@ -154,7 +154,7 @@ public:
 
   T *begin() const noexcept { return &m_heapVector[0]; }
 
-  T *const end() const noexcept { return &m_heapVector[m_size]; }
+  T *end() const noexcept { return &m_heapVector[m_size]; }
 
 protected:
   T m_array[N];

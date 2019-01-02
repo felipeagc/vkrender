@@ -97,7 +97,7 @@ void EntityInspectorSystem::process(ecs::World &world) {
             "Sun direction",
             &environment->m_ubo.sunDirection[0],
             0.01f,
-            0.0f,
+            -1.0f,
             1.0f);
         ImGui::ColorEdit3("Sun color", &environment->m_ubo.sunColor[0]);
         ImGui::DragFloat("Sun intensity", &environment->m_ubo.sunIntensity, 0.01f, 0.0f, 100.0f);

@@ -63,7 +63,9 @@ ImGuiRenderer::ImGuiRenderer(Window &window) : m_window(window) {
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
+    renderer::ctx().m_queueMutex.lock();
     VK_CHECK(vkQueueSubmit(ctx().m_graphicsQueue, 1, &endInfo, VK_NULL_HANDLE));
+    renderer::ctx().m_queueMutex.unlock();
 
     VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 

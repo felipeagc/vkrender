@@ -55,8 +55,8 @@
 - [ ] Add SDL2 as a git submodule
 
 ### Assets
-- [ ] Make AssetManager thread safe
-- [ ] Multi-threaded asset loading
+- [x] Make AssetManager thread safe
+- [x] Multi-threaded asset loading
 
 ### ECS
 - [ ] Better storage solution (packed array -- arena allocator)

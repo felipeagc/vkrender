@@ -1,17 +1,19 @@
 #include "buffer.hpp"
 #include "context.hpp"
+#include "thread_pool.hpp"
 #include "util.hpp"
 #include <fstl/logging.hpp>
 
 using namespace renderer;
 
 static inline VkCommandBuffer beginSingleTimeCommandBuffer() {
+  assert(threadID < VKR_THREAD_COUNT);
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
-      ctx().m_transientCommandPool,    // commandPool
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
-      1,                               // commandBufferCount
+      ctx().m_threadCommandPools[threadID], // commandPool
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY,      // level
+      1,                                    // commandBufferCount
   };
 
   VkCommandBuffer commandBuffer;
@@ -32,6 +34,7 @@ static inline VkCommandBuffer beginSingleTimeCommandBuffer() {
 }
 
 static inline void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
+  assert(threadID < VKR_THREAD_COUNT);
   VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
   VkSubmitInfo submitInfo{
@@ -46,13 +49,15 @@ static inline void endSingleTimeCommandBuffer(VkCommandBuffer commandBuffer) {
       nullptr,        // pSignalSemaphores
   };
 
+  renderer::ctx().m_queueMutex.lock();
   VK_CHECK(
       vkQueueSubmit(ctx().m_transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
 
   VK_CHECK(vkQueueWaitIdle(ctx().m_transferQueue));
+  renderer::ctx().m_queueMutex.unlock();
 
   vkFreeCommandBuffers(
-      ctx().m_device, ctx().m_transientCommandPool, 1, &commandBuffer);
+      ctx().m_device, ctx().m_threadCommandPools[threadID], 1, &commandBuffer);
 }
 
 Buffer::Buffer(BufferType bufferType, size_t size) : m_bufferType(bufferType) {

@@ -8,6 +8,8 @@
 #include "components/gltf_model_component.hpp"
 #include "components/light_component.hpp"
 #include "components/transform_component.hpp"
+#include <renderer/context.hpp>
+#include <renderer/thread_pool.hpp>
 #include <scene/driver.hpp>
 #include <scene/scene.hpp>
 
@@ -15,17 +17,25 @@ namespace engine {
 
 static inline void
 loadAssets(const scene::Scene &scene, AssetManager &assetManager) {
+  renderer::ThreadPool threadPool(renderer::VKR_THREAD_COUNT);
   for (auto &asset : scene.assets) {
+    renderer::Job job;
     if (asset.type == "GltfModel") {
-      loadAsset<GltfModelAsset>(asset, assetManager);
+      job = [&]() { loadAsset<GltfModelAsset>(asset, assetManager); };
     } else if (asset.type == "Texture") {
-      loadAsset<TextureAsset>(asset, assetManager);
+      job = [&]() { loadAsset<TextureAsset>(asset, assetManager); };
     } else if (asset.type == "Environment") {
-      loadAsset<EnvironmentAsset>(asset, assetManager);
+      job = [&]() { loadAsset<EnvironmentAsset>(asset, assetManager); };
     } else {
       fstl::log::warn("Unsupported asset type: {}", asset.type);
     }
+
+    if (job) {
+      threadPool.addJob(job);
+    }
   }
+
+  threadPool.wait();
 }
 
 static inline void loadEntities(

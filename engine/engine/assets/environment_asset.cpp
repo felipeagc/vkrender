@@ -19,6 +19,10 @@ void engine::loadAsset<EnvironmentAsset>(
   }
   const std::string &brdfLut = asset.properties.at("brdfLut").getString();
 
+  auto start = timeBegin(fmt::format("Loading Environment: {}", skybox));
+
   assetManager.loadAssetIntoIndex<EnvironmentAsset>(
       asset.id, width, height, skybox, irradiance, radiance, brdfLut);
+
+  timeEnd(start, fmt::format("Finished loading: {}", skybox));
 }

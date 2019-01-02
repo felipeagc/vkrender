@@ -41,12 +41,6 @@ GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
 
 StandardPipeline::StandardPipeline(
     BaseRenderTarget &renderTarget, Shader &shader) {
-  VkPushConstantRange pushConstantRange = {};
-  pushConstantRange.stageFlags =
-      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  pushConstantRange.offset = 0;
-  pushConstantRange.size = 128;
-
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   auto vertexInputStateCreateInfo = pipeline::defaultVertexInputState();
@@ -96,12 +90,6 @@ StandardPipeline::StandardPipeline(
 
 BillboardPipeline::BillboardPipeline(
     BaseRenderTarget &renderTarget, Shader &shader) {
-  VkPushConstantRange pushConstantRange = {};
-  pushConstantRange.stageFlags =
-      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  pushConstantRange.offset = 0;
-  pushConstantRange.size = 128;
-
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
@@ -299,11 +287,6 @@ FullscreenPipeline::FullscreenPipeline(
 
 BakeCubemapPipeline::BakeCubemapPipeline(
     VkRenderPass &renderpass, Shader &shader) {
-  VkPushConstantRange pushConstantRange = {};
-  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  pushConstantRange.offset = 0;
-  pushConstantRange.size = 128;
-
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {

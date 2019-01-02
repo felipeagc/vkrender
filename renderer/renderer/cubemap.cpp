@@ -3,6 +3,7 @@
 #include "context.hpp"
 #include "pipeline.hpp"
 #include "shader.hpp"
+#include "thread_pool.hpp"
 #include "util.hpp"
 #include <fstl/logging.hpp>
 #include <stb_image.h>
@@ -272,11 +273,9 @@ static void bakeCubemap(
     uint32_t cubemapImageHeight,
     uint32_t level = 0) {
   // Load HDR image
-  stbi_set_flip_vertically_on_load(true);
   int hdrWidth, hdrHeight, nrComponents;
   float *hdrData =
       stbi_loadf(hdrFile.c_str(), &hdrWidth, &hdrHeight, &nrComponents, 4);
-  stbi_set_flip_vertically_on_load(false);
 
   assert(hdrData != nullptr);
 
@@ -392,12 +391,13 @@ static void bakeCubemap(
   shader.destroy();
 
   // Allocate command buffer
+  assert(threadID < VKR_THREAD_COUNT);
   VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   {
     VkCommandBufferAllocateInfo allocateInfo = {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = renderer::ctx().m_graphicsCommandPool;
+    allocateInfo.commandPool = renderer::ctx().m_threadCommandPools[threadID];
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandBufferCount = 1;
 
@@ -520,8 +520,10 @@ static void bakeCubemap(
       nullptr,                       // pSignalSemaphores
   };
 
+  renderer::ctx().m_queueMutex.lock();
   vkQueueSubmit(
       renderer::ctx().m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  renderer::ctx().m_queueMutex.unlock();
 
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
@@ -534,9 +536,10 @@ static void bakeCubemap(
   vkDestroySampler(renderer::ctx().m_device, hdrSampler, nullptr);
   vmaDestroyImage(renderer::ctx().m_allocator, hdrImage, hdrAllocation);
 
+  assert(threadID < VKR_THREAD_COUNT);
   vkFreeCommandBuffers(
       renderer::ctx().m_device,
-      renderer::ctx().m_graphicsCommandPool,
+      renderer::ctx().m_threadCommandPools[threadID],
       1,
       &commandBuffer);
 

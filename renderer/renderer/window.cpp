@@ -238,6 +238,7 @@ void Window::endFrame() {
            .renderingFinishedSemaphore, // pSignalSemaphores
   };
 
+  renderer::ctx().m_queueMutex.lock();
   vkQueueSubmit(
       ctx().m_graphicsQueue,
       1,
@@ -262,6 +263,7 @@ void Window::endFrame() {
   } else {
     assert(result == VK_SUCCESS);
   }
+  renderer::ctx().m_queueMutex.unlock();
 
   m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 

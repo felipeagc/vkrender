@@ -1,6 +1,5 @@
 #include "gltf_model_asset.hpp"
 #include "../scene.hpp"
-#include <fstl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
@@ -18,7 +17,11 @@ void engine::loadAsset<GltfModelAsset>(
     flipUVs = true;
   }
 
+  auto start = timeBegin(fmt::format("Loading GltfModel: {}", path));
+
   assetManager.loadAssetIntoIndex<GltfModelAsset>(asset.id, path, flipUVs);
+
+  timeEnd(start, fmt::format("Finished loading: {}", path));
 }
 
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
@@ -237,8 +240,6 @@ void GltfModelAsset::Node::update(GltfModelAsset &model, uint32_t frameIndex) {
 
 GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
   m_identifier = path;
-
-  fstl::log::debug("Loading GltfModel asset: \"{}\"", m_identifier);
 
   std::string dir = path.substr(0, path.find_last_of('/') + 1);
 

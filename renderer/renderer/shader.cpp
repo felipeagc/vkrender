@@ -8,7 +8,6 @@
 using namespace renderer;
 
 Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
-  fstl::log::debug("Creating shader from GLSL code");
   m_vertexCode = compileShader(vertexPath, ShaderType::eVertex);
   m_fragmentCode = compileShader(fragmentPath, ShaderType::eFragment);
   m_vertexModule = this->createShaderModule(m_vertexCode);
@@ -18,7 +17,6 @@ Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
 Shader::Shader(
     const std::vector<uint32_t> &vertexCode,
     const std::vector<uint32_t> &fragmentCode) {
-  fstl::log::debug("Creating shader from SPV code");
   m_vertexCode = vertexCode;
   m_fragmentCode = fragmentCode;
   m_vertexModule = this->createShaderModule(vertexCode);
