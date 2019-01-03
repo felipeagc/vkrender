@@ -7,15 +7,14 @@
 namespace engine {
 class GltfModelSystem {
 public:
-  GltfModelSystem(AssetManager &assetManager);
+  GltfModelSystem();
   ~GltfModelSystem();
 
   void process(
       renderer::Window &window,
       AssetManager &assetManager,
       ecs::World &world,
-      renderer::GraphicsPipeline &pipeline,
-      renderer::GraphicsPipeline &boxPipeline);
+      renderer::GraphicsPipeline &pipeline);
 
 protected:
   AssetIndex m_boxAsset;

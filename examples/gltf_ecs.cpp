@@ -17,12 +17,12 @@ int main() {
   auto &world = scene.m_world;
   auto &assetManager = scene.m_assetManager;
 
-  engine::GltfModelSystem gltfModelSystem{assetManager};
+  engine::GltfModelSystem gltfModelSystem;
   engine::FPSCameraSystem fpsCameraSystem;
   engine::BillboardSystem billboardSystem;
   engine::SkyboxSystem skyboxSystem;
   engine::LightingSystem lightingSystem;
-  engine::EntityInspectorSystem entityInspectorSystem;
+  engine::EntityInspectorSystem entityInspectorSystem{assetManager};
 
   renderer::RenderTarget renderTarget(window.getWidth(), window.getHeight());
 
@@ -34,7 +34,6 @@ int main() {
   renderer::Shader boxShader{"../shaders/box.vert", "../shaders/box.frag"};
   renderer::Shader fullscreenShader{"../shaders/fullscreen.vert",
                                     "../shaders/fullscreen.frag"};
-
 
   renderer::GraphicsPipeline billboardPipeline =
       renderer::BillboardPipeline(renderTarget, billboardShader);
@@ -99,7 +98,7 @@ int main() {
     if (drawImgui) {
       engine::imgui::statsWindow(window);
       engine::imgui::assetsWindow(assetManager);
-      entityInspectorSystem.process(world);
+      entityInspectorSystem.imgui(world);
     }
 
     lightingSystem.process(window, world);
@@ -111,12 +110,9 @@ int main() {
     {
       renderTarget.beginRenderPass(window);
 
+      entityInspectorSystem.drawBox(window, assetManager, world, boxPipeline);
       gltfModelSystem.process(
-          window,
-          assetManager,
-          world,
-          modelShaderWatcher.pipeline(),
-          boxPipeline);
+          window, assetManager, world, modelShaderWatcher.pipeline());
       skyboxSystem.process(window, world, skyboxPipeline);
       billboardSystem.process(window, world, billboardPipeline);
 
