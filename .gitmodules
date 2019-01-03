@@ -1,9 +1,6 @@
 [submodule "spirv-cross"]
 	path = thirdparty/spirv-cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
-[submodule "fmt"]
-	path = thirdparty/fmt
-	url = https://github.com/fmtlib/fmt.git
 [submodule "glslang"]
 	path = thirdparty/glslang
 	url = https://github.com/KhronosGroup/glslang
