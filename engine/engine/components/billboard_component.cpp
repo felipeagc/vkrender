@@ -1,6 +1,6 @@
 #include "billboard_component.hpp"
 #include "../scene.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>

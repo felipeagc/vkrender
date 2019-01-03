@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atomic>
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <functional>
 #include <mutex>
 #include <renderer/texture.hpp>
@@ -96,7 +96,7 @@ public:
     auto id = getAssetType<A>();
     ensureAssetType<A>();
 
-    // fstl::log::debug("Loading asset #{}", assetIndex);
+    // ftl::debug("Loading asset #%lu", assetIndex);
 
     if (!this->ensureAssetIndex<A>(assetIndex)) {
       throw std::runtime_error(
@@ -116,7 +116,7 @@ public:
   }
 
   template <typename A> void unloadAsset(const AssetIndex assetIndex) {
-    fstl::log::debug("Unloading asset #{}", assetIndex);
+    ftl::debug("Unloading asset #%lu", assetIndex);
 
     auto id = getAssetType<A>();
     ensureAssetType<A>();

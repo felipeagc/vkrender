@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../asset_manager.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <renderer/texture.hpp>
 
 namespace engine {

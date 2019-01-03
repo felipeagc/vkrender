@@ -35,7 +35,7 @@ target_link_libraries(
   engine
 
   PUBLIC
-  fstl
+  ftl
   renderer
   ecs
   scene

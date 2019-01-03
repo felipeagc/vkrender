@@ -6,7 +6,7 @@ wc -l \
 	./renderer/**/*.cpp \
 	./renderer/**/*.hpp \
 	./examples/*.cpp \
-	./fstl/**/*.hpp \
+	./ftl/**/*.hpp \
 	./shaders/*.vert \
 	./shaders/*.frag \
 	| sort -n -r -k1

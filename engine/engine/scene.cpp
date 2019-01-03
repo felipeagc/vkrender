@@ -27,7 +27,7 @@ loadAssets(const scene::Scene &scene, AssetManager &assetManager) {
     } else if (asset.type == "Environment") {
       job = [&]() { loadAsset<EnvironmentAsset>(asset, assetManager); };
     } else {
-      fstl::log::warn("Unsupported asset type: {}", asset.type);
+      ftl::warn("Unsupported asset type: %s", asset.type.c_str());
     }
 
     if (job) {
@@ -57,7 +57,7 @@ static inline void loadEntities(
       } else if (compName == "Camera") {
         loadComponent<CameraComponent>(comp, world, assetManager, e);
       } else {
-        fstl::log::warn("Unsupported component type: {}", compName);
+        ftl::warn("Unsupported component type: %s", compName.c_str());
       }
     }
   }

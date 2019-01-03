@@ -3,7 +3,7 @@
 #include "../assets/environment_asset.hpp"
 #include "../assets/texture_asset.hpp"
 #include "../scene.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>

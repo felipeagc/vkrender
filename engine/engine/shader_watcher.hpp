@@ -1,7 +1,7 @@
 #pragma once
 
 #include "file_watcher.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <functional>
 #include <mutex>
 #include <renderer/base_render_target.hpp>
@@ -39,7 +39,7 @@ public:
     m_watcher.addFile(m_fragmentPath);
 
     m_watcher.onModify = [&](const std::string filename) {
-      fstl::log::debug("Shader \"{}\" was modified", filename);
+      ftl::debug("Shader \"%s\" was modified", filename.c_str());
       auto lock = this->lockPipeline();
 
       VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
@@ -54,7 +54,7 @@ public:
 
         shader.destroy();
       } catch (const std::exception &exception) {
-        fstl::log::error("Error while compiling shader: {}", exception.what());
+        ftl::error("Error while compiling shader: %s", exception.what());
       }
     };
   }

@@ -4,7 +4,7 @@
 #include <initializer_list>
 #include <stdexcept>
 
-namespace fstl {
+namespace ftl {
 template <typename T, size_t N = 8> class fixed_vector {
 public:
   fixed_vector() {}
@@ -162,4 +162,4 @@ protected:
   size_t m_capacity{N};
   T *m_heapVector{m_array};
 };
-} // namespace fstl
+} // namespace ftl

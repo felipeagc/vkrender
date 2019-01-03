@@ -1,7 +1,7 @@
 #pragma once
 
 #include <bitset>
-#include <fstl/fixed_vector.hpp>
+#include <ftl/fixed_vector.hpp>
 #include <vulkan/vulkan.h>
 
 namespace renderer {
@@ -38,7 +38,7 @@ protected:
   ResourceSetLayout() {}
   ResourceSetLayout(
       uint32_t maxSets,
-      const fstl::fixed_vector<VkDescriptorSetLayoutBinding, 8> &bindings);
+      const ftl::fixed_vector<VkDescriptorSetLayoutBinding, 8> &bindings);
 
   ResourceSetLayout(const ResourceSetLayout &) = delete;
   ResourceSetLayout &operator=(const ResourceSetLayout &) = delete;
@@ -64,12 +64,12 @@ protected:
   void destroy();
 
   VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-  fstl::fixed_vector<VkDescriptorSetLayoutBinding, 8> bindings;
+  ftl::fixed_vector<VkDescriptorSetLayoutBinding, 8> bindings;
 
   uint32_t maxSets = GLOBAL_MAX_DESCRIPTOR_SETS;
 
   // Preallocated descriptor sets
-  fstl::fixed_vector<VkDescriptorSet> descriptorSets;
+  ftl::fixed_vector<VkDescriptorSet> descriptorSets;
   std::bitset<GLOBAL_MAX_DESCRIPTOR_SETS> bitset;
 };
 
@@ -82,7 +82,7 @@ struct ResourceSetProvider {
 protected:
   ResourceSetProvider(){};
   ResourceSetProvider(
-      const fstl::fixed_vector<ResourceSetLayout *> &setLayouts);
+      const ftl::fixed_vector<ResourceSetLayout *> &setLayouts);
   void destroy();
 };
 

@@ -17,11 +17,14 @@ void engine::loadAsset<GltfModelAsset>(
     flipUVs = true;
   }
 
-  auto start = timeBegin(fmt::format("Loading GltfModel: {}", path));
+  char str[128] = "";
+  sprintf(str, "Loading GltfModel: %s", path.c_str());
+  auto start = timeBegin(str);
 
   assetManager.loadAssetIntoIndex<GltfModelAsset>(asset.id, path, flipUVs);
 
-  timeEnd(start, fmt::format("Finished loading: {}", path));
+  sprintf(str, "Finished loading: %s", path.c_str());
+  timeEnd(start, str);
 }
 
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
@@ -258,11 +261,11 @@ GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
   }
 
   if (!warn.empty()) {
-    fstl::log::warn("GLTF: {}", warn);
+    ftl::warn("GLTF: %s", warn.c_str());
   }
 
   if (!err.empty()) {
-    fstl::log::error("GLTF: {}", err);
+    ftl::error("GLTF: %s", err.c_str());
   }
 
   if (!ret) {
@@ -609,7 +612,7 @@ void GltfModelAsset::loadNode(
           break;
         }
         default:
-          fstl::log::error(
+          ftl::error(
               "GLTF: Index component type {} not supported!",
               accessor.componentType);
           return;

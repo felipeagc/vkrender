@@ -1,7 +1,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include "window.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 
 using namespace renderer;
 
@@ -23,7 +23,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const char *layerPrefix,
     const char *msg,
     void *userData) {
-  fstl::log::error("Validation layer: {}", msg);
+  ftl::error("Validation layer: %s", msg);
 
   return VK_FALSE;
 }
@@ -57,7 +57,7 @@ void DestroyDebugReportCallbackEXT(
 static bool checkValidationLayerSupport() {
   uint32_t count;
   vkEnumerateInstanceLayerProperties(&count, nullptr);
-  fstl::fixed_vector<VkLayerProperties> availableLayers(count);
+  ftl::fixed_vector<VkLayerProperties> availableLayers(count);
   vkEnumerateInstanceLayerProperties(&count, availableLayers.data());
 
   for (const char *layerName : REQUIRED_VALIDATION_LAYERS) {
@@ -98,7 +98,7 @@ static bool checkPhysicalDeviceProperties(
   uint32_t count;
   vkEnumerateDeviceExtensionProperties(
       physicalDevice, nullptr, &count, nullptr);
-  fstl::fixed_vector<VkExtensionProperties> availableExtensions(count);
+  ftl::fixed_vector<VkExtensionProperties> availableExtensions(count);
   vkEnumerateDeviceExtensionProperties(
       physicalDevice, nullptr, &count, availableExtensions.data());
 
@@ -114,7 +114,7 @@ static bool checkPhysicalDeviceProperties(
     }
 
     if (!found) {
-      fstl::log::warn(
+      ftl::warn(
           "Physical device {} doesn't support extension named \"{}\"",
           deviceProperties.deviceName,
           requiredExtension);
@@ -127,7 +127,7 @@ static bool checkPhysicalDeviceProperties(
   // uint32_t patchVersion = VK_VERSION_PATCH(deviceProperties.apiVersion);
 
   if (majorVersion < 1 && deviceProperties.limits.maxImageDimension2D < 4096) {
-    fstl::log::warn(
+    ftl::warn(
         "Physical device {} doesn't support required parameters!",
         deviceProperties.deviceName);
     return false;
@@ -137,14 +137,14 @@ static bool checkPhysicalDeviceProperties(
   VkPhysicalDeviceFeatures features = {};
   vkGetPhysicalDeviceFeatures(physicalDevice, &features);
   if (!features.wideLines) {
-    fstl::log::warn(
+    ftl::warn(
         "Physical device {} doesn't support required features!",
         deviceProperties.deviceName);
     return false;
   }
 
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
-  fstl::fixed_vector<VkQueueFamilyProperties> queueFamilyProperties(count);
+  ftl::fixed_vector<VkQueueFamilyProperties> queueFamilyProperties(count);
   vkGetPhysicalDeviceQueueFamilyProperties(
       physicalDevice, &count, queueFamilyProperties.data());
 
@@ -198,7 +198,7 @@ static bool checkPhysicalDeviceProperties(
   if (graphicsQueueFamilyIndex == UINT32_MAX ||
       presentQueueFamilyIndex == UINT32_MAX ||
       transferQueueFamilyIndex == UINT32_MAX) {
-    fstl::log::warn(
+    ftl::warn(
         "Could not find queue family with requested properties on physical "
         "device {}",
         deviceProperties.deviceName);
@@ -216,14 +216,14 @@ Context::Context() { globalContext = this; }
 
 void Context::createInstance(
     const std::vector<const char *> &requiredWindowVulkanExtensions) {
-  fstl::log::debug("Creating vulkan instance");
+  ftl::debug("Creating vulkan instance");
 #ifdef VKR_ENABLE_VALIDATION
-  fstl::log::debug("Using validation layers");
+  ftl::debug("Using validation layers");
   if (!checkValidationLayerSupport()) {
     throw std::runtime_error("Validation layers requested, but not available");
   }
 #else
-  fstl::log::debug("Not using validation layers");
+  ftl::debug("Not using validation layers");
 #endif
 
   VkApplicationInfo appInfo = {};
@@ -271,7 +271,7 @@ void Context::setupDebugCallback() {
 void Context::createDevice(VkSurfaceKHR &surface) {
   uint32_t count;
   vkEnumeratePhysicalDevices(m_instance, &count, nullptr);
-  fstl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
+  ftl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
   vkEnumeratePhysicalDevices(m_instance, &count, physicalDevices.data());
 
   for (auto physicalDevice_ : physicalDevices) {
@@ -294,9 +294,9 @@ void Context::createDevice(VkSurfaceKHR &surface) {
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
 
-  fstl::log::debug("Using physical device: {}", properties.deviceName);
+  ftl::debug("Using physical device: %s", properties.deviceName);
 
-  fstl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+  ftl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   float queuePriorities[] = {1.0f};
 
   queueCreateInfos.push_back({
@@ -443,7 +443,7 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
 }
 
 Context::~Context() {
-  fstl::log::debug("Vulkan context shutting down...");
+  ftl::debug("Vulkan context shutting down...");
 
   VK_CHECK(vkDeviceWaitIdle(m_device));
 
@@ -495,31 +495,31 @@ VkSampleCountFlagBits Context::getMaxUsableSampleCount() {
   VkSampleCountFlags counts = std::min(colorSamples, depthSamples);
 
   if (counts & VK_SAMPLE_COUNT_64_BIT) {
-    fstl::log::debug("Max samples: {}", 64);
+    ftl::debug("Max samples: %d", 64);
     return VK_SAMPLE_COUNT_64_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_32_BIT) {
-    fstl::log::debug("Max samples: {}", 32);
+    ftl::debug("Max samples: %d", 32);
     return VK_SAMPLE_COUNT_32_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_16_BIT) {
-    fstl::log::debug("Max samples: {}", 16);
+    ftl::debug("Max samples: %d", 16);
     return VK_SAMPLE_COUNT_16_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_8_BIT) {
-    fstl::log::debug("Max samples: {}", 8);
+    ftl::debug("Max samples: %d", 8);
     return VK_SAMPLE_COUNT_8_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_4_BIT) {
-    fstl::log::debug("Max samples: {}", 4);
+    ftl::debug("Max samples: %d", 4);
     return VK_SAMPLE_COUNT_4_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_2_BIT) {
-    fstl::log::debug("Max samples: {}", 2);
+    ftl::debug("Max samples: %d", 2);
     return VK_SAMPLE_COUNT_2_BIT;
   }
 
-  fstl::log::debug("Max samples: {}", 1);
+  ftl::debug("Max samples: %d", 1);
 
   return VK_SAMPLE_COUNT_1_BIT;
 }

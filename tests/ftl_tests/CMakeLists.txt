@@ -1,13 +1,13 @@
 add_executable(
-  fstl_tests
+  ftl_tests
   fixed_vector.cpp
 )
 
 target_link_libraries(
-  fstl_tests
-  fstl
+  ftl_tests
+  ftl
   gtest
   gtest_main
 )
 
-gtest_discover_tests(fstl_tests)
+gtest_discover_tests(ftl_tests)

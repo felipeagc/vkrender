@@ -2,7 +2,7 @@
 #include "context.hpp"
 #include "shader_compilation.hpp"
 #include "util.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <spirv_reflect.hpp>
 
 using namespace renderer;
@@ -23,9 +23,9 @@ Shader::Shader(
   m_fragmentModule = this->createShaderModule(fragmentCode);
 }
 
-fstl::fixed_vector<VkPipelineShaderStageCreateInfo>
+ftl::fixed_vector<VkPipelineShaderStageCreateInfo>
 Shader::getPipelineShaderStageCreateInfos() const {
-  return fstl::fixed_vector<VkPipelineShaderStageCreateInfo>{
+  return ftl::fixed_vector<VkPipelineShaderStageCreateInfo>{
       {
           VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
           nullptr,                                             // pNext
@@ -93,7 +93,7 @@ Shader::ShaderMetadata Shader::getAutoMetadata() const {
   auto resources = vertexComp.get_shader_resources();
 
   // <location, format, size, offset>
-  fstl::fixed_vector<std::tuple<uint32_t, VkFormat, uint32_t, uint32_t>>
+  ftl::fixed_vector<std::tuple<uint32_t, VkFormat, uint32_t, uint32_t>>
       locations;
 
   for (auto &input : resources.stage_inputs) {

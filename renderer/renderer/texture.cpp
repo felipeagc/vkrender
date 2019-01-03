@@ -2,7 +2,7 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <stb_image.h>
 
 using namespace renderer;

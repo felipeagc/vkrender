@@ -1,7 +1,7 @@
 #include <ecs/world.hpp>
 #include <engine/engine.hpp>
-#include <fstl/fixed_vector.hpp>
-#include <fstl/logging.hpp>
+#include <ftl/fixed_vector.hpp>
+#include <ftl/logging.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
 #include <scene/driver.hpp>
@@ -34,6 +34,7 @@ int main() {
   renderer::Shader boxShader{"../shaders/box.vert", "../shaders/box.frag"};
   renderer::Shader fullscreenShader{"../shaders/fullscreen.vert",
                                     "../shaders/fullscreen.frag"};
+
 
   renderer::GraphicsPipeline billboardPipeline =
       renderer::BillboardPipeline(renderTarget, billboardShader);
@@ -85,7 +86,7 @@ int main() {
         }
         break;
       case SDL_QUIT:
-        fstl::log::info("Goodbye");
+        ftl::info("Goodbye");
         window.setShouldClose(true);
         break;
       }

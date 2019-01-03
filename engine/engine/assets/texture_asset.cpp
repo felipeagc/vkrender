@@ -8,9 +8,12 @@ void engine::loadAsset<TextureAsset>(
     const scene::Asset &asset, AssetManager &assetManager) {
   const std::string &path = asset.properties.at("path").getString();
 
-  auto start = timeBegin(fmt::format("Loading Texture: {}", path));
+  char str[128] = "";
+  sprintf(str, "Loading Texture: %s", path.c_str());
+  auto start = timeBegin(str);
 
   assetManager.loadAssetIntoIndex<TextureAsset>(asset.id, path);
 
-  timeEnd(start, fmt::format("Finished loading: {}", path));
+  sprintf(str, "Finished loading: %s", path.c_str());
+  timeEnd(start, str);
 }

@@ -3,7 +3,7 @@
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
 #include <chrono>
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 
 using namespace renderer;
 
@@ -443,13 +443,13 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
 
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       ctx().m_physicalDevice, m_surface, &count, nullptr);
-  fstl::fixed_vector<VkSurfaceFormatKHR> surfaceFormats(count);
+  ftl::fixed_vector<VkSurfaceFormatKHR> surfaceFormats(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       ctx().m_physicalDevice, m_surface, &count, surfaceFormats.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       ctx().m_physicalDevice, m_surface, &count, nullptr);
-  fstl::fixed_vector<VkPresentModeKHR> presentModes(count);
+  ftl::fixed_vector<VkPresentModeKHR> presentModes(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       ctx().m_physicalDevice, m_surface, &count, presentModes.data());
 
@@ -531,7 +531,7 @@ void Window::allocateGraphicsCommandBuffers() {
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-  fstl::fixed_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
+  ftl::fixed_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
 
   vkAllocateCommandBuffers(
       ctx().m_device, &allocateInfo, commandBuffers.data());
@@ -756,7 +756,7 @@ uint32_t Window::getSwapchainNumImages(
 }
 
 VkSurfaceFormatKHR Window::getSwapchainFormat(
-    const fstl::fixed_vector<VkSurfaceFormatKHR> &formats) {
+    const ftl::fixed_vector<VkSurfaceFormatKHR> &formats) {
   if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
     return {VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR};
   }
@@ -806,7 +806,7 @@ VkImageUsageFlags Window::getSwapchainUsageFlags(
            VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
 
-  fstl::log::fatal(
+  ftl::fatal(
       "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by the "
       "swapchain!\n"
       "Supported swapchain image usages include:\n"
@@ -854,29 +854,29 @@ VkSurfaceTransformFlagBitsKHR Window::getSwapchainTransform(
 }
 
 VkPresentModeKHR Window::getSwapchainPresentMode(
-    const fstl::fixed_vector<VkPresentModeKHR> &presentModes) {
+    const ftl::fixed_vector<VkPresentModeKHR> &presentModes) {
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-      fstl::log::debug("Recreating swapchain using immediate present mode");
+      ftl::debug("Recreating swapchain using immediate present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
-      fstl::log::debug("Recreating swapchain using FIFO present mode");
+      ftl::debug("Recreating swapchain using FIFO present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-      fstl::log::debug("Recreating swapchain using mailbox present mode");
+      ftl::debug("Recreating swapchain using mailbox present mode");
       return presentMode;
     }
   }
 
-  fstl::log::fatal("FIFO present mode is not supported by the swapchain!");
+  ftl::fatal("FIFO present mode is not supported by the swapchain!");
 
   return static_cast<VkPresentModeKHR>(-1);
 }

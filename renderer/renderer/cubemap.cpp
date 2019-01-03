@@ -5,7 +5,7 @@
 #include "shader.hpp"
 #include "thread_pool.hpp"
 #include "util.hpp"
-#include <fstl/logging.hpp>
+#include <ftl/logging.hpp>
 #include <stb_image.h>
 
 using namespace renderer;

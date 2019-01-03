@@ -12,7 +12,7 @@ configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++1z")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++17")
 
 # Ccache
 find_program(CCACHE_PROGRAM ccache)
@@ -30,7 +30,7 @@ endif()
 include(cotire)
 
 add_subdirectory(thirdparty)
-add_subdirectory(fstl)
+add_subdirectory(ftl)
 add_subdirectory(ecs)
 add_subdirectory(renderer)
 add_subdirectory(scene)

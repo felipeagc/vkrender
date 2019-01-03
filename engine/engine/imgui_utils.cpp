@@ -34,15 +34,19 @@ void assetsWindow(AssetManager &assetManager) {
   auto &assets = assetManager.getAssets();
   for (size_t assetIndex = 0; assetIndex < assets.size(); assetIndex++) {
     Asset *asset = assets[assetIndex];
-    if (asset == nullptr) continue;
+    if (asset == nullptr) {
+      continue;
+    }
 
     ImGui::PushID(assetIndex);
 
-    if (asset->type() == AssetManager::getAssetType<GltfModelAsset>()) {
-      auto str =
-          fmt::format("GLTF Model #{}: {}", assetIndex, asset->identifier());
+    char str[128] = "";
 
-      if (ImGui::CollapsingHeader(str.c_str())) {
+    if (asset->type() == AssetManager::getAssetType<GltfModelAsset>()) {
+      sprintf(
+          str, "GLTF Model #%lu: %s", assetIndex, asset->identifier().c_str());
+
+      if (ImGui::CollapsingHeader(str)) {
         auto *gltfModelAsset = (GltfModelAsset *)asset;
 
         for (size_t i = 0; i < gltfModelAsset->m_materials.size(); i++) {
@@ -51,7 +55,9 @@ void assetsWindow(AssetManager &assetManager) {
 
           auto &mat = gltfModelAsset->m_materials[i];
 
-          if (ImGui::CollapsingHeader(fmt::format("Material #{}", i).c_str())) {
+          sprintf(str, "Material #%lu", i);
+
+          if (ImGui::CollapsingHeader(str)) {
             ImGui::ColorEdit4("Base color factor", &mat.ubo.baseColorFactor.x);
             ImGui::SliderFloat("Metallic", &mat.ubo.metallic, 0.0f, 1.0f);
             ImGui::SliderFloat("Roughness", &mat.ubo.roughness, 0.0f, 1.0f);
@@ -63,18 +69,17 @@ void assetsWindow(AssetManager &assetManager) {
       }
     } else if (
         asset->type() == AssetManager::getAssetType<EnvironmentAsset>()) {
-      auto str =
-          fmt::format("Environment #{}: {}", assetIndex, asset->identifier());
+      sprintf(
+          str, "Environment #%lu: %s", assetIndex, asset->identifier().c_str());
 
-      if (ImGui::CollapsingHeader(str.c_str())) {
+      if (ImGui::CollapsingHeader(str)) {
         // auto *environmentAsset = (EnvironmentAsset *)asset;
         ImGui::Text("Environment asset");
       }
     } else if (asset->type() == AssetManager::getAssetType<TextureAsset>()) {
-      auto str =
-          fmt::format("Texture #{}: {}", assetIndex, asset->identifier());
+      sprintf(str, "Texture #%lu: %s", assetIndex, asset->identifier().c_str());
 
-      if (ImGui::CollapsingHeader(str.c_str())) {
+      if (ImGui::CollapsingHeader(str)) {
         // auto *textureAsset = (TextureAsset *)asset;
         ImGui::Text("Texture asset");
       }
