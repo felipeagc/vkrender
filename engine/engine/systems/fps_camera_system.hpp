@@ -22,7 +22,7 @@ private:
   glm::vec3 m_camTarget;
 
   glm::vec3 m_camUp;
-  glm::vec3 m_camFront;
+  glm::vec3 m_camFront{0.0, 0.0, 1.0};
   glm::vec3 m_camRight;
   float m_camYaw = glm::radians(90.0f);
   float m_camPitch = 0.0;

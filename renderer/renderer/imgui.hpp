@@ -25,7 +25,7 @@ public:
 
   void draw();
 
-  void processEvent(SDL_Event *event);
+  void processEvent(SDL_Event &event);
 
 private:
   Window &m_window;

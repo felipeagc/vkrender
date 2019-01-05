@@ -40,13 +40,12 @@ public:
   void bind(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
 
   float m_fov;
+  CameraUniform m_cameraUniform;
 
 protected:
   renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
   renderer::ResourceSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
-
-  CameraUniform m_cameraUniform;
 
   float m_near = 0.001f;
   float m_far = 300.0f;

@@ -95,8 +95,8 @@ void ImGuiRenderer::draw() {
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 
-void ImGuiRenderer::processEvent(SDL_Event *event) {
-  ImGui_ImplSDL2_ProcessEvent(event);
+void ImGuiRenderer::processEvent(SDL_Event &event) {
+  ImGui_ImplSDL2_ProcessEvent(&event);
 }
 
 void ImGuiRenderer::createDescriptorPool() {

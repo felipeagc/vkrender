@@ -240,3 +240,210 @@ void EntityInspectorSystem::drawBox(
       0,
       0);
 }
+
+static inline glm::vec3 rayCast(
+    const float mx,
+    const float my,
+    const float width,
+    const float height,
+    const glm::mat4 &view,
+    const glm::mat4 &proj) {
+  float x = (2.0f * mx) / width - 1.0f;
+  float y = (2.0f * my) / height - 1.0f;
+
+  glm::vec4 clip(x, y, -1.0f, 0.0f);
+
+  glm::vec4 eye = glm::inverse(proj) * clip;
+
+  // @hack: I just tried this 2/3 number and it worked. No idea why.
+  eye.z = -(2.0f / 3.0f);
+  eye.w = 0.0f;
+
+  glm::vec4 ray = glm::inverse(view) * eye;
+  return glm::normalize(glm::vec3(ray.x, ray.y, ray.z));
+}
+
+static inline bool intersect(
+    glm::vec3 rayOrigin,
+    glm::vec3 rayDir,
+    glm::vec3 aabbMin,
+    glm::vec3 aabbMax,
+    glm::vec3 objPos,
+    glm::mat4 modelMatrix,
+    float *dist) {
+  float tMin = 0.0f;
+  float tMax = FLT_MAX;
+
+  glm::vec3 delta = objPos - rayOrigin;
+
+  {
+    glm::vec3 xaxis{modelMatrix[0].x, modelMatrix[0].y, modelMatrix[0].z};
+    xaxis = glm::normalize(xaxis);
+    float e = glm::dot(xaxis, delta);
+    float f = glm::dot(rayDir, xaxis);
+
+    if (fabs(f) > 0.0001f) {
+      float t1 = (e + aabbMin.x) / f;
+      float t2 = (e + aabbMax.x) / f;
+
+      if (t1 > t2) {
+        // Swap t1 and t2
+        float w = t1;
+        t1 = t2;
+        t2 = w;
+      }
+
+      if (t2 < tMax)
+        tMax = t2;
+      if (t1 > tMin)
+        tMin = t1;
+
+      if (tMax < tMin) {
+        return false;
+      }
+    } else {
+      if (-e + aabbMin.x > 0.0f || -e + aabbMax.x < 0.0f) {
+        return false;
+      }
+    }
+  }
+
+  {
+    glm::vec3 yaxis{modelMatrix[1].x, modelMatrix[1].y, modelMatrix[1].z};
+    yaxis = glm::normalize(yaxis);
+    float e = glm::dot(yaxis, delta);
+    float f = glm::dot(rayDir, yaxis);
+
+    if (fabs(f) > 0.0001f) {
+      float t1 = (e + aabbMin.y) / f;
+      float t2 = (e + aabbMax.y) / f;
+
+      if (t1 > t2) {
+        // Swap t1 and t2
+        float w = t1;
+        t1 = t2;
+        t2 = w;
+      }
+
+      if (t2 < tMax)
+        tMax = t2;
+      if (t1 > tMin)
+        tMin = t1;
+
+      if (tMax < tMin) {
+        return false;
+      }
+    } else {
+      if (-e + aabbMin.y > 0.0f || -e + aabbMax.y < 0.0f) {
+        return false;
+      }
+    }
+  }
+
+  {
+    glm::vec3 zaxis{modelMatrix[2].x, modelMatrix[2].y, modelMatrix[2].z};
+    zaxis = glm::normalize(zaxis);
+    float e = glm::dot(zaxis, delta);
+    float f = glm::dot(rayDir, zaxis);
+
+    if (fabs(f) > 0.0001f) {
+      float t1 = (e + aabbMin.z) / f;
+      float t2 = (e + aabbMax.z) / f;
+
+      if (t1 > t2) {
+        // Swap t1 and t2
+        float w = t1;
+        t1 = t2;
+        t2 = w;
+      }
+
+      if (t2 < tMax)
+        tMax = t2;
+      if (t1 > tMin)
+        tMin = t1;
+
+      if (tMax < tMin) {
+        return false;
+      }
+    } else {
+      if (-e + aabbMin.z > 0.0f || -e + aabbMax.z < 0.0f) {
+        return false;
+      }
+    }
+  }
+
+  *dist = tMin;
+  return true;
+}
+
+void EntityInspectorSystem::processEvent(
+    const renderer::Window &window,
+    AssetManager &assetManager,
+    ecs::World &world,
+    const SDL_Event &event) {
+  if (event.type == SDL_MOUSEBUTTONDOWN) {
+    if (event.button.button == SDL_BUTTON_LEFT) {
+      if (ImGui::IsAnyWindowHovered()) {
+        return;
+      }
+
+      float mouseX = (float)event.button.x;
+      float mouseY = (float)event.button.y;
+
+      auto camera =
+          world.first<engine::CameraComponent, engine::TransformComponent>();
+      auto cameraComp = world.getComponent<engine::CameraComponent>(camera);
+      auto cameraTransform =
+          world.getComponent<engine::TransformComponent>(camera);
+
+      glm::vec3 rayOrigin = cameraTransform->position;
+
+      glm::vec3 rayDir = rayCast(
+          mouseX,
+          mouseY,
+          (float)window.getWidth(),
+          (float)window.getHeight(),
+          cameraComp->m_cameraUniform.view,
+          cameraComp->m_cameraUniform.proj);
+
+      m_selectedEntity = ecs::MAX_ENTITY;
+
+      ftl::fixed_vector<std::pair<float, ecs::Entity>, 16> entities;
+
+      world.each<TransformComponent, GltfModelComponent>(
+          [&](ecs::Entity entity,
+              TransformComponent &transform,
+              GltfModelComponent &gltfModel) {
+            auto &modelAsset =
+                assetManager.getAsset<GltfModelAsset>(gltfModel.m_modelIndex);
+
+            glm::vec3 scale = (modelAsset.dimensions.size) / 2.0f;
+            glm::vec3 offset = modelAsset.dimensions.center;
+
+            glm::vec3 aabbMin = glm::vec3{-1.0} * scale + offset;
+            glm::vec3 aabbMax = glm::vec3{1.0} * scale + offset;
+
+            aabbMin *= transform.scale;
+            aabbMax *= transform.scale;
+
+            float dist = FLT_MAX;
+            if (intersect(
+                    rayOrigin,
+                    rayDir,
+                    aabbMin,
+                    aabbMax,
+                    transform.position,
+                    transform.getMatrix(),
+                    &dist)) {
+              entities.push_back({dist, entity});
+            }
+          });
+
+      if (entities.size() > 0) {
+        std::sort(entities.begin(), entities.end());
+
+        m_selectedEntity = entities[0].second;
+      }
+    }
+  }
+}

@@ -77,7 +77,7 @@ void CameraComponent::update(
       m_near,
       m_far);
 
-  // See: https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
+  // @note: See: https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
   glm::mat4 correction(
       {1.0, 0.0, 0.0, 0.0},
       {0.0, -1.0, 0.0, 0.0},

@@ -3,6 +3,8 @@
 #include "../asset_manager.hpp"
 #include <ecs/entity.hpp>
 
+union SDL_Event;
+
 namespace ecs {
 class World;
 }
@@ -25,6 +27,12 @@ public:
       AssetManager &assetManager,
       ecs::World &world,
       renderer::GraphicsPipeline &boxPipeline);
+
+  void processEvent(
+      const renderer::Window &window,
+      AssetManager &assetManager,
+      ecs::World &world,
+      const SDL_Event &event);
 
   AssetIndex m_boxAsset;
 

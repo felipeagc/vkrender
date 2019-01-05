@@ -21,8 +21,7 @@ layout (push_constant) uniform PushConstant {
 } pc;
 
 void main() {
-  vec4 locPos = model_ubo.matrix * vec4(pos * pc.scale + pc.offset, 1.0);
-  vec3 worldPos = locPos.xyz / locPos.w;
+  vec4 worldPos = model_ubo.matrix * vec4(pos * pc.scale + pc.offset, 1.0);
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * vec4(worldPos, 1.0);
+  gl_Position = camera_ubo.proj * camera_ubo.view * worldPos;
 }

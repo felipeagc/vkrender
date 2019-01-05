@@ -4,7 +4,6 @@
 #include <ftl/logging.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
-#include <scene/driver.hpp>
 
 int main() {
   renderer::Context context;
@@ -66,8 +65,9 @@ int main() {
 
     SDL_Event event;
     while (window.pollEvent(&event)) {
-      imgui.processEvent(&event);
+      imgui.processEvent(event);
       fpsCameraSystem.processEvent(window, event);
+      entityInspectorSystem.processEvent(window, assetManager, world, event);
 
       switch (event.type) {
       case SDL_KEYDOWN:
