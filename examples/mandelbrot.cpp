@@ -9,7 +9,7 @@ int main() {
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
-  renderer::RenderTarget renderTarget(window.getWidth(), window.getHeight());
+  renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
   engine::ShaderWatcher<renderer::FullscreenPipeline> shaderWatcher(

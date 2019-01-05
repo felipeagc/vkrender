@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base_render_target.hpp"
+#include "render_target.hpp"
 #include "common.hpp"
 #include "glm.hpp"
 #include "scancodes.hpp"
@@ -14,7 +14,7 @@
 
 namespace renderer {
 
-class Window : public BaseRenderTarget {
+class Window : public RenderTarget {
   friend class ImGuiRenderer;
 
 public:

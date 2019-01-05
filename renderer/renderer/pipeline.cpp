@@ -40,7 +40,7 @@ GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
 }
 
 StandardPipeline::StandardPipeline(
-    BaseRenderTarget &renderTarget, Shader &shader) {
+    RenderTarget &renderTarget, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   auto vertexInputStateCreateInfo = pipeline::defaultVertexInputState();
@@ -89,7 +89,7 @@ StandardPipeline::StandardPipeline(
 }
 
 BillboardPipeline::BillboardPipeline(
-    BaseRenderTarget &renderTarget, Shader &shader) {
+    RenderTarget &renderTarget, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
@@ -147,7 +147,7 @@ BillboardPipeline::BillboardPipeline(
 }
 
 BoxPipeline::BoxPipeline(
-    BaseRenderTarget &renderTarget, Shader &shader) {
+    RenderTarget &renderTarget, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   auto vertexInputStateCreateInfo = pipeline::defaultVertexInputState();
@@ -197,7 +197,7 @@ BoxPipeline::BoxPipeline(
       &m_pipeline));
 }
 
-SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
+SkyboxPipeline::SkyboxPipeline(RenderTarget &renderTarget, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
@@ -255,7 +255,7 @@ SkyboxPipeline::SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader) {
 }
 
 FullscreenPipeline::FullscreenPipeline(
-    BaseRenderTarget &renderTarget, Shader &shader) {
+    RenderTarget &renderTarget, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {

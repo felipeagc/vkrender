@@ -15,7 +15,7 @@ set(
   renderer/vertex_format.cpp
   renderer/shader.cpp
   renderer/pipeline.cpp
-  renderer/render_target.cpp
+  renderer/canvas.cpp
   renderer/imgui.cpp
   renderer/thread_pool.cpp
   )

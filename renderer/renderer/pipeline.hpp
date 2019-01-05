@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base_render_target.hpp"
+#include "render_target.hpp"
 #include "glm.hpp"
 #include <vulkan/vulkan.h>
 
@@ -37,31 +37,31 @@ public:
 class StandardPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
-  StandardPipeline(BaseRenderTarget &renderTarget, Shader &shader);
+  StandardPipeline(RenderTarget &renderTarget, Shader &shader);
 };
 
 class BillboardPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
-  BillboardPipeline(BaseRenderTarget &renderTarget, Shader &shader);
+  BillboardPipeline(RenderTarget &renderTarget, Shader &shader);
 };
 
 class BoxPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
-  BoxPipeline(BaseRenderTarget &renderTarget, Shader &shader);
+  BoxPipeline(RenderTarget &renderTarget, Shader &shader);
 };
 
 class SkyboxPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
-  SkyboxPipeline(BaseRenderTarget &renderTarget, Shader &shader);
+  SkyboxPipeline(RenderTarget &renderTarget, Shader &shader);
 };
 
 class FullscreenPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
-  FullscreenPipeline(BaseRenderTarget &renderTarget, Shader &shader);
+  FullscreenPipeline(RenderTarget &renderTarget, Shader &shader);
 };
 
 class BakeCubemapPipeline : public GraphicsPipeline {

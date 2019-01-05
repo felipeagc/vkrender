@@ -23,7 +23,7 @@ int main() {
   engine::LightingSystem lightingSystem;
   engine::EntityInspectorSystem entityInspectorSystem{assetManager};
 
-  renderer::RenderTarget renderTarget(window.getWidth(), window.getHeight());
+  renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
   renderer::Shader skyboxShader{"../shaders/skybox.vert",

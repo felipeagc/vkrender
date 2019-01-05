@@ -4,7 +4,7 @@
 #include <ftl/logging.hpp>
 #include <functional>
 #include <mutex>
-#include <renderer/base_render_target.hpp>
+#include <renderer/render_target.hpp>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/shader.hpp>
@@ -20,7 +20,7 @@ namespace engine {
 template <class Pipeline> class ShaderWatcher {
 public:
   ShaderWatcher(
-      renderer::BaseRenderTarget &renderTarget,
+      renderer::RenderTarget &renderTarget,
       const std::string &vertexPath,
       const std::string &fragmentPath)
       : m_vertexPath(vertexPath),
@@ -84,6 +84,6 @@ private:
   std::mutex m_mutex;
   Pipeline m_pipeline;
   FileWatcher m_watcher;
-  renderer::BaseRenderTarget &m_renderTarget;
+  renderer::RenderTarget &m_renderTarget;
 };
 } // namespace engine

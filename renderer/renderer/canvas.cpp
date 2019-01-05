@@ -1,4 +1,4 @@
-#include "render_target.hpp"
+#include "canvas.hpp"
 #include "context.hpp"
 #include "pipeline.hpp"
 #include "util.hpp"
@@ -6,7 +6,7 @@
 
 using namespace renderer;
 
-RenderTarget::RenderTarget(const uint32_t width, const uint32_t height)
+Canvas::Canvas(const uint32_t width, const uint32_t height)
     : m_width(width), m_height(height) {
   assert(ctx().getSupportedDepthFormat(&m_depthFormat));
   this->createColorTarget();
@@ -16,7 +16,7 @@ RenderTarget::RenderTarget(const uint32_t width, const uint32_t height)
   this->createFramebuffers();
 }
 
-RenderTarget::~RenderTarget() {
+Canvas::~Canvas() {
   this->destroyFramebuffers();
   this->destroyRenderPass();
   this->destroyColorTarget();
@@ -24,7 +24,7 @@ RenderTarget::~RenderTarget() {
   this->destroyDescriptorSet();
 }
 
-void RenderTarget::beginRenderPass(Window &window) {
+void Canvas::beginRenderPass(Window &window) {
   auto commandBuffer = window.getCurrentCommandBuffer();
   auto &resource =
       m_resources[window.getCurrentFrameIndex() % ARRAYSIZE(m_resources)];
@@ -63,13 +63,13 @@ void RenderTarget::beginRenderPass(Window &window) {
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void RenderTarget::endRenderPass(Window &window) {
+void Canvas::endRenderPass(Window &window) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   vkCmdEndRenderPass(commandBuffer);
 }
 
-void RenderTarget::draw(Window &window, GraphicsPipeline &pipeline) {
+void Canvas::draw(Window &window, GraphicsPipeline &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
   auto &resource =
       m_resources[window.getCurrentFrameIndex() % ARRAYSIZE(m_resources)];
@@ -90,7 +90,7 @@ void RenderTarget::draw(Window &window, GraphicsPipeline &pipeline) {
   vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 }
 
-void RenderTarget::resize(const uint32_t width, const uint32_t height) {
+void Canvas::resize(const uint32_t width, const uint32_t height) {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
   m_width = width;
   m_height = height;
@@ -106,7 +106,7 @@ void RenderTarget::resize(const uint32_t width, const uint32_t height) {
   this->createFramebuffers();
 }
 
-void RenderTarget::createColorTarget() {
+void Canvas::createColorTarget() {
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
 
@@ -198,7 +198,7 @@ void RenderTarget::createColorTarget() {
   }
 }
 
-void RenderTarget::destroyColorTarget() {
+void Canvas::destroyColorTarget() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
@@ -223,7 +223,7 @@ void RenderTarget::destroyColorTarget() {
   }
 }
 
-void RenderTarget::createDepthTarget() {
+void Canvas::createDepthTarget() {
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
 
@@ -293,7 +293,7 @@ void RenderTarget::createDepthTarget() {
   }
 }
 
-void RenderTarget::destroyDepthTarget() {
+void Canvas::destroyDepthTarget() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
@@ -310,7 +310,7 @@ void RenderTarget::destroyDepthTarget() {
   }
 }
 
-void RenderTarget::createDescriptorSet() {
+void Canvas::createDescriptorSet() {
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
 
@@ -347,7 +347,7 @@ void RenderTarget::createDescriptorSet() {
   }
 }
 
-void RenderTarget::destroyDescriptorSet() {
+void Canvas::destroyDescriptorSet() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.fullscreen;
@@ -358,7 +358,7 @@ void RenderTarget::destroyDescriptorSet() {
   }
 }
 
-void RenderTarget::createFramebuffers() {
+void Canvas::createFramebuffers() {
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
 
@@ -384,7 +384,7 @@ void RenderTarget::createFramebuffers() {
   }
 }
 
-void RenderTarget::destroyFramebuffers() {
+void Canvas::destroyFramebuffers() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
@@ -396,7 +396,7 @@ void RenderTarget::destroyFramebuffers() {
   }
 }
 
-void RenderTarget::createRenderPass() {
+void Canvas::createRenderPass() {
   VkAttachmentDescription attachmentDescriptions[] = {
       // Resolved color attachment
       VkAttachmentDescription{
@@ -488,7 +488,7 @@ void RenderTarget::createRenderPass() {
       ctx().m_device, &renderPassCreateInfo, nullptr, &m_renderPass));
 }
 
-void RenderTarget::destroyRenderPass() {
+void Canvas::destroyRenderPass() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
   if (m_renderPass != VK_NULL_HANDLE) {
     vkDestroyRenderPass(ctx().m_device, m_renderPass, nullptr);
