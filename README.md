@@ -37,7 +37,7 @@
 - [ ] Pass radiance mipmap count to shader at runtime
 
 ### Mesh generation
-- [ ] Shape asset
+- [x] Shape asset
 - [ ] MeshComponent class
 
 ### Utilities
@@ -62,13 +62,17 @@
 - [ ] Better storage solution (packed array -- arena allocator)
 - [x] More organized system abstraction
 
+### FTL
+- [ ] Stack allocator with regions
+- [ ] String
+- [ ] String builder
+
 ### Misc
 - [ ] Make standalone skybox baker
-- [ ] Object picking (use AABB testing with bouding box provided by gltf)
+- [x] Object picking (use OBB testing with bouding box provided by gltf)
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [x] Fullscreen post process shader
 - [ ] Document as much as possible
-- [x] Imgui
 
 
 ## Shaders
