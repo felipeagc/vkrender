@@ -139,5 +139,8 @@ int main() {
 
   vertexBuffer.destroy();
 
+  vkDestroyPipelineLayout(
+      renderer::ctx().m_device, pipeline.m_pipelineLayout, nullptr);
+
   return 0;
 }
