@@ -16,7 +16,7 @@ public:
       const std::string &irradiancePath,
       const std::vector<std::string> &radiancePaths,
       const std::string &brdfLutPath) {
-    m_identifier = skyboxPath;
+    this->identifier = skyboxPath;
 
     m_skyboxCubemap = renderer::Cubemap(skyboxPath, width, height);
     m_irradianceCubemap = renderer::Cubemap(irradiancePath, width, height);

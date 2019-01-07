@@ -8,18 +8,23 @@ using namespace engine;
 
 template <>
 void engine::loadComponent<GltfModelComponent>(
-    const scene::Component &comp,
+    const sdf::Component &comp,
     ecs::World &world,
     AssetManager &assetManager,
     ecs::Entity entity) {
-  world.assign<GltfModelComponent>(
-      entity,
-      assetManager.getAsset<engine::GltfModelAsset>(
-          comp.properties.at("asset").getUint32()));
+  for (auto &prop : comp.properties) {
+    if (strcmp(prop.name, "asset") == 0) {
+      uint32_t assetId;
+      prop.get_uint32(&assetId);
+
+      world.assign<GltfModelComponent>(
+          entity, assetManager.getAsset<GltfModelAsset>(assetId));
+    }
+  }
 }
 
 GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
-    : m_modelIndex(modelAsset.index()) {
+    : m_modelIndex(modelAsset.index) {
   // Create uniform buffers and descriptors
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
 

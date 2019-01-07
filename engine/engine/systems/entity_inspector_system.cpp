@@ -5,6 +5,7 @@
 #include "../components/environment_component.hpp"
 #include "../components/gltf_model_component.hpp"
 #include "../components/light_component.hpp"
+#include "../components/name_component.hpp"
 #include "../components/transform_component.hpp"
 #include <ecs/world.hpp>
 #include <imgui/imgui.h>
@@ -16,7 +17,7 @@ EntityInspectorSystem::EntityInspectorSystem(AssetManager &assetManager) {
   m_boxAsset = assetManager
                    .loadAsset<engine::ShapeAsset>(
                        engine::BoxShape(glm::vec3(-1.0), glm::vec3(1.0)))
-                   .index();
+                   .index;
 }
 
 EntityInspectorSystem::~EntityInspectorSystem() {}
@@ -57,7 +58,7 @@ static inline void entityInspector(ecs::World &world, ecs::Entity entity) {
 
         ImGui::DragFloat("Angle", &angle, 1.0f);
         ImGui::SameLine();
-        ImGui::DragFloat3("Rotation axis", &axis.x, 0.1f, -1.0f, 1.0f);
+        ImGui::DragFloat3("Rotation axis", &axis.x, 0.01f, -1.0f, 1.0f);
 
         transform->rotation =
             glm::rotate(prevQuat, glm::radians(angle), glm::normalize(axis));
@@ -134,25 +135,12 @@ void EntityInspectorSystem::imgui(ecs::World &world) {
   ImGui::Begin("Entities");
   char buf[256] = "";
   world.each([&](ecs::Entity entity) {
-    sprintf(buf, "Entity #%lu (", entity);
-
-    if (world.hasComponent<LightComponent>(entity)) {
-      strcat(buf, "Light");
+    auto name = world.getComponent<NameComponent>(entity);
+    sprintf(buf, "Entity #%lu", entity);
+    if (strlen(name->name) > 0) {
+      strcat(buf, ": ");
+      strcat(buf, name->name);
     }
-
-    if (world.hasComponent<GltfModelComponent>(entity)) {
-      strcat(buf, "GltfModel");
-    }
-
-    if (world.hasComponent<EnvironmentComponent>(entity)) {
-      strcat(buf, "Environment");
-    }
-
-    if (world.hasComponent<CameraComponent>(entity)) {
-      strcat(buf, "Camera");
-    }
-
-    strcat(buf, ")");
 
     bool selected = m_selectedEntity == entity;
     if (ImGui::Selectable(buf, entity, selected)) {

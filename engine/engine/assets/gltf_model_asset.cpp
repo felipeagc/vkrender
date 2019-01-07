@@ -10,18 +10,25 @@ using namespace engine;
 
 template <>
 void engine::loadAsset<GltfModelAsset>(
-    const scene::Asset &asset, AssetManager &assetManager) {
-  const std::string &path = asset.properties.at("path").getString();
+    const sdf::AssetBlock &asset, AssetManager &assetManager) {
+  std::string path;
   bool flipUVs = false;
-  if (asset.properties.find("flip_uvs") != asset.properties.end()) {
-    flipUVs = true;
+
+  for (auto &prop : asset.properties) {
+    if (strcmp(prop.name, "path") == 0) {
+      prop.get_string(path);
+    } else if (strcmp(prop.name, "flip_uvs") == 0) {
+      flipUVs = true;
+    }
   }
 
   char str[128] = "";
   sprintf(str, "Loading GltfModel: %s", path.c_str());
   auto start = timeBegin(str);
 
-  assetManager.loadAssetIntoIndex<GltfModelAsset>(asset.id, path, flipUVs);
+  auto &a = assetManager.loadAssetIntoIndex<GltfModelAsset>(
+      asset.index, path, flipUVs);
+  a.identifier = asset.name;
 
   sprintf(str, "Finished loading: %s", path.c_str());
   timeEnd(start, str);
@@ -242,7 +249,7 @@ void GltfModelAsset::Node::update(GltfModelAsset &model, uint32_t frameIndex) {
 }
 
 GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
-  m_identifier = path;
+  this->identifier = path;
 
   std::string dir = path.substr(0, path.find_last_of('/') + 1);
 

@@ -5,19 +5,19 @@ using namespace engine;
 
 template <>
 void engine::loadComponent<LightComponent>(
-    const scene::Component &comp,
+    const sdf::Component &comp,
     ecs::World &world,
     AssetManager &,
     ecs::Entity entity) {
   glm::vec3 color(1.0);
   float intensity = 1.0f;
 
-  if (comp.properties.find("color") != comp.properties.end()) {
-    color = comp.properties.at("color").getVec3();
-  }
-
-  if (comp.properties.find("intensity") != comp.properties.end()) {
-    intensity = comp.properties.at("intensity").getFloat();
+  for (auto &prop : comp.properties) {
+    if (strcmp(prop.name, "color") == 0) {
+      prop.get_vec3(&color);
+    } else if (strcmp(prop.name, "intensity") == 0) {
+      prop.get_float(&intensity);
+    }
   }
 
   world.assign<engine::LightComponent>(entity, color, intensity);

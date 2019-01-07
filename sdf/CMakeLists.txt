@@ -1,28 +1,26 @@
 set(
   SCENE_SOURCES
-  scene/parser.cpp
-  scene/lexer.cpp
-  scene/driver.cpp
+  sdf/parser.cpp
   )
 
 add_library(
-  scene
+  sdf 
   SHARED
   ${SCENE_SOURCES}
   )
 
 target_include_directories(
-  scene
+  sdf
   PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}"
   )
 
 target_link_libraries(
-  scene
+  sdf
 
   PRIVATE
   m
   glm
   )
 
-cotire(scene)
+cotire(sdf)

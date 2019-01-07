@@ -1,13 +1,13 @@
 add_executable(
-  scene_tests
+  sdf_tests
   scene.cpp
 )
 
 target_link_libraries(
-  scene_tests
-  scene
+  sdf_tests
+  sdf
   gtest
   gtest_main
 )
 
-gtest_discover_tests(scene_tests)
+gtest_discover_tests(sdf_tests)

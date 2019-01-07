@@ -5,26 +5,43 @@ using namespace engine;
 
 template <>
 void engine::loadAsset<EnvironmentAsset>(
-    const scene::Asset &asset, AssetManager &assetManager) {
-  const uint32_t width =
-      static_cast<uint32_t>(asset.properties.at("size").values[0].getInt());
-  const uint32_t height =
-      static_cast<uint32_t>(asset.properties.at("size").values[1].getInt());
-  const std::string &skybox = asset.properties.at("skybox").getString();
-  const std::string &irradiance = asset.properties.at("irradiance").getString();
-  std::vector<std::string> radiance(
-      asset.properties.at("radiance").values.size());
-  for (size_t i = 0; i < asset.properties.at("radiance").values.size(); i++) {
-    radiance[i] = asset.properties.at("radiance").values[i].getString();
+    const sdf::AssetBlock &asset, AssetManager &assetManager) {
+  uint32_t width = 1024;
+  uint32_t height = 1024;
+  std::string skybox;
+  std::string irradiance;
+  std::vector<std::string> radiance;
+  std::string brdfLut;
+
+  for (auto &prop : asset.properties) {
+    if (strcmp(prop.name, "size") == 0) {
+      if (prop.values.size() != 2) {
+        throw std::runtime_error("Invalid size property for environment asset");
+      }
+      prop.values[0].get_uint32(&width);
+      prop.values[1].get_uint32(&height);
+    } else if (strcmp(prop.name, "skybox") == 0) {
+      prop.get_string(skybox);
+    } else if (strcmp(prop.name, "irradiance") == 0) {
+      prop.get_string(irradiance);
+    } else if (strcmp(prop.name, "radiance") == 0) {
+      for (auto &value : prop.values) {
+        std::string s;
+        value.get_string(s);
+        radiance.push_back(s);
+      }
+    } else if (strcmp(prop.name, "brdfLut") == 0) {
+      prop.get_string(brdfLut);
+    }
   }
-  const std::string &brdfLut = asset.properties.at("brdfLut").getString();
 
   char str[128] = "";
   sprintf(str, "Loading Environment: %s", skybox.c_str());
   auto start = timeBegin(str);
 
-  assetManager.loadAssetIntoIndex<EnvironmentAsset>(
-      asset.id, width, height, skybox, irradiance, radiance, brdfLut);
+  auto &a = assetManager.loadAssetIntoIndex<EnvironmentAsset>(
+      asset.index, width, height, skybox, irradiance, radiance, brdfLut);
+  a.identifier = asset.name;
 
   sprintf(str, "Finished loading: %s", skybox.c_str());
   timeEnd(start, str);

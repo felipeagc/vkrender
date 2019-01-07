@@ -9,18 +9,22 @@ using namespace engine;
 
 template <>
 void engine::loadComponent<BillboardComponent>(
-    const scene::Component &comp,
+    const sdf::Component &comp,
     ecs::World &world,
     AssetManager &assetManager,
     ecs::Entity entity) {
-  world.assign<engine::BillboardComponent>(
-      entity,
-      assetManager.getAsset<engine::TextureAsset>(
-          comp.properties.at("asset").getUint32()));
+  for (auto &prop : comp.properties) {
+    if (strcmp(prop.name, "asset") == 0) {
+      uint32_t assetId;
+      prop.get_uint32(&assetId);
+      world.assign<engine::BillboardComponent>(
+          entity, assetManager.getAsset<engine::TextureAsset>(assetId));
+    }
+  }
 }
 
 BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
-    : m_textureIndex(textureAsset.index()) {
+    : m_textureIndex(textureAsset.index) {
   // Allocate material descriptor sets
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
   for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {

@@ -42,9 +42,9 @@ void assetsWindow(AssetManager &assetManager) {
 
     char str[128] = "";
 
-    if (asset->type() == AssetManager::getAssetType<GltfModelAsset>()) {
+    if (asset->type == AssetManager::getAssetType<GltfModelAsset>()) {
       sprintf(
-          str, "GLTF Model #%lu: %s", assetIndex, asset->identifier().c_str());
+          str, "GLTF Model #%lu: %s", assetIndex, asset->identifier.c_str());
 
       if (ImGui::CollapsingHeader(str)) {
         auto *gltfModelAsset = (GltfModelAsset *)asset;
@@ -67,17 +67,16 @@ void assetsWindow(AssetManager &assetManager) {
           ImGui::PopID();
         }
       }
-    } else if (
-        asset->type() == AssetManager::getAssetType<EnvironmentAsset>()) {
+    } else if (asset->type == AssetManager::getAssetType<EnvironmentAsset>()) {
       sprintf(
-          str, "Environment #%lu: %s", assetIndex, asset->identifier().c_str());
+          str, "Environment #%lu: %s", assetIndex, asset->identifier.c_str());
 
       if (ImGui::CollapsingHeader(str)) {
         // auto *environmentAsset = (EnvironmentAsset *)asset;
         ImGui::Text("Environment asset");
       }
-    } else if (asset->type() == AssetManager::getAssetType<TextureAsset>()) {
-      sprintf(str, "Texture #%lu: %s", assetIndex, asset->identifier().c_str());
+    } else if (asset->type == AssetManager::getAssetType<TextureAsset>()) {
+      sprintf(str, "Texture #%lu: %s", assetIndex, asset->identifier.c_str());
 
       if (ImGui::CollapsingHeader(str)) {
         // auto *textureAsset = (TextureAsset *)asset;

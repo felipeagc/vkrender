@@ -10,7 +10,7 @@ public:
   TextureAsset() {}
 
   TextureAsset(const std::string &path) {
-    m_identifier = path;
+    this->identifier = path;
     m_texture = renderer::Texture(path);
   }
 

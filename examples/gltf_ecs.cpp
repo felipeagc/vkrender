@@ -12,7 +12,7 @@ int main() {
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
-  engine::Scene scene("../assets/main.scene");
+  engine::Scene scene("../assets/main.sdf");
   auto &world = scene.m_world;
   auto &assetManager = scene.m_assetManager;
 

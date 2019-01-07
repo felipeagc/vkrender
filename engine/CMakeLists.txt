@@ -38,7 +38,7 @@ target_link_libraries(
   ftl
   renderer
   ecs
-  scene
+  sdf
 
   PRIVATE
   tinygltf

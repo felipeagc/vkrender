@@ -33,7 +33,7 @@ add_subdirectory(thirdparty)
 add_subdirectory(ftl)
 add_subdirectory(ecs)
 add_subdirectory(renderer)
-add_subdirectory(scene)
+add_subdirectory(sdf)
 add_subdirectory(engine)
 
 option(VKR_BUILD_EXAMPLES "Build the examples" ON)

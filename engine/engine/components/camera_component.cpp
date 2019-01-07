@@ -9,7 +9,7 @@ using namespace engine;
 
 template <>
 void engine::loadComponent<CameraComponent>(
-    const scene::Component &,
+    const sdf::Component &,
     ecs::World &world,
     AssetManager &,
     ecs::Entity entity) {

@@ -5,7 +5,7 @@ using namespace engine;
 
 template <>
 void engine::loadComponent<TransformComponent>(
-    const scene::Component &comp,
+    const sdf::Component &comp,
     ecs::World &world,
     AssetManager &,
     ecs::Entity entity) {
@@ -13,16 +13,18 @@ void engine::loadComponent<TransformComponent>(
   glm::vec3 scale(1.0);
   glm::quat rotation{1.0, 0.0, 0.0, 0.0};
 
-  if (comp.properties.find("position") != comp.properties.end()) {
-    pos = comp.properties.at("position").getVec3();
-  }
+  for (auto &prop : comp.properties) {
+    if (strcmp(prop.name, "position") == 0) {
+      prop.get_vec3(&pos);
+    }
 
-  if (comp.properties.find("scale") != comp.properties.end()) {
-    scale = comp.properties.at("scale").getVec3();
-  }
+    if (strcmp(prop.name, "scale") == 0) {
+      prop.get_vec3(&scale);
+    }
 
-  if (comp.properties.find("rotation") != comp.properties.end()) {
-    rotation = comp.properties.at("rotation").getQuat();
+    if (strcmp(prop.name, "rotation") == 0) {
+      prop.get_quat(&rotation);
+    }
   }
 
   world.assign<engine::TransformComponent>(entity, pos, scale, rotation);

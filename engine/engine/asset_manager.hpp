@@ -16,20 +16,10 @@ using AssetType = size_t;
 
 const AssetType MAX_ASSET_TYPES = 20;
 
-class Asset {
-  friend class AssetManager;
-
-public:
-  Asset(){};
-
-  inline AssetType type() const noexcept { return m_assetType; }
-  inline AssetIndex index() const noexcept { return m_assetIndex; }
-  inline const std::string &identifier() { return m_identifier; }
-
-protected:
-  AssetType m_assetType = -1;
-  AssetIndex m_assetIndex = -1;
-  std::string m_identifier = "";
+struct Asset {
+  AssetType type = -1;
+  AssetIndex index = -1;
+  std::string identifier = "";
 };
 
 namespace detail {
@@ -109,8 +99,8 @@ public:
 
     m_assets[assetIndex] = asset;
 
-    m_assets[assetIndex]->m_assetType = id;
-    m_assets[assetIndex]->m_assetIndex = assetIndex;
+    m_assets[assetIndex]->type = id;
+    m_assets[assetIndex]->index = assetIndex;
 
     return (A &)*m_assets[assetIndex];
   }

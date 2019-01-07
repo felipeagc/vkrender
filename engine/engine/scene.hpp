@@ -4,19 +4,18 @@
 #include <chrono>
 #include <ecs/world.hpp>
 #include <ftl/logging.hpp>
-#include <scene/scene.hpp>
+#include <sdf/parser.hpp>
 #include <string>
 
 namespace engine {
 
 inline std::chrono::time_point<std::chrono::system_clock>
-timeBegin(const char* msg) {
+timeBegin(const char *msg) {
   ftl::debug("%s", msg);
   return std::chrono::system_clock::now();
 }
 inline void timeEnd(
-    std::chrono::time_point<std::chrono::system_clock> start,
-    const char* msg) {
+    std::chrono::time_point<std::chrono::system_clock> start, const char *msg) {
   auto end = std::chrono::system_clock::now();
   float seconds =
       (float)std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
@@ -25,11 +24,11 @@ inline void timeEnd(
   ftl::debug("[%.2fs] %s", seconds, msg);
 }
 
-template <typename A> void loadAsset(const scene::Asset &, AssetManager &) {}
+template <typename A> void loadAsset(const sdf::AssetBlock &, AssetManager &) {}
 
 template <typename C>
 void loadComponent(
-    const scene::Component &, ecs::World &, AssetManager &, ecs::Entity) {}
+    const sdf::Component &, ecs::World &, AssetManager &, ecs::Entity) {}
 
 class Scene {
 public:

@@ -12,19 +12,24 @@ using namespace engine;
 
 template <>
 void engine::loadComponent<EnvironmentComponent>(
-    const scene::Component &comp,
+    const sdf::Component &comp,
     ecs::World &world,
     AssetManager &assetManager,
     ecs::Entity entity) {
-  world.assign<engine::EnvironmentComponent>(
-      entity,
-      assetManager.getAsset<engine::EnvironmentAsset>(
-          comp.properties.at("asset").getUint32()));
+  for (auto &prop : comp.properties) {
+    if (strcmp(prop.name, "asset") == 0) {
+      uint32_t assetId;
+      prop.get_uint32(&assetId);
+
+      world.assign<EnvironmentComponent>(
+          entity, assetManager.getAsset<EnvironmentAsset>(assetId));
+    }
+  }
 }
 
 EnvironmentComponent::EnvironmentComponent(
     const EnvironmentAsset &environmentAsset)
-    : m_environmentAssetIndex(environmentAsset.index()) {
+    : m_environmentAssetIndex(environmentAsset.index) {
   // Allocate descriptor sets
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
 
