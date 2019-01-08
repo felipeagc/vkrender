@@ -63,8 +63,8 @@
 - [x] More organized system abstraction
 
 ### FTL
-- [ ] Stack allocator with regions
-- [ ] String
+- [x] Stack allocator with regions
+- [x] String
 - [ ] String builder
 
 ### Misc

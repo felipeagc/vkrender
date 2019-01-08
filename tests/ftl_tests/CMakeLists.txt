@@ -1,13 +1,15 @@
-add_executable(
-  ftl_tests
-  fixed_vector.cpp
-)
+function(f_add_test test)
+  add_executable(${test} ${test}.cpp)
+  target_link_libraries(
+    ${test}
+    ftl
+    gtest
+    gtest_main
+  )
+  gtest_discover_tests(${test})
+endfunction()
 
-target_link_libraries(
-  ftl_tests
-  ftl
-  gtest
-  gtest_main
-)
-
-gtest_discover_tests(ftl_tests)
+f_add_test(fixed_vector)
+f_add_test(string)
+f_add_test(string_builder)
+f_add_test(stack_allocator)

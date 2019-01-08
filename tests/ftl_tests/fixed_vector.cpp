@@ -100,10 +100,6 @@ TEST(fixed_vector, test_count_constructor_stack) {
   std::vector<int> v(4);
 
   EXPECT_EQ(sv.size(), v.size());
-
-  for (size_t i = 0; i < sv.size(); i++) {
-    EXPECT_EQ(v[i], sv[i]);
-  }
 }
 
 TEST(fixed_vector, test_count_constructor_heap) {
@@ -111,10 +107,6 @@ TEST(fixed_vector, test_count_constructor_heap) {
   std::vector<int> v(10);
 
   EXPECT_EQ(sv.size(), v.size());
-
-  for (size_t i = 0; i < sv.size(); i++) {
-    EXPECT_EQ(v[i], sv[i]);
-  }
 }
 
 TEST(fixed_vector, test_count_value_constructor_stack) {

@@ -9,7 +9,10 @@ template <typename T, size_t N = 8> class fixed_vector {
 public:
   fixed_vector() {}
 
-  fixed_vector(size_t count) { this->resize(count); }
+  // Does not initialize values
+  fixed_vector(size_t count) {
+    this->resize(count);
+  }
 
   fixed_vector(size_t count, const T &value) {
     this->resize(count);
