@@ -3,6 +3,7 @@
 #include "../asset_manager.hpp"
 #include <ftl/logging.hpp>
 #include <renderer/cubemap.hpp>
+#include <renderer/texture.hpp>
 
 namespace engine {
 class EnvironmentAsset : public Asset {

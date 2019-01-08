@@ -2,9 +2,9 @@
 
 #include <atomic>
 #include <ftl/logging.hpp>
+#include <ftl/stack_allocator.hpp>
 #include <functional>
 #include <mutex>
-#include <renderer/texture.hpp>
 #include <string>
 #include <thread>
 #include <vector>
@@ -93,7 +93,8 @@ public:
           "Asset index is in use: " + std::to_string(assetIndex));
     }
 
-    A *asset = new A(std::forward<Args>(args)...);
+    void* ptr = m_allocator.alloc(sizeof(A), alignof(A));
+    A *asset = new (ptr) A(std::forward<Args>(args)...);
 
     std::scoped_lock<std::mutex> lock(m_mutex);
 
@@ -121,6 +122,8 @@ public:
   }
 
 private:
+  ftl::stack_allocator m_allocator{16384};
+
   // Indexed by asset index
   std::vector<Asset *> m_assets;
   // Indexed by asset type
@@ -137,7 +140,7 @@ private:
       m_assetDestructors.resize(id + 1);
     }
     if (!m_assetDestructors[id]) {
-      m_assetDestructors[id] = [](Asset *asset) { delete ((A *)asset); };
+      m_assetDestructors[id] = [](Asset *asset) { ((A *)asset)->~A(); };
     }
   }
 
