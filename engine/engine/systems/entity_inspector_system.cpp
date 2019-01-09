@@ -137,9 +137,9 @@ void EntityInspectorSystem::imgui(ecs::World &world) {
   world.each([&](ecs::Entity entity) {
     auto name = world.getComponent<NameComponent>(entity);
     sprintf(buf, "Entity #%lu", entity);
-    if (strlen(name->name) > 0) {
+    if (name->name.length() > 0) {
       strcat(buf, ": ");
-      strcat(buf, name->name);
+      strcat(buf, name->name.c_str());
     }
 
     bool selected = m_selectedEntity == entity;

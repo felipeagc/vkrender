@@ -34,9 +34,8 @@ void World::removeEntity(Entity entity) {
 
   for (size_t compId = 0; compId < MAX_COMPONENTS; compId++) {
     if (m_entityComponentMasks[entity][compId]) {
-      const void *component =
-          &m_componentVectors[compId][entity * m_componentSizes[compId]];
-      m_componentDestructors[compId](component);
+      const void *component = m_componentInfos[compId].allocator[entity];
+      m_componentInfos[compId].destructor(component);
       m_entityComponentMasks[entity][compId] = 0;
     }
   }

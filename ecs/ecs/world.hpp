@@ -3,11 +3,11 @@
 #include "entity.hpp"
 #include "typeid.hpp"
 #include <bitset>
+#include <cassert>
 #include <cstdint>
+#include <ftl/vector.hpp>
 #include <functional>
 #include <stdexcept>
-#include <vector>
-#include <cassert>
 
 namespace ecs {
 
@@ -15,6 +15,65 @@ const size_t MAX_COMPONENTS = 50;
 const size_t INITIAL_ALLOCATED_ENTITY_COUNT = 100;
 
 using ComponentMask = std::bitset<MAX_COMPONENTS>;
+
+struct ComponentAllocator {
+  struct Block {
+    Block() {}
+    Block(size_t size) { this->storage = new uint8_t[size]; }
+
+    uint8_t *storage = nullptr;
+  };
+
+  ComponentAllocator() {}
+
+  ComponentAllocator(size_t componentSize, size_t componentsPerBlock = 4) {
+    m_blockSize = componentSize * componentsPerBlock;
+    m_componentSize = componentSize;
+    m_componentsPerBlock = componentsPerBlock;
+    m_initialized = true;
+  }
+
+  ~ComponentAllocator() {
+    for (auto &block : m_blocks) {
+      if (block.storage != nullptr) {
+        delete[] block.storage;
+      }
+    }
+  }
+
+  void ensurePosition(size_t position) {
+    size_t blockIndex = position / m_componentsPerBlock;
+
+    if (blockIndex >= m_blocks.size()) {
+      m_blocks.resize(blockIndex + 1);
+    }
+
+    if (m_blocks[blockIndex].storage == nullptr) {
+      m_blocks[blockIndex] = Block(m_blockSize);
+    }
+  }
+
+  uint8_t *operator[](size_t position) {
+    size_t blockIndex = position / m_componentsPerBlock;
+    size_t positionInBlock = position % m_componentsPerBlock;
+
+    return &m_blocks[blockIndex].storage[positionInBlock * m_componentSize];
+  }
+
+  bool m_initialized = false;
+
+private:
+  ftl::small_vector<Block> m_blocks;
+  size_t m_blockSize = 0;
+  size_t m_componentSize = 0;
+  size_t m_componentsPerBlock = 0;
+};
+
+struct ComponentInfo {
+  ComponentAllocator allocator;
+  size_t size;
+  std::function<void(const void *)> destructor;
+};
 
 class World {
 public:
@@ -63,30 +122,26 @@ public:
 
     auto compId = WorldTypeId::type<Component>;
 
-    assert(sizeof(Component) == m_componentSizes[compId]);
-
-    const size_t index = entity * sizeof(Component);
+    assert(sizeof(Component) == m_componentInfos[compId].size);
 
     if (m_entityComponentMasks.size() <= entity) {
       throw std::runtime_error("Invalid entity");
     }
 
-    std::vector<std::uint8_t> &memory = m_componentVectors[compId];
+    auto &allocator = m_componentInfos[compId].allocator;
 
-    if (memory.size() <= index) {
-      memory.resize((entity + 1) * sizeof(Component));
-    }
+    allocator.ensurePosition(entity);
 
     if (m_entityComponentMasks[entity][compId]) {
       // Entity already has component
       // So let's destroy it
-      Component *comp = (Component *)&memory[index];
+      Component *comp = (Component *)allocator[entity];
       comp->~Component();
     }
 
     m_entityComponentMasks[entity].set(compId);
 
-    new (&memory[index]) Component{std::forward<Args>(args)...};
+    new (allocator[entity]) Component{std::forward<Args>(args)...};
   }
 
   /*
@@ -97,11 +152,10 @@ public:
 
     // If entity has the component
     if (m_entityComponentMasks[entity][compId]) {
-      std::vector<std::uint8_t> &memory = m_componentVectors[compId];
-      const size_t index = entity * sizeof(Component);
+      auto &allocator = m_componentInfos[compId].allocator;
 
       // Remove the component
-      Component *comp = (Component *)&memory[index];
+      Component *comp = (Component *)allocator[entity];
       comp->~Component();
     }
 
@@ -118,7 +172,7 @@ public:
       return nullptr;
     }
 
-    return (Component *)&m_componentVectors[compId][entity * sizeof(Component)];
+    return (Component *)m_componentInfos[compId].allocator[entity];
   }
 
   template <typename C> ComponentMask componentMask() {
@@ -168,9 +222,7 @@ public:
   /*
     Returns the first entity with the required components.
    */
-  template <typename... Components>
-  Entity
-  first() {
+  template <typename... Components> Entity first() {
     auto mask = componentMask<Components...>();
 
     for (Entity entity = 0; entity < m_entityComponentMasks.size(); entity++) {
@@ -184,28 +236,31 @@ public:
     throw std::runtime_error("Couldn't find entity with required components.");
   }
 
-
 protected:
-  std::array<std::vector<uint8_t>, MAX_COMPONENTS> m_componentVectors;
-  std::array<std::function<void(const void *)>, MAX_COMPONENTS>
-      m_componentDestructors;
-  std::array<size_t, MAX_COMPONENTS> m_componentSizes;
-  std::vector<ComponentMask> m_entityComponentMasks;
+  ftl::small_vector<ComponentInfo> m_componentInfos;
+  ftl::small_vector<ComponentMask> m_entityComponentMasks;
 
   /*
     Ensures that a component has all of its information initialized.
    */
   template <typename Component> void ensure() {
     auto id = WorldTypeId::type<Component>;
-    if (!m_componentDestructors[id]) {
-      m_componentDestructors[id] = [](const void *x) {
+
+    if (m_componentInfos.size() <= id) {
+      m_componentInfos.resize(id + 1);
+    }
+
+    if (!m_componentInfos[id].allocator.m_initialized) {
+      m_componentInfos[id].allocator = ComponentAllocator(sizeof(Component));
+    }
+
+    if (!m_componentInfos[id].destructor) {
+      m_componentInfos[id].destructor = [](const void *x) {
         static_cast<const Component *>(x)->~Component();
       };
     }
 
-    m_componentSizes[id] = sizeof(Component);
-
-    // TODO: error when id is MAX_COMPONENTS
+    m_componentInfos[id].size = sizeof(Component);
   }
 };
 } // namespace ecs

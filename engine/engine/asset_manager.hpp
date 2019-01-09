@@ -48,8 +48,14 @@ public:
 
   const std::vector<Asset *> &getAssets() { return m_assets; }
 
-  template <typename A> A &getAsset(const AssetIndex assetIndex) {
+  // Gets asset checking if asset type is registered
+  template <typename A> A &getAssetSafe(const AssetIndex assetIndex) {
     ensureAssetType<A>();
+    return (A &)*m_assets[assetIndex];
+  }
+
+  // Gets asset without checking if asset type is registered
+  template <typename A> A &getAsset(const AssetIndex assetIndex) {
     return (A &)*m_assets[assetIndex];
   }
 
