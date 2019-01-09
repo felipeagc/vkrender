@@ -42,7 +42,6 @@ target_link_libraries(
 
   PRIVATE
   tinygltf
-  rapidjson
   )
 
 target_include_directories(
