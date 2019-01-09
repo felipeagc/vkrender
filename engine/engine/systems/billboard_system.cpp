@@ -3,7 +3,7 @@
 #include "../components/billboard_component.hpp"
 #include "../components/camera_component.hpp"
 #include "../components/light_component.hpp"
-#include <ftl/fixed_vector.hpp>
+#include <ftl/vector.hpp>
 
 using namespace engine;
 
@@ -28,7 +28,7 @@ void BillboardSystem::process(
   camera->bind(window, pipeline);
 
   glm::vec3 cameraPos = cameraTransform->position;
-  ftl::fixed_vector<std::pair<float, ecs::Entity>> billboards;
+  ftl::small_vector<std::pair<float, ecs::Entity>> billboards;
 
   world.each<
       engine::TransformComponent,

@@ -57,7 +57,7 @@ void DestroyDebugReportCallbackEXT(
 static bool checkValidationLayerSupport() {
   uint32_t count;
   vkEnumerateInstanceLayerProperties(&count, nullptr);
-  ftl::fixed_vector<VkLayerProperties> availableLayers(count);
+  ftl::small_vector<VkLayerProperties> availableLayers(count);
   vkEnumerateInstanceLayerProperties(&count, availableLayers.data());
 
   for (const char *layerName : REQUIRED_VALIDATION_LAYERS) {
@@ -98,7 +98,7 @@ static bool checkPhysicalDeviceProperties(
   uint32_t count;
   vkEnumerateDeviceExtensionProperties(
       physicalDevice, nullptr, &count, nullptr);
-  ftl::fixed_vector<VkExtensionProperties> availableExtensions(count);
+  ftl::small_vector<VkExtensionProperties> availableExtensions(count);
   vkEnumerateDeviceExtensionProperties(
       physicalDevice, nullptr, &count, availableExtensions.data());
 
@@ -144,7 +144,7 @@ static bool checkPhysicalDeviceProperties(
   }
 
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
-  ftl::fixed_vector<VkQueueFamilyProperties> queueFamilyProperties(count);
+  ftl::small_vector<VkQueueFamilyProperties> queueFamilyProperties(count);
   vkGetPhysicalDeviceQueueFamilyProperties(
       physicalDevice, &count, queueFamilyProperties.data());
 
@@ -271,7 +271,7 @@ void Context::setupDebugCallback() {
 void Context::createDevice(VkSurfaceKHR &surface) {
   uint32_t count;
   vkEnumeratePhysicalDevices(m_instance, &count, nullptr);
-  ftl::fixed_vector<VkPhysicalDevice> physicalDevices(count);
+  ftl::small_vector<VkPhysicalDevice> physicalDevices(count);
   vkEnumeratePhysicalDevices(m_instance, &count, physicalDevices.data());
 
   for (auto physicalDevice_ : physicalDevices) {
@@ -296,7 +296,7 @@ void Context::createDevice(VkSurfaceKHR &surface) {
 
   ftl::debug("Using physical device: %s", properties.deviceName);
 
-  ftl::fixed_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+  ftl::small_vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   float queuePriorities[] = {1.0f};
 
   queueCreateInfos.push_back({

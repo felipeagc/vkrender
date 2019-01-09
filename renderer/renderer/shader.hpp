@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vertex_format.hpp"
-#include <ftl/fixed_vector.hpp>
+#include <ftl/vector.hpp>
 #include <fstream>
 #include <vector>
 
@@ -22,11 +22,11 @@ public:
 
   operator bool() { return m_vertexModule && m_fragmentModule; };
 
-  ftl::fixed_vector<VkPipelineShaderStageCreateInfo>
+  ftl::small_vector<VkPipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
   struct ShaderMetadata {
-    ftl::fixed_vector<VkDescriptorSetLayoutBinding>
+    ftl::small_vector<VkDescriptorSetLayoutBinding>
         descriptorSetLayoutBindings;
     renderer::VertexFormat vertexFormat;
   };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ftl/fixed_vector.hpp>
+#include <ftl/vector.hpp>
 #include <vulkan/vulkan.h>
 
 namespace renderer {
@@ -10,8 +10,8 @@ class VertexFormat {
 public:
   VertexFormat(){};
   VertexFormat(
-      ftl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions,
-      ftl::fixed_vector<VkVertexInputAttributeDescription>
+      ftl::small_vector<VkVertexInputBindingDescription> bindingDescriptions,
+      ftl::small_vector<VkVertexInputAttributeDescription>
           attributeDescriptions);
   ~VertexFormat(){};
   VertexFormat(const VertexFormat &other) = default;
@@ -21,8 +21,8 @@ public:
   getPipelineVertexInputStateCreateInfo() const;
 
 protected:
-  ftl::fixed_vector<VkVertexInputBindingDescription> m_bindingDescriptions;
-  ftl::fixed_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
+  ftl::small_vector<VkVertexInputBindingDescription> m_bindingDescriptions;
+  ftl::small_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 };
 
 class VertexFormatBuilder {
@@ -40,8 +40,8 @@ public:
   VertexFormat build();
 
 private:
-  ftl::fixed_vector<VkVertexInputBindingDescription> m_bindingDescriptions;
-  ftl::fixed_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
+  ftl::small_vector<VkVertexInputBindingDescription> m_bindingDescriptions;
+  ftl::small_vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 };
 
 } // namespace renderer

@@ -3,8 +3,8 @@
 using namespace renderer;
 
 VertexFormat::VertexFormat(
-    ftl::fixed_vector<VkVertexInputBindingDescription> bindingDescriptions,
-    ftl::fixed_vector<VkVertexInputAttributeDescription> attributeDescriptions)
+    ftl::small_vector<VkVertexInputBindingDescription> bindingDescriptions,
+    ftl::small_vector<VkVertexInputAttributeDescription> attributeDescriptions)
     : m_bindingDescriptions(bindingDescriptions),
       m_attributeDescriptions(attributeDescriptions) {}
 

@@ -443,13 +443,13 @@ void Window::createSwapchain(uint32_t width, uint32_t height) {
 
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       ctx().m_physicalDevice, m_surface, &count, nullptr);
-  ftl::fixed_vector<VkSurfaceFormatKHR> surfaceFormats(count);
+  ftl::small_vector<VkSurfaceFormatKHR> surfaceFormats(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       ctx().m_physicalDevice, m_surface, &count, surfaceFormats.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       ctx().m_physicalDevice, m_surface, &count, nullptr);
-  ftl::fixed_vector<VkPresentModeKHR> presentModes(count);
+  ftl::small_vector<VkPresentModeKHR> presentModes(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       ctx().m_physicalDevice, m_surface, &count, presentModes.data());
 
@@ -531,7 +531,7 @@ void Window::allocateGraphicsCommandBuffers() {
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-  ftl::fixed_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
+  ftl::small_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
 
   vkAllocateCommandBuffers(
       ctx().m_device, &allocateInfo, commandBuffers.data());
@@ -756,7 +756,7 @@ uint32_t Window::getSwapchainNumImages(
 }
 
 VkSurfaceFormatKHR Window::getSwapchainFormat(
-    const ftl::fixed_vector<VkSurfaceFormatKHR> &formats) {
+    const ftl::small_vector<VkSurfaceFormatKHR> &formats) {
   if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
     return {VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR};
   }
@@ -854,7 +854,7 @@ VkSurfaceTransformFlagBitsKHR Window::getSwapchainTransform(
 }
 
 VkPresentModeKHR Window::getSwapchainPresentMode(
-    const ftl::fixed_vector<VkPresentModeKHR> &presentModes) {
+    const ftl::small_vector<VkPresentModeKHR> &presentModes) {
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
       ftl::debug("Recreating swapchain using immediate present mode");

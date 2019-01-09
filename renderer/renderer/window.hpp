@@ -6,7 +6,7 @@
 #include "scancodes.hpp"
 #include <SDL2/SDL.h>
 #include <chrono>
-#include <ftl/fixed_vector.hpp>
+#include <ftl/vector.hpp>
 #include <functional>
 #include <string>
 #include <vulkan/vk_mem_alloc.h>
@@ -92,7 +92,7 @@ protected:
     VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   };
 
-  ftl::fixed_vector<FrameResources> m_frameResources{MAX_FRAMES_IN_FLIGHT};
+  ftl::small_vector<FrameResources> m_frameResources{MAX_FRAMES_IN_FLIGHT};
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
   int m_currentFrame = 0;
@@ -102,8 +102,8 @@ protected:
   VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
   VkFormat m_swapchainImageFormat;
   VkExtent2D m_swapchainExtent;
-  ftl::fixed_vector<VkImage> m_swapchainImages;
-  ftl::fixed_vector<VkImageView> m_swapchainImageViews;
+  ftl::small_vector<VkImage> m_swapchainImages;
+  ftl::small_vector<VkImageView> m_swapchainImageViews;
 
   void createVulkanSurface();
 
@@ -129,7 +129,7 @@ protected:
   uint32_t
   getSwapchainNumImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
   VkSurfaceFormatKHR
-  getSwapchainFormat(const ftl::fixed_vector<VkSurfaceFormatKHR> &formats);
+  getSwapchainFormat(const ftl::small_vector<VkSurfaceFormatKHR> &formats);
   VkExtent2D getSwapchainExtent(
       uint32_t width,
       uint32_t height,
@@ -139,6 +139,6 @@ protected:
   VkSurfaceTransformFlagBitsKHR
   getSwapchainTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
   VkPresentModeKHR getSwapchainPresentMode(
-      const ftl::fixed_vector<VkPresentModeKHR> &presentModes);
+      const ftl::small_vector<VkPresentModeKHR> &presentModes);
 };
 } // namespace renderer

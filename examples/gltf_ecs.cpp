@@ -1,6 +1,6 @@
 #include <ecs/world.hpp>
 #include <engine/engine.hpp>
-#include <ftl/fixed_vector.hpp>
+#include <ftl/vector.hpp>
 #include <ftl/logging.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
@@ -26,6 +26,8 @@ int main() {
   renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
+  renderer::Shader modelShader{"../shaders/model_pbr.vert",
+                               "../shaders/model_pbr.frag"};
   renderer::Shader skyboxShader{"../shaders/skybox.vert",
                                 "../shaders/skybox.frag"};
   renderer::Shader billboardShader{"../shaders/billboard.vert",
@@ -33,6 +35,9 @@ int main() {
   renderer::Shader boxShader{"../shaders/box.vert", "../shaders/box.frag"};
   renderer::Shader fullscreenShader{"../shaders/fullscreen.vert",
                                     "../shaders/fullscreen.frag"};
+
+  renderer::GraphicsPipeline modelPipeline =
+      renderer::StandardPipeline(renderTarget, modelShader);
 
   renderer::GraphicsPipeline billboardPipeline =
       renderer::BillboardPipeline(renderTarget, billboardShader);
@@ -46,19 +51,20 @@ int main() {
   renderer::GraphicsPipeline fullscreenPipeline =
       renderer::FullscreenPipeline(window, fullscreenShader);
 
+  modelShader.destroy();
   billboardShader.destroy();
   boxShader.destroy();
   skyboxShader.destroy();
   fullscreenShader.destroy();
 
-  engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
-      renderTarget, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
+  // engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
+  //     renderTarget, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
 
   float time = 0.0;
 
   bool drawImgui = false;
 
-  modelShaderWatcher.startWatching();
+  // modelShaderWatcher.startWatching();
 
   while (!window.getShouldClose()) {
     time += window.getDelta();
@@ -104,7 +110,7 @@ int main() {
     lightingSystem.process(window, world);
     fpsCameraSystem.process(window, world);
 
-    modelShaderWatcher.lockPipeline();
+    // modelShaderWatcher.lockPipeline();
 
     // Render target pass
     {
@@ -112,7 +118,7 @@ int main() {
 
       entityInspectorSystem.drawBox(window, assetManager, world, boxPipeline);
       gltfModelSystem.process(
-          window, assetManager, world, modelShaderWatcher.pipeline());
+          window, assetManager, world, modelPipeline);
       skyboxSystem.process(window, world, skyboxPipeline);
       billboardSystem.process(window, world, billboardPipeline);
 

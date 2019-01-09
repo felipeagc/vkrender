@@ -1,5 +1,5 @@
 #include <engine/engine.hpp>
-#include <ftl/fixed_vector.hpp>
+#include <ftl/vector.hpp>
 #include <ftl/logging.hpp>
 #include <renderer/renderer.hpp>
 

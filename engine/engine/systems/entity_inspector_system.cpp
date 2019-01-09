@@ -396,7 +396,7 @@ void EntityInspectorSystem::processEvent(
 
       m_selectedEntity = ecs::MAX_ENTITY;
 
-      ftl::fixed_vector<std::pair<float, ecs::Entity>, 16> entities;
+      ftl::small_vector<std::pair<float, ecs::Entity>, 16> entities;
 
       world.each<TransformComponent, GltfModelComponent>(
           [&](ecs::Entity entity,

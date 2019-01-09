@@ -7,7 +7,7 @@ using namespace renderer;
 
 ResourceSetLayout::ResourceSetLayout(
     uint32_t maxSets,
-    const ftl::fixed_vector<VkDescriptorSetLayoutBinding, 8> &bindings)
+    const ftl::small_vector<VkDescriptorSetLayoutBinding, 8> &bindings)
     : bindings(bindings), maxSets(maxSets) {
   VkDescriptorSetLayoutCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, // sType
@@ -51,8 +51,8 @@ void ResourceSetLayout::destroy() {
 }
 
 ResourceSetProvider::ResourceSetProvider(
-    const ftl::fixed_vector<ResourceSetLayout *> &setLayouts) {
-  ftl::fixed_vector<VkDescriptorPoolSize> poolSizes;
+    const ftl::small_vector<ResourceSetLayout *> &setLayouts) {
+  ftl::small_vector<VkDescriptorPoolSize> poolSizes;
 
   uint32_t maxSets = 0;
 
@@ -92,7 +92,7 @@ ResourceSetProvider::ResourceSetProvider(
   VK_CHECK(vkCreateDescriptorPool(
       ctx().m_device, &createInfo, nullptr, &this->descriptorPool));
 
-  ftl::fixed_vector<VkDescriptorSetLayout> descriptorSetLayouts;
+  ftl::small_vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
   for (auto &setLayout : setLayouts) {
     descriptorSetLayouts.push_back(setLayout->descriptorSetLayout);
@@ -122,7 +122,7 @@ ResourceSetProvider::ResourceSetProvider(
 
   for (auto &setLayout : setLayouts) {
     setLayout->descriptorSets.resize(setLayout->maxSets);
-    ftl::fixed_vector<VkDescriptorSetLayout> layouts;
+    ftl::small_vector<VkDescriptorSetLayout> layouts;
     for (uint32_t i = 0; i < setLayout->maxSets; i++) {
       layouts.push_back(setLayout->descriptorSetLayout);
     }
