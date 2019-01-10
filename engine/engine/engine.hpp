@@ -5,6 +5,7 @@
 #include "imgui_utils.hpp"
 #include "shader_watcher.hpp"
 #include "scene.hpp"
+#include "pipelines.hpp"
 
 #include "components/billboard_component.hpp"
 #include "components/camera_component.hpp"

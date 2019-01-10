@@ -1,8 +1,25 @@
 #pragma once
 
-#include "render_target.hpp"
 #include "glm.hpp"
+#include "render_target.hpp"
+#include "shader.hpp"
+#include <ftl/vector.hpp>
 #include <vulkan/vulkan.h>
+
+namespace renderer::pipeline {
+VkPipelineLayout createPipelineLayout(
+    uint32_t setLayoutCount, VkDescriptorSetLayout *descriptorSetLayouts);
+
+VkPipelineVertexInputStateCreateInfo defaultVertexInputState();
+VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState();
+VkPipelineViewportStateCreateInfo defaultViewportState();
+VkPipelineRasterizationStateCreateInfo defaultRasterizationState();
+VkPipelineMultisampleStateCreateInfo defaultMultisampleState(
+    VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
+VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState();
+VkPipelineColorBlendStateCreateInfo defaultColorBlendState();
+VkPipelineDynamicStateCreateInfo defaultDynamicState();
+} // namespace renderer::pipeline
 
 namespace renderer {
 class Window;
@@ -14,9 +31,33 @@ struct StandardVertex {
   glm::vec2 uv;
 };
 
+struct PipelineParameters {
+  VkPipelineVertexInputStateCreateInfo vertexInputState =
+      pipeline::defaultVertexInputState();
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
+      pipeline::defaultInputAssemblyState();
+  VkPipelineTessellationStateCreateInfo tessellationState;
+  bool hasTesselationState = false;
+  VkPipelineViewportStateCreateInfo viewportState =
+      pipeline::defaultViewportState();
+  VkPipelineRasterizationStateCreateInfo rasterizationState =
+      pipeline::defaultRasterizationState();
+  VkPipelineDepthStencilStateCreateInfo depthStencilState =
+      pipeline::defaultDepthStencilState();
+  VkPipelineColorBlendStateCreateInfo colorBlendState =
+      pipeline::defaultColorBlendState();
+  VkPipelineDynamicStateCreateInfo dynamicState =
+      pipeline::defaultDynamicState();
+  VkPipelineLayout layout;
+};
+
 class GraphicsPipeline {
 public:
   GraphicsPipeline(){};
+  GraphicsPipeline(
+      const RenderTarget &renderTarget,
+      const Shader &shader,
+      const PipelineParameters &parameters);
   GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
   ~GraphicsPipeline();
 
@@ -34,54 +75,9 @@ public:
   VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 };
 
-class StandardPipeline : public GraphicsPipeline {
-public:
-  using GraphicsPipeline::GraphicsPipeline;
-  StandardPipeline(RenderTarget &renderTarget, Shader &shader);
-};
-
-class BillboardPipeline : public GraphicsPipeline {
-public:
-  using GraphicsPipeline::GraphicsPipeline;
-  BillboardPipeline(RenderTarget &renderTarget, Shader &shader);
-};
-
-class BoxPipeline : public GraphicsPipeline {
-public:
-  using GraphicsPipeline::GraphicsPipeline;
-  BoxPipeline(RenderTarget &renderTarget, Shader &shader);
-};
-
-class SkyboxPipeline : public GraphicsPipeline {
-public:
-  using GraphicsPipeline::GraphicsPipeline;
-  SkyboxPipeline(RenderTarget &renderTarget, Shader &shader);
-};
-
-class FullscreenPipeline : public GraphicsPipeline {
-public:
-  using GraphicsPipeline::GraphicsPipeline;
-  FullscreenPipeline(RenderTarget &renderTarget, Shader &shader);
-};
-
 class BakeCubemapPipeline : public GraphicsPipeline {
 public:
   using GraphicsPipeline::GraphicsPipeline;
   BakeCubemapPipeline(VkRenderPass &renderpass, Shader &shader);
 };
 } // namespace renderer
-
-namespace renderer::pipeline {
-VkPipelineLayout createPipelineLayout(
-    uint32_t setLayoutCount, VkDescriptorSetLayout *descriptorSetLayouts);
-
-VkPipelineVertexInputStateCreateInfo defaultVertexInputState();
-VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState();
-VkPipelineViewportStateCreateInfo defaultViewportState();
-VkPipelineRasterizationStateCreateInfo defaultRasterizationState();
-VkPipelineMultisampleStateCreateInfo defaultMultisampleState(
-    VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
-VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState();
-VkPipelineColorBlendStateCreateInfo defaultColorBlendState();
-VkPipelineDynamicStateCreateInfo defaultDynamicState();
-} // namespace renderer::pipeline

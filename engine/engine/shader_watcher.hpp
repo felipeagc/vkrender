@@ -4,9 +4,9 @@
 #include <ftl/logging.hpp>
 #include <functional>
 #include <mutex>
-#include <renderer/render_target.hpp>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
+#include <renderer/render_target.hpp>
 #include <renderer/shader.hpp>
 #include <renderer/util.hpp>
 #include <string>
@@ -17,13 +17,15 @@ class Window;
 }
 
 namespace engine {
-template <class Pipeline> class ShaderWatcher {
+class ShaderWatcher {
 public:
   ShaderWatcher(
       renderer::RenderTarget &renderTarget,
-      const std::string &vertexPath,
-      const std::string &fragmentPath)
-      : m_vertexPath(vertexPath),
+      const char *vertexPath,
+      const char *fragmentPath,
+      renderer::PipelineParameters params)
+      : m_params(params),
+        m_vertexPath(vertexPath),
         m_fragmentPath(fragmentPath),
         m_renderTarget(renderTarget) {
     renderer::Shader shader{
@@ -31,9 +33,7 @@ public:
         m_fragmentPath,
     };
 
-    m_pipeline = Pipeline{m_renderTarget, shader};
-
-    shader.destroy();
+    m_pipeline = renderer::GraphicsPipeline{m_renderTarget, shader, m_params};
 
     m_watcher.addFile(m_vertexPath);
     m_watcher.addFile(m_fragmentPath);
@@ -50,9 +50,8 @@ public:
             m_fragmentPath,
         };
 
-        m_pipeline = Pipeline{m_renderTarget, shader};
-
-        shader.destroy();
+        m_pipeline =
+            renderer::GraphicsPipeline{m_renderTarget, shader, m_params};
       } catch (const std::exception &exception) {
         ftl::error("Error while compiling shader: %s", exception.what());
       }
@@ -79,10 +78,11 @@ public:
   inline void startWatching() noexcept { m_watcher.startWatching(); };
 
 private:
+  renderer::PipelineParameters m_params;
   std::string m_vertexPath;
   std::string m_fragmentPath;
   std::mutex m_mutex;
-  Pipeline m_pipeline;
+  renderer::GraphicsPipeline m_pipeline;
   FileWatcher m_watcher;
   renderer::RenderTarget &m_renderTarget;
 };

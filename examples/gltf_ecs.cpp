@@ -1,7 +1,7 @@
 #include <ecs/world.hpp>
 #include <engine/engine.hpp>
-#include <ftl/vector.hpp>
 #include <ftl/logging.hpp>
+#include <ftl/vector.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
 
@@ -26,39 +26,36 @@ int main() {
   renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
-  renderer::Shader modelShader{"../shaders/model_pbr.vert",
-                               "../shaders/model_pbr.frag"};
-  renderer::Shader skyboxShader{"../shaders/skybox.vert",
-                                "../shaders/skybox.frag"};
   renderer::Shader billboardShader{"../shaders/billboard.vert",
                                    "../shaders/billboard.frag"};
-  renderer::Shader boxShader{"../shaders/box.vert", "../shaders/box.frag"};
+  renderer::Shader wireframeShader{"../shaders/box.vert",
+                                   "../shaders/box.frag"};
+  renderer::Shader skyboxShader{"../shaders/skybox.vert",
+                                "../shaders/skybox.frag"};
   renderer::Shader fullscreenShader{"../shaders/fullscreen.vert",
                                     "../shaders/fullscreen.frag"};
 
-  renderer::GraphicsPipeline modelPipeline =
-      renderer::StandardPipeline(renderTarget, modelShader);
+  renderer::GraphicsPipeline modelPipeline(
+      renderTarget,
+      renderer::Shader{"../shaders/model_pbr.vert",
+                       "../shaders/model_pbr.frag"},
+      engine::standardPipelineParameters());
 
-  renderer::GraphicsPipeline billboardPipeline =
-      renderer::BillboardPipeline(renderTarget, billboardShader);
+  renderer::GraphicsPipeline billboardPipeline(
+      renderTarget, billboardShader, engine::billboardPipelineParameters());
 
-  renderer::GraphicsPipeline boxPipeline =
-      renderer::BoxPipeline(renderTarget, boxShader);
+  renderer::GraphicsPipeline wireframePipeline(
+      renderTarget, wireframeShader, engine::wireframePipelineParameters());
 
-  renderer::GraphicsPipeline skyboxPipeline =
-      renderer::SkyboxPipeline(renderTarget, skyboxShader);
+  renderer::GraphicsPipeline skyboxPipeline(
+      renderTarget, skyboxShader, engine::skyboxPipelineParameters());
 
-  renderer::GraphicsPipeline fullscreenPipeline =
-      renderer::FullscreenPipeline(window, fullscreenShader);
-
-  modelShader.destroy();
-  billboardShader.destroy();
-  boxShader.destroy();
-  skyboxShader.destroy();
-  fullscreenShader.destroy();
+  renderer::GraphicsPipeline fullscreenPipeline(
+      window, fullscreenShader, engine::fullscreenPipelineParameters());
 
   // engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
-  //     renderTarget, "../shaders/model_pbr.vert", "../shaders/model_pbr.frag");
+  //     renderTarget, "../shaders/model_pbr.vert",
+  //     "../shaders/model_pbr.frag");
 
   float time = 0.0;
 
@@ -116,9 +113,9 @@ int main() {
     {
       renderTarget.beginRenderPass(window);
 
-      entityInspectorSystem.drawBox(window, assetManager, world, boxPipeline);
-      gltfModelSystem.process(
-          window, assetManager, world, modelPipeline);
+      entityInspectorSystem.drawBox(
+          window, assetManager, world, wireframePipeline);
+      gltfModelSystem.process(window, assetManager, world, modelPipeline);
       skyboxSystem.process(window, world, skyboxPipeline);
       billboardSystem.process(window, world, billboardPipeline);
 

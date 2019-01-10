@@ -1,8 +1,8 @@
 #pragma once
 
 #include "vertex_format.hpp"
-#include <ftl/vector.hpp>
 #include <fstream>
+#include <ftl/vector.hpp>
 #include <vector>
 
 namespace renderer {
@@ -16,49 +16,20 @@ public:
       const std::vector<uint32_t> &vertexCode,
       const std::vector<uint32_t> &fragmentCode);
 
-  ~Shader(){};
+  ~Shader();
+
   Shader(const Shader &other) = delete;
-  Shader &operator=(Shader &other) = delete;
+  Shader &operator=(const Shader &other) = delete;
+
+  Shader(Shader &&other);
+  Shader &operator=(Shader &&other);
 
   operator bool() { return m_vertexModule && m_fragmentModule; };
 
   ftl::small_vector<VkPipelineShaderStageCreateInfo>
   getPipelineShaderStageCreateInfos() const;
 
-  struct ShaderMetadata {
-    ftl::small_vector<VkDescriptorSetLayoutBinding>
-        descriptorSetLayoutBindings;
-    renderer::VertexFormat vertexFormat;
-  };
-
-  ShaderMetadata getAutoMetadata() const;
-
-  void destroy();
-
-  static std::vector<uint32_t> loadCode(const std::string &path) {
-    std::ifstream file(path, std::ios::binary);
-
-    if (file.fail()) {
-      throw std::runtime_error("Failed to load shader code file");
-    }
-
-    std::streampos begin, end;
-    begin = file.tellg();
-    file.seekg(0, std::ios::end);
-    end = file.tellg();
-
-    std::vector<uint32_t> result(static_cast<size_t>(end - begin) / 4);
-
-    file.seekg(0, std::ios::beg);
-    file.read(reinterpret_cast<char *>(result.data()), end - begin);
-    file.close();
-
-    return result;
-  }
-
 private:
-  std::vector<uint32_t> m_vertexCode;
-  std::vector<uint32_t> m_fragmentCode;
   VkShaderModule m_vertexModule;
   VkShaderModule m_fragmentModule;
 

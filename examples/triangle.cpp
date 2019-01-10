@@ -80,8 +80,6 @@ int main() {
 
   renderer::GraphicsPipeline pipeline = createTrianglePipeline(window, shader);
 
-  shader.destroy();
-
   std::array<Vertex, 3> vertices{
       Vertex{{0.5, 0.5}, {0.0, 0.0, 1.0}},
       Vertex{{-0.5, 0.5}, {0.0, 1.0, 0.0}},

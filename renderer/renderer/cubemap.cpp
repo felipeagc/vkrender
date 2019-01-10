@@ -388,7 +388,6 @@ static void bakeCubemap(
   renderer::Shader shader(
       "../shaders/bake_cubemap.vert", "../shaders/bake_cubemap.frag");
   renderer::BakeCubemapPipeline pipeline(renderPass, shader);
-  shader.destroy();
 
   // Allocate command buffer
   assert(threadID < VKR_THREAD_COUNT);

@@ -4,6 +4,7 @@ set(
   engine/imgui_utils.cpp
   engine/file_watcher.cpp
   engine/scene.cpp
+  engine/pipelines.cpp
 
   engine/components/camera_component.cpp
   engine/components/gltf_model_component.cpp

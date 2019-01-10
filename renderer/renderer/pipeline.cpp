@@ -9,6 +9,48 @@ GraphicsPipeline::GraphicsPipeline(
     VkPipeline pipeline, VkPipelineLayout pipelineLayout)
     : m_pipeline(pipeline), m_pipelineLayout(pipelineLayout) {}
 
+GraphicsPipeline::GraphicsPipeline(
+    const RenderTarget &renderTarget,
+    const Shader &shader,
+    const PipelineParameters &parameters) {
+  m_pipelineLayout = parameters.layout;
+
+  auto stages = shader.getPipelineShaderStageCreateInfos();
+
+  auto multisampleState = pipeline::defaultMultisampleState(renderTarget.getSampleCount());
+
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
+      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      nullptr,
+      0,                                    // flags
+      static_cast<uint32_t>(stages.size()), // stageCount
+      stages.data(),                        // pStages
+      &parameters.vertexInputState,         // pVertexInputState
+      &parameters.inputAssemblyState,       // pInputAssemblyState
+      (parameters.hasTesselationState ? &parameters.tessellationState
+                                      : nullptr), // pTesselationState
+      &parameters.viewportState,                  // pViewportState
+      &parameters.rasterizationState,             // pRasterizationState
+      &multisampleState,               // multisampleState
+      &parameters.depthStencilState,              // pDepthStencilState
+      &parameters.colorBlendState,                // pColorBlendState
+      &parameters.dynamicState,                   // pDynamicState
+      m_pipelineLayout,                           // pipelineLayout
+      renderTarget.getRenderPass(),               // renderPass
+      0,                                          // subpass
+      {},                                         // basePipelineHandle
+      -1                                          // basePipelineIndex
+  };
+
+  VK_CHECK(vkCreateGraphicsPipelines(
+      ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &m_pipeline));
+}
+
 GraphicsPipeline::~GraphicsPipeline() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
@@ -39,303 +81,6 @@ GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
   return *this;
 }
 
-StandardPipeline::StandardPipeline(
-    RenderTarget &renderTarget, Shader &shader) {
-  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
-
-  auto vertexInputStateCreateInfo = pipeline::defaultVertexInputState();
-  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
-  auto viewportStateCreateInfo = pipeline::defaultViewportState();
-  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
-  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
-  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
-  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
-  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
-
-  m_pipelineLayout = ctx().m_resourceManager.m_providers.standard.pipelineLayout;
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                                                    // flags
-      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
-      shaderStageCreateInfos.data(),                        // pStages
-      &vertexInputStateCreateInfo,                          // pVertexInputState
-      &inputAssemblyStateCreateInfo, // pInputAssemblyState
-      nullptr,                       // pTesselationState
-      &viewportStateCreateInfo,      // pViewportState
-      &rasterizationStateCreateInfo, // pRasterizationState
-      &multisampleStateCreateInfo,   // multisampleState
-      &depthStencilStateCreateInfo,  // pDepthStencilState
-      &colorBlendStateCreateInfo,    // pColorBlendState
-      &dynamicStateCreateInfo,       // pDynamicState
-      m_pipelineLayout,              // pipelineLayout
-      renderTarget.getRenderPass(),  // renderPass
-      0,                             // subpass
-      {},                            // basePipelineHandle
-      -1                             // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &m_pipeline));
-}
-
-BillboardPipeline::BillboardPipeline(
-    RenderTarget &renderTarget, Shader &shader) {
-  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
-
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
-      0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
-  };
-
-  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
-  auto viewportStateCreateInfo = pipeline::defaultViewportState();
-  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
-  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
-  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
-  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
-  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
-
-  m_pipelineLayout = ctx().m_resourceManager.m_providers.billboard.pipelineLayout;
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                                                    // flags
-      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
-      shaderStageCreateInfos.data(),                        // pStages
-      &vertexInputStateCreateInfo,                          // pVertexInputState
-      &inputAssemblyStateCreateInfo, // pInputAssemblyState
-      nullptr,                       // pTesselationState
-      &viewportStateCreateInfo,      // pViewportState
-      &rasterizationStateCreateInfo, // pRasterizationState
-      &multisampleStateCreateInfo,   // multisampleState
-      &depthStencilStateCreateInfo,  // pDepthStencilState
-      &colorBlendStateCreateInfo,    // pColorBlendState
-      &dynamicStateCreateInfo,       // pDynamicState
-      m_pipelineLayout,              // pipelineLayout
-      renderTarget.getRenderPass(),  // renderPass
-      0,                             // subpass
-      {},                            // basePipelineHandle
-      -1                             // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &m_pipeline));
-}
-
-BoxPipeline::BoxPipeline(
-    RenderTarget &renderTarget, Shader &shader) {
-  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
-
-  auto vertexInputStateCreateInfo = pipeline::defaultVertexInputState();
-  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
-  auto viewportStateCreateInfo = pipeline::defaultViewportState();
-  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
-  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
-  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_LINE;
-  rasterizationStateCreateInfo.lineWidth = 2.0f;
-  auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
-  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
-  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
-  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
-
-  m_pipelineLayout = ctx().m_resourceManager.m_providers.box.pipelineLayout;
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                                                    // flags
-      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
-      shaderStageCreateInfos.data(),                        // pStages
-      &vertexInputStateCreateInfo,                          // pVertexInputState
-      &inputAssemblyStateCreateInfo, // pInputAssemblyState
-      nullptr,                       // pTesselationState
-      &viewportStateCreateInfo,      // pViewportState
-      &rasterizationStateCreateInfo, // pRasterizationState
-      &multisampleStateCreateInfo,   // multisampleState
-      &depthStencilStateCreateInfo,  // pDepthStencilState
-      &colorBlendStateCreateInfo,    // pColorBlendState
-      &dynamicStateCreateInfo,       // pDynamicState
-      m_pipelineLayout,              // pipelineLayout
-      renderTarget.getRenderPass(),  // renderPass
-      0,                             // subpass
-      {},                            // basePipelineHandle
-      -1                             // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &m_pipeline));
-}
-
-SkyboxPipeline::SkyboxPipeline(RenderTarget &renderTarget, Shader &shader) {
-  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
-
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
-      0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
-  };
-
-  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
-  auto viewportStateCreateInfo = pipeline::defaultViewportState();
-  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
-  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
-  auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
-  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
-  depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
-  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
-
-  m_pipelineLayout = ctx().m_resourceManager.m_providers.skybox.pipelineLayout;
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                                                    // flags
-      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
-      shaderStageCreateInfos.data(),                        // pStages
-      &vertexInputStateCreateInfo,                          // pVertexInputState
-      &inputAssemblyStateCreateInfo, // pInputAssemblyState
-      nullptr,                       // pTesselationState
-      &viewportStateCreateInfo,      // pViewportState
-      &rasterizationStateCreateInfo, // pRasterizationState
-      &multisampleStateCreateInfo,   // multisampleState
-      &depthStencilStateCreateInfo,  // pDepthStencilState
-      &colorBlendStateCreateInfo,    // pColorBlendState
-      &dynamicStateCreateInfo,       // pDynamicState
-      m_pipelineLayout,              // pipelineLayout
-      renderTarget.getRenderPass(),  // renderPass
-      0,                             // subpass
-      {},                            // basePipelineHandle
-      -1                             // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &m_pipeline));
-}
-
-FullscreenPipeline::FullscreenPipeline(
-    RenderTarget &renderTarget, Shader &shader) {
-  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
-
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
-      0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
-  };
-
-  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
-  auto viewportStateCreateInfo = pipeline::defaultViewportState();
-  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
-  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
-  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
-  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
-  depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
-
-  VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
-      VK_FALSE,                            // blendEnable
-      VK_BLEND_FACTOR_SRC_ALPHA,           // srcColorBlendFactor
-      VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // dstColorBlendFactor
-      VK_BLEND_OP_ADD,                     // colorBlendOp
-      VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // srcAlphaBlendFactor
-      VK_BLEND_FACTOR_ZERO,                // dstAlphaBlendFactor
-      VK_BLEND_OP_ADD,                     // alphaBlendOp
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, // colorWriteMask
-  };
-
-  VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-      nullptr,
-      0,                          // flags
-      VK_FALSE,                   // logicOpEnable
-      VK_LOGIC_OP_COPY,           // logicOp
-      1,                          // attachmentCount
-      &colorBlendAttachmentState, // pAttachments
-      {0.0f, 0.0f, 0.0f, 0.0f},   // blendConstants
-  };
-
-  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
-
-  m_pipelineLayout = ctx().m_resourceManager.m_providers.fullscreen.pipelineLayout;
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                                                    // flags
-      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
-      shaderStageCreateInfos.data(),                        // pStages
-      &vertexInputStateCreateInfo,                          // pVertexInputState
-      &inputAssemblyStateCreateInfo, // pInputAssemblyState
-      nullptr,                       // pTesselationState
-      &viewportStateCreateInfo,      // pViewportState
-      &rasterizationStateCreateInfo, // pRasterizationState
-      &multisampleStateCreateInfo,   // multisampleState
-      &depthStencilStateCreateInfo,  // pDepthStencilState
-      &colorBlendStateCreateInfo,    // pColorBlendState
-      &dynamicStateCreateInfo,       // pDynamicState
-      m_pipelineLayout,              // pipelineLayout
-      renderTarget.getRenderPass(),  // renderPass
-      0,                             // subpass
-      {},                            // basePipelineHandle
-      -1                             // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &m_pipeline));
-}
-
 BakeCubemapPipeline::BakeCubemapPipeline(
     VkRenderPass &renderpass, Shader &shader) {
   auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
@@ -359,7 +104,8 @@ BakeCubemapPipeline::BakeCubemapPipeline(
   auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
   auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
 
-  m_pipelineLayout = ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
+  m_pipelineLayout =
+      ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,

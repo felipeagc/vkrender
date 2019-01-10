@@ -1,6 +1,6 @@
 #include <engine/engine.hpp>
-#include <ftl/vector.hpp>
 #include <ftl/logging.hpp>
+#include <ftl/vector.hpp>
 #include <renderer/renderer.hpp>
 
 int main() {
@@ -12,8 +12,11 @@ int main() {
   renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
-  engine::ShaderWatcher<renderer::FullscreenPipeline> shaderWatcher(
-      window, "../shaders/mandelbrot.vert", "../shaders/mandelbrot.frag");
+  engine::ShaderWatcher shaderWatcher(
+      window,
+      "../shaders/mandelbrot.vert",
+      "../shaders/mandelbrot.frag",
+      engine::fullscreenPipelineParameters());
 
   shaderWatcher.startWatching();
 
@@ -21,9 +24,6 @@ int main() {
     double time = 0.0;
     glm::dvec2 camPos{0.0, 0.0};
   } block;
-
-  auto pipelineLayout =
-      renderer::ctx().m_resourceManager.m_providers.fullscreen.pipelineLayout;
 
   while (!window.getShouldClose()) {
     block.time += window.getDelta();
@@ -43,6 +43,8 @@ int main() {
         break;
       }
     }
+
+    shaderWatcher.lockPipeline();
 
     glm::dvec2 offset{0.0};
     double speed = 0.3f * window.getDelta();
@@ -64,8 +66,6 @@ int main() {
 
     window.beginFrame();
 
-    shaderWatcher.lockPipeline();
-
     // Render target pass
     {
       renderTarget.beginRenderPass(window);
@@ -78,7 +78,7 @@ int main() {
 
       vkCmdPushConstants(
           window.getCurrentCommandBuffer(),
-          pipelineLayout,
+          shaderWatcher.pipeline().m_pipelineLayout,
           VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
           0,
           sizeof(block),
