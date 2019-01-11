@@ -11,7 +11,7 @@ class World;
 
 namespace renderer {
 class Window;
-class GraphicsPipeline;
+struct GraphicsPipeline;
 } // namespace renderer
 
 namespace engine {

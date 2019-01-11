@@ -83,12 +83,12 @@ void Canvas::draw(Window &window, GraphicsPipeline &pipeline) {
       m_resources[window.getCurrentFrameIndex() % ARRAYSIZE(m_resources)];
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       0, // firstSet
       1,
       resource.resourceSet,

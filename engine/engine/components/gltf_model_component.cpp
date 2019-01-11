@@ -87,7 +87,7 @@ void GltfModelComponent::draw(
   memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
   auto &gltfModel = assetManager.getAsset<GltfModelAsset>(m_modelIndex);
 
@@ -104,7 +104,7 @@ void GltfModelComponent::draw(
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       3, // firstSet
       1,
       m_descriptorSets[i],
@@ -131,7 +131,7 @@ void GltfModelComponent::drawNode(
     vkCmdBindDescriptorSets(
         commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline.m_pipelineLayout,
+        pipeline.layout,
         2, // firstSet
         1,
         model.m_meshes[node.meshIndex].descriptorSets[i],
@@ -144,7 +144,7 @@ void GltfModelComponent::drawNode(
         auto &mat = model.m_materials[primitive.materialIndex];
         vkCmdPushConstants(
             commandBuffer,
-            pipeline.m_pipelineLayout,
+            pipeline.layout,
             VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
             0,
             sizeof(mat.ubo),
@@ -153,7 +153,7 @@ void GltfModelComponent::drawNode(
         vkCmdBindDescriptorSets(
             commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline.m_pipelineLayout,
+            pipeline.layout,
             1, // firstSet
             1,
             mat.descriptorSets[i],

@@ -78,7 +78,7 @@ int main() {
 
       vkCmdPushConstants(
           window.getCurrentCommandBuffer(),
-          shaderWatcher.pipeline().m_pipelineLayout,
+          shaderWatcher.pipeline().layout,
           VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
           0,
           sizeof(block),

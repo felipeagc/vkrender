@@ -154,12 +154,12 @@ void EnvironmentComponent::bind(
   auto i = window.getCurrentFrameIndex();
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       setIndex, // firstSet
       1,
       m_descriptorSets[i],
@@ -176,12 +176,12 @@ void EnvironmentComponent::drawSkybox(
   this->update(window);
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       1, // firstSet
       1,
       m_descriptorSets[i],

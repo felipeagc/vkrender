@@ -7,9 +7,6 @@
 #include <vulkan/vulkan.h>
 
 namespace renderer::pipeline {
-VkPipelineLayout createPipelineLayout(
-    uint32_t setLayoutCount, VkDescriptorSetLayout *descriptorSetLayouts);
-
 VkPipelineVertexInputStateCreateInfo defaultVertexInputState();
 VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState();
 VkPipelineViewportStateCreateInfo defaultViewportState();
@@ -51,8 +48,7 @@ struct PipelineParameters {
   VkPipelineLayout layout;
 };
 
-class GraphicsPipeline {
-public:
+struct GraphicsPipeline {
   GraphicsPipeline(){};
   GraphicsPipeline(
       const RenderTarget &renderTarget,
@@ -69,15 +65,7 @@ public:
   GraphicsPipeline(GraphicsPipeline &&rhs);
   GraphicsPipeline &operator=(GraphicsPipeline &&rhs);
 
-  operator bool() { return m_pipeline != VK_NULL_HANDLE; }
-
-  VkPipeline m_pipeline = VK_NULL_HANDLE;
-  VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-};
-
-class BakeCubemapPipeline : public GraphicsPipeline {
-public:
-  using GraphicsPipeline::GraphicsPipeline;
-  BakeCubemapPipeline(VkRenderPass &renderpass, Shader &shader);
+  VkPipeline pipeline = VK_NULL_HANDLE;
+  VkPipelineLayout layout = VK_NULL_HANDLE;
 };
 } // namespace renderer

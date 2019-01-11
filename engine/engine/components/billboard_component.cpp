@@ -81,11 +81,11 @@ void BillboardComponent::draw(
   auto i = window.getCurrentFrameIndex();
 
   vkCmdBindPipeline(
-      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+      commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
   vkCmdPushConstants(
       commandBuffer,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
       0,
       sizeof(BillboardUniform),
@@ -94,7 +94,7 @@ void BillboardComponent::draw(
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       1, // firstSet
       1,
       m_materialDescriptorSets[i],

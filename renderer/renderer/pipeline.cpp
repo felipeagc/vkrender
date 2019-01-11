@@ -7,17 +7,18 @@ namespace renderer {
 
 GraphicsPipeline::GraphicsPipeline(
     VkPipeline pipeline, VkPipelineLayout pipelineLayout)
-    : m_pipeline(pipeline), m_pipelineLayout(pipelineLayout) {}
+    : pipeline(pipeline), layout(pipelineLayout) {}
 
 GraphicsPipeline::GraphicsPipeline(
     const RenderTarget &renderTarget,
     const Shader &shader,
     const PipelineParameters &parameters) {
-  m_pipelineLayout = parameters.layout;
+  layout = parameters.layout;
 
   auto stages = shader.getPipelineShaderStageCreateInfos();
 
-  auto multisampleState = pipeline::defaultMultisampleState(renderTarget.getSampleCount());
+  auto multisampleState =
+      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -31,11 +32,11 @@ GraphicsPipeline::GraphicsPipeline(
                                       : nullptr), // pTesselationState
       &parameters.viewportState,                  // pViewportState
       &parameters.rasterizationState,             // pRasterizationState
-      &multisampleState,               // multisampleState
+      &multisampleState,                          // multisampleState
       &parameters.depthStencilState,              // pDepthStencilState
       &parameters.colorBlendState,                // pColorBlendState
       &parameters.dynamicState,                   // pDynamicState
-      m_pipelineLayout,                           // pipelineLayout
+      layout,                           // pipelineLayout
       renderTarget.getRenderPass(),               // renderPass
       0,                                          // subpass
       {},                                         // basePipelineHandle
@@ -48,118 +49,41 @@ GraphicsPipeline::GraphicsPipeline(
       1,
       &pipelineCreateInfo,
       nullptr,
-      &m_pipeline));
+      &this->pipeline));
 }
 
 GraphicsPipeline::~GraphicsPipeline() {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(ctx().m_device, m_pipeline, nullptr);
+  if (this->pipeline != VK_NULL_HANDLE) {
+    vkDestroyPipeline(ctx().m_device, this->pipeline, nullptr);
   }
 }
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&rhs) {
-  m_pipeline = rhs.m_pipeline;
-  m_pipelineLayout = rhs.m_pipelineLayout;
-  rhs.m_pipeline = VK_NULL_HANDLE;
-  rhs.m_pipelineLayout = VK_NULL_HANDLE;
+  this->pipeline = rhs.pipeline;
+  layout = rhs.layout;
+  rhs.pipeline = VK_NULL_HANDLE;
+  rhs.layout = VK_NULL_HANDLE;
 }
 
 GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(ctx().m_device, m_pipeline, nullptr);
+  if (this->pipeline != VK_NULL_HANDLE) {
+    vkDestroyPipeline(ctx().m_device, this->pipeline, nullptr);
   }
 
-  m_pipeline = rhs.m_pipeline;
-  m_pipelineLayout = rhs.m_pipelineLayout;
-  rhs.m_pipeline = VK_NULL_HANDLE;
-  rhs.m_pipelineLayout = VK_NULL_HANDLE;
+  this->pipeline = rhs.pipeline;
+  layout = rhs.layout;
+  rhs.pipeline = VK_NULL_HANDLE;
+  rhs.layout = VK_NULL_HANDLE;
 
   return *this;
-}
-
-BakeCubemapPipeline::BakeCubemapPipeline(
-    VkRenderPass &renderpass, Shader &shader) {
-  auto shaderStageCreateInfos = shader.getPipelineShaderStageCreateInfos();
-
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
-      0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
-  };
-
-  auto inputAssemblyStateCreateInfo = pipeline::defaultInputAssemblyState();
-  auto viewportStateCreateInfo = pipeline::defaultViewportState();
-  auto rasterizationStateCreateInfo = pipeline::defaultRasterizationState();
-  auto multisampleStateCreateInfo =
-      pipeline::defaultMultisampleState(VK_SAMPLE_COUNT_1_BIT);
-  auto depthStencilStateCreateInfo = pipeline::defaultDepthStencilState();
-  auto colorBlendStateCreateInfo = pipeline::defaultColorBlendState();
-  auto dynamicStateCreateInfo = pipeline::defaultDynamicState();
-
-  m_pipelineLayout =
-      ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                                                    // flags
-      static_cast<uint32_t>(shaderStageCreateInfos.size()), // stageCount
-      shaderStageCreateInfos.data(),                        // pStages
-      &vertexInputStateCreateInfo,                          // pVertexInputState
-      &inputAssemblyStateCreateInfo, // pInputAssemblyState
-      nullptr,                       // pTesselationState
-      &viewportStateCreateInfo,      // pViewportState
-      &rasterizationStateCreateInfo, // pRasterizationState
-      &multisampleStateCreateInfo,   // multisampleState
-      &depthStencilStateCreateInfo,  // pDepthStencilState
-      &colorBlendStateCreateInfo,    // pColorBlendState
-      &dynamicStateCreateInfo,       // pDynamicState
-      m_pipelineLayout,              // pipelineLayout
-      renderpass,                    // renderPass
-      0,                             // subpass
-      {},                            // basePipelineHandle
-      -1                             // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &m_pipeline));
 }
 } // namespace renderer
 
 namespace renderer::pipeline {
-VkPipelineLayout createPipelineLayout(
-    uint32_t setLayoutCount, VkDescriptorSetLayout *descriptorSetLayouts) {
-  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      nullptr,
-      0,
-      setLayoutCount,       // setLayoutCount
-      descriptorSetLayouts, // pSetLayouts
-      0,                    // pushConstantRangeCount
-      nullptr,              // pPushConstantRanges
-  };
-
-  VkPipelineLayout pipelineLayout;
-
-  VK_CHECK(vkCreatePipelineLayout(
-      ctx().m_device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
-
-  return pipelineLayout;
-}
-
 VkPipelineVertexInputStateCreateInfo defaultVertexInputState() {
   static VkVertexInputBindingDescription vertexBindingDescriptions[] = {
       {

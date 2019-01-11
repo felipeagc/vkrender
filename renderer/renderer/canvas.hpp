@@ -8,7 +8,7 @@
 
 namespace renderer {
 class Window;
-class GraphicsPipeline;
+struct GraphicsPipeline;
 
 class Canvas : public RenderTarget {
 public:

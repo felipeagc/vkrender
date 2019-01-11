@@ -105,7 +105,7 @@ void CameraComponent::bind(
   vkCmdBindDescriptorSets(
       commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline.m_pipelineLayout,
+      pipeline.layout,
       0,
       1,
       m_descriptorSets[i],
