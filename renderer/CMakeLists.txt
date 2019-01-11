@@ -12,7 +12,6 @@ set(
   renderer/cubemap.cpp
   renderer/shader_compilation.cpp
   renderer/resource_manager.cpp
-  renderer/vertex_format.cpp
   renderer/shader.cpp
   renderer/pipeline.cpp
   renderer/canvas.cpp

@@ -13,5 +13,4 @@
 #include "shader_compilation.hpp"
 #include "texture.hpp"
 #include "util.hpp"
-#include "vertex_format.hpp"
 #include "window.hpp"

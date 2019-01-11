@@ -1,6 +1,5 @@
 #pragma once
 
-#include "vertex_format.hpp"
 #include <fstream>
 #include <ftl/vector.hpp>
 #include <vector>

@@ -4,6 +4,5 @@ macro(add_example name)
   cotire(${name})
 endmacro()
 
-add_example(triangle)
 add_example(gltf_ecs)
 add_example(mandelbrot)
