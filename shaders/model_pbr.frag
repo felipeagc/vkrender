@@ -37,6 +37,7 @@ layout (set = 4, binding = 0) uniform EnvironmentUniform {
   float exposure;
   vec3 sunColor;
   float sunIntensity;
+  float radianceMipLevels;
   uint lightCount;
   layout(offset = 48) Light lights[MAX_LIGHTS];
 } environment;
@@ -46,8 +47,6 @@ layout (set = 4, binding = 3) uniform samplerCube radianceMap;
 layout (set = 4, binding = 4) uniform sampler2D brdfLut;
 
 layout (location = 0) out vec4 outColor;
-
-const float MAX_REFLECTION_LOD = 9.0;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
   return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
@@ -156,7 +155,7 @@ void main() {
   vec3 irradiance = pow(texture(irradianceMap, N).rgb, vec3(2.2));
   vec3 diffuse = irradiance * albedo;
 
-  vec3 prefilteredColor = pow(textureLod(radianceMap, R, roughness * MAX_REFLECTION_LOD).rgb, vec3(2.2));
+  vec3 prefilteredColor = pow(textureLod(radianceMap, R, roughness * environment.radianceMipLevels).rgb, vec3(2.2));
   vec2 brdf = pow(texture(brdfLut, vec2(max(dot(N, V), 0.0), 1.0 - roughness)).rg, vec2(2.2));
   vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 

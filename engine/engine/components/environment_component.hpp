@@ -54,6 +54,7 @@ public:
     float exposure = 8.0f;
     glm::vec3 sunColor{1.0};
     float sunIntensity = 1.0f;
+    float radianceMipLevels = 1.0f;
     uint32_t lightCount = 0;
     alignas(16) Light lights[MAX_LIGHTS];
   } m_ubo;

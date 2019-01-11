@@ -32,6 +32,8 @@ public:
 
   void destroy();
 
+  uint32_t m_mipLevels = 1;
+
 private:
   VkImage m_image = VK_NULL_HANDLE;
   VmaAllocation m_allocation = VK_NULL_HANDLE;

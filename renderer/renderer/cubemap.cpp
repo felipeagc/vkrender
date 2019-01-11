@@ -567,6 +567,8 @@ Cubemap::Cubemap(
   m_width = width;
   m_height = height;
 
+  m_mipLevels = static_cast<uint32_t>(radiancePaths.size());
+
   createCubemapImage(
       &m_image,
       &m_allocation,

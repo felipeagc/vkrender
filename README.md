@@ -15,9 +15,6 @@
 - [x] Multisampling
 - [x] Make multisampling configurable
 
-### Descriptor sets
-- [ ] Make a better abstraction for updating descriptor sets
-
 ### GLTF models
 - [x] Load glTF models
 - [x] Figure out UV flipping of GltfModels
@@ -34,7 +31,6 @@
 - [x] Emissive maps
 - [x] Occlusion maps
 - [ ] Normal maps
-- [ ] Pass radiance mipmap count to shader at runtime
 
 ### Mesh generation
 - [x] Shape asset

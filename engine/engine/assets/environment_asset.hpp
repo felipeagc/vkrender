@@ -40,14 +40,6 @@ public:
   EnvironmentAsset(EnvironmentAsset &&) = delete;
   EnvironmentAsset &operator=(EnvironmentAsset &&) = delete;
 
-  const renderer::Cubemap &skyboxCubemap() const { return m_skyboxCubemap; }
-  const renderer::Cubemap &irradianceCubemap() const {
-    return m_irradianceCubemap;
-  }
-  const renderer::Cubemap &radianceCubemap() const { return m_radianceCubemap; }
-  const renderer::Texture &brdfLut() const { return m_brdfLut; }
-
-private:
   renderer::Cubemap m_skyboxCubemap;
   renderer::Cubemap m_irradianceCubemap;
   renderer::Cubemap m_radianceCubemap;

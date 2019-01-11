@@ -33,6 +33,9 @@ EnvironmentComponent::EnvironmentComponent(
   // Allocate descriptor sets
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
 
+  m_ubo.radianceMipLevels =
+      (float)environmentAsset.m_radianceCubemap.m_mipLevels;
+
   for (size_t i = 0; i < ARRAYSIZE(m_descriptorSets); i++) {
     this->m_descriptorSets[i] = setLayout.allocate();
   }
@@ -51,12 +54,12 @@ EnvironmentComponent::EnvironmentComponent(
     };
 
     auto skyboxDescriptorInfo =
-        environmentAsset.skyboxCubemap().getDescriptorInfo();
+        environmentAsset.m_skyboxCubemap.getDescriptorInfo();
     auto irradianceDescriptorInfo =
-        environmentAsset.irradianceCubemap().getDescriptorInfo();
+        environmentAsset.m_irradianceCubemap.getDescriptorInfo();
     auto radianceDescriptorInfo =
-        environmentAsset.radianceCubemap().getDescriptorInfo();
-    auto brdfLutDescriptorInfo = environmentAsset.brdfLut().getDescriptorInfo();
+        environmentAsset.m_radianceCubemap.getDescriptorInfo();
+    auto brdfLutDescriptorInfo = environmentAsset.m_brdfLut.getDescriptorInfo();
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
