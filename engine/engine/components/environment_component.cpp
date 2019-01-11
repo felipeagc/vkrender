@@ -42,13 +42,11 @@ EnvironmentComponent::EnvironmentComponent(
 
   // Update descriptor sets
   for (size_t i = 0; i < ARRAYSIZE(m_descriptorSets); i++) {
-    m_uniformBuffers[i] = renderer::Buffer{renderer::BufferType::eUniform,
-                                           sizeof(EnvironmentUniform)};
-
-    m_uniformBuffers[i].mapMemory(&m_mappings[i]);
+    re_buffer_init_uniform(&m_uniformBuffers[i], sizeof(EnvironmentUniform));
+    re_buffer_map_memory(&m_uniformBuffers[i], &m_mappings[i]);
 
     VkDescriptorBufferInfo bufferInfo{
-        m_uniformBuffers[i].getHandle(),
+        m_uniformBuffers[i].buffer,
         0,
         sizeof(EnvironmentUniform),
     };
@@ -137,8 +135,8 @@ EnvironmentComponent::~EnvironmentComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
-    m_uniformBuffers[i].unmapMemory();
-    m_uniformBuffers[i].destroy();
+    re_buffer_unmap_memory(&m_uniformBuffers[i]);
+    re_buffer_destroy(&m_uniformBuffers[i]);
   }
 
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;

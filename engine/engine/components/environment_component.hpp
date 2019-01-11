@@ -62,7 +62,7 @@ public:
 protected:
   AssetIndex m_environmentAssetIndex;
 
-  renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
+  re_buffer_t m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
   renderer::ResourceSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };

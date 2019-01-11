@@ -69,7 +69,7 @@ public:
       glm::mat4 matrix;
     } ubo;
 
-    renderer::Buffer uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
+    re_buffer_t uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
     void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
     renderer::ResourceSet descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 
@@ -126,8 +126,8 @@ public:
   std::vector<Material> m_materials;
 
 protected:
-  renderer::Buffer m_vertexBuffer;
-  renderer::Buffer m_indexBuffer;
+  re_buffer_t m_vertexBuffer;
+  re_buffer_t m_indexBuffer;
 
   void loadMaterials(tinygltf::Model &model);
 

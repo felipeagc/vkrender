@@ -184,15 +184,14 @@ GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     this->descriptorSets[i] = setLayout.allocate();
 
-    this->uniformBuffers[i] =
-        renderer::Buffer{renderer::BufferType::eUniform, sizeof(MeshUniform)};
+    re_buffer_init_uniform(&this->uniformBuffers[i], sizeof(MeshUniform));
 
     // UniformBuffer
-    this->uniformBuffers[i].mapMemory(&this->mappings[i]);
+    re_buffer_map_memory(&this->uniformBuffers[i], &this->mappings[i]);
     memcpy(this->mappings[i], &this->ubo, sizeof(MeshUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        this->uniformBuffers[i].getHandle(), 0, sizeof(MeshUniform)};
+        this->uniformBuffers[i].buffer, 0, sizeof(MeshUniform)};
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
@@ -308,38 +307,39 @@ GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
 
   assert((vertexBufferSize > 0) && (indexBufferSize > 0));
 
-  renderer::Buffer stagingBuffer{renderer::BufferType::eStaging,
-                                 std::max(vertexBufferSize, indexBufferSize)};
+  re_buffer_t staging_buffer;
+  re_buffer_init_staging(
+      &staging_buffer,
+      vertexBufferSize > indexBufferSize ? vertexBufferSize : indexBufferSize);
 
-  void *stagingMemoryPointer;
-  stagingBuffer.mapMemory(&stagingMemoryPointer);
+  void *staging_pointer;
+  re_buffer_map_memory(&staging_buffer, &staging_pointer);
 
-  this->m_vertexBuffer =
-      renderer::Buffer{renderer::BufferType::eVertex, vertexBufferSize};
+  re_buffer_init_vertex(&m_vertexBuffer, vertexBufferSize);
+  re_buffer_init_index(&m_indexBuffer, indexBufferSize);
 
-  this->m_indexBuffer =
-      renderer::Buffer{renderer::BufferType::eIndex, indexBufferSize};
+  memcpy(staging_pointer, vertices.data(), vertexBufferSize);
+  re_buffer_transfer_to_buffer(
+      &staging_buffer, &m_vertexBuffer, vertexBufferSize);
 
-  memcpy(stagingMemoryPointer, vertices.data(), vertexBufferSize);
-  stagingBuffer.bufferTransfer(m_vertexBuffer, vertexBufferSize);
+  memcpy(staging_pointer, indices.data(), indexBufferSize);
+  re_buffer_transfer_to_buffer(
+      &staging_buffer, &m_indexBuffer, indexBufferSize);
 
-  memcpy(stagingMemoryPointer, indices.data(), indexBufferSize);
-  stagingBuffer.bufferTransfer(m_indexBuffer, indexBufferSize);
-
-  stagingBuffer.unmapMemory();
-  stagingBuffer.destroy();
+  re_buffer_unmap_memory(&staging_buffer);
+  re_buffer_destroy(&staging_buffer);
 
   this->getSceneDimensions();
 }
 
 GltfModelAsset::~GltfModelAsset() {
-  m_vertexBuffer.destroy();
-  m_indexBuffer.destroy();
+  re_buffer_destroy(&m_vertexBuffer);
+  re_buffer_destroy(&m_indexBuffer);
 
   for (auto &mesh : m_meshes) {
     for (auto &uniformBuffer : mesh.uniformBuffers) {
-      uniformBuffer.unmapMemory();
-      uniformBuffer.destroy();
+      re_buffer_unmap_memory(&uniformBuffer);
+      re_buffer_destroy(&uniformBuffer);
     }
 
     auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;

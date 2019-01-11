@@ -245,19 +245,19 @@ static void bakeCubemap(
   // Upload data to image
   {
     size_t hdrSize = hdrWidth * hdrHeight * 4 * sizeof(float);
-    renderer::Buffer stagingBuffer{renderer::BufferType::eStaging, hdrSize};
+    re_buffer_t staging_buffer;
+    re_buffer_init_staging(&staging_buffer, hdrSize);
 
     void *stagingMemoryPointer;
-    stagingBuffer.mapMemory(&stagingMemoryPointer);
+    re_buffer_map_memory(&staging_buffer, &stagingMemoryPointer);
     memcpy(stagingMemoryPointer, hdrData, hdrSize);
 
-    stagingBuffer.imageTransfer(
-        hdrImage,
-        static_cast<uint32_t>(hdrWidth),
-        static_cast<uint32_t>(hdrHeight));
+    re_buffer_transfer_to_image(
+        &staging_buffer, hdrImage, (uint32_t)hdrWidth, (uint32_t)hdrHeight);
 
-    stagingBuffer.unmapMemory();
-    stagingBuffer.destroy();
+    re_buffer_unmap_memory(&staging_buffer);
+
+    re_buffer_destroy(&staging_buffer);
   }
 
   // Create hdrDescriptorSet

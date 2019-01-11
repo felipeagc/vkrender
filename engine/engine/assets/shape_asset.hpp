@@ -15,7 +15,8 @@ public:
   ~ShapeAsset();
 
   Shape m_shape;
-  renderer::Buffer m_vertexBuffer;
-  renderer::Buffer m_indexBuffer;
+
+  re_buffer_t m_vertexBuffer;
+  re_buffer_t m_indexBuffer;
 };
 } // namespace engine

@@ -36,7 +36,7 @@ public:
 
 private:
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
-  renderer::Buffer m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
+  re_buffer_t m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
 
   void drawNode(
       GltfModelAsset &model,

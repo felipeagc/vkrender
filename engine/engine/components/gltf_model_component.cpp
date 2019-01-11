@@ -29,15 +29,14 @@ GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    m_uniformBuffers[i] =
-        renderer::Buffer{renderer::BufferType::eUniform, sizeof(ModelUniform)};
+    re_buffer_init_uniform(&m_uniformBuffers[i], sizeof(ModelUniform));
 
-    m_uniformBuffers[i].mapMemory(&m_mappings[i]);
+    re_buffer_map_memory(&m_uniformBuffers[i], &m_mappings[i]);
 
     memcpy(m_mappings[i], &m_ubo, sizeof(ModelUniform));
 
     VkDescriptorBufferInfo bufferInfo = {
-        m_uniformBuffers[i].getHandle(), 0, sizeof(ModelUniform)};
+        m_uniformBuffers[i].buffer, 0, sizeof(ModelUniform)};
 
     this->m_descriptorSets[i] = setLayout.allocate();
 
@@ -63,8 +62,8 @@ GltfModelComponent::~GltfModelComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
-    m_uniformBuffers[i].unmapMemory();
-    m_uniformBuffers[i].destroy();
+    re_buffer_unmap_memory(&m_uniformBuffers[i]);
+    re_buffer_destroy(&m_uniformBuffers[i]);
   }
 
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
@@ -92,12 +91,12 @@ void GltfModelComponent::draw(
   auto &gltfModel = assetManager.getAsset<GltfModelAsset>(m_modelIndex);
 
   VkDeviceSize offset = 0;
-  VkBuffer vertexBuffer = gltfModel.m_vertexBuffer.getHandle();
+  VkBuffer vertexBuffer = gltfModel.m_vertexBuffer.buffer;
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
       commandBuffer,
-      gltfModel.m_indexBuffer.getHandle(),
+      gltfModel.m_indexBuffer.buffer,
       0,
       VK_INDEX_TYPE_UINT32);
 

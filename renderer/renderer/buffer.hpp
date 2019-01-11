@@ -3,37 +3,27 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-
-enum class BufferType {
-  eVertex,
-  eIndex,
-  eUniform,
-  eStaging,
-  eOther
+struct re_buffer_t {
+  VkBuffer buffer = VK_NULL_HANDLE;
+  VmaAllocation allocation = VK_NULL_HANDLE;
 };
 
-class Buffer {
-public:
-  Buffer() {}
-  Buffer(BufferType bufferType, size_t size);
+void re_buffer_init_vertex(re_buffer_t *buffer, size_t size);
 
-  void destroy();
+void re_buffer_init_index(re_buffer_t *buffer, size_t size);
 
-  VkBuffer getHandle() const;
+void re_buffer_init_uniform(re_buffer_t *buffer, size_t size);
 
-  operator bool() const;
+void re_buffer_init_staging(re_buffer_t *buffer, size_t size);
 
-  void mapMemory(void **dest);
-  void unmapMemory();
+bool re_buffer_map_memory(re_buffer_t *buffer, void **dest);
 
-  void bufferTransfer(Buffer &to, size_t size);
+void re_buffer_unmap_memory(re_buffer_t *buffer);
 
-  void imageTransfer(VkImage toImage, uint32_t width, uint32_t height);
+void re_buffer_transfer_to_buffer(
+    re_buffer_t *buffer, re_buffer_t *dest, size_t size);
 
-protected:
-  BufferType m_bufferType = BufferType::eOther;
-  VkBuffer m_buffer = VK_NULL_HANDLE;
-  VmaAllocation m_allocation = VK_NULL_HANDLE;
-};
-} // namespace renderer
+void re_buffer_transfer_to_image(
+    re_buffer_t *buffer, VkImage dest, uint32_t width, uint32_t height);
+
+void re_buffer_destroy(re_buffer_t *buffer);

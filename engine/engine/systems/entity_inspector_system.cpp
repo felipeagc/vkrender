@@ -200,13 +200,13 @@ void EntityInspectorSystem::drawBox(
       &pushConstant);
 
   VkDeviceSize offset = 0;
-  VkBuffer vertexBuffer = box.m_vertexBuffer.getHandle();
+  VkBuffer vertexBuffer = box.m_vertexBuffer.buffer;
   vkCmdBindVertexBuffers(
       window.getCurrentCommandBuffer(), 0, 1, &vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
       window.getCurrentCommandBuffer(),
-      box.m_indexBuffer.getHandle(),
+      box.m_indexBuffer.buffer,
       0,
       VK_INDEX_TYPE_UINT32);
 

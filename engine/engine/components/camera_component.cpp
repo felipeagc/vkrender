@@ -20,15 +20,13 @@ CameraComponent::CameraComponent(float fov) : m_fov(fov) {
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.camera;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    m_uniformBuffers[i] =
-        renderer::Buffer{renderer::BufferType::eUniform, sizeof(CameraUniform)};
-
-    m_uniformBuffers[i].mapMemory(&m_mappings[i]);
+    re_buffer_init_uniform(&m_uniformBuffers[i], sizeof(CameraUniform));
+    re_buffer_map_memory(&m_uniformBuffers[i], &m_mappings[i]);
 
     this->m_descriptorSets[i] = setLayout.allocate();
 
     VkDescriptorBufferInfo bufferInfo{
-        m_uniformBuffers[i].getHandle(),
+        m_uniformBuffers[i].buffer,
         0,
         sizeof(CameraUniform),
     };
@@ -55,8 +53,8 @@ CameraComponent::~CameraComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
-    m_uniformBuffers[i].unmapMemory();
-    m_uniformBuffers[i].destroy();
+    re_buffer_unmap_memory(&m_uniformBuffers[i]);
+    re_buffer_destroy(&m_uniformBuffers[i]);
   }
 
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.camera;
@@ -77,7 +75,8 @@ void CameraComponent::update(
       m_near,
       m_far);
 
-  // @note: See: https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
+  // @note: See:
+  // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
   glm::mat4 correction(
       {1.0, 0.0, 0.0, 0.0},
       {0.0, -1.0, 0.0, 0.0},

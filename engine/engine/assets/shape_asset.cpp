@@ -7,29 +7,30 @@ ShapeAsset::ShapeAsset(const Shape &shape) : m_shape(shape) {
       sizeof(renderer::StandardVertex) * m_shape.m_vertices.size();
   size_t indexBufferSize = sizeof(uint32_t) * m_shape.m_indices.size();
 
-  renderer::Buffer stagingBuffer{renderer::BufferType::eStaging,
-                                 std::max(vertexBufferSize, indexBufferSize)};
+  re_buffer_t staging_buffer;
+  re_buffer_init_staging(
+      &staging_buffer,
+      vertexBufferSize > indexBufferSize ? vertexBufferSize : indexBufferSize);
 
-  void *stagingMemoryPointer;
-  stagingBuffer.mapMemory(&stagingMemoryPointer);
+  void *staging_pointer;
+  re_buffer_map_memory(&staging_buffer, &staging_pointer);
 
-  this->m_vertexBuffer =
-      renderer::Buffer{renderer::BufferType::eVertex, vertexBufferSize};
+  re_buffer_init_vertex(&m_vertexBuffer, vertexBufferSize);
+  re_buffer_init_index(&m_indexBuffer, indexBufferSize);
 
-  this->m_indexBuffer =
-      renderer::Buffer{renderer::BufferType::eIndex, indexBufferSize};
+  memcpy(staging_pointer, m_shape.m_vertices.data(), vertexBufferSize);
+  re_buffer_transfer_to_buffer(
+      &staging_buffer, &m_vertexBuffer, vertexBufferSize);
 
-  memcpy(stagingMemoryPointer, m_shape.m_vertices.data(), vertexBufferSize);
-  stagingBuffer.bufferTransfer(m_vertexBuffer, vertexBufferSize);
+  memcpy(staging_pointer, m_shape.m_indices.data(), indexBufferSize);
+  re_buffer_transfer_to_buffer(
+      &staging_buffer, &m_indexBuffer, indexBufferSize);
 
-  memcpy(stagingMemoryPointer, m_shape.m_indices.data(), indexBufferSize);
-  stagingBuffer.bufferTransfer(m_indexBuffer, indexBufferSize);
-
-  stagingBuffer.unmapMemory();
-  stagingBuffer.destroy();
+  re_buffer_unmap_memory(&staging_buffer);
+  re_buffer_destroy(&staging_buffer);
 }
 
 ShapeAsset::~ShapeAsset() {
-  m_vertexBuffer.destroy();
-  m_indexBuffer.destroy();
+  re_buffer_destroy(&m_vertexBuffer);
+  re_buffer_destroy(&m_indexBuffer);
 }
