@@ -1,5 +1,6 @@
 #include "cubemap.hpp"
 #include "buffer.hpp"
+#include "canvas.hpp"
 #include "context.hpp"
 #include "pipeline.hpp"
 #include "shader.hpp"
@@ -41,62 +42,6 @@ static const glm::mat4 cameraViews[] = {
         glm::vec3(0.0f, 0.0f, -1.0f),
         glm::vec3(0.0f, -1.0f, 0.0f)),
 };
-
-static void
-createRenderPass(VkRenderPass *renderPass, VkFormat cubemapImageFormat) {
-  VkAttachmentDescription attachment = {};
-  attachment.format = cubemapImageFormat;
-  attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkAttachmentReference colorAttachment = {};
-  colorAttachment.attachment = 0;
-  colorAttachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkSubpassDescription subpass = {};
-  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &colorAttachment;
-
-  VkSubpassDependency dependencies[2] = {};
-  dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependencies[0].dstSubpass = 0;
-  dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                                  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-  dependencies[1].srcSubpass = 0;
-  dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-  dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                                  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-  VkRenderPassCreateInfo renderPassCreateInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-      nullptr,                 // pNext
-      0,                       // flags
-      1,                       // attachmentCount
-      &attachment,             // pAttachments
-      1,                       // subpassCount
-      &subpass,                // pSubpasses
-      ARRAYSIZE(dependencies), // dependencyCount
-      dependencies,            // pDependencies
-  };
-
-  VK_CHECK(vkCreateRenderPass(
-      renderer::ctx().m_device, &renderPassCreateInfo, nullptr, renderPass));
-}
 
 static void createImageAndImageView(
     VkImage *image,
@@ -203,7 +148,7 @@ static void copySideImageToCubemap(
       commandBuffer,
       sideImage,
       VK_IMAGE_ASPECT_COLOR_BIT,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   VkImageSubresourceRange cubeFaceSubresourceRange = {};
@@ -254,7 +199,7 @@ static void copySideImageToCubemap(
       sideImage,
       VK_IMAGE_ASPECT_COLOR_BIT,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   // Change image layout of copied face to shader read
   setImageLayout(
@@ -295,22 +240,6 @@ static void bakeCubemap(
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
   createSampler(&hdrSampler);
-
-  // Create side VkImage and stuff
-  VkImage sideImage = VK_NULL_HANDLE;
-  VmaAllocation sideAllocation = VK_NULL_HANDLE;
-  VkImageView sideImageView = VK_NULL_HANDLE;
-
-  createImageAndImageView(
-      &sideImage,
-      &sideAllocation,
-      &sideImageView,
-      cubemapImageFormat,
-      cubemapImageWidth,
-      cubemapImageHeight,
-      VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-          VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
   // Upload data to image
   {
@@ -361,33 +290,27 @@ static void bakeCubemap(
   CameraUniform cameraUBO;
   cameraUBO.proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
-  // Create renderpass
-  VkRenderPass renderPass = VK_NULL_HANDLE;
-  createRenderPass(&renderPass, cubemapImageFormat);
-
-  // Create framebuffer
-  VkFramebuffer framebuffer = VK_NULL_HANDLE;
-  {
-    VkFramebufferCreateInfo createInfo = {
-        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
-        nullptr,                                   // pNext
-        0,                                         // flags
-        renderPass,                                // renderPass
-        1,                                         // attachmentCount
-        &sideImageView,                            // pAttachments
-        cubemapImageWidth,                         // width
-        cubemapImageHeight,                        // height
-        1,                                         // layers
-    };
-
-    VK_CHECK(vkCreateFramebuffer(
-        renderer::ctx().m_device, &createInfo, nullptr, &framebuffer));
-  }
+  Canvas canvas{cubemapImageWidth, cubemapImageHeight, cubemapImageFormat};
 
   // Create pipeline
-  renderer::Shader shader(
-      "../shaders/bake_cubemap.vert", "../shaders/bake_cubemap.frag");
-  renderer::BakeCubemapPipeline pipeline(renderPass, shader);
+  renderer::PipelineParameters pipelineParams;
+  pipelineParams.layout =
+      renderer::ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
+  pipelineParams.vertexInputState = VkPipelineVertexInputStateCreateInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
+      nullptr,                                                   // pNext
+      0,                                                         // flags
+      0,       // vertexBindingDescriptionCount
+      nullptr, // pVertexBindingDescriptions
+      0,       // vertexAttributeDescriptionCount
+      nullptr, // pVertexAttributeDescriptions
+  };
+
+  renderer::GraphicsPipeline pipeline(
+      canvas,
+      renderer::Shader(
+          "../shaders/bake_cubemap.vert", "../shaders/bake_cubemap.frag"),
+      pipelineParams);
 
   // Allocate command buffer
   assert(threadID < VKR_THREAD_COUNT);
@@ -412,19 +335,6 @@ static void bakeCubemap(
 
   VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
-  // Begin renderpass
-  VkClearValue clearValue = {{{1.0f, 1.0f, 1.0f, 1.0f}}};
-
-  VkRenderPassBeginInfo renderPassBeginInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,          // sType
-      nullptr,                                           // pNext
-      renderPass,                                        // renderPass
-      framebuffer,                                       // framebuffer
-      {{0, 0}, {cubemapImageWidth, cubemapImageHeight}}, // renderArea
-      1,                                                 // clearValueCount
-      &clearValue,                                       // pClearValues
-  };
-
   // Convert all layers of cubemapImage to shader read only
   {
     VkImageSubresourceRange cubeFaceSubresourceRange = {};
@@ -443,8 +353,7 @@ static void bakeCubemap(
   }
 
   for (size_t i = 0; i < ARRAYSIZE(cameraViews); i++) {
-    vkCmdBeginRenderPass(
-        commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    canvas.beginRenderPass(commandBuffer);
 
     cameraUBO.view = cameraViews[i];
 
@@ -489,11 +398,11 @@ static void bakeCubemap(
       vkCmdDraw(commandBuffer, 36, 1, 0, 0);
     }
 
-    vkCmdEndRenderPass(commandBuffer);
+    canvas.endRenderPass(commandBuffer);
 
     copySideImageToCubemap(
         commandBuffer,
-        sideImage,
+        canvas.getColorImage(),
         cubemapImage,
         cubemapImageWidth,
         cubemapImageHeight,
@@ -528,9 +437,6 @@ static void bakeCubemap(
 
   setLayout.free(hdrDescriptorSet);
 
-  vkDestroyImageView(renderer::ctx().m_device, sideImageView, nullptr);
-  vmaDestroyImage(renderer::ctx().m_allocator, sideImage, sideAllocation);
-
   vkDestroyImageView(renderer::ctx().m_device, hdrImageView, nullptr);
   vkDestroySampler(renderer::ctx().m_device, hdrSampler, nullptr);
   vmaDestroyImage(renderer::ctx().m_allocator, hdrImage, hdrAllocation);
@@ -541,10 +447,6 @@ static void bakeCubemap(
       renderer::ctx().m_threadCommandPools[threadID],
       1,
       &commandBuffer);
-
-  vkDestroyFramebuffer(renderer::ctx().m_device, framebuffer, nullptr);
-
-  vkDestroyRenderPass(renderer::ctx().m_device, renderPass, nullptr);
 
   stbi_image_free(hdrData);
 }

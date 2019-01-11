@@ -1,7 +1,7 @@
 #pragma once
 
-#include "render_target.hpp"
 #include "common.hpp"
+#include "render_target.hpp"
 #include "resource_manager.hpp"
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -12,12 +12,19 @@ class GraphicsPipeline;
 
 class Canvas : public RenderTarget {
 public:
-  Canvas(const uint32_t width, const uint32_t height);
+  Canvas(
+      const uint32_t width,
+      const uint32_t height,
+      const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM);
   ~Canvas();
 
   // RenderTarget cannot be copied
   Canvas(const Canvas &) = delete;
   Canvas &operator=(const Canvas &) = delete;
+
+  void beginRenderPass(
+      const VkCommandBuffer commandBuffer, uint32_t resourceIndex = 0);
+  void endRenderPass(const VkCommandBuffer commandBuffer);
 
   void beginRenderPass(Window &window);
   void endRenderPass(Window &window);
@@ -26,12 +33,14 @@ public:
 
   void resize(const uint32_t width, const uint32_t height);
 
+  VkImage getColorImage(uint32_t resourceIndex = 0);
+
 protected:
   uint32_t m_width = 0;
   uint32_t m_height = 0;
 
   VkFormat m_depthFormat;
-  VkFormat m_colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+  VkFormat m_colorFormat;
 
   // @note: we could have multiple of these resources per frame-in-flight,
   // but from initial testing there's no real performance gain

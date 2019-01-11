@@ -6,8 +6,9 @@
 
 using namespace renderer;
 
-Canvas::Canvas(const uint32_t width, const uint32_t height)
-    : m_width(width), m_height(height) {
+Canvas::Canvas(
+    const uint32_t width, const uint32_t height, const VkFormat colorFormat)
+    : m_width(width), m_height(height), m_colorFormat(colorFormat) {
   assert(ctx().getSupportedDepthFormat(&m_depthFormat));
   this->createColorTarget();
   this->createDepthTarget();
@@ -24,10 +25,9 @@ Canvas::~Canvas() {
   this->destroyDescriptorSet();
 }
 
-void Canvas::beginRenderPass(Window &window) {
-  auto commandBuffer = window.getCurrentCommandBuffer();
-  auto &resource =
-      m_resources[window.getCurrentFrameIndex() % ARRAYSIZE(m_resources)];
+void Canvas::beginRenderPass(
+    const VkCommandBuffer commandBuffer, uint32_t resourceIndex) {
+  auto &resource = m_resources[resourceIndex];
 
   // @todo: make this customizable
   VkClearValue clearValues[2] = {};
@@ -63,10 +63,18 @@ void Canvas::beginRenderPass(Window &window) {
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Canvas::endRenderPass(Window &window) {
-  auto commandBuffer = window.getCurrentCommandBuffer();
-
+void Canvas::endRenderPass(const VkCommandBuffer commandBuffer) {
   vkCmdEndRenderPass(commandBuffer);
+}
+
+void Canvas::beginRenderPass(Window &window) {
+  this->beginRenderPass(
+      window.getCurrentCommandBuffer(),
+      window.getCurrentFrameIndex() % ARRAYSIZE(m_resources));
+}
+
+void Canvas::endRenderPass(Window &window) {
+  this->endRenderPass(window.getCurrentCommandBuffer());
 }
 
 void Canvas::draw(Window &window, GraphicsPipeline &pipeline) {
@@ -106,6 +114,10 @@ void Canvas::resize(const uint32_t width, const uint32_t height) {
   this->createFramebuffers();
 }
 
+VkImage Canvas::getColorImage(uint32_t resourceIndex) {
+  return m_resources[resourceIndex].color.image;
+}
+
 void Canvas::createColorTarget() {
   for (size_t i = 0; i < ARRAYSIZE(m_resources); i++) {
     auto &resource = m_resources[i];
@@ -125,7 +137,8 @@ void Canvas::createColorTarget() {
         1,                       // arrayLayers
         m_sampleCount,           // samples
         VK_IMAGE_TILING_OPTIMAL, // tiling
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
         0,                                       // queueFamilyIndexCount
@@ -248,7 +261,6 @@ void Canvas::createDepthTarget() {
         0,                              // queueFamiylIndexCount
         nullptr,                        // pQueueFamilyIndices
         VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
-
     };
 
     VmaAllocationCreateInfo allocInfo{};

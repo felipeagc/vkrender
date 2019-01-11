@@ -26,15 +26,6 @@ int main() {
   renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
-  renderer::Shader billboardShader{"../shaders/billboard.vert",
-                                   "../shaders/billboard.frag"};
-  renderer::Shader wireframeShader{"../shaders/box.vert",
-                                   "../shaders/box.frag"};
-  renderer::Shader skyboxShader{"../shaders/skybox.vert",
-                                "../shaders/skybox.frag"};
-  renderer::Shader fullscreenShader{"../shaders/fullscreen.vert",
-                                    "../shaders/fullscreen.frag"};
-
   renderer::GraphicsPipeline modelPipeline(
       renderTarget,
       renderer::Shader{"../shaders/model_pbr.vert",
@@ -42,16 +33,26 @@ int main() {
       engine::standardPipelineParameters());
 
   renderer::GraphicsPipeline billboardPipeline(
-      renderTarget, billboardShader, engine::billboardPipelineParameters());
+      renderTarget,
+      renderer::Shader{"../shaders/billboard.vert",
+                       "../shaders/billboard.frag"},
+      engine::billboardPipelineParameters());
 
   renderer::GraphicsPipeline wireframePipeline(
-      renderTarget, wireframeShader, engine::wireframePipelineParameters());
+      renderTarget,
+      renderer::Shader{"../shaders/box.vert", "../shaders/box.frag"},
+      engine::wireframePipelineParameters());
 
   renderer::GraphicsPipeline skyboxPipeline(
-      renderTarget, skyboxShader, engine::skyboxPipelineParameters());
+      renderTarget,
+      renderer::Shader{"../shaders/skybox.vert", "../shaders/skybox.frag"},
+      engine::skyboxPipelineParameters());
 
   renderer::GraphicsPipeline fullscreenPipeline(
-      window, fullscreenShader, engine::fullscreenPipelineParameters());
+      window,
+      renderer::Shader{"../shaders/fullscreen.vert",
+                       "../shaders/fullscreen.frag"},
+      engine::fullscreenPipelineParameters());
 
   // engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
   //     renderTarget, "../shaders/model_pbr.vert",
