@@ -2,11 +2,11 @@
 
 #include <atomic>
 #include <ftl/logging.hpp>
-#include <ftl/stack_allocator.hpp>
 #include <functional>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <util/bump_allocator.hpp>
 #include <vector>
 
 namespace engine {
@@ -39,7 +39,7 @@ class AssetManager {
   using AssetTypeId = detail::TypeId<struct AssetManagerDummy>;
 
 public:
-  AssetManager(){};
+  AssetManager();
   ~AssetManager();
 
   // No copying AssetManager
@@ -99,7 +99,7 @@ public:
           "Asset index is in use: " + std::to_string(assetIndex));
     }
 
-    void* ptr = m_allocator.alloc(sizeof(A), alignof(A));
+    void *ptr = bump_alloc(&m_allocator, A);
     A *asset = new (ptr) A(std::forward<Args>(args)...);
 
     std::scoped_lock<std::mutex> lock(m_mutex);
@@ -128,7 +128,7 @@ public:
   }
 
 private:
-  ftl::stack_allocator m_allocator{16384};
+  bump_allocator_t m_allocator;
 
   // Indexed by asset index
   std::vector<Asset *> m_assets;

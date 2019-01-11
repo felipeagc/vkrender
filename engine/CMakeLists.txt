@@ -36,6 +36,7 @@ target_link_libraries(
   engine
 
   PUBLIC
+  util
   ftl
   renderer
   ecs
