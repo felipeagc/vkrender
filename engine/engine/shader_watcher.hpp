@@ -29,8 +29,8 @@ public:
         m_fragmentPath(fragmentPath),
         m_renderTarget(renderTarget) {
     renderer::Shader shader{
-        m_vertexPath,
-        m_fragmentPath,
+        m_vertexPath.c_str(),
+        m_fragmentPath.c_str(),
     };
 
     m_pipeline = renderer::GraphicsPipeline{m_renderTarget, shader, m_params};
@@ -46,8 +46,8 @@ public:
 
       try {
         renderer::Shader shader{
-            m_vertexPath,
-            m_fragmentPath,
+            m_vertexPath.c_str(),
+            m_fragmentPath.c_str(),
         };
 
         m_pipeline =

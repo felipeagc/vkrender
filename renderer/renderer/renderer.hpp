@@ -10,7 +10,6 @@
 #include "render_target.hpp"
 #include "scancodes.hpp"
 #include "shader.hpp"
-#include "shader_compilation.hpp"
 #include "texture.hpp"
 #include "util.hpp"
 #include "window.hpp"
