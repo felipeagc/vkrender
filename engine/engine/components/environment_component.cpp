@@ -34,7 +34,7 @@ EnvironmentComponent::EnvironmentComponent(
   auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
 
   m_ubo.radianceMipLevels =
-      (float)environmentAsset.m_radianceCubemap.m_mipLevels;
+      (float)environmentAsset.m_radianceCubemap.mip_levels;
 
   for (size_t i = 0; i < ARRAYSIZE(m_descriptorSets); i++) {
     this->m_descriptorSets[i] = setLayout.allocate();
@@ -52,11 +52,11 @@ EnvironmentComponent::EnvironmentComponent(
     };
 
     auto skyboxDescriptorInfo =
-        environmentAsset.m_skyboxCubemap.getDescriptorInfo();
+        re_cubemap_descriptor(&environmentAsset.m_skyboxCubemap);
     auto irradianceDescriptorInfo =
-        environmentAsset.m_irradianceCubemap.getDescriptorInfo();
+        re_cubemap_descriptor(&environmentAsset.m_irradianceCubemap);
     auto radianceDescriptorInfo =
-        environmentAsset.m_radianceCubemap.getDescriptorInfo();
+        re_cubemap_descriptor(&environmentAsset.m_radianceCubemap);
     auto brdfLutDescriptorInfo =
         re_texture_descriptor(&environmentAsset.m_brdfLut);
 

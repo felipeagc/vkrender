@@ -1,46 +1,33 @@
 #pragma once
 
-#include <array>
-#include <string>
-#include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-class Cubemap {
-public:
-  Cubemap(){};
-  Cubemap(
-      const std::string &hdrPath, const uint32_t width, const uint32_t height);
-  Cubemap(
-      const std::vector<std::string> &radiancePaths,
-      const uint32_t width,
-      const uint32_t height);
-  ~Cubemap(){};
+struct re_cubemap_t {
+  VkImage image;
+  VmaAllocation allocation;
+  VkImageView image_view;
+  VkSampler sampler;
 
-  // Cubemap can be copied
-  Cubemap(const Cubemap &) = default;
-  Cubemap &operator=(const Cubemap &) = default;
+  uint32_t width;
+  uint32_t height;
 
-  // Cubemap can be moved
-  Cubemap(Cubemap &&) = default;
-  Cubemap &operator=(Cubemap &&) = default;
-
-  operator bool() const;
-
-  VkDescriptorImageInfo getDescriptorInfo() const;
-
-  void destroy();
-
-  uint32_t m_mipLevels = 1;
-
-private:
-  VkImage m_image = VK_NULL_HANDLE;
-  VmaAllocation m_allocation = VK_NULL_HANDLE;
-  VkImageView m_imageView = VK_NULL_HANDLE;
-  VkSampler m_sampler = VK_NULL_HANDLE;
-
-  uint32_t m_width = 0;
-  uint32_t m_height = 0;
+  uint32_t mip_levels;
 };
-} // namespace renderer
+
+void re_cubemap_init_from_hdr_equirec(
+    re_cubemap_t *cubemap,
+    const char *path,
+    const uint32_t width,
+    const uint32_t height);
+
+void re_cubemap_init_from_hdr_equirec_mipmaps(
+    re_cubemap_t *cubemap,
+    const char **paths,
+    const uint32_t path_count,
+    const uint32_t width,
+    const uint32_t height);
+
+VkDescriptorImageInfo re_cubemap_descriptor(const re_cubemap_t *cubemap);
+
+void re_cubemap_destroy(re_cubemap_t *cubemap);

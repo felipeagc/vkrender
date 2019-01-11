@@ -12,12 +12,12 @@
 
 using namespace renderer;
 
-struct CameraUniform {
+struct camera_uniform_t {
   glm::mat4 view;
   glm::mat4 proj;
 };
 
-static const glm::mat4 cameraViews[] = {
+static const glm::mat4 camera_views[] = {
     glm::lookAt(
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(1.0f, 0.0f, 0.0f),
@@ -44,7 +44,7 @@ static const glm::mat4 cameraViews[] = {
         glm::vec3(0.0f, -1.0f, 0.0f)),
 };
 
-static void createImageAndImageView(
+static void create_image_and_image_view(
     VkImage *image,
     VmaAllocation *allocation,
     VkImageView *imageView,
@@ -111,7 +111,7 @@ static void createImageAndImageView(
       renderer::ctx().m_device, &imageViewCreateInfo, nullptr, imageView));
 }
 
-static void createSampler(VkSampler *sampler) {
+static void create_sampler(VkSampler *sampler) {
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
       nullptr,
@@ -137,7 +137,7 @@ static void createSampler(VkSampler *sampler) {
       renderer::ctx().m_device, &samplerCreateInfo, nullptr, sampler));
 }
 
-static void copySideImageToCubemap(
+static void copy_side_image_to_cubemap(
     VkCommandBuffer commandBuffer,
     VkImage sideImage,
     VkImage cubemapImage,
@@ -211,8 +211,8 @@ static void copySideImageToCubemap(
       cubeFaceSubresourceRange);
 }
 
-static void bakeCubemap(
-    const std::string &hdrFile,
+static void bake_cubemap(
+    const char *hdrFile,
     VkImage &cubemapImage,
     VkFormat cubemapImageFormat,
     uint32_t cubemapImageWidth,
@@ -220,8 +220,7 @@ static void bakeCubemap(
     uint32_t level = 0) {
   // Load HDR image
   int hdrWidth, hdrHeight, nrComponents;
-  float *hdrData =
-      stbi_loadf(hdrFile.c_str(), &hdrWidth, &hdrHeight, &nrComponents, 4);
+  float *hdrData = stbi_loadf(hdrFile, &hdrWidth, &hdrHeight, &nrComponents, 4);
 
   assert(hdrData != nullptr);
 
@@ -231,7 +230,7 @@ static void bakeCubemap(
   VkImageView hdrImageView = VK_NULL_HANDLE;
   VkSampler hdrSampler = VK_NULL_HANDLE;
 
-  createImageAndImageView(
+  create_image_and_image_view(
       &hdrImage,
       &hdrAllocation,
       &hdrImageView,
@@ -240,7 +239,7 @@ static void bakeCubemap(
       static_cast<uint32_t>(hdrHeight),
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-  createSampler(&hdrSampler);
+  create_sampler(&hdrSampler);
 
   // Upload data to image
   {
@@ -288,7 +287,7 @@ static void bakeCubemap(
   }
 
   // Camera matrices
-  CameraUniform cameraUBO;
+  camera_uniform_t cameraUBO;
   cameraUBO.proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
   Canvas canvas{cubemapImageWidth, cubemapImageHeight, cubemapImageFormat};
@@ -362,17 +361,17 @@ static void bakeCubemap(
         cubeFaceSubresourceRange);
   }
 
-  for (size_t i = 0; i < ARRAYSIZE(cameraViews); i++) {
+  for (size_t i = 0; i < ARRAYSIZE(camera_views); i++) {
     canvas.beginRenderPass(commandBuffer);
 
-    cameraUBO.view = cameraViews[i];
+    cameraUBO.view = camera_views[i];
 
     vkCmdPushConstants(
         commandBuffer,
         pipeline.layout,
         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         0,
-        sizeof(CameraUniform),
+        sizeof(camera_uniform_t),
         &cameraUBO);
 
     VkViewport viewport{
@@ -410,7 +409,7 @@ static void bakeCubemap(
 
     canvas.endRenderPass(commandBuffer);
 
-    copySideImageToCubemap(
+    copy_side_image_to_cubemap(
         commandBuffer,
         canvas.getColorImage(),
         cubemapImage,
@@ -461,7 +460,7 @@ static void bakeCubemap(
   stbi_image_free(hdrData);
 }
 
-static void createCubemapImage(
+static void create_cubemap_image(
     VkImage *image,
     VmaAllocation *allocation,
     VkImageView *imageView,
@@ -553,46 +552,52 @@ static void createCubemapImage(
       vkCreateSampler(ctx().m_device, &samplerCreateInfo, nullptr, sampler));
 }
 
-Cubemap::Cubemap(
-    const std::string &hdrPath, const uint32_t width, const uint32_t height) {
-  m_width = width;
-  m_height = height;
+void re_cubemap_init_from_hdr_equirec(
+    re_cubemap_t *cubemap,
+    const char *path,
+    const uint32_t width,
+    const uint32_t height) {
+  cubemap->width = width;
+  cubemap->height = height;
 
-  createCubemapImage(
-      &m_image,
-      &m_allocation,
-      &m_imageView,
-      &m_sampler,
+  create_cubemap_image(
+      &cubemap->image,
+      &cubemap->allocation,
+      &cubemap->image_view,
+      &cubemap->sampler,
       VK_FORMAT_R32G32B32A32_SFLOAT,
       width,
       height);
 
-  bakeCubemap(hdrPath, m_image, VK_FORMAT_R32G32B32A32_SFLOAT, width, height);
+  bake_cubemap(
+      path, cubemap->image, VK_FORMAT_R32G32B32A32_SFLOAT, width, height);
 }
 
-Cubemap::Cubemap(
-    const std::vector<std::string> &radiancePaths,
+void re_cubemap_init_from_hdr_equirec_mipmaps(
+    re_cubemap_t *cubemap,
+    const char **paths,
+    const uint32_t path_count,
     const uint32_t width,
     const uint32_t height) {
-  m_width = width;
-  m_height = height;
+  cubemap->width = width;
+  cubemap->height = height;
 
-  m_mipLevels = static_cast<uint32_t>(radiancePaths.size());
+  cubemap->mip_levels = path_count;
 
-  createCubemapImage(
-      &m_image,
-      &m_allocation,
-      &m_imageView,
-      &m_sampler,
+  create_cubemap_image(
+      &cubemap->image,
+      &cubemap->allocation,
+      &cubemap->image_view,
+      &cubemap->sampler,
       VK_FORMAT_R32G32B32A32_SFLOAT,
       width,
       height,
-      static_cast<uint32_t>(radiancePaths.size()));
+      path_count);
 
-  for (size_t i = 0; i < radiancePaths.size(); i++) {
-    bakeCubemap(
-        radiancePaths[i],
-        m_image,
+  for (size_t i = 0; i < path_count; i++) {
+    bake_cubemap(
+        paths[i],
+        cubemap->image,
         VK_FORMAT_R32G32B32A32_SFLOAT,
         width / pow(2, i),
         height / pow(2, i),
@@ -600,24 +605,25 @@ Cubemap::Cubemap(
   }
 }
 
-Cubemap::operator bool() const { return m_image != VK_NULL_HANDLE; }
-
-VkDescriptorImageInfo Cubemap::getDescriptorInfo() const {
+VkDescriptorImageInfo re_cubemap_descriptor(const re_cubemap_t *cubemap) {
   return {
-      m_sampler,
-      m_imageView,
+      cubemap->sampler,
+      cubemap->image_view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
   };
 }
 
-void Cubemap::destroy() {
+void re_cubemap_destroy(re_cubemap_t *cubemap) {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-  vkDestroyImageView(ctx().m_device, m_imageView, nullptr);
-  vkDestroySampler(ctx().m_device, m_sampler, nullptr);
-  vmaDestroyImage(ctx().m_allocator, m_image, m_allocation);
 
-  m_image = VK_NULL_HANDLE;
-  m_allocation = VK_NULL_HANDLE;
-  m_imageView = VK_NULL_HANDLE;
-  m_sampler = VK_NULL_HANDLE;
+  if (cubemap->image != VK_NULL_HANDLE) {
+    vkDestroyImageView(ctx().m_device, cubemap->image_view, nullptr);
+    vkDestroySampler(ctx().m_device, cubemap->sampler, nullptr);
+    vmaDestroyImage(ctx().m_allocator, cubemap->image, cubemap->allocation);
+
+    cubemap->image = VK_NULL_HANDLE;
+    cubemap->allocation = VK_NULL_HANDLE;
+    cubemap->image_view = VK_NULL_HANDLE;
+    cubemap->sampler = VK_NULL_HANDLE;
+  }
 }
