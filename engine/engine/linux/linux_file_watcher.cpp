@@ -22,14 +22,14 @@ FileWatcher::~FileWatcher() {
   close(m_fd);
 }
 
-void FileWatcher::addFile(const std::string &filename) {
+void FileWatcher::addFile(const char *filename) {
   std::scoped_lock<std::mutex> lock(m_tableMutex);
 
-  int wd = inotify_add_watch(m_fd, filename.c_str(), IN_ALL_EVENTS);
+  int wd = inotify_add_watch(m_fd, filename, IN_ALL_EVENTS);
   m_table[wd] = WatchDescriptor{filename, std::chrono::steady_clock::now()};
 }
 
-void FileWatcher::removeFile(const std::string &filename) {
+void FileWatcher::removeFile(const char *filename) {
   std::scoped_lock<std::mutex> lock(m_tableMutex);
 
   for (auto &[wd, desc] : m_table) {
@@ -95,7 +95,7 @@ void FileWatcher::startWatching() {
   });
 }
 
-void FileWatcher::stopWatching()  {
+void FileWatcher::stopWatching() {
   m_running.store(false);
   if (m_watcherThread.joinable()) {
     m_watcherThread.join();

@@ -14,8 +14,8 @@ public:
   FileWatcher();
   ~FileWatcher();
 
-  void addFile(const std::string &filename);
-  void removeFile(const std::string &filename);
+  void addFile(const char* filename);
+  void removeFile(const char* filename);
 
   void startWatching();
   void stopWatching();

@@ -35,8 +35,8 @@ public:
 
     m_pipeline = renderer::GraphicsPipeline{m_renderTarget, shader, m_params};
 
-    m_watcher.addFile(m_vertexPath);
-    m_watcher.addFile(m_fragmentPath);
+    m_watcher.addFile(m_vertexPath.c_str());
+    m_watcher.addFile(m_fragmentPath.c_str());
 
     m_watcher.onModify = [&](const std::string filename) {
       ftl::debug("Shader \"%s\" was modified", filename.c_str());
