@@ -8,6 +8,7 @@
 #include "util.hpp"
 #include <ftl/logging.hpp>
 #include <stb_image.h>
+#include <util/file.hpp>
 
 using namespace renderer;
 
@@ -306,11 +307,20 @@ static void bakeCubemap(
       nullptr, // pVertexAttributeDescriptions
   };
 
-  renderer::GraphicsPipeline pipeline(
-      canvas,
-      renderer::Shader(
-          "../shaders/bake_cubemap.vert", "../shaders/bake_cubemap.frag"),
-      pipelineParams);
+  renderer::GraphicsPipeline pipeline;
+
+  re_shader_t shader;
+  char *vertex_code = load_string_from_file("../shaders/bake_cubemap.vert");
+  char *fragment_code = load_string_from_file("../shaders/bake_cubemap.frag");
+
+  re_shader_init_glsl(&shader, vertex_code, fragment_code);
+
+  pipeline = renderer::GraphicsPipeline(canvas, shader, pipelineParams);
+
+  free(vertex_code);
+  free(fragment_code);
+
+  re_shader_destroy(&shader);
 
   // Allocate command buffer
   assert(threadID < VKR_THREAD_COUNT);

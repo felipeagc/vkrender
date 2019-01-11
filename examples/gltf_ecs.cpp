@@ -4,6 +4,7 @@
 #include <ftl/vector.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
+#include <util/file.hpp>
 
 int main() {
   renderer::Context context;
@@ -26,43 +27,49 @@ int main() {
   renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
-  renderer::GraphicsPipeline modelPipeline(
-      renderTarget,
-      renderer::Shader{"../shaders/model_pbr.vert",
-                       "../shaders/model_pbr.frag"},
+  renderer::GraphicsPipeline model_pipeline;
+  eg_init_pipeline(
+      &model_pipeline,
+      &renderTarget,
+      "../shaders/model_pbr.vert",
+      "../shaders/model_pbr.frag",
       engine::standardPipelineParameters());
 
-  renderer::GraphicsPipeline billboardPipeline(
-      renderTarget,
-      renderer::Shader{"../shaders/billboard.vert",
-                       "../shaders/billboard.frag"},
+  renderer::GraphicsPipeline billboard_pipeline;
+  eg_init_pipeline(
+      &billboard_pipeline,
+      &renderTarget,
+      "../shaders/billboard.vert",
+      "../shaders/billboard.frag",
       engine::billboardPipelineParameters());
 
-  renderer::GraphicsPipeline wireframePipeline(
-      renderTarget,
-      renderer::Shader{"../shaders/box.vert", "../shaders/box.frag"},
+  renderer::GraphicsPipeline wireframe_pipeline;
+  eg_init_pipeline(
+      &wireframe_pipeline,
+      &renderTarget,
+      "../shaders/box.vert",
+      "../shaders/box.frag",
       engine::wireframePipelineParameters());
 
-  renderer::GraphicsPipeline skyboxPipeline(
-      renderTarget,
-      renderer::Shader{"../shaders/skybox.vert", "../shaders/skybox.frag"},
+  renderer::GraphicsPipeline skybox_pipeline;
+  eg_init_pipeline(
+      &skybox_pipeline,
+      &renderTarget,
+      "../shaders/skybox.vert",
+      "../shaders/skybox.frag",
       engine::skyboxPipelineParameters());
 
-  renderer::GraphicsPipeline fullscreenPipeline(
-      window,
-      renderer::Shader{"../shaders/fullscreen.vert",
-                       "../shaders/fullscreen.frag"},
+  renderer::GraphicsPipeline fullscreen_pipeline;
+  eg_init_pipeline(
+      &fullscreen_pipeline,
+      &window,
+      "../shaders/fullscreen.vert",
+      "../shaders/fullscreen.frag",
       engine::fullscreenPipelineParameters());
-
-  // engine::ShaderWatcher<renderer::StandardPipeline> modelShaderWatcher(
-  //     renderTarget, "../shaders/model_pbr.vert",
-  //     "../shaders/model_pbr.frag");
 
   float time = 0.0;
 
   bool drawImgui = false;
-
-  // modelShaderWatcher.startWatching();
 
   while (!window.getShouldClose()) {
     time += window.getDelta();
@@ -115,10 +122,10 @@ int main() {
       renderTarget.beginRenderPass(window);
 
       entityInspectorSystem.drawBox(
-          window, assetManager, world, wireframePipeline);
-      gltfModelSystem.process(window, assetManager, world, modelPipeline);
-      skyboxSystem.process(window, world, skyboxPipeline);
-      billboardSystem.process(window, world, billboardPipeline);
+          window, assetManager, world, wireframe_pipeline);
+      gltfModelSystem.process(window, assetManager, world, model_pipeline);
+      skyboxSystem.process(window, world, skybox_pipeline);
+      billboardSystem.process(window, world, billboard_pipeline);
 
       renderTarget.endRenderPass(window);
     }
@@ -129,7 +136,7 @@ int main() {
     {
       window.beginRenderPass();
 
-      renderTarget.draw(window, fullscreenPipeline);
+      renderTarget.draw(window, fullscreen_pipeline);
 
       if (drawImgui) {
         imgui.draw();

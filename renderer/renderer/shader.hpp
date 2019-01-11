@@ -1,33 +1,25 @@
 #pragma once
 
-#include <ftl/vector.hpp>
+#include <vulkan/vulkan.h>
 
-namespace renderer {
-class Shader {
-public:
-  // Creates a shader from a path to a GLSL file
-  Shader(const char *vertexPath, const char *fragmentPath);
-
-  // Creates a shader from SPIR-V code
-  Shader(
-      size_t vertexCodeSize,
-      uint32_t *vertexCode,
-      size_t fragmentCodeSize,
-      uint32_t *fragmentCode);
-
-  ~Shader();
-
-  Shader(const Shader &other) = delete;
-  Shader &operator=(const Shader &other) = delete;
-
-  Shader(Shader &&other);
-  Shader &operator=(Shader &&other);
-
-  ftl::small_vector<VkPipelineShaderStageCreateInfo>
-  getPipelineShaderStageCreateInfos() const;
-
-private:
-  VkShaderModule m_vertexModule;
-  VkShaderModule m_fragmentModule;
+struct re_shader_t {
+  VkShaderModule vertex_module;
+  VkShaderModule fragment_module;
 };
-} // namespace renderer
+
+void re_shader_init_glsl(
+    re_shader_t *shader,
+    const char *vertex_code,
+    const char *fragment_code);
+
+void re_shader_init_spirv(
+    re_shader_t *shader,
+    const uint32_t *vertex_code,
+    size_t vertex_code_size,
+    const uint32_t *fragment_code,
+    size_t fragment_code_size);
+
+void re_shader_get_pipeline_stages(
+    const re_shader_t *shader, VkPipelineShaderStageCreateInfo *pipeline_stages);
+
+void re_shader_destroy(re_shader_t *shader);

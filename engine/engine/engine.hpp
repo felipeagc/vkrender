@@ -3,9 +3,10 @@
 #include "asset_manager.hpp"
 #include "file_watcher.hpp"
 #include "imgui_utils.hpp"
-#include "shader_watcher.hpp"
-#include "scene.hpp"
 #include "pipelines.hpp"
+#include "scene.hpp"
+#include "shader_watcher.hpp"
+#include "util.hpp"
 
 #include "components/billboard_component.hpp"
 #include "components/camera_component.hpp"
@@ -23,5 +24,5 @@
 
 #include "assets/environment_asset.hpp"
 #include "assets/gltf_model_asset.hpp"
-#include "assets/texture_asset.hpp"
 #include "assets/shape_asset.hpp"
+#include "assets/texture_asset.hpp"

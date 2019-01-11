@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file_watcher.hpp"
+#include "util.hpp"
 #include <ftl/logging.hpp>
 #include <functional>
 #include <mutex>
@@ -28,12 +29,12 @@ public:
         m_vertexPath(vertexPath),
         m_fragmentPath(fragmentPath),
         m_renderTarget(renderTarget) {
-    renderer::Shader shader{
+    eg_init_pipeline(
+        &m_pipeline,
+        &m_renderTarget,
         m_vertexPath.c_str(),
         m_fragmentPath.c_str(),
-    };
-
-    m_pipeline = renderer::GraphicsPipeline{m_renderTarget, shader, m_params};
+        m_params);
 
     m_watcher.addFile(m_vertexPath.c_str());
     m_watcher.addFile(m_fragmentPath.c_str());
@@ -45,13 +46,12 @@ public:
       VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
       try {
-        renderer::Shader shader{
+        eg_init_pipeline(
+            &m_pipeline,
+            &m_renderTarget,
             m_vertexPath.c_str(),
             m_fragmentPath.c_str(),
-        };
-
-        m_pipeline =
-            renderer::GraphicsPipeline{m_renderTarget, shader, m_params};
+            m_params);
       } catch (const std::exception &exception) {
         ftl::error("Error while compiling shader: %s", exception.what());
       }

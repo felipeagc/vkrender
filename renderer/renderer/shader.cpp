@@ -13,16 +13,16 @@ using namespace renderer;
 
 static bool glslangInitialized = false;
 
-enum class ShaderType {
-  VERTEX,
-  TESS_CONTROL,
-  TESS_EVALUATION,
-  GEOMETRY,
-  FRAGMENT,
-  COMPUTE,
+enum shader_type_t {
+  SHADER_TYPE_VERTEX,
+  SHADER_TYPE_TESS_CONTROL,
+  SHADER_TYPE_TESS_EVALUATION,
+  SHADER_TYPE_GEOMETRY,
+  SHADER_TYPE_FRAGMENT,
+  SHADER_TYPE_COMPUTE,
 };
 
-static inline uint32_t *loadSPVCode(const char *path, size_t *codeSize) {
+static inline uint32_t *load_spv_code(const char *path, size_t *codeSize) {
   FILE *file = fopen(path, "rb");
 
   if (file == nullptr) {
@@ -42,62 +42,30 @@ static inline uint32_t *loadSPVCode(const char *path, size_t *codeSize) {
   return storage;
 }
 
-void getFileDir(const char *path, char *outDir) {
-  char *delim = strrchr(path, '/');
-  if (delim == nullptr) {
-    delim = strrchr(path, '\\');
-  }
-  if (delim == nullptr) {
-    return;
-  }
-  int i = 0;
-  for (const char *c = path; c <= delim; c++) {
-    outDir[i++] = *c;
-  }
-  outDir[i] = '\0';
-}
-
-static inline std::vector<uint32_t>
-compileGLSL(const char *path, const ShaderType shaderType) {
+static inline uint32_t *compile_glsl(
+    const char *glsl_code, const shader_type_t shader_type, size_t *code_size) {
   if (!glslangInitialized) {
     glslang::InitializeProcess();
   }
 
-  FILE *file = fopen(path, "r");
-
-  if (file == nullptr) {
-    ftl::error("Could not open shader file: %s", path);
-    assert(0);
-  }
-
-  fseek(file, 0, SEEK_END);
-  size_t strSize = ftell(file);
-  fseek(file, 0, SEEK_SET);
-
-  char *buffer = new char[strSize + 1];
-  fread(buffer, sizeof(char), strSize, file);
-  buffer[strSize] = '\0';
-
-  fclose(file);
-
   EShLanguage shaderType_;
-  switch (shaderType) {
-  case ShaderType::VERTEX:
+  switch (shader_type) {
+  case SHADER_TYPE_VERTEX:
     shaderType_ = EShLangVertex;
     break;
-  case ShaderType::TESS_CONTROL:
+  case SHADER_TYPE_TESS_CONTROL:
     shaderType_ = EShLangTessControl;
     break;
-  case ShaderType::TESS_EVALUATION:
+  case SHADER_TYPE_TESS_EVALUATION:
     shaderType_ = EShLangTessEvaluation;
     break;
-  case ShaderType::GEOMETRY:
+  case SHADER_TYPE_GEOMETRY:
     shaderType_ = EShLangGeometry;
     break;
-  case ShaderType::FRAGMENT:
+  case SHADER_TYPE_FRAGMENT:
     shaderType_ = EShLangFragment;
     break;
-  case ShaderType::COMPUTE:
+  case SHADER_TYPE_COMPUTE:
     shaderType_ = EShLangCompute;
     break;
   default:
@@ -107,7 +75,7 @@ compileGLSL(const char *path, const ShaderType shaderType) {
 
   glslang::TShader shader(shaderType_);
 
-  shader.setStrings(&buffer, 1);
+  shader.setStrings(&glsl_code, 1);
 
   int clientInputSemanticsVersion = 100;
 
@@ -129,9 +97,7 @@ compileGLSL(const char *path, const ShaderType shaderType) {
 
   DirStackFileIncluder includer;
 
-  char dir[256];
-  getFileDir(path, dir);
-  includer.pushExternalLocalDirectory(dir);
+  // includer.pushExternalLocalDirectory(dir);
 
   std::string preprocessedGLSL;
 
@@ -145,11 +111,9 @@ compileGLSL(const char *path, const ShaderType shaderType) {
           &preprocessedGLSL,
           includer)) {
     ftl::error(
-        "GLSL preprocessing failed for: %s\n%s\n%s",
-        path,
+        "GLSL preprocessing failed: %s\n%s",
         shader.getInfoLog(),
         shader.getInfoDebugLog());
-    delete[] buffer;
     assert(0);
   }
 
@@ -158,11 +122,9 @@ compileGLSL(const char *path, const ShaderType shaderType) {
 
   if (!shader.parse(&resources, 100, false, messages)) {
     ftl::error(
-        "GLSL parsing failed for: %s\n%s\n%s",
-        path,
+        "GLSL parsing failed: %s\n%s",
         shader.getInfoLog(),
         shader.getInfoDebugLog());
-    delete[] buffer;
     assert(0);
   }
 
@@ -171,11 +133,9 @@ compileGLSL(const char *path, const ShaderType shaderType) {
 
   if (!program.link(messages)) {
     ftl::error(
-        "GLSL linking failed for: %s\n%s\n%s",
-        path,
+        "GLSL linking failed: %s\n%s",
         shader.getInfoLog(),
         shader.getInfoDebugLog());
-    delete[] buffer;
     assert(0);
   }
 
@@ -185,117 +145,86 @@ compileGLSL(const char *path, const ShaderType shaderType) {
   glslang::GlslangToSpv(
       *program.getIntermediate(shaderType_), spirv, &logger, &spvOptions);
 
-  delete[] buffer;
+  *code_size = spirv.size() * sizeof(uint32_t);
 
-  return spirv;
+  uint32_t *code = new uint32_t[spirv.size()];
+  memcpy(code, spirv.data(), *code_size);
+  return code;
 }
 
 static inline VkShaderModule
-createShaderModule(size_t codeSize, uint32_t *code) {
-  VkShaderModule shaderModule;
+create_shader_module(const uint32_t *code, size_t code_size) {
+  VkShaderModule module;
 
   VkShaderModuleCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, codeSize, code};
+      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, code_size, code};
 
-  VK_CHECK(vkCreateShaderModule(
-      ctx().m_device, &createInfo, nullptr, &shaderModule));
-  return shaderModule;
+  VK_CHECK(vkCreateShaderModule(ctx().m_device, &createInfo, nullptr, &module));
+  return module;
 }
 
-Shader::Shader(const char *vertexPath, const char *fragmentPath) {
-  bool isGLSL = false;
-  const char *spvExt = ".spv";
-  size_t vertexPathLength = strlen(vertexPath);
-  for (size_t i = 0; i < strlen(spvExt); i++) {
-    if (vertexPath[vertexPathLength - i] != spvExt[strlen(spvExt) - i]) {
-      isGLSL = true;
-      break;
-    }
-  }
+void re_shader_init_glsl(
+    re_shader_t *shader,
+    const char *vertex_glsl_code,
+    const char *fragment_glsl_code) {
+  size_t vertex_spirv_code_size, fragment_spirv_code_size;
 
-  if (isGLSL) {
-    std::vector<uint32_t> vertexCode =
-        compileGLSL(vertexPath, ShaderType::VERTEX);
-    std::vector<uint32_t> fragmentCode =
-        compileGLSL(fragmentPath, ShaderType::FRAGMENT);
-    m_vertexModule = createShaderModule(
-        vertexCode.size() * sizeof(uint32_t), vertexCode.data());
-    m_fragmentModule = createShaderModule(
-        fragmentCode.size() * sizeof(uint32_t), fragmentCode.data());
-  } else {
-    size_t vertexCodeSize, fragmentCodeSize;
-    uint32_t *vertexCode = loadSPVCode(vertexPath, &vertexCodeSize);
-    uint32_t *fragmentCode = loadSPVCode(fragmentPath, &fragmentCodeSize);
-    m_vertexModule = createShaderModule(vertexCodeSize, vertexCode);
-    m_fragmentModule = createShaderModule(fragmentCodeSize, fragmentCode);
-    delete[] vertexCode;
-    delete[] fragmentCode;
-  }
+  uint32_t *vertex_spirv_code = compile_glsl(
+      vertex_glsl_code, SHADER_TYPE_VERTEX, &vertex_spirv_code_size);
+  uint32_t *fragment_spirv_code = compile_glsl(
+      fragment_glsl_code, SHADER_TYPE_FRAGMENT, &fragment_spirv_code_size);
+
+  shader->vertex_module =
+      create_shader_module(vertex_spirv_code, vertex_spirv_code_size);
+  shader->fragment_module =
+      create_shader_module(fragment_spirv_code, fragment_spirv_code_size);
+
+  delete[] vertex_spirv_code;
+  delete[] fragment_spirv_code;
 }
 
-Shader::Shader(
-    size_t vertexCodeSize,
-    uint32_t *vertexCode,
-    size_t fragmentCodeSize,
-    uint32_t *fragmentCode) {
-  m_vertexModule = createShaderModule(vertexCodeSize, vertexCode);
-  m_fragmentModule = createShaderModule(fragmentCodeSize, fragmentCode);
+void re_shader_init_spirv(
+    re_shader_t *shader,
+    const uint32_t *vertex_code,
+    size_t vertex_code_size,
+    const uint32_t *fragment_code,
+    size_t fragment_code_size) {
+  shader->vertex_module = create_shader_module(vertex_code, vertex_code_size);
+  shader->fragment_module =
+      create_shader_module(fragment_code, fragment_code_size);
 }
 
-Shader::~Shader() {
+void re_shader_destroy(re_shader_t *shader) {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
 
-  if (m_vertexModule != VK_NULL_HANDLE && m_fragmentModule != VK_NULL_HANDLE) {
-    vkDestroyShaderModule(ctx().m_device, m_vertexModule, nullptr);
-    vkDestroyShaderModule(ctx().m_device, m_fragmentModule, nullptr);
+  if (shader->vertex_module != VK_NULL_HANDLE &&
+      shader->fragment_module != VK_NULL_HANDLE) {
+    vkDestroyShaderModule(ctx().m_device, shader->vertex_module, nullptr);
+    vkDestroyShaderModule(ctx().m_device, shader->fragment_module, nullptr);
+    shader->vertex_module = VK_NULL_HANDLE;
+    shader->fragment_module = VK_NULL_HANDLE;
   }
 }
 
-Shader::Shader(Shader &&other) {
-  m_vertexModule = other.m_vertexModule;
-  m_fragmentModule = other.m_fragmentModule;
-
-  other.m_vertexModule = VK_NULL_HANDLE;
-  other.m_fragmentModule = VK_NULL_HANDLE;
-}
-
-Shader &Shader::operator=(Shader &&other) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-
-  if (m_vertexModule != VK_NULL_HANDLE && m_fragmentModule != VK_NULL_HANDLE) {
-    vkDestroyShaderModule(ctx().m_device, m_vertexModule, nullptr);
-    vkDestroyShaderModule(ctx().m_device, m_fragmentModule, nullptr);
-  }
-
-  m_vertexModule = other.m_vertexModule;
-  m_fragmentModule = other.m_fragmentModule;
-
-  other.m_vertexModule = VK_NULL_HANDLE;
-  other.m_fragmentModule = VK_NULL_HANDLE;
-
-  return *this;
-}
-
-ftl::small_vector<VkPipelineShaderStageCreateInfo>
-Shader::getPipelineShaderStageCreateInfos() const {
-  return ftl::small_vector<VkPipelineShaderStageCreateInfo>{
-      {
-          VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
-          nullptr,                                             // pNext
-          0,                                                   // flags
-          VK_SHADER_STAGE_VERTEX_BIT,                          // stage
-          m_vertexModule,                                      // module
-          "main",                                              // pName
-          nullptr, // pSpecializationInfo
-      },
-      {
-          VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
-          nullptr,                                             // pNext
-          0,                                                   // flags
-          VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
-          m_fragmentModule,                                    // module
-          "main",                                              // pName
-          nullptr, // pSpecializationInfo
-      },
+void re_shader_get_pipeline_stages(
+    const re_shader_t *shader,
+    VkPipelineShaderStageCreateInfo *pipeline_stages) {
+  pipeline_stages[0] = {
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
+      NULL,                                                // pNext
+      0,                                                   // flags
+      VK_SHADER_STAGE_VERTEX_BIT,                          // stage
+      shader->vertex_module,                               // module
+      "main",                                              // pName
+      NULL, // pSpecializationInfo
+  };
+  pipeline_stages[1] = {
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
+      NULL,                                                // pNext
+      0,                                                   // flags
+      VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
+      shader->fragment_module,                             // module
+      "main",                                              // pName
+      NULL, // pSpecializationInfo
   };
 }

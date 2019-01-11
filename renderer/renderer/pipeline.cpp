@@ -11,11 +11,12 @@ GraphicsPipeline::GraphicsPipeline(
 
 GraphicsPipeline::GraphicsPipeline(
     const RenderTarget &renderTarget,
-    const Shader &shader,
+    const re_shader_t shader,
     const PipelineParameters &parameters) {
   layout = parameters.layout;
 
-  auto stages = shader.getPipelineShaderStageCreateInfos();
+  VkPipelineShaderStageCreateInfo pipeline_stages[2];
+  re_shader_get_pipeline_stages(&shader, pipeline_stages);
 
   auto multisampleState =
       pipeline::defaultMultisampleState(renderTarget.getSampleCount());
@@ -23,11 +24,11 @@ GraphicsPipeline::GraphicsPipeline(
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       nullptr,
-      0,                                    // flags
-      static_cast<uint32_t>(stages.size()), // stageCount
-      stages.data(),                        // pStages
-      &parameters.vertexInputState,         // pVertexInputState
-      &parameters.inputAssemblyState,       // pInputAssemblyState
+      0,                              // flags
+      ARRAYSIZE(pipeline_stages),     // stageCount
+      pipeline_stages,                // pStages
+      &parameters.vertexInputState,   // pVertexInputState
+      &parameters.inputAssemblyState, // pInputAssemblyState
       (parameters.hasTesselationState ? &parameters.tessellationState
                                       : nullptr), // pTesselationState
       &parameters.viewportState,                  // pViewportState
@@ -36,7 +37,7 @@ GraphicsPipeline::GraphicsPipeline(
       &parameters.depthStencilState,              // pDepthStencilState
       &parameters.colorBlendState,                // pColorBlendState
       &parameters.dynamicState,                   // pDynamicState
-      layout,                           // pipelineLayout
+      layout,                                     // pipelineLayout
       renderTarget.getRenderPass(),               // renderPass
       0,                                          // subpass
       {},                                         // basePipelineHandle

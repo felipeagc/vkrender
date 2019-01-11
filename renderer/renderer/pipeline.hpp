@@ -52,7 +52,7 @@ struct GraphicsPipeline {
   GraphicsPipeline(){};
   GraphicsPipeline(
       const RenderTarget &renderTarget,
-      const Shader &shader,
+      const re_shader_t shader,
       const PipelineParameters &parameters);
   GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
   ~GraphicsPipeline();
