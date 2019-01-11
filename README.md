@@ -5,15 +5,14 @@
 - [x] Compile GLSL shaders using glslang
 - [x] Shader live refresh
 
+### Filesystem
+- [ ] File system utility functions
+- [ ] Configurable assets path
+
 ### Camera
 - [x] Camera options
 - [x] Use quaternion for camera
 - [x] First person camera
-
-### Pipeline
-- [x] Figure out a way to pass more parameters to the pipeline on creation
-- [x] Multisampling
-- [x] Make multisampling configurable
 
 ### GLTF models
 - [x] Load glTF models
@@ -47,15 +46,14 @@
 - [ ] Better event system
 
 ### Libraries
-- [ ] Figure out how to add vulkan SDK as a submodule
-- [ ] Add SDL2 as a git submodule
+- [ ] Use volk
+- [ ] Add SDL2 as a submodule
 
 ### Assets
 - [x] Make AssetManager thread safe
 - [x] Multi-threaded asset loading
 
 ### ECS
-- [ ] Better storage solution (packed array -- arena allocator)
 - [x] More organized system abstraction
 
 ### FTL
@@ -63,9 +61,15 @@
 - [x] String
 - [ ] String builder
 
+### Portability
+- [ ] Windows file watcher
+- [ ] `#define`s for dllexport (windows)
+
 ### Misc
 - [ ] Make standalone skybox baker
 - [x] Object picking (use OBB testing with bouding box provided by gltf)
+- [ ] Object picking with a color buffer
+- [ ] Transformation gizmos
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [x] Fullscreen post process shader
 - [ ] Document as much as possible
