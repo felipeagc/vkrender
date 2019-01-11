@@ -57,7 +57,8 @@ EnvironmentComponent::EnvironmentComponent(
         environmentAsset.m_irradianceCubemap.getDescriptorInfo();
     auto radianceDescriptorInfo =
         environmentAsset.m_radianceCubemap.getDescriptorInfo();
-    auto brdfLutDescriptorInfo = environmentAsset.m_brdfLut.getDescriptorInfo();
+    auto brdfLutDescriptorInfo =
+        re_texture_descriptor(&environmentAsset.m_brdfLut);
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{

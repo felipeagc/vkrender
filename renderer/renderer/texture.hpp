@@ -1,42 +1,27 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-class Texture {
-public:
-  Texture(){};
-  Texture(const std::string &path);
-  Texture(
-      const std::vector<unsigned char> &data,
-      const uint32_t width,
-      const uint32_t height);
-  ~Texture(){};
+struct re_texture_t {
+  VkImage image;
+  VmaAllocation allocation;
+  VkImageView image_view;
+  VkSampler sampler;
 
-  // Texture can be copied
-  Texture(const Texture &) = default;
-  Texture &operator=(const Texture &) = default;
-
-  // Texture can be moved
-  Texture(Texture &&) = default;
-  Texture &operator=(Texture &&) = default;
-
-  operator bool() const;
-
-  VkDescriptorImageInfo getDescriptorInfo() const;
-
-  void destroy();
-
-private:
-  VkImage m_image = VK_NULL_HANDLE;
-  VmaAllocation m_allocation = VK_NULL_HANDLE;
-  VkImageView m_imageView = VK_NULL_HANDLE;
-  VkSampler m_sampler = VK_NULL_HANDLE;
-
-  uint32_t m_width = 0;
-  uint32_t m_height = 0;
+  uint32_t width;
+  uint32_t height;
 };
-} // namespace renderer
+
+bool re_texture_init_from_path(re_texture_t *texture, const char *path);
+
+void re_texture_init(
+    re_texture_t *texture,
+    const uint8_t *data,
+    const size_t data_size,
+    const uint32_t width,
+    const uint32_t height);
+
+VkDescriptorImageInfo re_texture_descriptor(const re_texture_t *texture);
+
+void re_texture_destroy(re_texture_t *texture);

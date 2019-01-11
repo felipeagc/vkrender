@@ -2,12 +2,11 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <ftl/logging.hpp>
 #include <stb_image.h>
 
 using namespace renderer;
 
-static void createImage(
+static inline void create_image(
     VkImage *image,
     VmaAllocation *allocation,
     VkImageView *imageView,
@@ -97,76 +96,78 @@ static void createImage(
       vkCreateSampler(ctx().m_device, &samplerCreateInfo, nullptr, sampler));
 }
 
-static std::vector<unsigned char>
-loadImage(const std::string &path, uint32_t *width, uint32_t *height) {
+bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
   int iwidth, iheight, channels;
   stbi_uc *pixels =
-      stbi_load(path.data(), &iwidth, &iheight, &channels, STBI_rgb_alpha);
+      stbi_load(path, &iwidth, &iheight, &channels, STBI_rgb_alpha);
 
-  size_t imageSize = static_cast<size_t>(iwidth * iheight * 4);
+  size_t imageSize = (size_t)(iwidth * iheight * 4);
 
-  *width = static_cast<uint32_t>(iwidth);
-  *height = static_cast<uint32_t>(iheight);
+  uint32_t width = (uint32_t)iwidth;
+  uint32_t height = (uint32_t)iheight;
 
   if (!pixels) {
-    throw std::runtime_error("Failed to load image from disk");
+    return false;
   }
 
-  std::vector<unsigned char> result(pixels, pixels + imageSize);
+  re_texture_init(texture, pixels, imageSize, width, height);
 
   stbi_image_free(pixels);
 
-  return result;
+  return true;
 }
 
-Texture::Texture(const std::string &path) {
-  uint32_t width, height;
-  auto pixels = loadImage(path, &width, &height);
-
-  *this = Texture{pixels, width, height};
-}
-
-Texture::Texture(
-    const std::vector<unsigned char> &data,
+void re_texture_init(
+    re_texture_t *texture,
+    const uint8_t *data,
+    const size_t data_size,
     const uint32_t width,
     const uint32_t height) {
-  m_width = width;
-  m_height = height;
+  texture->width = width;
+  texture->height = height;
 
-  createImage(&m_image, &m_allocation, &m_imageView, &m_sampler, width, height);
+  create_image(
+      &texture->image,
+      &texture->allocation,
+      &texture->image_view,
+      &texture->sampler,
+      texture->width,
+      texture->height);
 
   re_buffer_t staging_buffer;
-  re_buffer_init_staging(&staging_buffer, data.size());
+  re_buffer_init_staging(&staging_buffer, data_size);
 
   void *staging_pointer;
   re_buffer_map_memory(&staging_buffer, &staging_pointer);
-  memcpy(staging_pointer, data.data(), data.size());
+  memcpy(staging_pointer, data, data_size);
 
-  re_buffer_transfer_to_image(&staging_buffer, m_image, m_width, m_height);
+  re_buffer_transfer_to_image(
+      &staging_buffer, texture->image, texture->width, texture->height);
 
   re_buffer_unmap_memory(&staging_buffer);
 
   re_buffer_destroy(&staging_buffer);
 }
 
-Texture::operator bool() const { return m_image != VK_NULL_HANDLE; }
-
-VkDescriptorImageInfo Texture::getDescriptorInfo() const {
-  return {
-      m_sampler,
-      m_imageView,
+VkDescriptorImageInfo re_texture_descriptor(const re_texture_t *texture) {
+  return VkDescriptorImageInfo{
+      texture->sampler,
+      texture->image_view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
   };
 }
 
-void Texture::destroy() {
+void re_texture_destroy(re_texture_t *texture) {
   VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-  vkDestroyImageView(ctx().m_device, m_imageView, nullptr);
-  vkDestroySampler(ctx().m_device, m_sampler, nullptr);
-  vmaDestroyImage(ctx().m_allocator, m_image, m_allocation);
 
-  m_image = VK_NULL_HANDLE;
-  m_allocation = VK_NULL_HANDLE;
-  m_imageView = VK_NULL_HANDLE;
-  m_sampler = VK_NULL_HANDLE;
+  if (texture->image != VK_NULL_HANDLE) {
+    vkDestroyImageView(ctx().m_device, texture->image_view, nullptr);
+    vkDestroySampler(ctx().m_device, texture->sampler, nullptr);
+    vmaDestroyImage(ctx().m_allocator, texture->image, texture->allocation);
+
+    texture->image = VK_NULL_HANDLE;
+    texture->allocation = VK_NULL_HANDLE;
+    texture->image_view = VK_NULL_HANDLE;
+    texture->sampler = VK_NULL_HANDLE;
+  }
 }

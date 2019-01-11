@@ -22,14 +22,16 @@ public:
     m_skyboxCubemap = renderer::Cubemap(skyboxPath, width, height);
     m_irradianceCubemap = renderer::Cubemap(irradiancePath, width, height);
     m_radianceCubemap = renderer::Cubemap(radiancePaths, width, height);
-    m_brdfLut = renderer::Texture(brdfLutPath);
+
+    re_texture_init_from_path(&m_brdfLut, brdfLutPath.c_str());
   }
 
   ~EnvironmentAsset() {
     m_skyboxCubemap.destroy();
     m_irradianceCubemap.destroy();
     m_radianceCubemap.destroy();
-    m_brdfLut.destroy();
+
+    re_texture_destroy(&m_brdfLut);
   }
 
   // EnvironmentAsset cannot be copied
@@ -43,6 +45,6 @@ public:
   renderer::Cubemap m_skyboxCubemap;
   renderer::Cubemap m_irradianceCubemap;
   renderer::Cubemap m_radianceCubemap;
-  renderer::Texture m_brdfLut;
+  re_texture_t m_brdfLut;
 };
 } // namespace engine

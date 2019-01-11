@@ -122,7 +122,7 @@ public:
   // TODO: these vectors are bad for data locality
   std::vector<Node> m_nodes;
   std::vector<Mesh> m_meshes;
-  std::vector<renderer::Texture> m_textures;
+  std::vector<re_texture_t> m_textures;
   std::vector<Material> m_materials;
 
 protected:

@@ -33,7 +33,7 @@ BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
 
   // Update descriptor sets
   for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
-    auto albedoDescriptorInfo = textureAsset.texture().getDescriptorInfo();
+    auto albedoDescriptorInfo = re_texture_descriptor(&textureAsset.m_texture);
 
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{

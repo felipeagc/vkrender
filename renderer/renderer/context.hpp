@@ -71,8 +71,8 @@ public:
 
   ResourceManager m_resourceManager;
 
-  Texture m_whiteTexture;
-  Texture m_blackTexture;
+  re_texture_t m_white_texture;
+  re_texture_t m_black_texture;
 
 private:
   void createInstance(

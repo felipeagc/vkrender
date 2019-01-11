@@ -40,25 +40,26 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     this->descriptorSets[i] = setLayout.allocate();
 
-    VkDescriptorImageInfo albedoDescriptorInfo = {};
-    VkDescriptorImageInfo normalDescriptorInfo = {};
-    VkDescriptorImageInfo metallicRoughnessDescriptorInfo = {};
-    VkDescriptorImageInfo occlusionDescriptorInfo = {};
-    VkDescriptorImageInfo emissiveDescriptorInfo = {};
+    VkDescriptorImageInfo albedoDescriptorInfo =
+        re_texture_descriptor(&renderer::ctx().m_white_texture);
+    VkDescriptorImageInfo normalDescriptorInfo =
+        re_texture_descriptor(&renderer::ctx().m_white_texture);
+    VkDescriptorImageInfo metallicRoughnessDescriptorInfo =
+        re_texture_descriptor(&renderer::ctx().m_white_texture);
+    VkDescriptorImageInfo occlusionDescriptorInfo =
+        re_texture_descriptor(&renderer::ctx().m_white_texture);
+    VkDescriptorImageInfo emissiveDescriptorInfo =
+        re_texture_descriptor(&renderer::ctx().m_black_texture);
 
     // Albedo
     if (this->baseColorTextureIndex != -1) {
       auto &albedoTexture = model.m_textures[this->baseColorTextureIndex];
-      albedoDescriptorInfo = albedoTexture.getDescriptorInfo();
-    } else {
-      albedoDescriptorInfo = renderer::ctx().m_whiteTexture.getDescriptorInfo();
+      albedoDescriptorInfo = re_texture_descriptor(&albedoTexture);
     }
 
     if (this->normalTextureIndex != -1) {
       auto &normalTexture = model.m_textures[this->normalTextureIndex];
-      normalDescriptorInfo = normalTexture.getDescriptorInfo();
-    } else {
-      normalDescriptorInfo = renderer::ctx().m_whiteTexture.getDescriptorInfo();
+      normalDescriptorInfo = re_texture_descriptor(&normalTexture);
     }
 
     // Metallic/roughness
@@ -66,28 +67,19 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
       auto &metallicRoughnessTexture =
           model.m_textures[this->metallicRoughnessTextureIndex];
       metallicRoughnessDescriptorInfo =
-          metallicRoughnessTexture.getDescriptorInfo();
-    } else {
-      metallicRoughnessDescriptorInfo =
-          renderer::ctx().m_whiteTexture.getDescriptorInfo();
+          re_texture_descriptor(&metallicRoughnessTexture);
     }
 
     // Occlusion
     if (this->occlusionTextureIndex != -1) {
       auto &occlusionTexture = model.m_textures[this->occlusionTextureIndex];
-      occlusionDescriptorInfo = occlusionTexture.getDescriptorInfo();
-    } else {
-      occlusionDescriptorInfo =
-          renderer::ctx().m_whiteTexture.getDescriptorInfo();
+      occlusionDescriptorInfo = re_texture_descriptor(&occlusionTexture);
     }
 
     // Emissive
     if (this->emissiveTextureIndex != -1) {
       auto &emissiveTexture = model.m_textures[this->emissiveTextureIndex];
-      emissiveDescriptorInfo = emissiveTexture.getDescriptorInfo();
-    } else {
-      emissiveDescriptorInfo =
-          renderer::ctx().m_blackTexture.getDescriptorInfo();
+      emissiveDescriptorInfo = re_texture_descriptor(&emissiveTexture);
     }
 
     VkWriteDescriptorSet descriptorWrites[] = {
@@ -358,8 +350,8 @@ GltfModelAsset::~GltfModelAsset() {
   m_materials.clear();
 
   for (auto &texture : m_textures) {
-    if (texture)
-      texture.destroy();
+    // @todo: make sure texture is actually initialized
+    re_texture_destroy(&texture);
   }
 
   m_textures.clear();
@@ -441,10 +433,12 @@ void GltfModelAsset::loadTextures(tinygltf::Model &model) {
       throw std::runtime_error("Only 4-component images are supported.");
     }
 
-    m_textures[i] =
-        renderer::Texture{model.images[i].image,
-                          static_cast<uint32_t>(model.images[i].width),
-                          static_cast<uint32_t>(model.images[i].height)};
+    re_texture_init(
+        &m_textures[i],
+        model.images[i].image.data(),
+        model.images[i].image.size(),
+        (uint32_t)model.images[i].width,
+        (uint32_t)model.images[i].height);
   }
 }
 

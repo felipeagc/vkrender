@@ -438,8 +438,10 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
 
   m_resourceManager.initialize();
 
-  m_whiteTexture = Texture{{255, 255, 255, 255}, 1, 1};
-  m_blackTexture = Texture{{0, 0, 0, 255}, 1, 1};
+  uint8_t white[] = {255, 255, 255, 255};
+  uint8_t black[] = {0, 0, 0, 255};
+  re_texture_init(&m_white_texture, white, sizeof(white), 1, 1);
+  re_texture_init(&m_black_texture, black, sizeof(black), 1, 1);
 }
 
 Context::~Context() {
@@ -447,8 +449,8 @@ Context::~Context() {
 
   VK_CHECK(vkDeviceWaitIdle(m_device));
 
-  m_whiteTexture.destroy();
-  m_blackTexture.destroy();
+  re_texture_destroy(&m_white_texture);
+  re_texture_destroy(&m_black_texture);
 
   m_resourceManager.destroy();
 

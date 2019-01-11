@@ -11,17 +11,18 @@ public:
 
   TextureAsset(const std::string &path) {
     this->identifier = path;
-    m_texture = renderer::Texture(path);
+
+    re_texture_init_from_path(&m_texture, path.c_str());
   }
 
   TextureAsset(
       const std::vector<unsigned char> &data,
       const uint32_t width,
       const uint32_t height) {
-    m_texture = renderer::Texture(data, width, height);
+    re_texture_init(&m_texture, data.data(), data.size(), width, height);
   }
 
-  ~TextureAsset() { m_texture.destroy(); }
+  ~TextureAsset() { re_texture_destroy(&m_texture); }
 
   // TextureAsset cannot be copied
   TextureAsset(const TextureAsset &) = delete;
@@ -31,9 +32,6 @@ public:
   TextureAsset(TextureAsset &&) = delete;
   TextureAsset &operator=(TextureAsset &&) = delete;
 
-  const renderer::Texture &texture() const { return m_texture; }
-
-private:
-  renderer::Texture m_texture;
+  re_texture_t m_texture;
 };
 } // namespace engine
