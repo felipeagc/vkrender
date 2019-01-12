@@ -17,7 +17,7 @@ int main() {
       &window.render_target,
       "../shaders/mandelbrot.vert",
       "../shaders/mandelbrot.frag",
-      engine::fullscreenPipelineParameters());
+      eg_fullscreen_pipeline_parameters());
 
   shaderWatcher.startWatching();
 
@@ -80,14 +80,14 @@ int main() {
 
       vkCmdPushConstants(
           window.getCurrentCommandBuffer(),
-          shaderWatcher.pipeline().layout,
+          shaderWatcher.pipeline.layout,
           VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
           0,
           sizeof(block),
           &block);
 
       re_canvas_draw(
-          &canvas, window.getCurrentCommandBuffer(), &shaderWatcher.pipeline());
+          &canvas, window.getCurrentCommandBuffer(), &shaderWatcher.pipeline);
 
       window.endRenderPass();
     }

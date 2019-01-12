@@ -14,7 +14,7 @@ BillboardSystem::~BillboardSystem() {}
 void BillboardSystem::process(
     renderer::Window &window,
     ecs::World &world,
-    renderer::GraphicsPipeline &pipeline) {
+    re_pipeline_t &pipeline) {
   if (!drawBillboards)
     return;
 

@@ -37,7 +37,7 @@ public:
   void update(renderer::Window &window, const TransformComponent &transform);
 
   // Binds this camera to a pipeline
-  void bind(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
+  void bind(renderer::Window &window, re_pipeline_t &pipeline);
 
   float m_fov;
   CameraUniform m_cameraUniform;

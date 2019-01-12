@@ -16,7 +16,7 @@ public:
   void process(
       renderer::Window &window,
       ecs::World &world,
-      renderer::GraphicsPipeline &pipeline);
+      re_pipeline_t &pipeline);
 
 private:
   bool drawBillboards = true;

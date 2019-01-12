@@ -2,26 +2,25 @@
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
 
-namespace engine {
-renderer::PipelineParameters standardPipelineParameters() {
-  renderer::PipelineParameters params;
+re_pipeline_parameters_t eg_standard_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.layout =
       renderer::ctx().m_resourceManager.m_providers.standard.pipelineLayout;
 
-  params.rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  params.rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
 
   return params;
 }
 
-renderer::PipelineParameters billboardPipelineParameters() {
-  renderer::PipelineParameters params;
+re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.layout =
       renderer::ctx().m_resourceManager.m_providers.billboard.pipelineLayout;
 
-  params.vertexInputState = VkPipelineVertexInputStateCreateInfo{
+  params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
       0,                                                         // flags
@@ -31,33 +30,33 @@ renderer::PipelineParameters billboardPipelineParameters() {
       nullptr, // pVertexAttributeDescriptions
   };
 
-  params.rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
-  params.rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   return params;
 }
 
-renderer::PipelineParameters wireframePipelineParameters() {
-  renderer::PipelineParameters params;
+re_pipeline_parameters_t eg_wireframe_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.layout =
       renderer::ctx().m_resourceManager.m_providers.box.pipelineLayout;
 
-  params.rasterizationState.cullMode = VK_CULL_MODE_NONE;
-  params.rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  params.rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-  params.rasterizationState.lineWidth = 2.0f;
+  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
+  params.rasterization_state.lineWidth = 2.0f;
 
   return params;
 }
 
-renderer::PipelineParameters skyboxPipelineParameters() {
-  renderer::PipelineParameters params;
+re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.layout =
       renderer::ctx().m_resourceManager.m_providers.skybox.pipelineLayout;
 
-  params.vertexInputState = VkPipelineVertexInputStateCreateInfo{
+  params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
       0,                                                         // flags
@@ -67,20 +66,20 @@ renderer::PipelineParameters skyboxPipelineParameters() {
       nullptr, // pVertexAttributeDescriptions
   };
 
-  params.rasterizationState.cullMode = VK_CULL_MODE_NONE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
 
-  params.depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+  params.depth_stencil_state.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 
   return params;
 }
 
-renderer::PipelineParameters fullscreenPipelineParameters() {
-  renderer::PipelineParameters params;
+re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.layout =
       renderer::ctx().m_resourceManager.m_providers.fullscreen.pipelineLayout;
 
-  params.vertexInputState = VkPipelineVertexInputStateCreateInfo{
+  params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
       0,                                                         // flags
@@ -90,10 +89,10 @@ renderer::PipelineParameters fullscreenPipelineParameters() {
       nullptr, // pVertexAttributeDescriptions
   };
 
-  params.rasterizationState.cullMode = VK_CULL_MODE_FRONT_BIT;
-  params.rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-  params.depthStencilState.depthTestEnable = VK_FALSE;
+  params.depth_stencil_state.depthTestEnable = VK_FALSE;
 
   static VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
       VK_FALSE,                            // blendEnable
@@ -107,7 +106,7 @@ renderer::PipelineParameters fullscreenPipelineParameters() {
           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, // colorWriteMask
   };
 
-  params.colorBlendState = VkPipelineColorBlendStateCreateInfo{
+  params.color_blend_state = VkPipelineColorBlendStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
       nullptr,
       0,                          // flags
@@ -120,4 +119,3 @@ renderer::PipelineParameters fullscreenPipelineParameters() {
 
   return params;
 }
-} // namespace engine

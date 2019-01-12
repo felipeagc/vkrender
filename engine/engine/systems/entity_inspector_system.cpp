@@ -160,7 +160,7 @@ void EntityInspectorSystem::drawBox(
     renderer::Window &window,
     AssetManager &assetManager,
     ecs::World &world,
-    renderer::GraphicsPipeline &boxPipeline) {
+    re_pipeline_t wireframe_pipeline) {
   if (m_selectedEntity == ecs::MAX_ENTITY) {
     return;
   }
@@ -173,14 +173,14 @@ void EntityInspectorSystem::drawBox(
 
   ecs::Entity camera = world.first<engine::CameraComponent>();
   world.getComponent<engine::CameraComponent>(camera)->bind(
-      window, boxPipeline);
+      window, wireframe_pipeline);
 
   auto &box = assetManager.getAsset<ShapeAsset>(m_boxAsset);
 
   vkCmdBindPipeline(
       window.getCurrentCommandBuffer(),
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      boxPipeline.pipeline);
+      wireframe_pipeline.pipeline);
 
   auto &modelAsset = assetManager.getAsset<GltfModelAsset>(model->m_modelIndex);
 
@@ -193,7 +193,7 @@ void EntityInspectorSystem::drawBox(
 
   vkCmdPushConstants(
       window.getCurrentCommandBuffer(),
-      boxPipeline.layout,
+      wireframe_pipeline.layout,
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
       0,
       sizeof(pushConstant),
@@ -213,7 +213,7 @@ void EntityInspectorSystem::drawBox(
   vkCmdBindDescriptorSets(
       window.getCurrentCommandBuffer(),
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      boxPipeline.layout,
+      wireframe_pipeline.layout,
       1, // firstSet
       1,
       model->m_descriptorSets[window.getCurrentFrameIndex()],

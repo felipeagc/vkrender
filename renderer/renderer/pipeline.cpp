@@ -3,101 +3,20 @@
 #include "shader.hpp"
 #include "util.hpp"
 
-namespace renderer {
-
-GraphicsPipeline::GraphicsPipeline(
-    VkPipeline pipeline, VkPipelineLayout pipelineLayout)
-    : pipeline(pipeline), layout(pipelineLayout) {}
-
-GraphicsPipeline::GraphicsPipeline(
-    const re_render_target_t render_target,
-    const re_shader_t shader,
-    const PipelineParameters &parameters) {
-  layout = parameters.layout;
-
-  VkPipelineShaderStageCreateInfo pipeline_stages[2];
-  re_shader_get_pipeline_stages(&shader, pipeline_stages);
-
-  auto multisampleState =
-      pipeline::defaultMultisampleState(render_target.sample_count);
-
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
-      0,                              // flags
-      ARRAYSIZE(pipeline_stages),     // stageCount
-      pipeline_stages,                // pStages
-      &parameters.vertexInputState,   // pVertexInputState
-      &parameters.inputAssemblyState, // pInputAssemblyState
-      (parameters.hasTesselationState ? &parameters.tessellationState
-                                      : nullptr), // pTesselationState
-      &parameters.viewportState,                  // pViewportState
-      &parameters.rasterizationState,             // pRasterizationState
-      &multisampleState,                          // multisampleState
-      &parameters.depthStencilState,              // pDepthStencilState
-      &parameters.colorBlendState,                // pColorBlendState
-      &parameters.dynamicState,                   // pDynamicState
-      layout,                                     // pipelineLayout
-      render_target.render_pass,               // renderPass
-      0,                                          // subpass
-      {},                                         // basePipelineHandle
-      -1                                          // basePipelineIndex
-  };
-
-  VK_CHECK(vkCreateGraphicsPipelines(
-      ctx().m_device,
-      VK_NULL_HANDLE,
-      1,
-      &pipelineCreateInfo,
-      nullptr,
-      &this->pipeline));
-}
-
-GraphicsPipeline::~GraphicsPipeline() {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-
-  if (this->pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(ctx().m_device, this->pipeline, nullptr);
-  }
-}
-
-GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&rhs) {
-  this->pipeline = rhs.pipeline;
-  layout = rhs.layout;
-  rhs.pipeline = VK_NULL_HANDLE;
-  rhs.layout = VK_NULL_HANDLE;
-}
-
-GraphicsPipeline &GraphicsPipeline::operator=(GraphicsPipeline &&rhs) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
-
-  if (this->pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(ctx().m_device, this->pipeline, nullptr);
-  }
-
-  this->pipeline = rhs.pipeline;
-  layout = rhs.layout;
-  rhs.pipeline = VK_NULL_HANDLE;
-  rhs.layout = VK_NULL_HANDLE;
-
-  return *this;
-}
-} // namespace renderer
-
-namespace renderer::pipeline {
-VkPipelineVertexInputStateCreateInfo defaultVertexInputState() {
+static inline VkPipelineVertexInputStateCreateInfo
+default_vertex_input_state() {
   static VkVertexInputBindingDescription vertexBindingDescriptions[] = {
       {
           0,                           // binding
-          sizeof(StandardVertex),      // stride,
+          sizeof(re_vertex_t),         // stride,
           VK_VERTEX_INPUT_RATE_VERTEX, // inputRate
       },
   };
 
   static VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
-      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StandardVertex, pos)},
-      {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StandardVertex, normal)},
-      {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(StandardVertex, uv)},
+      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(re_vertex_t, pos)},
+      {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(re_vertex_t, normal)},
+      {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(re_vertex_t, uv)},
   };
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
@@ -113,7 +32,8 @@ VkPipelineVertexInputStateCreateInfo defaultVertexInputState() {
   return vertexInputStateCreateInfo;
 }
 
-VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState() {
+static inline VkPipelineInputAssemblyStateCreateInfo
+default_input_assembly_state() {
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
       nullptr,
@@ -125,7 +45,7 @@ VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState() {
   return inputAssemblyStateCreateInfo;
 }
 
-VkPipelineViewportStateCreateInfo defaultViewportState() {
+static inline VkPipelineViewportStateCreateInfo default_viewport_state() {
   // pViewports and pScissors are null because we're defining them through a
   // dynamic state
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
@@ -141,7 +61,8 @@ VkPipelineViewportStateCreateInfo defaultViewportState() {
   return viewportStateCreateInfo;
 }
 
-VkPipelineRasterizationStateCreateInfo defaultRasterizationState() {
+static inline VkPipelineRasterizationStateCreateInfo
+default_rasterization_state() {
   VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
       nullptr,
@@ -161,10 +82,11 @@ VkPipelineRasterizationStateCreateInfo defaultRasterizationState() {
   return rasterizationStateCreateInfo;
 }
 
-VkPipelineMultisampleStateCreateInfo
-defaultMultisampleState(VkSampleCountFlagBits sampleCount) {
+static inline VkPipelineMultisampleStateCreateInfo
+default_multisample_state(VkSampleCountFlagBits sampleCount) {
   VkPhysicalDeviceFeatures deviceFeatures;
-  vkGetPhysicalDeviceFeatures(ctx().m_physicalDevice, &deviceFeatures);
+  vkGetPhysicalDeviceFeatures(
+      renderer::ctx().m_physicalDevice, &deviceFeatures);
   VkBool32 hasSampleShading = deviceFeatures.sampleRateShading;
 
   VkBool32 sampleShadingEnable =
@@ -189,7 +111,8 @@ defaultMultisampleState(VkSampleCountFlagBits sampleCount) {
   return multisampleStateCreateInfo;
 }
 
-VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState() {
+static inline VkPipelineDepthStencilStateCreateInfo
+default_depth_stencil_state() {
   VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
   depthStencilStateCreateInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -204,7 +127,7 @@ VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState() {
   return depthStencilStateCreateInfo;
 }
 
-VkPipelineColorBlendStateCreateInfo defaultColorBlendState() {
+static inline VkPipelineColorBlendStateCreateInfo default_color_blend_state() {
   static VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
       VK_TRUE,                             // blendEnable
       VK_BLEND_FACTOR_SRC_ALPHA,           // srcColorBlendFactor
@@ -231,7 +154,7 @@ VkPipelineColorBlendStateCreateInfo defaultColorBlendState() {
   return colorBlendStateCreateInfo;
 }
 
-VkPipelineDynamicStateCreateInfo defaultDynamicState() {
+static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
   static VkDynamicState dynamicStates[] = {
       VK_DYNAMIC_STATE_VIEWPORT,
       VK_DYNAMIC_STATE_SCISSOR,
@@ -247,4 +170,67 @@ VkPipelineDynamicStateCreateInfo defaultDynamicState() {
 
   return dynamicStateCreateInfo;
 }
-} // namespace renderer::pipeline
+
+re_pipeline_parameters_t re_default_pipeline_parameters() {
+  re_pipeline_parameters_t params;
+  params.vertex_input_state = default_vertex_input_state();
+  params.input_assembly_state = default_input_assembly_state();
+  params.viewport_state = default_viewport_state();
+  params.rasterization_state = default_rasterization_state();
+  params.depth_stencil_state = default_depth_stencil_state();
+  params.color_blend_state = default_color_blend_state();
+  params.dynamic_state = default_dynamic_state();
+  return params;
+}
+
+void re_pipeline_init_graphics(
+    re_pipeline_t *pipeline,
+    const re_render_target_t render_target,
+    const re_shader_t shader,
+    const re_pipeline_parameters_t parameters) {
+  pipeline->layout = parameters.layout;
+
+  VkPipelineShaderStageCreateInfo pipeline_stages[2];
+  re_shader_get_pipeline_stages(&shader, pipeline_stages);
+
+  auto multisample_state =
+      default_multisample_state(render_target.sample_count);
+
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{
+      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      nullptr,
+      0,                                // flags
+      ARRAYSIZE(pipeline_stages),       // stageCount
+      pipeline_stages,                  // pStages
+      &parameters.vertex_input_state,   // pVertexInputState
+      &parameters.input_assembly_state, // pInputAssemblyState
+      nullptr,                          // pTesselationState
+      &parameters.viewport_state,       // pViewportState
+      &parameters.rasterization_state,  // pRasterizationState
+      &multisample_state,               // multisampleState
+      &parameters.depth_stencil_state,  // pDepthStencilState
+      &parameters.color_blend_state,    // pColorBlendState
+      &parameters.dynamic_state,        // pDynamicState
+      pipeline->layout,                 // pipelineLayout
+      render_target.render_pass,        // renderPass
+      0,                                // subpass
+      {},                               // basePipelineHandle
+      -1                                // basePipelineIndex
+  };
+
+  VK_CHECK(vkCreateGraphicsPipelines(
+      renderer::ctx().m_device,
+      VK_NULL_HANDLE,
+      1,
+      &pipelineCreateInfo,
+      nullptr,
+      &pipeline->pipeline));
+}
+
+void re_pipeline_destroy(re_pipeline_t *pipeline) {
+  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+
+  if (pipeline->pipeline != VK_NULL_HANDLE) {
+    vkDestroyPipeline(renderer::ctx().m_device, pipeline->pipeline, nullptr);
+  }
+}

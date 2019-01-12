@@ -6,33 +6,21 @@ union SDL_Event;
 
 namespace renderer {
 class Window;
+}
 
-class ImGuiRenderer {
-public:
-  ImGuiRenderer(Window &window);
-  ~ImGuiRenderer();
-
-  // ImguiRenderer cannot be copied
-  ImGuiRenderer(const ImGuiRenderer &) = delete;
-  ImGuiRenderer &operator=(const ImGuiRenderer &) = delete;
-
-  // ImguiRenderer cannot be moved
-  ImGuiRenderer(ImGuiRenderer &&) = delete;
-  ImGuiRenderer &operator=(ImGuiRenderer &&) = delete;
-
-  void begin();
-  void end();
-
-  void draw();
-
-  void processEvent(SDL_Event &event);
-
-private:
-  Window &m_window;
-
-  VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
-
-  void createDescriptorPool();
-  void destroyDescriptorPool();
+struct re_imgui_t {
+  renderer::Window *window;
+  VkDescriptorPool descriptor_pool;
 };
-} // namespace renderer
+
+void re_imgui_init(re_imgui_t *imgui, renderer::Window *window);
+
+void re_imgui_begin(re_imgui_t *imgui);
+
+void re_imgui_end(re_imgui_t *imgui);
+
+void re_imgui_draw(re_imgui_t *imgui);
+
+void re_imgui_process_event(re_imgui_t *imgui, SDL_Event *event);
+
+void re_imgui_destroy(re_imgui_t *imgui);

@@ -16,6 +16,6 @@ public:
   void process(
       renderer::Window &window,
       ecs::World &world,
-      renderer::GraphicsPipeline &pipeline);
+      re_pipeline_t &pipeline);
 };
 } // namespace engine

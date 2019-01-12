@@ -17,7 +17,7 @@ void GltfModelSystem::process(
     renderer::Window &window,
     AssetManager &assetManager,
     ecs::World &world,
-    renderer::GraphicsPipeline &modelPipeline) {
+    re_pipeline_t modelPipeline) {
   // Draw models
   ecs::Entity camera = world.first<engine::CameraComponent>();
   ecs::Entity skybox = world.first<engine::EnvironmentComponent>();

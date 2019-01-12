@@ -75,7 +75,7 @@ GltfModelComponent::~GltfModelComponent() {
 void GltfModelComponent::draw(
     renderer::Window &window,
     engine::AssetManager &assetManager,
-    renderer::GraphicsPipeline &pipeline,
+    re_pipeline_t pipeline,
     const glm::mat4 &transform) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
@@ -95,10 +95,7 @@ void GltfModelComponent::draw(
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
-      commandBuffer,
-      gltfModel.m_indexBuffer.buffer,
-      0,
-      VK_INDEX_TYPE_UINT32);
+      commandBuffer, gltfModel.m_indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(
       commandBuffer,
@@ -119,7 +116,7 @@ void GltfModelComponent::drawNode(
     GltfModelAsset &model,
     GltfModelAsset::Node &node,
     renderer::Window &window,
-    renderer::GraphicsPipeline &pipeline) {
+    re_pipeline_t pipeline) {
   VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();

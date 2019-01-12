@@ -4,6 +4,10 @@
 #include <ecs/world.hpp>
 #include <renderer/pipeline.hpp>
 
+namespace renderer {
+class Window;
+}
+
 namespace engine {
 class GltfModelSystem {
 public:
@@ -14,7 +18,7 @@ public:
       renderer::Window &window,
       AssetManager &assetManager,
       ecs::World &world,
-      renderer::GraphicsPipeline &pipeline);
+      re_pipeline_t pipeline);
 
 protected:
   AssetIndex m_boxAsset;

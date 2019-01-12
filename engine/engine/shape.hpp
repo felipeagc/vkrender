@@ -7,7 +7,7 @@ namespace engine {
 class Shape {
 public:
   std::vector<uint32_t> m_indices;
-  std::vector<renderer::StandardVertex> m_vertices;
+  std::vector<re_vertex_t> m_vertices;
 };
 
 class BoxShape : public Shape {

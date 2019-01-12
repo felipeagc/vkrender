@@ -12,7 +12,7 @@ SkyboxSystem::~SkyboxSystem() {}
 void SkyboxSystem::process(
     renderer::Window &window,
     ecs::World &world,
-    renderer::GraphicsPipeline &pipeline) {
+    re_pipeline_t &pipeline) {
   ecs::Entity cameraEntity = world.first<CameraComponent>();
   world.getComponent<CameraComponent>(cameraEntity)->bind(window, pipeline);
 

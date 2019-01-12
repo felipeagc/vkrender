@@ -97,7 +97,7 @@ void CameraComponent::update(
 }
 
 void CameraComponent::bind(
-    renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
+    renderer::Window &window, re_pipeline_t &pipeline) {
   auto i = window.getCurrentFrameIndex();
   VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
 

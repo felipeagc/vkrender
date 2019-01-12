@@ -33,11 +33,11 @@ public:
 
   void bind(
       renderer::Window &window,
-      renderer::GraphicsPipeline &pipeline,
+      re_pipeline_t &pipeline,
       uint32_t setIndex);
 
   void
-  drawSkybox(renderer::Window &window, renderer::GraphicsPipeline &pipeline);
+  drawSkybox(renderer::Window &window, re_pipeline_t &pipeline);
 
   void update(renderer::Window &window);
 

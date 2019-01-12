@@ -3,8 +3,7 @@
 using namespace engine;
 
 ShapeAsset::ShapeAsset(const Shape &shape) : m_shape(shape) {
-  size_t vertexBufferSize =
-      sizeof(renderer::StandardVertex) * m_shape.m_vertices.size();
+  size_t vertexBufferSize = sizeof(re_vertex_t) * m_shape.m_vertices.size();
   size_t indexBufferSize = sizeof(uint32_t) * m_shape.m_indices.size();
 
   re_buffer_t staging_buffer;

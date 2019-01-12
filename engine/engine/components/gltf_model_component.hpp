@@ -3,6 +3,10 @@
 #include "../asset_manager.hpp"
 #include "../assets/gltf_model_asset.hpp"
 
+namespace renderer {
+class Window;
+}
+
 namespace engine {
 
 class GltfModelComponent {
@@ -23,7 +27,7 @@ public:
   void draw(
       renderer::Window &window,
       engine::AssetManager &assetManager,
-      renderer::GraphicsPipeline &pipeline,
+      re_pipeline_t pipeline,
       const glm::mat4 &transform);
 
   AssetIndex m_modelIndex;
@@ -42,6 +46,6 @@ private:
       GltfModelAsset &model,
       GltfModelAsset::Node &node,
       renderer::Window &window,
-      renderer::GraphicsPipeline &pipeline);
+      re_pipeline_t pipeline);
 };
 } // namespace engine

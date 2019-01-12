@@ -3,14 +3,12 @@
 #include <renderer/pipeline.hpp>
 #include <renderer/shader.hpp>
 
-namespace engine {
-renderer::PipelineParameters standardPipelineParameters();
+re_pipeline_parameters_t eg_standard_pipeline_parameters();
 
-renderer::PipelineParameters billboardPipelineParameters();
+re_pipeline_parameters_t eg_billboard_pipeline_parameters();
 
-renderer::PipelineParameters wireframePipelineParameters();
+re_pipeline_parameters_t eg_wireframe_pipeline_parameters();
 
-renderer::PipelineParameters skyboxPipelineParameters();
+re_pipeline_parameters_t eg_skybox_pipeline_parameters();
 
-renderer::PipelineParameters fullscreenPipelineParameters();
-} // namespace engine
+re_pipeline_parameters_t eg_fullscreen_pipeline_parameters();

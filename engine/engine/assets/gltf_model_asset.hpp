@@ -138,7 +138,7 @@ protected:
       int nodeIndex,
       const tinygltf::Model &model,
       std::vector<uint32_t> &indices,
-      std::vector<renderer::StandardVertex> &vertices,
+      std::vector<re_vertex_t> &vertices,
       bool flipUVs);
 
   void getNodeDimensions(Node &node, glm::vec3 &min, glm::vec3 &max);

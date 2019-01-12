@@ -1,6 +1,5 @@
 #include "canvas.hpp"
 #include "context.hpp"
-#include "pipeline.hpp"
 #include "util.hpp"
 #include "window.hpp"
 
@@ -471,7 +470,7 @@ void re_canvas_end(re_canvas_t *, const VkCommandBuffer command_buffer) {
 void re_canvas_draw(
     re_canvas_t *canvas,
     const VkCommandBuffer command_buffer,
-    renderer::GraphicsPipeline *pipeline) {
+    re_pipeline_t *pipeline) {
   auto resource = canvas->resources[0];
 
   vkCmdBindPipeline(

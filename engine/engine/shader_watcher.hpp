@@ -24,17 +24,17 @@ public:
       re_render_target_t *renderTarget,
       const char *vertexPath,
       const char *fragmentPath,
-      renderer::PipelineParameters params)
-      : m_params(params),
+      re_pipeline_parameters_t pipeline_params)
+      : pipeline_params(pipeline_params),
         m_vertexPath(vertexPath),
         m_fragmentPath(fragmentPath),
         m_renderTarget(renderTarget) {
     eg_init_pipeline(
-        &m_pipeline,
+        &this->pipeline,
         *m_renderTarget,
         m_vertexPath.c_str(),
         m_fragmentPath.c_str(),
-        m_params);
+        this->pipeline_params);
 
     m_watcher.addFile(m_vertexPath.c_str());
     m_watcher.addFile(m_fragmentPath.c_str());
@@ -47,11 +47,11 @@ public:
 
       try {
         eg_init_pipeline(
-            &m_pipeline,
+            &this->pipeline,
             *m_renderTarget,
             m_vertexPath.c_str(),
             m_fragmentPath.c_str(),
-            m_params);
+            this->pipeline_params);
       } catch (const std::exception &exception) {
         ftl::error("Error while compiling shader: %s", exception.what());
       }
@@ -73,16 +73,15 @@ public:
     return std::scoped_lock<std::mutex>(m_mutex);
   }
 
-  inline renderer::GraphicsPipeline &pipeline() noexcept { return m_pipeline; }
-
   inline void startWatching() noexcept { m_watcher.startWatching(); };
 
+  re_pipeline_t pipeline;
+  re_pipeline_parameters_t pipeline_params;
+
 private:
-  renderer::PipelineParameters m_params;
   std::string m_vertexPath;
   std::string m_fragmentPath;
   std::mutex m_mutex;
-  renderer::GraphicsPipeline m_pipeline;
   FileWatcher m_watcher;
   re_render_target_t *m_renderTarget;
 };

@@ -2,6 +2,7 @@
 
 #include "../asset_manager.hpp"
 #include <ecs/entity.hpp>
+#include <renderer/pipeline.hpp>
 
 union SDL_Event;
 
@@ -11,7 +12,6 @@ class World;
 
 namespace renderer {
 class Window;
-struct GraphicsPipeline;
 } // namespace renderer
 
 namespace engine {
@@ -26,7 +26,7 @@ public:
       renderer::Window &window,
       AssetManager &assetManager,
       ecs::World &world,
-      renderer::GraphicsPipeline &boxPipeline);
+      re_pipeline_t wireframe_pipeline);
 
   void processEvent(
       const renderer::Window &window,

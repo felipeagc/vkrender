@@ -274,7 +274,7 @@ GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
   loadMaterials(model);
 
   std::vector<uint32_t> indices;
-  std::vector<renderer::StandardVertex> vertices;
+  std::vector<re_vertex_t> vertices;
 
   tinygltf::Scene &scene = model.scenes[model.defaultScene];
 
@@ -292,7 +292,7 @@ GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
     }
   }
 
-  size_t vertexBufferSize = vertices.size() * sizeof(renderer::StandardVertex);
+  size_t vertexBufferSize = vertices.size() * sizeof(re_vertex_t);
   // TODO: index buffer size could be larger than it needs to be
   // due to other index types
   size_t indexBufferSize = indices.size() * sizeof(uint32_t);
@@ -447,7 +447,7 @@ void GltfModelAsset::loadNode(
     int nodeIndex,
     const tinygltf::Model &model,
     std::vector<uint32_t> &indices,
-    std::vector<renderer::StandardVertex> &vertices,
+    std::vector<re_vertex_t> &vertices,
     bool flipUVs) {
   const tinygltf::Node &node = model.nodes[nodeIndex];
 
@@ -551,7 +551,7 @@ void GltfModelAsset::loadNode(
         }
 
         for (size_t v = 0; v < posAccessor.count; v++) {
-          renderer::StandardVertex vert{};
+          re_vertex_t vert{};
 
           vert.pos =
               glm::vec3(glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0));

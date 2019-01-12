@@ -3,69 +3,37 @@
 #include "glm.hpp"
 #include "render_target.hpp"
 #include "shader.hpp"
-#include <ftl/vector.hpp>
 #include <vulkan/vulkan.h>
 
-namespace renderer::pipeline {
-VkPipelineVertexInputStateCreateInfo defaultVertexInputState();
-VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState();
-VkPipelineViewportStateCreateInfo defaultViewportState();
-VkPipelineRasterizationStateCreateInfo defaultRasterizationState();
-VkPipelineMultisampleStateCreateInfo defaultMultisampleState(
-    VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
-VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState();
-VkPipelineColorBlendStateCreateInfo defaultColorBlendState();
-VkPipelineDynamicStateCreateInfo defaultDynamicState();
-} // namespace renderer::pipeline
+struct re_pipeline_parameters_t {
+  VkPipelineVertexInputStateCreateInfo vertex_input_state;
+  VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
+  VkPipelineViewportStateCreateInfo viewport_state;
+  VkPipelineRasterizationStateCreateInfo rasterization_state;
+  VkPipelineDepthStencilStateCreateInfo depth_stencil_state;
+  VkPipelineColorBlendStateCreateInfo color_blend_state;
+  VkPipelineDynamicStateCreateInfo dynamic_state;
+  VkPipelineLayout layout;
+};
 
-namespace renderer {
-class Window;
-class Shader;
+// Does not have a default pipeline layout
+re_pipeline_parameters_t re_default_pipeline_parameters();
 
-struct StandardVertex {
+struct re_vertex_t {
   glm::vec3 pos;
   glm::vec3 normal;
   glm::vec2 uv;
 };
 
-struct PipelineParameters {
-  VkPipelineVertexInputStateCreateInfo vertexInputState =
-      pipeline::defaultVertexInputState();
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
-      pipeline::defaultInputAssemblyState();
-  VkPipelineTessellationStateCreateInfo tessellationState;
-  bool hasTesselationState = false;
-  VkPipelineViewportStateCreateInfo viewportState =
-      pipeline::defaultViewportState();
-  VkPipelineRasterizationStateCreateInfo rasterizationState =
-      pipeline::defaultRasterizationState();
-  VkPipelineDepthStencilStateCreateInfo depthStencilState =
-      pipeline::defaultDepthStencilState();
-  VkPipelineColorBlendStateCreateInfo colorBlendState =
-      pipeline::defaultColorBlendState();
-  VkPipelineDynamicStateCreateInfo dynamicState =
-      pipeline::defaultDynamicState();
+struct re_pipeline_t {
+  VkPipeline pipeline;
   VkPipelineLayout layout;
 };
 
-struct GraphicsPipeline {
-  GraphicsPipeline(){};
-  GraphicsPipeline(
-      const re_render_target_t render_target,
-      const re_shader_t shader,
-      const PipelineParameters &parameters);
-  GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
-  ~GraphicsPipeline();
+void re_pipeline_init_graphics(
+    re_pipeline_t *pipeline,
+    const re_render_target_t render_target,
+    const re_shader_t shader,
+    const re_pipeline_parameters_t parameters);
 
-  // GraphicsPipeline cannot be copied
-  GraphicsPipeline(const GraphicsPipeline &) = delete;
-  GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
-
-  // GraphicsPipeline can be moved
-  GraphicsPipeline(GraphicsPipeline &&rhs);
-  GraphicsPipeline &operator=(GraphicsPipeline &&rhs);
-
-  VkPipeline pipeline = VK_NULL_HANDLE;
-  VkPipelineLayout layout = VK_NULL_HANDLE;
-};
-} // namespace renderer
+void re_pipeline_destroy(re_pipeline_t *pipeline);

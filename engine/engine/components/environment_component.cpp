@@ -149,7 +149,7 @@ EnvironmentComponent::~EnvironmentComponent() {
 
 void EnvironmentComponent::bind(
     renderer::Window &window,
-    renderer::GraphicsPipeline &pipeline,
+    re_pipeline_t &pipeline,
     uint32_t setIndex) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
@@ -170,7 +170,7 @@ void EnvironmentComponent::bind(
 }
 
 void EnvironmentComponent::drawSkybox(
-    renderer::Window &window, renderer::GraphicsPipeline &pipeline) {
+    renderer::Window &window, re_pipeline_t &pipeline) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();

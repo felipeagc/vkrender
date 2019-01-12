@@ -9,7 +9,9 @@
 int main() {
   renderer::Context context;
   renderer::Window window("GLTF models", 1600, 900);
-  renderer::ImGuiRenderer imgui(window);
+
+  re_imgui_t imgui;
+  re_imgui_init(&imgui, &window);
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
@@ -28,45 +30,45 @@ int main() {
   re_canvas_init(&canvas, window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
-  renderer::GraphicsPipeline model_pipeline;
+  re_pipeline_t model_pipeline;
   eg_init_pipeline(
       &model_pipeline,
       canvas.render_target,
       "../shaders/model_pbr.vert",
       "../shaders/model_pbr.frag",
-      engine::standardPipelineParameters());
+      eg_standard_pipeline_parameters());
 
-  renderer::GraphicsPipeline billboard_pipeline;
+  re_pipeline_t billboard_pipeline;
   eg_init_pipeline(
       &billboard_pipeline,
       canvas.render_target,
       "../shaders/billboard.vert",
       "../shaders/billboard.frag",
-      engine::billboardPipelineParameters());
+      eg_billboard_pipeline_parameters());
 
-  renderer::GraphicsPipeline wireframe_pipeline;
+  re_pipeline_t wireframe_pipeline;
   eg_init_pipeline(
       &wireframe_pipeline,
       canvas.render_target,
       "../shaders/box.vert",
       "../shaders/box.frag",
-      engine::wireframePipelineParameters());
+      eg_wireframe_pipeline_parameters());
 
-  renderer::GraphicsPipeline skybox_pipeline;
+  re_pipeline_t skybox_pipeline;
   eg_init_pipeline(
       &skybox_pipeline,
       canvas.render_target,
       "../shaders/skybox.vert",
       "../shaders/skybox.frag",
-      engine::skyboxPipelineParameters());
+      eg_skybox_pipeline_parameters());
 
-  renderer::GraphicsPipeline fullscreen_pipeline;
+  re_pipeline_t fullscreen_pipeline;
   eg_init_pipeline(
       &fullscreen_pipeline,
       window.render_target,
       "../shaders/fullscreen.vert",
       "../shaders/fullscreen.frag",
-      engine::fullscreenPipelineParameters());
+      eg_fullscreen_pipeline_parameters());
 
   float time = 0.0;
 
@@ -77,7 +79,7 @@ int main() {
 
     SDL_Event event;
     while (window.pollEvent(&event)) {
-      imgui.processEvent(event);
+      re_imgui_process_event(&imgui, &event);
       fpsCameraSystem.processEvent(window, event);
       entityInspectorSystem.processEvent(window, assetManager, world, event);
 
@@ -106,7 +108,7 @@ int main() {
 
     window.beginFrame();
 
-    imgui.begin();
+    re_imgui_begin(&imgui);
 
     if (drawImgui) {
       engine::imgui::statsWindow(window);
@@ -132,7 +134,7 @@ int main() {
       re_canvas_end(&canvas, window.getCurrentCommandBuffer());
     }
 
-    imgui.end();
+    re_imgui_end(&imgui);
 
     // Window pass
     {
@@ -142,7 +144,7 @@ int main() {
           &canvas, window.getCurrentCommandBuffer(), &fullscreen_pipeline);
 
       if (drawImgui) {
-        imgui.draw();
+        re_imgui_draw(&imgui);
       }
 
       window.endRenderPass();
@@ -151,7 +153,15 @@ int main() {
     window.endFrame();
   }
 
+  re_pipeline_destroy(&model_pipeline);
+  re_pipeline_destroy(&billboard_pipeline);
+  re_pipeline_destroy(&wireframe_pipeline);
+  re_pipeline_destroy(&skybox_pipeline);
+  re_pipeline_destroy(&fullscreen_pipeline);
+
   re_canvas_destroy(&canvas);
+
+  re_imgui_destroy(&imgui);
 
   return 0;
 }

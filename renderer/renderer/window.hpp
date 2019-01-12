@@ -15,8 +15,6 @@
 namespace renderer {
 
 class Window {
-  friend class ImGuiRenderer;
-
 public:
   Window(const char *title, uint32_t width = 800, uint32_t height = 600);
   ~Window();
@@ -63,10 +61,10 @@ public:
 
   re_render_target_t render_target;
 
+  SDL_Window *m_window = nullptr;
+
 protected:
   bool m_shouldClose = false;
-
-  SDL_Window *m_window = nullptr;
 
   double m_deltaTime = 0.0f;
   std::chrono::time_point<std::chrono::high_resolution_clock> m_timeBefore;

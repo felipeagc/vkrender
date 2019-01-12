@@ -1,13 +1,13 @@
 #pragma once
 
 #include "common.hpp"
+#include "pipeline.hpp"
 #include "render_target.hpp"
 #include "resource_manager.hpp"
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 namespace renderer {
-struct GraphicsPipeline;
 class Window;
 } // namespace renderer
 
@@ -50,16 +50,14 @@ void re_canvas_init(
     const uint32_t height,
     const VkFormat color_format = VK_FORMAT_R8G8B8A8_UNORM);
 
-void re_canvas_begin(
-    re_canvas_t *canvas,
-    const VkCommandBuffer command_buffer);
+void re_canvas_begin(re_canvas_t *canvas, const VkCommandBuffer command_buffer);
 
 void re_canvas_end(re_canvas_t *canvas, const VkCommandBuffer command_buffer);
 
 void re_canvas_draw(
     re_canvas_t *canvas,
     const VkCommandBuffer command_buffer,
-    renderer::GraphicsPipeline *pipeline);
+    re_pipeline_t *pipeline);
 
 void re_canvas_resize(
     re_canvas_t *canvas, const uint32_t width, const uint32_t height);

@@ -7,7 +7,12 @@
 #include <renderer/pipeline.hpp>
 #include <renderer/resource_manager.hpp>
 
+namespace renderer {
+class Window;
+}
+
 namespace engine {
+
 class BillboardComponent {
 public:
   // Creates an initialized Billboard with the given parameters
@@ -25,7 +30,7 @@ public:
 
   void draw(
       renderer::Window &window,
-      renderer::GraphicsPipeline &pipeline,
+      re_pipeline_t pipeline,
       const glm::mat4 &transform,
       const glm::vec3 &color);
 

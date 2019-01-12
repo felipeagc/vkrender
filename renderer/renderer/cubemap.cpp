@@ -295,10 +295,10 @@ static void bake_cubemap(
       &canvas, cubemapImageWidth, cubemapImageHeight, cubemapImageFormat);
 
   // Create pipeline
-  renderer::PipelineParameters pipelineParams;
-  pipelineParams.layout =
+  re_pipeline_parameters_t pipeline_params = re_default_pipeline_parameters();
+  pipeline_params.layout =
       renderer::ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
-  pipelineParams.vertexInputState = VkPipelineVertexInputStateCreateInfo{
+  pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
       0,                                                         // flags
@@ -308,7 +308,7 @@ static void bake_cubemap(
       nullptr, // pVertexAttributeDescriptions
   };
 
-  renderer::GraphicsPipeline pipeline;
+  re_pipeline_t pipeline;
 
   re_shader_t shader;
   char *vertex_code = load_string_from_file("../shaders/bake_cubemap.vert");
@@ -316,8 +316,8 @@ static void bake_cubemap(
 
   re_shader_init_glsl(&shader, vertex_code, fragment_code);
 
-  pipeline =
-      renderer::GraphicsPipeline(canvas.render_target, shader, pipelineParams);
+  re_pipeline_init_graphics(
+      &pipeline, canvas.render_target, shader, pipeline_params);
 
   free(vertex_code);
   free(fragment_code);
@@ -463,6 +463,8 @@ static void bake_cubemap(
   stbi_image_free(hdrData);
 
   re_canvas_destroy(&canvas);
+
+  re_pipeline_destroy(&pipeline);
 }
 
 static void create_cubemap_image(
