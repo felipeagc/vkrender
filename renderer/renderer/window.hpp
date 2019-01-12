@@ -1,8 +1,8 @@
 #pragma once
 
-#include "render_target.hpp"
 #include "common.hpp"
 #include "glm.hpp"
+#include "render_target.hpp"
 #include "scancodes.hpp"
 #include <SDL2/SDL.h>
 #include <chrono>
@@ -14,7 +14,7 @@
 
 namespace renderer {
 
-class Window : public RenderTarget {
+class Window {
   friend class ImGuiRenderer;
 
 public:
@@ -60,6 +60,8 @@ public:
   VkCommandBuffer getCurrentCommandBuffer();
 
   glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
+
+  re_render_target_t render_target;
 
 protected:
   bool m_shouldClose = false;

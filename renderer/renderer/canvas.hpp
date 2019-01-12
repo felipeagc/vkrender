@@ -7,78 +7,61 @@
 #include <vulkan/vulkan.h>
 
 namespace renderer {
-class Window;
 struct GraphicsPipeline;
+class Window;
+} // namespace renderer
 
-class Canvas : public RenderTarget {
-public:
-  Canvas(
-      const uint32_t width,
-      const uint32_t height,
-      const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM);
-  ~Canvas();
+struct re_canvas_t {
+  re_render_target_t render_target;
 
-  // RenderTarget cannot be copied
-  Canvas(const Canvas &) = delete;
-  Canvas &operator=(const Canvas &) = delete;
+  uint32_t width;
+  uint32_t height;
 
-  void beginRenderPass(
-      const VkCommandBuffer commandBuffer, uint32_t resourceIndex = 0);
-  void endRenderPass(const VkCommandBuffer commandBuffer);
-
-  void beginRenderPass(Window &window);
-  void endRenderPass(Window &window);
-
-  void draw(Window &window, GraphicsPipeline &pipeline);
-
-  void resize(const uint32_t width, const uint32_t height);
-
-  VkImage getColorImage(uint32_t resourceIndex = 0);
-
-protected:
-  uint32_t m_width = 0;
-  uint32_t m_height = 0;
-
-  VkFormat m_depthFormat;
-  VkFormat m_colorFormat;
+  VkFormat depth_format;
+  VkFormat color_format;
 
   // @note: we could have multiple of these resources per frame-in-flight,
   // but from initial testing there's no real performance gain
   struct {
     struct {
-      VkImage image = VK_NULL_HANDLE;
-      VmaAllocation allocation = VK_NULL_HANDLE;
+      VkImage image;
+      VmaAllocation allocation;
       // @todo: no need for multiple samplers
-      VkSampler sampler = VK_NULL_HANDLE;
-      VkImageView imageView = VK_NULL_HANDLE;
+      VkSampler sampler;
+      VkImageView image_view;
     } color;
 
     struct {
-      VkImage image = VK_NULL_HANDLE;
-      VmaAllocation allocation = VK_NULL_HANDLE;
-      VkImageView imageView = VK_NULL_HANDLE;
+      VkImage image;
+      VmaAllocation allocation;
+      VkImageView image_view;
     } depth;
 
-    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+    VkFramebuffer framebuffer;
 
     // For rendering this render target's image to another render target
-    ResourceSet resourceSet;
-  } m_resources[1];
-
-private:
-  void createColorTarget();
-  void destroyColorTarget();
-
-  void createDepthTarget();
-  void destroyDepthTarget();
-
-  void createDescriptorSet();
-  void destroyDescriptorSet();
-
-  void createFramebuffers();
-  void destroyFramebuffers();
-
-  void createRenderPass();
-  void destroyRenderPass();
+    renderer::ResourceSet resource_set;
+  } resources[1];
 };
-} // namespace renderer
+
+void re_canvas_init(
+    re_canvas_t *canvas,
+    const uint32_t width,
+    const uint32_t height,
+    const VkFormat color_format = VK_FORMAT_R8G8B8A8_UNORM);
+
+void re_canvas_begin(
+    re_canvas_t *canvas,
+    const VkCommandBuffer command_buffer);
+
+void re_canvas_end(re_canvas_t *canvas, const VkCommandBuffer command_buffer);
+
+void re_canvas_draw(
+    re_canvas_t *canvas,
+    const VkCommandBuffer command_buffer,
+    renderer::GraphicsPipeline *pipeline);
+
+void re_canvas_resize(
+    re_canvas_t *canvas, const uint32_t width, const uint32_t height);
+
+void re_canvas_destroy(re_canvas_t *canvas);

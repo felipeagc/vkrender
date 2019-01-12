@@ -5,7 +5,7 @@
 
 inline void eg_init_pipeline(
     renderer::GraphicsPipeline *pipeline,
-    renderer::RenderTarget *render_target,
+    const re_render_target_t render_target,
     const char *vertex_path,
     const char *fragment_path,
     const renderer::PipelineParameters params) {
@@ -15,7 +15,7 @@ inline void eg_init_pipeline(
 
   re_shader_init_glsl(&shader, vertex_code, fragment_code);
 
-  *pipeline = renderer::GraphicsPipeline(*render_target, shader, params);
+  *pipeline = renderer::GraphicsPipeline(render_target, shader, params);
 
   free(vertex_code);
   free(fragment_code);

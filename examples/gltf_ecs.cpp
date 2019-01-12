@@ -24,13 +24,14 @@ int main() {
   engine::LightingSystem lightingSystem;
   engine::EntityInspectorSystem entityInspectorSystem{assetManager};
 
-  renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
+  re_canvas_t canvas;
+  re_canvas_init(&canvas, window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
   renderer::GraphicsPipeline model_pipeline;
   eg_init_pipeline(
       &model_pipeline,
-      &renderTarget,
+      canvas.render_target,
       "../shaders/model_pbr.vert",
       "../shaders/model_pbr.frag",
       engine::standardPipelineParameters());
@@ -38,7 +39,7 @@ int main() {
   renderer::GraphicsPipeline billboard_pipeline;
   eg_init_pipeline(
       &billboard_pipeline,
-      &renderTarget,
+      canvas.render_target,
       "../shaders/billboard.vert",
       "../shaders/billboard.frag",
       engine::billboardPipelineParameters());
@@ -46,7 +47,7 @@ int main() {
   renderer::GraphicsPipeline wireframe_pipeline;
   eg_init_pipeline(
       &wireframe_pipeline,
-      &renderTarget,
+      canvas.render_target,
       "../shaders/box.vert",
       "../shaders/box.frag",
       engine::wireframePipelineParameters());
@@ -54,7 +55,7 @@ int main() {
   renderer::GraphicsPipeline skybox_pipeline;
   eg_init_pipeline(
       &skybox_pipeline,
-      &renderTarget,
+      canvas.render_target,
       "../shaders/skybox.vert",
       "../shaders/skybox.frag",
       engine::skyboxPipelineParameters());
@@ -62,7 +63,7 @@ int main() {
   renderer::GraphicsPipeline fullscreen_pipeline;
   eg_init_pipeline(
       &fullscreen_pipeline,
-      &window,
+      window.render_target,
       "../shaders/fullscreen.vert",
       "../shaders/fullscreen.frag",
       engine::fullscreenPipelineParameters());
@@ -90,9 +91,10 @@ int main() {
         break;
       case SDL_WINDOWEVENT:
         if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-          renderTarget.resize(
-              static_cast<uint32_t>(event.window.data1),
-              static_cast<uint32_t>(event.window.data2));
+          re_canvas_resize(
+              &canvas,
+              (uint32_t)event.window.data1,
+              (uint32_t)event.window.data2);
         }
         break;
       case SDL_QUIT:
@@ -119,7 +121,7 @@ int main() {
 
     // Render target pass
     {
-      renderTarget.beginRenderPass(window);
+      re_canvas_begin(&canvas, window.getCurrentCommandBuffer());
 
       entityInspectorSystem.drawBox(
           window, assetManager, world, wireframe_pipeline);
@@ -127,7 +129,7 @@ int main() {
       skyboxSystem.process(window, world, skybox_pipeline);
       billboardSystem.process(window, world, billboard_pipeline);
 
-      renderTarget.endRenderPass(window);
+      re_canvas_end(&canvas, window.getCurrentCommandBuffer());
     }
 
     imgui.end();
@@ -136,7 +138,8 @@ int main() {
     {
       window.beginRenderPass();
 
-      renderTarget.draw(window, fullscreen_pipeline);
+      re_canvas_draw(
+          &canvas, window.getCurrentCommandBuffer(), &fullscreen_pipeline);
 
       if (drawImgui) {
         imgui.draw();
@@ -147,6 +150,8 @@ int main() {
 
     window.endFrame();
   }
+
+  re_canvas_destroy(&canvas);
 
   return 0;
 }

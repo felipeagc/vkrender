@@ -33,7 +33,7 @@ ImGuiRenderer::ImGuiRenderer(Window &window) : m_window(window) {
       throw std::runtime_error("Failed to initialize IMGUI!");
     }
   };
-  ImGui_ImplVulkan_Init(&init_info, m_window.m_renderPass);
+  ImGui_ImplVulkan_Init(&init_info, m_window.render_target.render_pass);
 
   // Setup style
   ImGui::StyleColorsDark();

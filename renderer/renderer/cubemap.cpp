@@ -290,7 +290,9 @@ static void bake_cubemap(
   camera_uniform_t cameraUBO;
   cameraUBO.proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
-  Canvas canvas{cubemapImageWidth, cubemapImageHeight, cubemapImageFormat};
+  re_canvas_t canvas;
+  re_canvas_init(
+      &canvas, cubemapImageWidth, cubemapImageHeight, cubemapImageFormat);
 
   // Create pipeline
   renderer::PipelineParameters pipelineParams;
@@ -314,7 +316,8 @@ static void bake_cubemap(
 
   re_shader_init_glsl(&shader, vertex_code, fragment_code);
 
-  pipeline = renderer::GraphicsPipeline(canvas, shader, pipelineParams);
+  pipeline =
+      renderer::GraphicsPipeline(canvas.render_target, shader, pipelineParams);
 
   free(vertex_code);
   free(fragment_code);
@@ -362,7 +365,7 @@ static void bake_cubemap(
   }
 
   for (size_t i = 0; i < ARRAYSIZE(camera_views); i++) {
-    canvas.beginRenderPass(commandBuffer);
+    re_canvas_begin(&canvas, commandBuffer);
 
     cameraUBO.view = camera_views[i];
 
@@ -407,11 +410,11 @@ static void bake_cubemap(
       vkCmdDraw(commandBuffer, 36, 1, 0, 0);
     }
 
-    canvas.endRenderPass(commandBuffer);
+    re_canvas_end(&canvas, commandBuffer);
 
     copy_side_image_to_cubemap(
         commandBuffer,
-        canvas.getColorImage(),
+        canvas.resources[0].color.image,
         cubemapImage,
         cubemapImageWidth,
         cubemapImageHeight,
@@ -458,6 +461,8 @@ static void bake_cubemap(
       &commandBuffer);
 
   stbi_image_free(hdrData);
+
+  re_canvas_destroy(&canvas);
 }
 
 static void create_cubemap_image(

@@ -10,7 +10,7 @@ GraphicsPipeline::GraphicsPipeline(
     : pipeline(pipeline), layout(pipelineLayout) {}
 
 GraphicsPipeline::GraphicsPipeline(
-    const RenderTarget &renderTarget,
+    const re_render_target_t render_target,
     const re_shader_t shader,
     const PipelineParameters &parameters) {
   layout = parameters.layout;
@@ -19,7 +19,7 @@ GraphicsPipeline::GraphicsPipeline(
   re_shader_get_pipeline_stages(&shader, pipeline_stages);
 
   auto multisampleState =
-      pipeline::defaultMultisampleState(renderTarget.getSampleCount());
+      pipeline::defaultMultisampleState(render_target.sample_count);
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -38,7 +38,7 @@ GraphicsPipeline::GraphicsPipeline(
       &parameters.colorBlendState,                // pColorBlendState
       &parameters.dynamicState,                   // pDynamicState
       layout,                                     // pipelineLayout
-      renderTarget.getRenderPass(),               // renderPass
+      render_target.render_pass,               // renderPass
       0,                                          // subpass
       {},                                         // basePipelineHandle
       -1                                          // basePipelineIndex

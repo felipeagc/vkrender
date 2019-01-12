@@ -291,7 +291,7 @@ void Window::beginRenderPass() {
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,     // sType
       nullptr,                                      // pNext
-      m_renderPass,                                 // renderPass
+      this->render_target.render_pass,              // renderPass
       m_frameResources[m_currentFrame].framebuffer, // framebuffer
       {{0, 0}, m_swapchainExtent},                  // renderArea
       ARRAYSIZE(clearValues),                       // clearValueCount
@@ -605,6 +605,8 @@ void Window::createDepthStencilResources() {
 }
 
 void Window::createRenderPass() {
+  this->render_target.sample_count = VK_SAMPLE_COUNT_1_BIT;
+
   VkAttachmentDescription attachmentDescriptions[] = {
       // Resolved color attachment
       VkAttachmentDescription{
@@ -693,7 +695,10 @@ void Window::createRenderPass() {
   };
 
   VK_CHECK(vkCreateRenderPass(
-      ctx().m_device, &renderPassCreateInfo, nullptr, &m_renderPass));
+      ctx().m_device,
+      &renderPassCreateInfo,
+      nullptr,
+      &this->render_target.render_pass));
 }
 
 void Window::regenFramebuffer(
@@ -709,7 +714,7 @@ void Window::regenFramebuffer(
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
       nullptr,                                       // pNext
       0,                                             // flags
-      m_renderPass,                                  // renderPass
+      this->render_target.render_pass,               // renderPass
       static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
       attachments,                                   // pAttachments
       m_swapchainExtent.width,                       // width
@@ -740,7 +745,7 @@ void Window::destroyResizables() {
     m_depthStencil.allocation = VK_NULL_HANDLE;
   }
 
-  vkDestroyRenderPass(ctx().m_device, m_renderPass, nullptr);
+  vkDestroyRenderPass(ctx().m_device, this->render_target.render_pass, nullptr);
 }
 
 uint32_t Window::getSwapchainNumImages(

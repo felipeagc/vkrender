@@ -21,7 +21,7 @@ namespace engine {
 class ShaderWatcher {
 public:
   ShaderWatcher(
-      renderer::RenderTarget &renderTarget,
+      re_render_target_t *renderTarget,
       const char *vertexPath,
       const char *fragmentPath,
       renderer::PipelineParameters params)
@@ -31,7 +31,7 @@ public:
         m_renderTarget(renderTarget) {
     eg_init_pipeline(
         &m_pipeline,
-        &m_renderTarget,
+        *m_renderTarget,
         m_vertexPath.c_str(),
         m_fragmentPath.c_str(),
         m_params);
@@ -48,7 +48,7 @@ public:
       try {
         eg_init_pipeline(
             &m_pipeline,
-            &m_renderTarget,
+            *m_renderTarget,
             m_vertexPath.c_str(),
             m_fragmentPath.c_str(),
             m_params);
@@ -84,6 +84,6 @@ private:
   std::mutex m_mutex;
   renderer::GraphicsPipeline m_pipeline;
   FileWatcher m_watcher;
-  renderer::RenderTarget &m_renderTarget;
+  re_render_target_t *m_renderTarget;
 };
 } // namespace engine

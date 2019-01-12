@@ -2,14 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-class RenderTarget {
-public:
-  inline VkSampleCountFlagBits getSampleCount() const { return m_sampleCount; };
-  inline VkRenderPass getRenderPass() const { return m_renderPass; };
-
-protected:
-  VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
-  VkRenderPass m_renderPass = VK_NULL_HANDLE;
+struct re_render_target_t {
+  VkSampleCountFlagBits sample_count;
+  VkRenderPass render_pass;
 };
-} // namespace renderer

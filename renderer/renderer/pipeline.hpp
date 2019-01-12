@@ -51,7 +51,7 @@ struct PipelineParameters {
 struct GraphicsPipeline {
   GraphicsPipeline(){};
   GraphicsPipeline(
-      const RenderTarget &renderTarget,
+      const re_render_target_t render_target,
       const re_shader_t shader,
       const PipelineParameters &parameters);
   GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout pipelineLayout);

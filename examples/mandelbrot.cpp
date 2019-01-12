@@ -9,11 +9,12 @@ int main() {
 
   window.clearColor = {0.15, 0.15, 0.15, 1.0};
 
-  renderer::Canvas renderTarget(window.getWidth(), window.getHeight());
+  re_canvas_t canvas;
+  re_canvas_init(&canvas, window.getWidth(), window.getHeight());
 
   // Create shaders & pipelines
   engine::ShaderWatcher shaderWatcher(
-      window,
+      &window.render_target,
       "../shaders/mandelbrot.vert",
       "../shaders/mandelbrot.frag",
       engine::fullscreenPipelineParameters());
@@ -33,9 +34,10 @@ int main() {
       switch (event.type) {
       case SDL_WINDOWEVENT:
         if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-          renderTarget.resize(
-              static_cast<uint32_t>(event.window.data1),
-              static_cast<uint32_t>(event.window.data2));
+          re_canvas_resize(
+              &canvas,
+              (uint32_t)event.window.data1,
+              (uint32_t)event.window.data2);
         }
         break;
       case SDL_QUIT:
@@ -68,8 +70,8 @@ int main() {
 
     // Render target pass
     {
-      renderTarget.beginRenderPass(window);
-      renderTarget.endRenderPass(window);
+      re_canvas_begin(&canvas, window.getCurrentCommandBuffer());
+      re_canvas_end(&canvas, window.getCurrentCommandBuffer());
     }
 
     // Window pass
@@ -84,13 +86,16 @@ int main() {
           sizeof(block),
           &block);
 
-      renderTarget.draw(window, shaderWatcher.pipeline());
+      re_canvas_draw(
+          &canvas, window.getCurrentCommandBuffer(), &shaderWatcher.pipeline());
 
       window.endRenderPass();
     }
 
     window.endFrame();
   }
+
+  re_canvas_destroy(&canvas);
 
   return 0;
 }
