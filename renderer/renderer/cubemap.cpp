@@ -145,7 +145,7 @@ static void copy_side_image_to_cubemap(
     uint32_t cubemapHeight,
     uint32_t layer,
     uint32_t level) {
-  setImageLayout(
+  re_set_image_layout(
       commandBuffer,
       sideImage,
       VK_IMAGE_ASPECT_COLOR_BIT,
@@ -159,7 +159,7 @@ static void copy_side_image_to_cubemap(
   cubeFaceSubresourceRange.baseArrayLayer = layer;
   cubeFaceSubresourceRange.layerCount = 1;
 
-  setImageLayout(
+  re_set_image_layout(
       commandBuffer,
       cubemapImage,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -195,7 +195,7 @@ static void copy_side_image_to_cubemap(
       &copyRegion);
 
   // Transform framebuffer color attachment back
-  setImageLayout(
+  re_set_image_layout(
       commandBuffer,
       sideImage,
       VK_IMAGE_ASPECT_COLOR_BIT,
@@ -203,7 +203,7 @@ static void copy_side_image_to_cubemap(
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   // Change image layout of copied face to shader read
-  setImageLayout(
+  re_set_image_layout(
       commandBuffer,
       cubemapImage,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -260,8 +260,8 @@ static void bake_cubemap(
   }
 
   // Create hdrDescriptorSet
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
-  ResourceSet hdrDescriptorSet = setLayout.allocate();
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+  re_resource_set_t hdr_resource_set = re_allocate_resource_set(&set_layout);
   {
     VkDescriptorImageInfo hdrImageDescriptor = {
         hdrSampler,
@@ -272,7 +272,7 @@ static void bake_cubemap(
     VkWriteDescriptorSet hdrDescriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        hdrDescriptorSet,                          // dstSet
+        hdr_resource_set.descriptor_set,           // dstSet
         1,                                         // dstBinding
         0,                                         // dstArrayElement
         1,                                         // descriptorCount
@@ -297,7 +297,7 @@ static void bake_cubemap(
   // Create pipeline
   re_pipeline_parameters_t pipeline_params = re_default_pipeline_parameters();
   pipeline_params.layout =
-      renderer::ctx().m_resourceManager.m_providers.bakeCubemap.pipelineLayout;
+      renderer::ctx().resource_manager.providers.bake_cubemap.pipeline_layout;
   pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
@@ -356,7 +356,7 @@ static void bake_cubemap(
     cubeFaceSubresourceRange.baseArrayLayer = 0;
     cubeFaceSubresourceRange.layerCount = 6; // all layers
 
-    setImageLayout(
+    re_set_image_layout(
         commandBuffer,
         cubemapImage,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -403,7 +403,7 @@ static void bake_cubemap(
           pipeline.layout,
           0, // firstSet
           1,
-          hdrDescriptorSet,
+          &hdr_resource_set.descriptor_set,
           0,
           nullptr);
 
@@ -447,7 +447,7 @@ static void bake_cubemap(
 
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  setLayout.free(hdrDescriptorSet);
+  re_free_resource_set(&set_layout, &hdr_resource_set);
 
   vkDestroyImageView(renderer::ctx().m_device, hdrImageView, nullptr);
   vkDestroySampler(renderer::ctx().m_device, hdrSampler, nullptr);

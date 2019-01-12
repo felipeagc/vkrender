@@ -31,13 +31,13 @@ EnvironmentComponent::EnvironmentComponent(
     const EnvironmentAsset &environmentAsset)
     : m_environmentAssetIndex(environmentAsset.index) {
   // Allocate descriptor sets
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.environment;
 
   m_ubo.radianceMipLevels =
       (float)environmentAsset.m_radianceCubemap.mip_levels;
 
   for (size_t i = 0; i < ARRAYSIZE(m_descriptorSets); i++) {
-    this->m_descriptorSets[i] = setLayout.allocate();
+    this->m_descriptorSets[i] = re_allocate_resource_set(&set_layout);
   }
 
   // Update descriptor sets
@@ -64,19 +64,19 @@ EnvironmentComponent::EnvironmentComponent(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_descriptorSets[i],               // dstSet
-            0,                                 // dstBinding
-            0,                                 // dstArrayElement
-            1,                                 // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            nullptr,                           // pImageInfo
-            &bufferInfo,                       // pBufferInfo
-            nullptr,                           // pTexelBufferView
+            m_descriptorSets[i].descriptor_set, // dstSet
+            0,                                  // dstBinding
+            0,                                  // dstArrayElement
+            1,                                  // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,  // descriptorType
+            nullptr,                            // pImageInfo
+            &bufferInfo,                        // pBufferInfo
+            nullptr,                            // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_descriptorSets[i],                       // dstSet
+            m_descriptorSets[i].descriptor_set,        // dstSet
             1,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -88,7 +88,7 @@ EnvironmentComponent::EnvironmentComponent(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_descriptorSets[i],                       // dstSet
+            m_descriptorSets[i].descriptor_set,        // dstSet
             2,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -100,7 +100,7 @@ EnvironmentComponent::EnvironmentComponent(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_descriptorSets[i],                       // dstSet
+            m_descriptorSets[i].descriptor_set,        // dstSet
             3,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -112,7 +112,7 @@ EnvironmentComponent::EnvironmentComponent(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_descriptorSets[i],                       // dstSet
+            m_descriptorSets[i].descriptor_set,        // dstSet
             4,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -140,17 +140,15 @@ EnvironmentComponent::~EnvironmentComponent() {
     re_buffer_destroy(&m_uniformBuffers[i]);
   }
 
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.environment;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.environment;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    setLayout.free(m_descriptorSets[i]);
+    re_free_resource_set(&set_layout, &m_descriptorSets[i]);
   }
 }
 
 void EnvironmentComponent::bind(
-    renderer::Window &window,
-    re_pipeline_t &pipeline,
-    uint32_t setIndex) {
+    renderer::Window &window, re_pipeline_t &pipeline, uint32_t setIndex) {
   auto commandBuffer = window.getCurrentCommandBuffer();
 
   auto i = window.getCurrentFrameIndex();
@@ -164,7 +162,7 @@ void EnvironmentComponent::bind(
       pipeline.layout,
       setIndex, // firstSet
       1,
-      m_descriptorSets[i],
+      &m_descriptorSets[i].descriptor_set,
       0,
       nullptr);
 }
@@ -186,7 +184,7 @@ void EnvironmentComponent::drawSkybox(
       pipeline.layout,
       1, // firstSet
       1,
-      m_descriptorSets[i],
+      &m_descriptorSets[i].descriptor_set,
       0,
       nullptr);
 

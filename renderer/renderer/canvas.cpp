@@ -221,8 +221,8 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
 
-    auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.fullscreen;
-    resource.resource_set = setLayout.allocate();
+    auto &set_layout = renderer::ctx().resource_manager.set_layouts.fullscreen;
+    resource.resource_set = re_allocate_resource_set(&set_layout);
 
     VkDescriptorImageInfo descriptor = {
         resource.color.sampler,
@@ -234,7 +234,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            resource.resource_set,                     // dstSet
+            resource.resource_set.descriptor_set,      // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -257,11 +257,11 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
 static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.fullscreen;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.fullscreen;
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
-    setLayout.free(resource.resource_set);
+    re_free_resource_set(&set_layout, &resource.resource_set);
   }
 }
 
@@ -482,7 +482,7 @@ void re_canvas_draw(
       pipeline->layout,
       0, // firstSet
       1,
-      resource.resource_set,
+      &resource.resource_set.descriptor_set,
       0,
       nullptr);
 
@@ -501,11 +501,11 @@ void re_canvas_resize(
   destroy_depth_target(canvas);
   destroy_descriptor_sets(canvas);
 
-  create_framebuffers(canvas);
-  create_render_pass(canvas);
   create_color_target(canvas);
   create_depth_target(canvas);
   create_descriptor_sets(canvas);
+  create_render_pass(canvas);
+  create_framebuffers(canvas);
 }
 
 void re_canvas_destroy(re_canvas_t *canvas) {

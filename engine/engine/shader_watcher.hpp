@@ -46,6 +46,8 @@ public:
       VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
       try {
+        re_pipeline_destroy(&this->pipeline);
+
         eg_init_pipeline(
             &this->pipeline,
             *m_renderTarget,
@@ -58,7 +60,7 @@ public:
     };
   }
 
-  ~ShaderWatcher(){};
+  ~ShaderWatcher() { re_pipeline_destroy(&this->pipeline); };
 
   ShaderWatcher(const ShaderWatcher &) = delete;
   ShaderWatcher &operator=(const ShaderWatcher &) = delete;

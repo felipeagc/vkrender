@@ -64,6 +64,6 @@ protected:
 
   re_buffer_t m_uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
   void *m_mappings[renderer::MAX_FRAMES_IN_FLIGHT];
-  renderer::ResourceSet m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+  re_resource_set_t m_descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace engine

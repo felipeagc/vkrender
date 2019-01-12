@@ -26,9 +26,9 @@ void engine::loadComponent<BillboardComponent>(
 BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
     : m_textureIndex(textureAsset.index) {
   // Allocate material descriptor sets
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
   for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
-    m_materialDescriptorSets[i] = setLayout.allocate();
+    m_materialDescriptorSets[i] = re_allocate_resource_set(&set_layout);
   }
 
   // Update descriptor sets
@@ -39,14 +39,14 @@ BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            m_materialDescriptorSets[i],               // dstSet
-            0,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &albedoDescriptorInfo,                     // pImageInfo
-            nullptr,                                   // pBufferInfo
-            nullptr,                                   // pTexelBufferView
+            m_materialDescriptorSets[i].descriptor_set, // dstSet
+            0,                                          // dstBinding
+            0,                                          // dstArrayElement
+            1,                                          // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,  // descriptorType
+            &albedoDescriptorInfo,                      // pImageInfo
+            nullptr,                                    // pBufferInfo
+            nullptr,                                    // pTexelBufferView
         },
     };
 
@@ -62,9 +62,9 @@ BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
 BillboardComponent::~BillboardComponent() {
   VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
 
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
   for (auto &set : m_materialDescriptorSets) {
-    setLayout.free(set);
+    re_free_resource_set(&set_layout, &set);
   }
 }
 
@@ -97,7 +97,7 @@ void BillboardComponent::draw(
       pipeline.layout,
       1, // firstSet
       1,
-      m_materialDescriptorSets[i],
+      &m_materialDescriptorSets[i].descriptor_set,
       0,
       nullptr);
 

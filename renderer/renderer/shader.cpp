@@ -22,26 +22,6 @@ enum shader_type_t {
   SHADER_TYPE_COMPUTE,
 };
 
-static inline uint32_t *load_spv_code(const char *path, size_t *codeSize) {
-  FILE *file = fopen(path, "rb");
-
-  if (file == nullptr) {
-    return nullptr;
-  }
-
-  fseek(file, 0, SEEK_END);
-  *codeSize = ftell(file);
-  fseek(file, 0, SEEK_SET);
-
-  uint32_t *storage = new uint32_t[*codeSize / sizeof(uint32_t)];
-
-  fread(storage, sizeof(uint32_t), *codeSize / sizeof(uint32_t), file);
-
-  fclose(file);
-
-  return storage;
-}
-
 static inline uint32_t *compile_glsl(
     const char *glsl_code, const shader_type_t shader_type, size_t *code_size) {
   if (!glslangInitialized) {

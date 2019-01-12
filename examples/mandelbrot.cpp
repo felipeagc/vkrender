@@ -46,7 +46,7 @@ int main() {
       }
     }
 
-    shaderWatcher.lockPipeline();
+    auto lock = shaderWatcher.lockPipeline();
 
     glm::dvec2 offset{0.0};
     double speed = 0.3f * window.getDelta();

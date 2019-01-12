@@ -1,8 +1,6 @@
 #include "util.hpp"
 
-using namespace renderer;
-
-void renderer::setImageLayout(
+void re_set_image_layout(
     VkCommandBuffer cmdbuffer,
     VkImage image,
     VkImageLayout oldImageLayout,
@@ -131,7 +129,7 @@ void renderer::setImageLayout(
       &imageMemoryBarrier);
 }
 
-void renderer::setImageLayout(
+void re_set_image_layout(
     VkCommandBuffer cmdbuffer,
     VkImage image,
     VkImageAspectFlags aspectMask,
@@ -146,7 +144,7 @@ void renderer::setImageLayout(
   subresourceRange.levelCount = 1;
   subresourceRange.layerCount = 1;
 
-  setImageLayout(
+  re_set_image_layout(
       cmdbuffer,
       image,
       oldImageLayout,

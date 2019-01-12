@@ -216,7 +216,7 @@ void EntityInspectorSystem::drawBox(
       wireframe_pipeline.layout,
       1, // firstSet
       1,
-      model->m_descriptorSets[window.getCurrentFrameIndex()],
+      &model->m_descriptorSets[window.getCurrentFrameIndex()].descriptor_set,
       0,
       nullptr);
 

@@ -4,122 +4,69 @@
 #include <ftl/vector.hpp>
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-const size_t GLOBAL_MAX_DESCRIPTOR_SETS = 1000;
+const size_t RE_GLOBAL_MAX_DESCRIPTOR_SETS = 1000;
 
-struct ResourceSet {
-  friend struct ResourceSetProvider;
-  friend struct ResourceSetLayout;
-
-  operator VkDescriptorSet() { return this->descriptorSet; }
-  operator VkDescriptorSet*() { return &this->descriptorSet; }
-  operator bool() { return this->descriptorSet != VK_NULL_HANDLE; }
-
-  ResourceSet() {}
-
-protected:
-  VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-  uint32_t allocation = -1;
-
-  ResourceSet(VkDescriptorSet descriptorSet, uint32_t allocation)
-      : descriptorSet(descriptorSet), allocation(allocation) {}
+struct re_resource_set_t {
+  VkDescriptorSet descriptor_set;
+  uint32_t allocation;
 };
 
-struct ResourceSetLayout {
-  friend class ResourceManager;
-  friend struct ResourceSetProvider;
-
-  operator VkDescriptorSetLayout() { return this->descriptorSetLayout; }
-
-  ResourceSet allocate();
-  void free(ResourceSet &resourceSet);
-
-protected:
-  ResourceSetLayout() {}
-  ResourceSetLayout(
-      uint32_t maxSets,
-      const ftl::small_vector<VkDescriptorSetLayoutBinding, 8> &bindings);
-
-  ResourceSetLayout(const ResourceSetLayout &) = delete;
-  ResourceSetLayout &operator=(const ResourceSetLayout &) = delete;
-
-  ResourceSetLayout(ResourceSetLayout &&old) {
-    this->descriptorSetLayout = old.descriptorSetLayout;
-    this->maxSets = old.maxSets;
-    this->descriptorSets = old.descriptorSets;
-    this->bitset = old.bitset;
-    this->bindings = old.bindings;
-    old.descriptorSetLayout = VK_NULL_HANDLE;
-  }
-  ResourceSetLayout &operator=(ResourceSetLayout &&old) {
-    this->descriptorSetLayout = old.descriptorSetLayout;
-    this->maxSets = old.maxSets;
-    this->descriptorSets = old.descriptorSets;
-    this->bitset = old.bitset;
-    this->bindings = old.bindings;
-    old.descriptorSetLayout = VK_NULL_HANDLE;
-    return *this;
-  }
-
-  void destroy();
-
-  VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-  ftl::small_vector<VkDescriptorSetLayoutBinding, 8> bindings;
-
-  uint32_t maxSets = GLOBAL_MAX_DESCRIPTOR_SETS;
+struct re_resource_set_layout_t {
+  VkDescriptorSetLayout descriptor_set_layout;
+  VkDescriptorSetLayoutBinding *bindings;
+  uint32_t binding_count;
 
   // Preallocated descriptor sets
-  ftl::small_vector<VkDescriptorSet> descriptorSets;
-  std::bitset<GLOBAL_MAX_DESCRIPTOR_SETS> bitset;
+  VkDescriptorSet *descriptor_sets;
+  uint32_t max_sets;
+  std::bitset<RE_GLOBAL_MAX_DESCRIPTOR_SETS> bitset;
 };
 
-struct ResourceSetProvider {
-  friend class ResourceManager;
+void re_resource_set_layout_init(
+    re_resource_set_layout_t *layout,
+    uint32_t max_sets,
+    VkDescriptorSetLayoutBinding *bindings,
+    uint32_t binding_count);
 
-  VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-  VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout);
 
-protected:
-  ResourceSetProvider(){};
-  ResourceSetProvider(
-      const ftl::small_vector<ResourceSetLayout *> &setLayouts);
-  void destroy();
+void re_free_resource_set(
+    re_resource_set_layout_t *layout, re_resource_set_t *resource_set);
+
+void re_resource_set_layout_destroy(re_resource_set_layout_t *layout);
+
+struct re_resource_set_provider_t {
+  VkPipelineLayout pipeline_layout;
+  VkDescriptorPool descriptor_pool;
 };
 
-class ResourceManager {
-public:
-  ResourceManager(){};
-  ~ResourceManager(){};
+void re_resource_set_provider_init(
+    re_resource_set_provider_t *provider,
+    re_resource_set_layout_t *set_layouts,
+    uint32_t set_layout_count);
 
-  // ResourceManager cannot be copied
-  ResourceManager(const ResourceManager &) = delete;
-  ResourceManager &operator=(const ResourceManager &) = delete;
+void re_resource_set_provider_destroy(re_resource_set_provider_t *provider);
 
-  // ResourceManager cannot be moved
-  ResourceManager(ResourceManager &&) = delete;
-  ResourceManager &operator=(ResourceManager &&) = delete;
-
-  // Initialize resource providers
-  void initialize();
-
-  void destroy();
+struct re_resource_manager_t {
+  struct {
+    re_resource_set_layout_t camera;
+    re_resource_set_layout_t mesh;
+    re_resource_set_layout_t model;
+    re_resource_set_layout_t material;
+    re_resource_set_layout_t environment;
+    re_resource_set_layout_t fullscreen;
+  } set_layouts;
 
   struct {
-    ResourceSetProvider standard;
-    ResourceSetProvider billboard;
-    ResourceSetProvider box;
-    ResourceSetProvider skybox;
-    ResourceSetProvider fullscreen;
-    ResourceSetProvider bakeCubemap;
-  } m_providers;
-
-  struct {
-    ResourceSetLayout camera;
-    ResourceSetLayout mesh;
-    ResourceSetLayout model;
-    ResourceSetLayout material;
-    ResourceSetLayout environment;
-    ResourceSetLayout fullscreen;
-  } m_setLayouts;
+    re_resource_set_provider_t standard;
+    re_resource_set_provider_t billboard;
+    re_resource_set_provider_t wireframe;
+    re_resource_set_provider_t skybox;
+    re_resource_set_provider_t fullscreen;
+    re_resource_set_provider_t bake_cubemap;
+  } providers;
 };
-} // namespace renderer
+
+void re_resource_manager_init(re_resource_manager_t *manager);
+
+void re_resource_manager_destroy(re_resource_manager_t *manager);

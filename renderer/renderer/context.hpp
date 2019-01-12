@@ -69,7 +69,7 @@ public:
 
   VkCommandPool m_threadCommandPools[VKR_THREAD_COUNT];
 
-  ResourceManager m_resourceManager;
+  re_resource_manager_t resource_manager;
 
   re_texture_t m_white_texture;
   re_texture_t m_black_texture;

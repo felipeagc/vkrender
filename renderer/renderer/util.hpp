@@ -11,8 +11,7 @@
 
 #define ARRAYSIZE(array) (sizeof(array) / sizeof((array)[0]))
 
-namespace renderer {
-void setImageLayout(
+void re_set_image_layout(
     VkCommandBuffer cmdbuffer,
     VkImage image,
     VkImageLayout oldImageLayout,
@@ -21,7 +20,7 @@ void setImageLayout(
     VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
     VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
-void setImageLayout(
+void re_set_image_layout(
     VkCommandBuffer cmdbuffer,
     VkImage image,
     VkImageAspectFlags aspectMask,
@@ -30,4 +29,3 @@ void setImageLayout(
     VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
     VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
     uint32_t level = 0);
-} // namespace renderer

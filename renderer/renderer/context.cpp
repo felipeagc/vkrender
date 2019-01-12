@@ -436,7 +436,7 @@ void Context::lateInitialize(VkSurfaceKHR &surface) {
   this->createTransientCommandPool();
   this->createThreadCommandPools();
 
-  m_resourceManager.initialize();
+  re_resource_manager_init(&this->resource_manager);
 
   uint8_t white[] = {255, 255, 255, 255};
   uint8_t black[] = {0, 0, 0, 255};
@@ -452,7 +452,7 @@ Context::~Context() {
   re_texture_destroy(&m_white_texture);
   re_texture_destroy(&m_black_texture);
 
-  m_resourceManager.destroy();
+  re_resource_manager_destroy(&this->resource_manager);
 
   if (m_transientCommandPool) {
     vkDestroyCommandPool(m_device, m_transientCommandPool, nullptr);

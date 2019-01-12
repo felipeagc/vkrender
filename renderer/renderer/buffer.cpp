@@ -161,7 +161,7 @@ void re_buffer_transfer_to_image(
     re_buffer_t *buffer, VkImage dest, uint32_t width, uint32_t height) {
   VkCommandBuffer commandBuffer = begin_single_time_command_buffer();
 
-  setImageLayout(
+  re_set_image_layout(
       commandBuffer,
       dest,
       VK_IMAGE_ASPECT_COLOR_BIT,
@@ -190,7 +190,7 @@ void re_buffer_transfer_to_image(
       1,
       &region);
 
-  setImageLayout(
+  re_set_image_layout(
       commandBuffer,
       dest,
       VK_IMAGE_ASPECT_COLOR_BIT,

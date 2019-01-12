@@ -35,10 +35,10 @@ void engine::loadAsset<GltfModelAsset>(
 }
 
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    this->descriptorSets[i] = setLayout.allocate();
+    this->descriptorSets[i] = re_allocate_resource_set(&set_layout);
 
     VkDescriptorImageInfo albedoDescriptorInfo =
         re_texture_descriptor(&renderer::ctx().m_white_texture);
@@ -86,7 +86,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],                   // dstSet
+            this->descriptorSets[i].descriptor_set,    // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -98,7 +98,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],                   // dstSet
+            this->descriptorSets[i].descriptor_set,    // dstSet
             1,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -110,7 +110,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],                   // dstSet
+            this->descriptorSets[i].descriptor_set,    // dstSet
             2,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -122,7 +122,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],                   // dstSet
+            this->descriptorSets[i].descriptor_set,    // dstSet
             3,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -134,7 +134,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],                   // dstSet
+            this->descriptorSets[i].descriptor_set,    // dstSet
             4,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -171,10 +171,10 @@ GltfModelAsset::Primitive::Primitive(
 GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
   this->ubo.matrix = matrix;
 
-  auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.mesh;
+  auto &set_layout = renderer::ctx().resource_manager.set_layouts.mesh;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
-    this->descriptorSets[i] = setLayout.allocate();
+    this->descriptorSets[i] = re_allocate_resource_set(&set_layout);
 
     re_buffer_init_uniform(&this->uniformBuffers[i], sizeof(MeshUniform));
 
@@ -189,14 +189,14 @@ GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             nullptr,
-            this->descriptorSets[i],           // dstSet
-            0,                                 // dstBinding
-            0,                                 // dstArrayElement
-            1,                                 // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            nullptr,                           // pImageInfo
-            &bufferInfo,                       // pBufferInfo
-            nullptr,                           // pTexelBufferView
+            this->descriptorSets[i].descriptor_set, // dstSet
+            0,                                      // dstBinding
+            0,                                      // dstArrayElement
+            1,                                      // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,      // descriptorType
+            nullptr,                                // pImageInfo
+            &bufferInfo,                            // pBufferInfo
+            nullptr,                                // pTexelBufferView
         },
     };
 
@@ -334,16 +334,16 @@ GltfModelAsset::~GltfModelAsset() {
       re_buffer_destroy(&uniformBuffer);
     }
 
-    auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+    auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
     for (auto &set : mesh.descriptorSets) {
-      setLayout.free(set);
+      re_free_resource_set(&set_layout, &set);
     }
   }
 
   for (auto &material : m_materials) {
-    auto &setLayout = renderer::ctx().m_resourceManager.m_setLayouts.material;
+    auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
     for (auto &set : material.descriptorSets) {
-      setLayout.free(set);
+      re_free_resource_set(&set_layout, &set);
     }
   }
 

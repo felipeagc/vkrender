@@ -40,7 +40,7 @@ struct re_canvas_t {
     VkFramebuffer framebuffer;
 
     // For rendering this render target's image to another render target
-    renderer::ResourceSet resource_set;
+    re_resource_set_t resource_set;
   } resources[1];
 };
 
