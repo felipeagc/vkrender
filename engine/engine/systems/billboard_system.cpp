@@ -12,9 +12,7 @@ BillboardSystem::BillboardSystem() {}
 BillboardSystem::~BillboardSystem() {}
 
 void BillboardSystem::process(
-    renderer::Window &window,
-    ecs::World &world,
-    re_pipeline_t &pipeline) {
+    const re_window_t *window, ecs::World &world, re_pipeline_t &pipeline) {
   if (!drawBillboards)
     return;
 

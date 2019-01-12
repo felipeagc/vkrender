@@ -2,10 +2,7 @@
 
 #include "../asset_manager.hpp"
 #include "../assets/gltf_model_asset.hpp"
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 
@@ -25,7 +22,7 @@ public:
   GltfModelComponent &operator=(GltfModelComponent &&) = delete;
 
   void draw(
-      renderer::Window &window,
+      const re_window_t *window,
       engine::AssetManager &assetManager,
       re_pipeline_t pipeline,
       const glm::mat4 &transform);
@@ -45,7 +42,7 @@ private:
   void drawNode(
       GltfModelAsset &model,
       GltfModelAsset::Node &node,
-      renderer::Window &window,
+      const re_window_t *window,
       re_pipeline_t pipeline);
 };
 } // namespace engine

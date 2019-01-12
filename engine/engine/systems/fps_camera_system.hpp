@@ -2,12 +2,7 @@
 
 #include <ecs/world.hpp>
 #include <renderer/pipeline.hpp>
-
-union SDL_Event;
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 class FPSCameraSystem {
@@ -15,8 +10,8 @@ public:
   FPSCameraSystem();
   ~FPSCameraSystem();
 
-  void processEvent(renderer::Window &window, const SDL_Event &event);
-  void process(renderer::Window &window, ecs::World &world);
+  void processEvent(re_window_t *window, const SDL_Event &event);
+  void process(const re_window_t* window, ecs::World &world);
 
 private:
   glm::vec3 m_camTarget;

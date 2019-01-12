@@ -44,7 +44,7 @@ static inline void destroy_descriptor_pool(re_imgui_t *imgui) {
   }
 }
 
-void re_imgui_init(re_imgui_t *imgui, renderer::Window *window) {
+void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
   imgui->window = window;
   create_descriptor_pool(imgui);
 
@@ -52,7 +52,7 @@ void re_imgui_init(re_imgui_t *imgui, renderer::Window *window) {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
 
-  ImGui_ImplSDL2_InitForVulkan(imgui->window->m_window);
+  ImGui_ImplSDL2_InitForVulkan(imgui->window->sdl_window);
 
   // Setup Vulkan binding
   ImGui_ImplVulkan_InitInfo init_info = {};
@@ -78,7 +78,7 @@ void re_imgui_init(re_imgui_t *imgui, renderer::Window *window) {
   {
     // Use any command queue
     VkCommandPool commandPool = ctx().m_graphicsCommandPool;
-    auto commandBuffer = imgui->window->getCurrentCommandBuffer();
+    auto commandBuffer = re_window_get_current_command_buffer(imgui->window);
 
     VK_CHECK(vkResetCommandPool(ctx().m_device, commandPool, 0));
     VkCommandBufferBeginInfo beginInfo = {
@@ -111,7 +111,7 @@ void re_imgui_init(re_imgui_t *imgui, renderer::Window *window) {
 
 void re_imgui_begin(re_imgui_t *imgui) {
   ImGui_ImplVulkan_NewFrame();
-  ImGui_ImplSDL2_NewFrame(imgui->window->m_window);
+  ImGui_ImplSDL2_NewFrame(imgui->window->sdl_window);
   ImGui::NewFrame();
 }
 
@@ -120,9 +120,9 @@ void re_imgui_end(re_imgui_t *) {
 }
 
 void re_imgui_draw(re_imgui_t *imgui) {
-  auto commandBuffer = imgui->window->getCurrentCommandBuffer();
+  auto command_buffer = re_window_get_current_command_buffer(imgui->window);
 
-  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
 }
 
 void re_imgui_process_event(re_imgui_t *, SDL_Event *event) {

@@ -6,13 +6,9 @@
 #include <renderer/common.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/resource_manager.hpp>
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
-
 class BillboardComponent {
 public:
   // Creates an initialized Billboard with the given parameters
@@ -29,7 +25,7 @@ public:
   BillboardComponent &operator=(BillboardComponent &&rhs) = delete;
 
   void draw(
-      renderer::Window &window,
+      const re_window_t *window,
       re_pipeline_t pipeline,
       const glm::mat4 &transform,
       const glm::vec3 &color);

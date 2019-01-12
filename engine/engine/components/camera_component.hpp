@@ -6,10 +6,7 @@
 #include <renderer/glm.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/resource_manager.hpp>
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 class CameraComponent {
@@ -34,10 +31,10 @@ public:
   CameraComponent &operator=(CameraComponent &&) = delete;
 
   // Updates the GPU resources with the data in this Camera object
-  void update(renderer::Window &window, const TransformComponent &transform);
+  void update(const re_window_t *window, const TransformComponent &transform);
 
   // Binds this camera to a pipeline
-  void bind(renderer::Window &window, re_pipeline_t &pipeline);
+  void bind(const re_window_t *window, re_pipeline_t &pipeline);
 
   float m_fov;
   CameraUniform m_cameraUniform;

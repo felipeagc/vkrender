@@ -3,16 +3,11 @@
 #include "../asset_manager.hpp"
 #include <ecs/entity.hpp>
 #include <renderer/pipeline.hpp>
-
-union SDL_Event;
+#include <renderer/window.hpp>
 
 namespace ecs {
 class World;
 }
-
-namespace renderer {
-class Window;
-} // namespace renderer
 
 namespace engine {
 class EntityInspectorSystem {
@@ -23,13 +18,13 @@ public:
   void imgui(ecs::World &world);
 
   void drawBox(
-      renderer::Window &window,
+      const re_window_t *window,
       AssetManager &assetManager,
       ecs::World &world,
       re_pipeline_t wireframe_pipeline);
 
   void processEvent(
-      const renderer::Window &window,
+      const re_window_t *window,
       AssetManager &assetManager,
       ecs::World &world,
       const SDL_Event &event);

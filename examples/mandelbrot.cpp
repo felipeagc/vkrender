@@ -5,12 +5,16 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 800, 600);
+  re_window_t window;
+  re_window_init(&window, "Mandelbrot set", 1600, 900);
 
-  window.clearColor = {0.15, 0.15, 0.15, 1.0};
+  window.clear_color = {0.15, 0.15, 0.15, 1.0};
+
+  uint32_t width, height;
+  re_window_get_size(&window, &width, &height);
 
   re_canvas_t canvas;
-  re_canvas_init(&canvas, window.getWidth(), window.getHeight());
+  re_canvas_init(&canvas, width, height);
 
   // Create shaders & pipelines
   engine::ShaderWatcher shaderWatcher(
@@ -26,11 +30,11 @@ int main() {
     glm::dvec2 camPos{0.0, 0.0};
   } block;
 
-  while (!window.getShouldClose()) {
-    block.time += window.getDelta();
+  while (!window.should_close) {
+    block.time += window.delta_time;
 
     SDL_Event event;
-    while (window.pollEvent(&event)) {
+    while (re_window_poll_event(&window, &event)) {
       switch (event.type) {
       case SDL_WINDOWEVENT:
         if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -41,7 +45,7 @@ int main() {
         }
         break;
       case SDL_QUIT:
-        window.setShouldClose(true);
+        window.should_close = true;
         break;
       }
     }
@@ -49,53 +53,56 @@ int main() {
     auto lock = shaderWatcher.lockPipeline();
 
     glm::dvec2 offset{0.0};
-    double speed = 0.3f * window.getDelta();
+    double speed = 0.3f * window.delta_time;
 
-    if (window.isScancodePressed(renderer::Scancode::eD)) {
+    if (re_window_is_scancode_pressed(&window, SDL_SCANCODE_D)) {
       offset.x += speed;
     }
-    if (window.isScancodePressed(renderer::Scancode::eA)) {
+    if (re_window_is_scancode_pressed(&window, SDL_SCANCODE_A)) {
       offset.x -= speed;
     }
-    if (window.isScancodePressed(renderer::Scancode::eW)) {
+    if (re_window_is_scancode_pressed(&window, SDL_SCANCODE_W)) {
       offset.y -= speed;
     }
-    if (window.isScancodePressed(renderer::Scancode::eS)) {
+    if (re_window_is_scancode_pressed(&window, SDL_SCANCODE_S)) {
       offset.y += speed;
     }
 
     block.camPos += offset;
 
-    window.beginFrame();
+    re_window_begin_frame(&window);
+
+    auto command_buffer = re_window_get_current_command_buffer(&window);
 
     // Render target pass
     {
-      re_canvas_begin(&canvas, window.getCurrentCommandBuffer());
-      re_canvas_end(&canvas, window.getCurrentCommandBuffer());
+      re_canvas_begin(&canvas, command_buffer);
+      re_canvas_end(&canvas, command_buffer);
     }
 
     // Window pass
     {
-      window.beginRenderPass();
+      re_window_begin_render_pass(&window);
 
       vkCmdPushConstants(
-          window.getCurrentCommandBuffer(),
+          command_buffer,
           shaderWatcher.pipeline.layout,
           VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
           0,
           sizeof(block),
           &block);
 
-      re_canvas_draw(
-          &canvas, window.getCurrentCommandBuffer(), &shaderWatcher.pipeline);
+      re_canvas_draw(&canvas, command_buffer, &shaderWatcher.pipeline);
 
-      window.endRenderPass();
+      re_window_end_render_pass(&window);
     }
 
-    window.endFrame();
+    re_window_end_frame(&window);
   }
 
   re_canvas_destroy(&canvas);
+
+  re_window_destroy(&window);
 
   return 0;
 }

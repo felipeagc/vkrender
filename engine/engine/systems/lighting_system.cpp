@@ -10,7 +10,7 @@ LightingSystem::LightingSystem() {}
 
 LightingSystem::~LightingSystem() {}
 
-void LightingSystem::process(renderer::Window &window, ecs::World &world) {
+void LightingSystem::process(const re_window_t *window, ecs::World &world) {
   ecs::Entity environmentEntity = world.first<EnvironmentComponent>();
 
   auto environment =

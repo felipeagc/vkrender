@@ -18,18 +18,18 @@ FPSCameraSystem::FPSCameraSystem() {}
 FPSCameraSystem::~FPSCameraSystem() {}
 
 void FPSCameraSystem::processEvent(
-    renderer::Window &window, const SDL_Event &event) {
+    re_window_t *window, const SDL_Event &event) {
   switch (event.type) {
   case SDL_MOUSEBUTTONDOWN:
     if (event.button.button == SDL_BUTTON_RIGHT && !ImGui::IsAnyItemActive()) {
-      window.getMouseState(&m_prevMouseX, &m_prevMouseY);
-      window.setRelativeMouse(true);
+      re_window_get_mouse_state(window, &m_prevMouseX, &m_prevMouseY);
+      re_window_set_relative_mouse(window, true);
     }
     break;
   case SDL_MOUSEBUTTONUP:
     if (event.button.button == SDL_BUTTON_RIGHT && !ImGui::IsAnyItemActive()) {
-      window.setRelativeMouse(false);
-      window.warpMouse(m_prevMouseX, m_prevMouseY);
+      re_window_set_relative_mouse(window, true);
+      re_window_warp_mouse(window, m_prevMouseX, m_prevMouseY);
     }
     break;
   case SDL_MOUSEMOTION:
@@ -37,7 +37,7 @@ void FPSCameraSystem::processEvent(
       int dx = event.motion.xrel;
       int dy = event.motion.yrel;
 
-      if (window.getRelativeMouse()) {
+      if (re_window_get_relative_mouse(window)) {
         m_camYaw += glm::radians((float)dx) * SENSITIVITY;
         m_camPitch -= glm::radians((float)dy) * SENSITIVITY;
         m_camPitch =
@@ -48,7 +48,7 @@ void FPSCameraSystem::processEvent(
   }
 }
 
-void FPSCameraSystem::process(renderer::Window &window, ecs::World &world) {
+void FPSCameraSystem::process(const re_window_t *window, ecs::World &world) {
   ecs::Entity cameraEntity =
       world.first<engine::CameraComponent, engine::TransformComponent>();
 
@@ -68,16 +68,16 @@ void FPSCameraSystem::process(renderer::Window &window, ecs::World &world) {
   m_camRight = glm::normalize(glm::cross(m_camFront, glm::vec3(0.0, 1.0, 0.0)));
   m_camUp = glm::normalize(glm::cross(m_camRight, m_camFront));
 
-  float speed = 10.0f * window.getDelta();
+  float speed = 10.0f * window->delta_time;
   glm::vec3 movement(0.0);
 
-  if (window.isScancodePressed(renderer::Scancode::eW))
+  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_W))
     movement += m_camFront;
-  if (window.isScancodePressed(renderer::Scancode::eS))
+  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_S))
     movement -= m_camFront;
-  if (window.isScancodePressed(renderer::Scancode::eA))
+  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_A))
     movement -= m_camRight;
-  if (window.isScancodePressed(renderer::Scancode::eD))
+  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_D))
     movement += m_camRight;
 
   movement *= speed;
@@ -85,7 +85,7 @@ void FPSCameraSystem::process(renderer::Window &window, ecs::World &world) {
   m_camTarget += movement;
 
   transform->position =
-      lerp(transform->position, m_camTarget, window.getDelta() * 10.0f);
+      lerp(transform->position, m_camTarget, window->delta_time * 10.0f);
 
   transform->lookAt(m_camFront, m_camUp);
 

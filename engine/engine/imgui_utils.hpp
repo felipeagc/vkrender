@@ -2,10 +2,7 @@
 
 #include <ecs/entity.hpp>
 #include <ecs/world.hpp>
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 class AssetManager;
@@ -15,7 +12,7 @@ struct LightComponent;
 class CameraComponent;
 
 namespace imgui {
-void statsWindow(renderer::Window &window);
+void statsWindow(const re_window_t *window);
 
 void assetsWindow(AssetManager &assetManager);
 } // namespace imgui

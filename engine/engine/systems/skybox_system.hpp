@@ -2,10 +2,7 @@
 
 #include <ecs/world.hpp>
 #include <renderer/pipeline.hpp>
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 class SkyboxSystem {
@@ -14,8 +11,6 @@ public:
   ~SkyboxSystem();
 
   void process(
-      renderer::Window &window,
-      ecs::World &world,
-      re_pipeline_t &pipeline);
+      const re_window_t *window, ecs::World &world, re_pipeline_t &pipeline);
 };
 } // namespace engine

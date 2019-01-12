@@ -8,12 +8,13 @@
 
 int main() {
   renderer::Context context;
-  renderer::Window window("GLTF models", 1600, 900);
+  re_window_t window;
+  re_window_init(&window, "GLTF models", 1600, 900);
 
   re_imgui_t imgui;
   re_imgui_init(&imgui, &window);
 
-  window.clearColor = {0.15, 0.15, 0.15, 1.0};
+  window.clear_color = {0.15, 0.15, 0.15, 1.0};
 
   engine::Scene scene("../assets/main.sdf");
   auto &world = scene.m_world;
@@ -26,8 +27,11 @@ int main() {
   engine::LightingSystem lightingSystem;
   engine::EntityInspectorSystem entityInspectorSystem{assetManager};
 
+  uint32_t width, height;
+  re_window_get_size(&window, &width, &height);
+
   re_canvas_t canvas;
-  re_canvas_init(&canvas, window.getWidth(), window.getHeight());
+  re_canvas_init(&canvas, width, height);
 
   // Create shaders & pipelines
   re_pipeline_t model_pipeline;
@@ -74,14 +78,14 @@ int main() {
 
   bool drawImgui = false;
 
-  while (!window.getShouldClose()) {
-    time += window.getDelta();
+  while (!window.should_close) {
+    time += window.delta_time;
 
     SDL_Event event;
-    while (window.pollEvent(&event)) {
+    while (re_window_poll_event(&window, &event)) {
       re_imgui_process_event(&imgui, &event);
-      fpsCameraSystem.processEvent(window, event);
-      entityInspectorSystem.processEvent(window, assetManager, world, event);
+      fpsCameraSystem.processEvent(&window, event);
+      entityInspectorSystem.processEvent(&window, assetManager, world, event);
 
       switch (event.type) {
       case SDL_KEYDOWN:
@@ -101,56 +105,58 @@ int main() {
         break;
       case SDL_QUIT:
         ftl::info("Goodbye");
-        window.setShouldClose(true);
+        window.should_close = true;
         break;
       }
     }
 
-    window.beginFrame();
+    re_window_begin_frame(&window);
+
+    auto command_buffer = re_window_get_current_command_buffer(&window);
 
     re_imgui_begin(&imgui);
 
     if (drawImgui) {
-      engine::imgui::statsWindow(window);
+      engine::imgui::statsWindow(&window);
       engine::imgui::assetsWindow(assetManager);
       entityInspectorSystem.imgui(world);
     }
 
-    lightingSystem.process(window, world);
-    fpsCameraSystem.process(window, world);
+    lightingSystem.process(&window, world);
+    fpsCameraSystem.process(&window, world);
 
     // modelShaderWatcher.lockPipeline();
 
     // Render target pass
     {
-      re_canvas_begin(&canvas, window.getCurrentCommandBuffer());
+      re_canvas_begin(&canvas, command_buffer);
 
       entityInspectorSystem.drawBox(
-          window, assetManager, world, wireframe_pipeline);
-      gltfModelSystem.process(window, assetManager, world, model_pipeline);
-      skyboxSystem.process(window, world, skybox_pipeline);
-      billboardSystem.process(window, world, billboard_pipeline);
+          &window, assetManager, world, wireframe_pipeline);
+      gltfModelSystem.process(&window, assetManager, world, model_pipeline);
+      skyboxSystem.process(&window, world, skybox_pipeline);
+      billboardSystem.process(&window, world, billboard_pipeline);
 
-      re_canvas_end(&canvas, window.getCurrentCommandBuffer());
+      re_canvas_end(&canvas, command_buffer);
     }
 
     re_imgui_end(&imgui);
 
     // Window pass
     {
-      window.beginRenderPass();
+      re_window_begin_render_pass(&window);
 
       re_canvas_draw(
-          &canvas, window.getCurrentCommandBuffer(), &fullscreen_pipeline);
+          &canvas, command_buffer, &fullscreen_pipeline);
 
       if (drawImgui) {
         re_imgui_draw(&imgui);
       }
 
-      window.endRenderPass();
+      re_window_end_render_pass(&window);
     }
 
-    window.endFrame();
+    re_window_end_frame(&window);
   }
 
   re_pipeline_destroy(&model_pipeline);
@@ -162,6 +168,8 @@ int main() {
   re_canvas_destroy(&canvas);
 
   re_imgui_destroy(&imgui);
+
+  re_window_destroy(&window);
 
   return 0;
 }

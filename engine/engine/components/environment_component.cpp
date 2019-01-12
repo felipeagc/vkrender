@@ -148,10 +148,10 @@ EnvironmentComponent::~EnvironmentComponent() {
 }
 
 void EnvironmentComponent::bind(
-    renderer::Window &window, re_pipeline_t &pipeline, uint32_t setIndex) {
-  auto commandBuffer = window.getCurrentCommandBuffer();
+    const re_window_t *window, re_pipeline_t &pipeline, uint32_t setIndex) {
+  auto commandBuffer = re_window_get_current_command_buffer(window);
 
-  auto i = window.getCurrentFrameIndex();
+  auto i = window->current_frame;
 
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
@@ -168,10 +168,10 @@ void EnvironmentComponent::bind(
 }
 
 void EnvironmentComponent::drawSkybox(
-    renderer::Window &window, re_pipeline_t &pipeline) {
-  auto commandBuffer = window.getCurrentCommandBuffer();
+    const re_window_t *window, re_pipeline_t &pipeline) {
+  auto commandBuffer = re_window_get_current_command_buffer(window);
 
-  auto i = window.getCurrentFrameIndex();
+  auto i = window->current_frame;
 
   this->update(window);
 
@@ -191,8 +191,8 @@ void EnvironmentComponent::drawSkybox(
   vkCmdDraw(commandBuffer, 36, 1, 0, 0);
 }
 
-void EnvironmentComponent::update(renderer::Window &window) {
-  auto i = window.getCurrentFrameIndex();
+void EnvironmentComponent::update(const re_window_t *window) {
+  auto i = window->current_frame;
   memcpy(m_mappings[i], &m_ubo, sizeof(EnvironmentUniform));
 }
 

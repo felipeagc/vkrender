@@ -13,10 +13,6 @@
 #include <string>
 #include <thread>
 
-namespace renderer {
-class Window;
-}
-
 namespace engine {
 class ShaderWatcher {
 public:

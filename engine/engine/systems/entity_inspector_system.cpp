@@ -9,7 +9,6 @@
 #include "../components/transform_component.hpp"
 #include <ecs/world.hpp>
 #include <imgui/imgui.h>
-#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -157,7 +156,7 @@ void EntityInspectorSystem::imgui(ecs::World &world) {
 }
 
 void EntityInspectorSystem::drawBox(
-    renderer::Window &window,
+      const re_window_t *window,
     AssetManager &assetManager,
     ecs::World &world,
     re_pipeline_t wireframe_pipeline) {
@@ -177,8 +176,10 @@ void EntityInspectorSystem::drawBox(
 
   auto &box = assetManager.getAsset<ShapeAsset>(m_boxAsset);
 
+  auto command_buffer = re_window_get_current_command_buffer(window);
+
   vkCmdBindPipeline(
-      window.getCurrentCommandBuffer(),
+      command_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       wireframe_pipeline.pipeline);
 
@@ -192,7 +193,7 @@ void EntityInspectorSystem::drawBox(
   pushConstant.offset = modelAsset.dimensions.center;
 
   vkCmdPushConstants(
-      window.getCurrentCommandBuffer(),
+      command_buffer,
       wireframe_pipeline.layout,
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
       0,
@@ -202,26 +203,26 @@ void EntityInspectorSystem::drawBox(
   VkDeviceSize offset = 0;
   VkBuffer vertexBuffer = box.m_vertexBuffer.buffer;
   vkCmdBindVertexBuffers(
-      window.getCurrentCommandBuffer(), 0, 1, &vertexBuffer, &offset);
+      command_buffer, 0, 1, &vertexBuffer, &offset);
 
   vkCmdBindIndexBuffer(
-      window.getCurrentCommandBuffer(),
+      command_buffer,
       box.m_indexBuffer.buffer,
       0,
       VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(
-      window.getCurrentCommandBuffer(),
+      command_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       wireframe_pipeline.layout,
       1, // firstSet
       1,
-      &model->m_descriptorSets[window.getCurrentFrameIndex()].descriptor_set,
+      &model->m_descriptorSets[window->current_frame].descriptor_set,
       0,
       nullptr);
 
   vkCmdDrawIndexed(
-      window.getCurrentCommandBuffer(),
+      command_buffer,
       box.m_shape.m_indices.size(),
       1,
       0,
@@ -365,7 +366,7 @@ static inline bool intersect(
 }
 
 void EntityInspectorSystem::processEvent(
-    const renderer::Window &window,
+    const re_window_t *window,
     AssetManager &assetManager,
     ecs::World &world,
     const SDL_Event &event) {
@@ -386,11 +387,14 @@ void EntityInspectorSystem::processEvent(
 
       glm::vec3 rayOrigin = cameraTransform->position;
 
+      uint32_t width, height;
+      re_window_get_size(window, &width, &height);
+
       glm::vec3 rayDir = rayCast(
           mouseX,
           mouseY,
-          (float)window.getWidth(),
-          (float)window.getHeight(),
+          (float)width,
+          (float)height,
           cameraComp->m_cameraUniform.view,
           cameraComp->m_cameraUniform.proj);
 

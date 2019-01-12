@@ -8,10 +8,7 @@
 #include <renderer/pipeline.hpp>
 #include <renderer/resource_manager.hpp>
 #include <renderer/texture.hpp>
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 const uint32_t MAX_LIGHTS = 20;
@@ -32,14 +29,14 @@ public:
   EnvironmentComponent &operator=(EnvironmentComponent &&rhs) = delete;
 
   void bind(
-      renderer::Window &window,
+      const re_window_t *window,
       re_pipeline_t &pipeline,
       uint32_t setIndex);
 
   void
-  drawSkybox(renderer::Window &window, re_pipeline_t &pipeline);
+  drawSkybox(const re_window_t *window, re_pipeline_t &pipeline);
 
-  void update(renderer::Window &window);
+  void update(const re_window_t *window);
 
   void addLight(const glm::vec3 &pos, const glm::vec3 &color);
   void resetLights();

@@ -15,15 +15,15 @@
 
 namespace engine {
 namespace imgui {
-void statsWindow(renderer::Window &window) {
+void statsWindow(const re_window_t *window) {
   ImGui::Begin("Stats");
 
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(renderer::ctx().m_physicalDevice, &properties);
 
   ImGui::Text("Physical device: %s", properties.deviceName);
-  ImGui::Text("Delta time: %.3f s", window.getDelta());
-  ImGui::Text("Framerate: %.2f", 1.0f / window.getDelta());
+  ImGui::Text("Delta time: %.3f s", window->delta_time);
+  ImGui::Text("Framerate: %.2f", 1.0f / window->delta_time);
 
   ImGui::End();
 }

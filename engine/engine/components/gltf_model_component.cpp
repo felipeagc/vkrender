@@ -73,13 +73,13 @@ GltfModelComponent::~GltfModelComponent() {
 }
 
 void GltfModelComponent::draw(
-    renderer::Window &window,
+    const re_window_t *window,
     engine::AssetManager &assetManager,
     re_pipeline_t pipeline,
     const glm::mat4 &transform) {
-  auto commandBuffer = window.getCurrentCommandBuffer();
+  auto commandBuffer = re_window_get_current_command_buffer(window);
 
-  auto i = window.getCurrentFrameIndex();
+  auto i = window->current_frame;
 
   // Update model matrix
   m_ubo.model = transform;
@@ -115,11 +115,11 @@ void GltfModelComponent::draw(
 void GltfModelComponent::drawNode(
     GltfModelAsset &model,
     GltfModelAsset::Node &node,
-    renderer::Window &window,
+    const re_window_t *window,
     re_pipeline_t pipeline) {
-  VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
+  VkCommandBuffer commandBuffer = re_window_get_current_command_buffer(window);
 
-  auto i = window.getCurrentFrameIndex();
+  auto i = window->current_frame;
 
   // TODO: update animations here (when we implement them)
 

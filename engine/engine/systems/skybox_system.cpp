@@ -10,7 +10,7 @@ SkyboxSystem::SkyboxSystem() {}
 SkyboxSystem::~SkyboxSystem() {}
 
 void SkyboxSystem::process(
-    renderer::Window &window,
+    const re_window_t *window,
     ecs::World &world,
     re_pipeline_t &pipeline) {
   ecs::Entity cameraEntity = world.first<CameraComponent>();

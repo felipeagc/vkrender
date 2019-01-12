@@ -3,7 +3,6 @@
 #include <ftl/logging.hpp>
 #include <renderer/context.hpp>
 #include <renderer/util.hpp>
-#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -69,16 +68,16 @@ BillboardComponent::~BillboardComponent() {
 }
 
 void BillboardComponent::draw(
-    renderer::Window &window,
+    const re_window_t *window,
     re_pipeline_t pipeline,
     const glm::mat4 &transform,
     const glm::vec3 &color) {
   m_ubo.model = transform;
   m_ubo.color = glm::vec4(color, 1.0f);
 
-  auto commandBuffer = window.getCurrentCommandBuffer();
+  auto commandBuffer = re_window_get_current_command_buffer(window);
 
-  auto i = window.getCurrentFrameIndex();
+  auto i = window->current_frame;
 
   vkCmdBindPipeline(
       commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);

@@ -1,19 +1,14 @@
 #pragma once
 
 #include "common.hpp"
-
-union SDL_Event;
-
-namespace renderer {
-class Window;
-}
+#include "window.hpp"
 
 struct re_imgui_t {
-  renderer::Window *window;
+  re_window_t *window;
   VkDescriptorPool descriptor_pool;
 };
 
-void re_imgui_init(re_imgui_t *imgui, renderer::Window *window);
+void re_imgui_init(re_imgui_t *imgui, re_window_t *window);
 
 void re_imgui_begin(re_imgui_t *imgui);
 

@@ -3,10 +3,7 @@
 #include "../asset_manager.hpp"
 #include <ecs/world.hpp>
 #include <renderer/pipeline.hpp>
-
-namespace renderer {
-class Window;
-}
+#include <renderer/window.hpp>
 
 namespace engine {
 class GltfModelSystem {
@@ -15,7 +12,7 @@ public:
   ~GltfModelSystem();
 
   void process(
-      renderer::Window &window,
+      const re_window_t *window,
       AssetManager &assetManager,
       ecs::World &world,
       re_pipeline_t pipeline);

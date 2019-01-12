@@ -3,142 +3,86 @@
 #include "common.hpp"
 #include "glm.hpp"
 #include "render_target.hpp"
-#include "scancodes.hpp"
 #include <SDL2/SDL.h>
-#include <chrono>
-#include <ftl/vector.hpp>
-#include <functional>
-#include <string>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-
-class Window {
-public:
-  Window(const char *title, uint32_t width = 800, uint32_t height = 600);
-  ~Window();
-
-  // No copying Window
-  Window(const Window &) = delete;
-  Window &operator=(const Window &) = delete;
-
-  bool pollEvent(SDL_Event *event);
-
-  void beginFrame();
-  void endFrame();
-
-  void beginRenderPass();
-  void endRenderPass();
-
-  uint32_t getWidth() const;
-  uint32_t getHeight() const;
-
-  bool getRelativeMouse() const;
-  void setRelativeMouse(bool relative = true);
-
-  void getMouseState(int *x, int *y) const;
-  void getRelativeMouseState(int *x, int *y) const;
-
-  void warpMouse(int x, int y);
-
-  bool isMouseLeftPressed() const;
-  bool isMouseRightPressed() const;
-
-  bool isScancodePressed(Scancode scancode) const;
-
-  double getDelta() const;
-
-  bool getShouldClose() const;
-  void setShouldClose(bool shouldClose);
-
-  VkSampleCountFlagBits getMaxSampleCount() const;
-
-  int getCurrentFrameIndex() const;
-  VkCommandBuffer getCurrentCommandBuffer();
-
-  glm::vec4 clearColor{1.0f, 1.0f, 1.0f, 1.0f};
+struct re_window_t {
+  glm::vec4 clear_color;
 
   re_render_target_t render_target;
+  SDL_Window *sdl_window;
 
-  SDL_Window *m_window = nullptr;
+  bool should_close;
 
-protected:
-  bool m_shouldClose = false;
+  double delta_time;
+  uint32_t time_before;
 
-  double m_deltaTime = 0.0f;
-  std::chrono::time_point<std::chrono::high_resolution_clock> m_timeBefore;
+  VkSurfaceKHR surface;
 
-  VkSurfaceKHR m_surface = VK_NULL_HANDLE;
+  VkSampleCountFlagBits max_samples;
 
-  VkSampleCountFlagBits m_maxSampleCount = VK_SAMPLE_COUNT_1_BIT;
-
-  VkFormat m_depthImageFormat;
+  VkFormat depth_format;
 
   // @note: might wanna make one of these per frame
   struct {
-    VkImage image = VK_NULL_HANDLE;
-    VmaAllocation allocation = VK_NULL_HANDLE;
-    VkImageView view = VK_NULL_HANDLE;
-  } m_depthStencil;
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView view;
+  } depth_stencil;
 
   struct FrameResources {
-    VkSemaphore imageAvailableSemaphore = VK_NULL_HANDLE;
-    VkSemaphore renderingFinishedSemaphore = VK_NULL_HANDLE;
-    VkFence fence = VK_NULL_HANDLE;
+    VkSemaphore image_available_semaphore;
+    VkSemaphore rendering_finished_semaphore;
+    VkFence fence;
 
-    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+    VkFramebuffer framebuffer;
 
-    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-  };
-
-  ftl::small_vector<FrameResources> m_frameResources{MAX_FRAMES_IN_FLIGHT};
+    VkCommandBuffer command_buffer;
+  } frame_resources[renderer::MAX_FRAMES_IN_FLIGHT];
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
-  int m_currentFrame = 0;
+  uint32_t current_frame;
   // Index of the current swapchain image
-  uint32_t m_currentImageIndex;
+  uint32_t current_image_index;
 
-  VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
-  VkFormat m_swapchainImageFormat;
-  VkExtent2D m_swapchainExtent;
-  ftl::small_vector<VkImage> m_swapchainImages;
-  ftl::small_vector<VkImageView> m_swapchainImageViews;
+  VkSwapchainKHR swapchain;
+  VkFormat swapchain_image_format;
+  VkExtent2D swapchain_extent;
 
-  void createVulkanSurface();
-
-  void createSyncObjects();
-  void createSwapchain(uint32_t width, uint32_t height);
-  void createSwapchainImageViews();
-
-  void allocateGraphicsCommandBuffers();
-
-  // Populates the depthStencil member struct
-  void createDepthStencilResources();
-
-  void createRenderPass();
-
-  void
-  regenFramebuffer(VkFramebuffer &framebuffer, VkImageView &swapchainImageView);
-
-  // When window gets resized, call this.
-  void updateSize();
-
-  void destroyResizables();
-
-  uint32_t
-  getSwapchainNumImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
-  VkSurfaceFormatKHR
-  getSwapchainFormat(const ftl::small_vector<VkSurfaceFormatKHR> &formats);
-  VkExtent2D getSwapchainExtent(
-      uint32_t width,
-      uint32_t height,
-      const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
-  VkImageUsageFlags
-  getSwapchainUsageFlags(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
-  VkSurfaceTransformFlagBitsKHR
-  getSwapchainTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
-  VkPresentModeKHR getSwapchainPresentMode(
-      const ftl::small_vector<VkPresentModeKHR> &presentModes);
+  uint32_t swapchain_image_count;
+  VkImage *swapchain_images;
+  VkImageView *swapchain_image_views;
 };
-} // namespace renderer
+
+bool re_window_init(
+    re_window_t *window, const char *title, uint32_t width, uint32_t height);
+
+void re_window_get_size(
+    const re_window_t *window, uint32_t *width, uint32_t *height);
+
+bool re_window_poll_event(re_window_t *window, SDL_Event *event);
+
+void re_window_begin_frame(re_window_t *window);
+void re_window_end_frame(re_window_t *window);
+
+void re_window_begin_render_pass(re_window_t *window);
+void re_window_end_render_pass(re_window_t *window);
+
+bool re_window_get_relative_mouse(const re_window_t *window);
+void re_window_set_relative_mouse(re_window_t *window, bool relative);
+
+void re_window_get_mouse_state(const re_window_t *window, int *x, int *y);
+void re_window_get_relative_mouse_state(const re_window_t *window, int *x, int *y);
+
+void re_window_warp_mouse(re_window_t *window, int x, int y);
+
+bool re_window_is_mouse_left_pressed(const re_window_t *window);
+bool re_window_is_mouse_right_pressed(const re_window_t *window);
+
+bool re_window_is_scancode_pressed(
+    const re_window_t *window, SDL_Scancode scancode);
+
+VkCommandBuffer re_window_get_current_command_buffer(const re_window_t *window);
+
+void re_window_destroy(re_window_t *window);

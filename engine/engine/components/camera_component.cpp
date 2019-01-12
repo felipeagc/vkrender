@@ -65,15 +65,14 @@ CameraComponent::~CameraComponent() {
 }
 
 void CameraComponent::update(
-    renderer::Window &window, const TransformComponent &transform) {
-  auto i = window.getCurrentFrameIndex();
+    const re_window_t *window, const TransformComponent &transform) {
+  auto i = window->current_frame;
+
+  uint32_t width, height;
+  re_window_get_size(window, &width, &height);
 
   m_cameraUniform.proj = glm::perspective(
-      glm::radians(m_fov),
-      static_cast<float>(window.getWidth()) /
-          static_cast<float>(window.getHeight()),
-      m_near,
-      m_far);
+      glm::radians(m_fov), (float)width / (float)height, m_near, m_far);
 
   // @note: See:
   // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
@@ -96,9 +95,9 @@ void CameraComponent::update(
   memcpy(m_mappings[i], &m_cameraUniform, sizeof(CameraUniform));
 }
 
-void CameraComponent::bind(renderer::Window &window, re_pipeline_t &pipeline) {
-  auto i = window.getCurrentFrameIndex();
-  VkCommandBuffer commandBuffer = window.getCurrentCommandBuffer();
+void CameraComponent::bind(const re_window_t *window, re_pipeline_t &pipeline) {
+  auto i = window->current_frame;
+  VkCommandBuffer commandBuffer = re_window_get_current_command_buffer(window);
 
   vkCmdBindDescriptorSets(
       commandBuffer,

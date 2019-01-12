@@ -7,10 +7,6 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-namespace renderer {
-class Window;
-} // namespace renderer
-
 struct re_canvas_t {
   re_render_target_t render_target;
 

@@ -5,7 +5,6 @@
 #include "../components/environment_component.hpp"
 #include "../components/gltf_model_component.hpp"
 #include "../components/transform_component.hpp"
-#include <renderer/window.hpp>
 
 using namespace engine;
 
@@ -14,7 +13,7 @@ GltfModelSystem::GltfModelSystem() {}
 GltfModelSystem::~GltfModelSystem() {}
 
 void GltfModelSystem::process(
-    renderer::Window &window,
+    const re_window_t *window,
     AssetManager &assetManager,
     ecs::World &world,
     re_pipeline_t modelPipeline) {
