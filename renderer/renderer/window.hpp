@@ -16,7 +16,7 @@ struct re_window_t {
   bool should_close;
 
   double delta_time;
-  uint32_t time_before;
+  uint64_t time_before_ns;
 
   VkSurfaceKHR surface;
 

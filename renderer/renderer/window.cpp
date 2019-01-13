@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
 #include <ftl/logging.hpp>
+#include <util/time.hpp>
 
 using namespace renderer;
 
@@ -528,7 +529,7 @@ bool re_window_init(
   window->should_close = false;
   window->clear_color = glm::vec4(0.0, 0.0, 0.0, 1.0);
   window->delta_time = 0.0f;
-  window->time_before = 0;
+  window->time_before_ns = 0;
 
   window->swapchain = VK_NULL_HANDLE;
   window->surface = VK_NULL_HANDLE;
@@ -589,7 +590,6 @@ bool re_window_init(
   }
 
   window->max_samples = re_context_get_max_sample_count(&g_ctx);
-  ;
 
   create_sync_objects(window);
 
@@ -658,7 +658,7 @@ bool re_window_poll_event(re_window_t *window, SDL_Event *event) {
 }
 
 void re_window_begin_frame(re_window_t *window) {
-  window->time_before = SDL_GetTicks();
+  window->time_before_ns = time_ns();
 
   // Begin
   vkWaitForFences(
@@ -821,10 +821,9 @@ void re_window_end_frame(re_window_t *window) {
 
   window->current_frame = (window->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-  // @todo: get a better resolution timer
-  uint32_t elapsed_time_millis = SDL_GetTicks() - window->time_before;
+  uint64_t elapsed_time_ns = time_ns() - window->time_before_ns;
 
-  window->delta_time = (double)elapsed_time_millis / 1000.0f;
+  window->delta_time = (double)elapsed_time_ns/ 1.0e9;
 }
 
 void re_window_begin_render_pass(re_window_t *window) {
