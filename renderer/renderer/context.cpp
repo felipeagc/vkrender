@@ -2,6 +2,7 @@
 #include "util.hpp"
 #include "window.hpp"
 #include <ftl/logging.hpp>
+#include <vector>
 
 re_context_t g_ctx;
 
@@ -74,20 +75,33 @@ static inline bool check_validation_layer_support() {
   return true;
 }
 
-static inline std::vector<const char *>
-get_required_extensions(std::vector<const char *> sdlExtensions) {
-  std::vector<const char *> extensions{sdlExtensions};
+static inline void get_required_extensions(
+    const char *const *required_window_vulkan_extensions,
+    uint32_t extension_count,
+    const char **out_extensions,
+    uint32_t *out_extension_count) {
+  *out_extension_count = extension_count;
 
 #ifdef RE_ENABLE_VALIDATION
-  extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+  (*out_extension_count)++;
 #endif
 
-  return extensions;
+  if (out_extensions == NULL) {
+    return;
+  }
+
+  for (uint32_t i = 0; i < extension_count; i++) {
+    out_extensions[i] = required_window_vulkan_extensions[i];
+  }
+
+#ifdef RE_ENABLE_VALIDATION
+  out_extensions[extension_count] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+#endif
 }
 
 static inline bool check_physical_device_properties(
     VkPhysicalDevice physicalDevice,
-    VkSurfaceKHR &surface,
+    VkSurfaceKHR surface,
     uint32_t *graphicsQueueFamily,
     uint32_t *presentQueueFamily,
     uint32_t *transferQueueFamily) {
@@ -210,7 +224,8 @@ static inline bool check_physical_device_properties(
 
 static inline void create_instance(
     re_context_t *ctx,
-    const std::vector<const char *> &requiredWindowVulkanExtensions) {
+    const char *const *required_window_vulkan_extensions,
+    uint32_t window_extension_count) {
   ftl::debug("Creating vulkan instance");
 #ifdef RE_ENABLE_VALIDATION
   ftl::debug("Using validation layers");
@@ -245,11 +260,25 @@ static inline void create_instance(
 #endif
 
   // Set required instance extensions
-  auto extensions = get_required_extensions(requiredWindowVulkanExtensions);
-  createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-  createInfo.ppEnabledExtensionNames = extensions.data();
+  uint32_t extension_count = 0;
+  get_required_extensions(
+      required_window_vulkan_extensions,
+      window_extension_count,
+      NULL,
+      &extension_count);
+  const char **extensions =
+      (const char **)malloc(sizeof(const char *) * extension_count);
+  get_required_extensions(
+      required_window_vulkan_extensions,
+      window_extension_count,
+      extensions,
+      &extension_count);
+  createInfo.enabledExtensionCount = extension_count;
+  createInfo.ppEnabledExtensionNames = extensions;
 
   VK_CHECK(vkCreateInstance(&createInfo, nullptr, &ctx->instance));
+
+  free(extensions);
 }
 
 static inline void setup_debug_callback(re_context_t *ctx) {
@@ -263,7 +292,7 @@ static inline void setup_debug_callback(re_context_t *ctx) {
       ctx->instance, &createInfo, nullptr, &ctx->debug_callback));
 }
 
-static inline void create_device(re_context_t *ctx, VkSurfaceKHR *surface) {
+static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   uint32_t count;
   vkEnumeratePhysicalDevices(ctx->instance, &count, nullptr);
   ftl::small_vector<VkPhysicalDevice> physicalDevices(count);
@@ -272,7 +301,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR *surface) {
   for (auto physical_device : physicalDevices) {
     if (check_physical_device_properties(
             physical_device,
-            *surface,
+            surface,
             &ctx->graphics_queue_family_index,
             &ctx->present_queue_family_index,
             &ctx->transfer_queue_family_index)) {
@@ -409,7 +438,8 @@ static inline void create_thread_command_pools(re_context_t *ctx) {
 
 void re_context_pre_init(
     re_context_t *ctx,
-    const std::vector<const char *> &required_window_vulkan_extensions) {
+    const char *const *required_window_vulkan_extensions,
+    uint32_t window_extension_count) {
   ctx->instance = VK_NULL_HANDLE;
   ctx->device = VK_NULL_HANDLE;
   ctx->physical_device = VK_NULL_HANDLE;
@@ -430,13 +460,14 @@ void re_context_pre_init(
     ctx->thread_command_pools[i] = VK_NULL_HANDLE;
   }
 
-  create_instance(ctx, required_window_vulkan_extensions);
+  create_instance(
+      ctx, required_window_vulkan_extensions, window_extension_count);
 #ifdef RE_ENABLE_VALIDATION
   setup_debug_callback(ctx);
 #endif
 }
 
-void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR *surface) {
+void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR surface) {
   if (ctx->device != VK_NULL_HANDLE) {
     return;
   }

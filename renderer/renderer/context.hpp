@@ -3,7 +3,6 @@
 #include "resource_manager.hpp"
 #include "texture.hpp"
 #include <mutex>
-#include <vector>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -58,9 +57,10 @@ extern re_context_t g_ctx;
 
 void re_context_pre_init(
     re_context_t *ctx,
-    const std::vector<const char *> &required_window_vulkan_extensions);
+    const char *const *required_window_vulkan_extensions,
+    uint32_t window_extension_count);
 
-void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR *surface);
+void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR surface);
 
 VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx);
 

@@ -563,21 +563,24 @@ bool re_window_init(
 
   SDL_SetWindowResizable(window->sdl_window, SDL_TRUE);
 
-  uint32_t sdlExtensionCount = 0;
+  uint32_t sdl_extension_count = 0;
   SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &sdlExtensionCount, nullptr);
-  std::vector<const char *> sdlExtensions(sdlExtensionCount);
+      window->sdl_window, &sdl_extension_count, nullptr);
+  const char **sdl_extensions =
+      (const char **)malloc(sizeof(const char *) * sdl_extension_count);
   SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &sdlExtensionCount, sdlExtensions.data());
+      window->sdl_window, &sdl_extension_count, sdl_extensions);
 
   // These context initialization functions only run if the context is
   // uninitialized
-  re_context_pre_init(&g_ctx, sdlExtensions);
+  re_context_pre_init(&g_ctx, sdl_extensions, sdl_extension_count);
+
+  free(sdl_extensions);
 
   create_vulkan_surface(window);
 
   // Lazily create vulkan context stuff
-  re_context_late_inint(&g_ctx, &window->surface);
+  re_context_late_inint(&g_ctx, window->surface);
 
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(
@@ -823,7 +826,7 @@ void re_window_end_frame(re_window_t *window) {
 
   uint64_t elapsed_time_ns = time_ns() - window->time_before_ns;
 
-  window->delta_time = (double)elapsed_time_ns/ 1.0e9;
+  window->delta_time = (double)elapsed_time_ns / 1.0e9;
 }
 
 void re_window_begin_render_pass(re_window_t *window) {
