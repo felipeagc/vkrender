@@ -28,7 +28,7 @@ void FPSCameraSystem::processEvent(
     break;
   case SDL_MOUSEBUTTONUP:
     if (event.button.button == SDL_BUTTON_RIGHT && !ImGui::IsAnyItemActive()) {
-      re_window_set_relative_mouse(window, true);
+      re_window_set_relative_mouse(window, false);
       re_window_warp_mouse(window, m_prevMouseX, m_prevMouseY);
     }
     break;
