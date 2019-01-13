@@ -7,8 +7,6 @@
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_vulkan.h>
 
-using namespace renderer;
-
 static inline void create_descriptor_pool(re_imgui_t *imgui) {
   VkDescriptorPoolSize imguiPoolSizes[] = {
       {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},

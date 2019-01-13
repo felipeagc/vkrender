@@ -5,8 +5,6 @@
 #include <ftl/logging.hpp>
 #include <util/time.hpp>
 
-using namespace renderer;
-
 static inline uint32_t
 get_swapchain_num_images(const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
   uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
@@ -285,13 +283,13 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
   allocateInfo.pNext = nullptr;
   allocateInfo.commandPool = g_ctx.graphics_command_pool;
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
+  allocateInfo.commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT;
 
-  ftl::small_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
+  ftl::small_vector<VkCommandBuffer> commandBuffers(RE_MAX_FRAMES_IN_FLIGHT);
 
   vkAllocateCommandBuffers(g_ctx.device, &allocateInfo, commandBuffers.data());
 
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+  for (size_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     window->frame_resources[i].command_buffer = commandBuffers[i];
   }
 }
@@ -539,7 +537,7 @@ bool re_window_init(
   // Index of the current swapchain image
   window->current_image_index = 0;
 
-  for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     window->frame_resources[i].framebuffer = VK_NULL_HANDLE;
     window->frame_resources[i].command_buffer = VK_NULL_HANDLE;
   }
@@ -822,7 +820,7 @@ void re_window_end_frame(re_window_t *window) {
   }
   g_ctx.queue_mutex.unlock();
 
-  window->current_frame = (window->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+  window->current_frame = (window->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 
   uint64_t elapsed_time_ns = time_ns() - window->time_before_ns;
 

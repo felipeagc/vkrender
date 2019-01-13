@@ -142,7 +142,7 @@ EnvironmentComponent::~EnvironmentComponent() {
 
   auto &set_layout = g_ctx.resource_manager.set_layouts.environment;
 
-  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_free_resource_set(&set_layout, &m_descriptorSets[i]);
   }
 }

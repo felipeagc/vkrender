@@ -37,7 +37,7 @@ void engine::loadAsset<GltfModelAsset>(
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
   auto &set_layout = g_ctx.resource_manager.set_layouts.material;
 
-  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     this->descriptorSets[i] = re_allocate_resource_set(&set_layout);
 
     VkDescriptorImageInfo albedoDescriptorInfo =
@@ -173,7 +173,7 @@ GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
 
   auto &set_layout = g_ctx.resource_manager.set_layouts.mesh;
 
-  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     this->descriptorSets[i] = re_allocate_resource_set(&set_layout);
 
     re_buffer_init_uniform(&this->uniformBuffers[i], sizeof(MeshUniform));
@@ -286,7 +286,7 @@ GltfModelAsset::GltfModelAsset(const std::string &path, bool flipUVs) {
   }
 
   for (size_t i = 0; i < scene.nodes.size(); i++) {
-    for (uint32_t frameIndex = 0; frameIndex < renderer::MAX_FRAMES_IN_FLIGHT;
+    for (uint32_t frameIndex = 0; frameIndex < RE_MAX_FRAMES_IN_FLIGHT;
          frameIndex++) {
       m_nodes[i].update(*this, frameIndex);
     }

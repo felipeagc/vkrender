@@ -38,6 +38,6 @@ protected:
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
   } m_ubo;
 
-  re_resource_set_t m_materialDescriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+  re_resource_set_t m_materialDescriptorSets[RE_MAX_FRAMES_IN_FLIGHT];
 };
 } // namespace engine

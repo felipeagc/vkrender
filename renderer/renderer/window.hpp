@@ -39,7 +39,7 @@ struct re_window_t {
     VkFramebuffer framebuffer;
 
     VkCommandBuffer command_buffer;
-  } frame_resources[renderer::MAX_FRAMES_IN_FLIGHT];
+  } frame_resources[RE_MAX_FRAMES_IN_FLIGHT];
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
   uint32_t current_frame;

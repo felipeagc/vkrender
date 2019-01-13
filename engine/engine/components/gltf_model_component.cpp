@@ -28,7 +28,7 @@ GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
   // Create uniform buffers and descriptors
   auto &set_layout = g_ctx.resource_manager.set_layouts.mesh;
 
-  for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_init_uniform(&m_uniformBuffers[i], sizeof(ModelUniform));
 
     re_buffer_map_memory(&m_uniformBuffers[i], &m_mappings[i]);

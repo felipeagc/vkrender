@@ -39,7 +39,7 @@ public:
       float hasNormalTexture = 0.0f;
     } ubo;
 
-    re_resource_set_t descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+    re_resource_set_t descriptorSets[RE_MAX_FRAMES_IN_FLIGHT];
 
     void load(const GltfModelAsset &model);
   };
@@ -69,9 +69,9 @@ public:
       glm::mat4 matrix;
     } ubo;
 
-    re_buffer_t uniformBuffers[renderer::MAX_FRAMES_IN_FLIGHT];
-    void *mappings[renderer::MAX_FRAMES_IN_FLIGHT];
-    re_resource_set_t descriptorSets[renderer::MAX_FRAMES_IN_FLIGHT];
+    re_buffer_t uniformBuffers[RE_MAX_FRAMES_IN_FLIGHT];
+    void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
+    re_resource_set_t descriptorSets[RE_MAX_FRAMES_IN_FLIGHT];
 
     Mesh() {}
     Mesh(glm::mat4 matrix);
