@@ -31,7 +31,7 @@ EnvironmentComponent::EnvironmentComponent(
     const EnvironmentAsset &environmentAsset)
     : m_environmentAssetIndex(environmentAsset.index) {
   // Allocate descriptor sets
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.environment;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.environment;
 
   m_ubo.radianceMipLevels =
       (float)environmentAsset.m_radianceCubemap.mip_levels;
@@ -124,7 +124,7 @@ EnvironmentComponent::EnvironmentComponent(
     };
 
     vkUpdateDescriptorSets(
-        renderer::ctx().m_device,
+        g_ctx.device,
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
@@ -133,14 +133,14 @@ EnvironmentComponent::EnvironmentComponent(
 }
 
 EnvironmentComponent::~EnvironmentComponent() {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
     re_buffer_unmap_memory(&m_uniformBuffers[i]);
     re_buffer_destroy(&m_uniformBuffers[i]);
   }
 
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.environment;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.environment;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     re_free_resource_set(&set_layout, &m_descriptorSets[i]);

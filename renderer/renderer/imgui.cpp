@@ -34,13 +34,13 @@ static inline void create_descriptor_pool(re_imgui_t *imgui) {
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      ctx().m_device, &createInfo, nullptr, &imgui->descriptor_pool));
+      g_ctx.device, &createInfo, nullptr, &imgui->descriptor_pool));
 }
 
 static inline void destroy_descriptor_pool(re_imgui_t *imgui) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (imgui->descriptor_pool != VK_NULL_HANDLE) {
-    vkDestroyDescriptorPool(ctx().m_device, imgui->descriptor_pool, nullptr);
+    vkDestroyDescriptorPool(g_ctx.device, imgui->descriptor_pool, nullptr);
   }
 }
 
@@ -56,11 +56,11 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
 
   // Setup Vulkan binding
   ImGui_ImplVulkan_InitInfo init_info = {};
-  init_info.Instance = ctx().m_instance;
-  init_info.PhysicalDevice = ctx().m_physicalDevice;
-  init_info.Device = ctx().m_device;
-  init_info.QueueFamily = ctx().m_graphicsQueueFamilyIndex;
-  init_info.Queue = ctx().m_graphicsQueue;
+  init_info.Instance = g_ctx.instance;
+  init_info.PhysicalDevice = g_ctx.physical_device;
+  init_info.Device = g_ctx.device;
+  init_info.QueueFamily = g_ctx.graphics_queue_family_index;
+  init_info.Queue = g_ctx.graphics_queue;
   init_info.PipelineCache = VK_NULL_HANDLE;
   init_info.DescriptorPool = imgui->descriptor_pool;
   init_info.Allocator = nullptr;
@@ -77,10 +77,10 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
   // Upload Fonts
   {
     // Use any command queue
-    VkCommandPool commandPool = ctx().m_graphicsCommandPool;
+    VkCommandPool commandPool = g_ctx.graphics_command_pool;
     auto commandBuffer = re_window_get_current_command_buffer(imgui->window);
 
-    VK_CHECK(vkResetCommandPool(ctx().m_device, commandPool, 0));
+    VK_CHECK(vkResetCommandPool(g_ctx.device, commandPool, 0));
     VkCommandBufferBeginInfo beginInfo = {
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
         nullptr,                                     // pNext
@@ -99,11 +99,11 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
-    renderer::ctx().m_queueMutex.lock();
-    VK_CHECK(vkQueueSubmit(ctx().m_graphicsQueue, 1, &endInfo, VK_NULL_HANDLE));
-    renderer::ctx().m_queueMutex.unlock();
+    g_ctx.queue_mutex.lock();
+    VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &endInfo, VK_NULL_HANDLE));
+    g_ctx.queue_mutex.unlock();
 
-    VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+    VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
     ImGui_ImplVulkan_InvalidateFontUploadObjects();
   }
@@ -115,9 +115,7 @@ void re_imgui_begin(re_imgui_t *imgui) {
   ImGui::NewFrame();
 }
 
-void re_imgui_end(re_imgui_t *) {
-  ImGui::Render();
-}
+void re_imgui_end(re_imgui_t *) { ImGui::Render(); }
 
 void re_imgui_draw(re_imgui_t *imgui) {
   auto command_buffer = re_window_get_current_command_buffer(imgui->window);

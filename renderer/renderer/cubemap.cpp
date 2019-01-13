@@ -78,7 +78,7 @@ static void create_image_and_image_view(
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      renderer::ctx().m_allocator,
+      g_ctx.gpu_allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
       image,
@@ -108,7 +108,7 @@ static void create_image_and_image_view(
   };
 
   VK_CHECK(vkCreateImageView(
-      renderer::ctx().m_device, &imageViewCreateInfo, nullptr, imageView));
+      g_ctx.device, &imageViewCreateInfo, nullptr, imageView));
 }
 
 static void create_sampler(VkSampler *sampler) {
@@ -133,8 +133,7 @@ static void create_sampler(VkSampler *sampler) {
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(
-      renderer::ctx().m_device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, nullptr, sampler));
 }
 
 static void copy_side_image_to_cubemap(
@@ -260,7 +259,7 @@ static void bake_cubemap(
   }
 
   // Create hdrDescriptorSet
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.material;
   re_resource_set_t hdr_resource_set = re_allocate_resource_set(&set_layout);
   {
     VkDescriptorImageInfo hdrImageDescriptor = {
@@ -282,8 +281,7 @@ static void bake_cubemap(
         nullptr,                                   // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(
-        renderer::ctx().m_device, 1, &hdrDescriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(g_ctx.device, 1, &hdrDescriptorWrite, 0, nullptr);
   }
 
   // Camera matrices
@@ -297,7 +295,7 @@ static void bake_cubemap(
   // Create pipeline
   re_pipeline_parameters_t pipeline_params = re_default_pipeline_parameters();
   pipeline_params.layout =
-      renderer::ctx().resource_manager.providers.bake_cubemap.pipeline_layout;
+      g_ctx.resource_manager.providers.bake_cubemap.pipeline_layout;
   pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
@@ -325,18 +323,17 @@ static void bake_cubemap(
   re_shader_destroy(&shader);
 
   // Allocate command buffer
-  assert(threadID < VKR_THREAD_COUNT);
+  assert(threadID < RE_THREAD_COUNT);
   VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   {
     VkCommandBufferAllocateInfo allocateInfo = {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = renderer::ctx().m_threadCommandPools[threadID];
+    allocateInfo.commandPool = g_ctx.thread_command_pools[threadID];
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandBufferCount = 1;
 
-    vkAllocateCommandBuffers(
-        renderer::ctx().m_device, &allocateInfo, &commandBuffer);
+    vkAllocateCommandBuffers(g_ctx.device, &allocateInfo, &commandBuffer);
   }
 
   // Begin command buffer
@@ -440,25 +437,21 @@ static void bake_cubemap(
       nullptr,                       // pSignalSemaphores
   };
 
-  renderer::ctx().m_queueMutex.lock();
-  vkQueueSubmit(
-      renderer::ctx().m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  renderer::ctx().m_queueMutex.unlock();
+  g_ctx.queue_mutex.lock();
+  vkQueueSubmit(g_ctx.graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
+  g_ctx.queue_mutex.unlock();
 
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   re_free_resource_set(&set_layout, &hdr_resource_set);
 
-  vkDestroyImageView(renderer::ctx().m_device, hdrImageView, nullptr);
-  vkDestroySampler(renderer::ctx().m_device, hdrSampler, nullptr);
-  vmaDestroyImage(renderer::ctx().m_allocator, hdrImage, hdrAllocation);
+  vkDestroyImageView(g_ctx.device, hdrImageView, nullptr);
+  vkDestroySampler(g_ctx.device, hdrSampler, nullptr);
+  vmaDestroyImage(g_ctx.gpu_allocator, hdrImage, hdrAllocation);
 
-  assert(threadID < VKR_THREAD_COUNT);
+  assert(threadID < RE_THREAD_COUNT);
   vkFreeCommandBuffers(
-      renderer::ctx().m_device,
-      renderer::ctx().m_threadCommandPools[threadID],
-      1,
-      &commandBuffer);
+      g_ctx.device, g_ctx.thread_command_pools[threadID], 1, &commandBuffer);
 
   stbi_image_free(hdrData);
 
@@ -502,7 +495,7 @@ static void create_cubemap_image(
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      ctx().m_allocator,
+      g_ctx.gpu_allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
       image,
@@ -532,7 +525,7 @@ static void create_cubemap_image(
   };
 
   VK_CHECK(vkCreateImageView(
-      ctx().m_device, &imageViewCreateInfo, nullptr, imageView));
+      g_ctx.device, &imageViewCreateInfo, nullptr, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -555,8 +548,7 @@ static void create_cubemap_image(
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(
-      vkCreateSampler(ctx().m_device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, nullptr, sampler));
 }
 
 void re_cubemap_init_from_hdr_equirec(
@@ -621,12 +613,12 @@ VkDescriptorImageInfo re_cubemap_descriptor(const re_cubemap_t *cubemap) {
 }
 
 void re_cubemap_destroy(re_cubemap_t *cubemap) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (cubemap->image != VK_NULL_HANDLE) {
-    vkDestroyImageView(ctx().m_device, cubemap->image_view, nullptr);
-    vkDestroySampler(ctx().m_device, cubemap->sampler, nullptr);
-    vmaDestroyImage(ctx().m_allocator, cubemap->image, cubemap->allocation);
+    vkDestroyImageView(g_ctx.device, cubemap->image_view, nullptr);
+    vkDestroySampler(g_ctx.device, cubemap->sampler, nullptr);
+    vmaDestroyImage(g_ctx.gpu_allocator, cubemap->image, cubemap->allocation);
 
     cubemap->image = VK_NULL_HANDLE;
     cubemap->allocation = VK_NULL_HANDLE;

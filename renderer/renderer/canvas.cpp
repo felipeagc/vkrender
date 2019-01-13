@@ -35,7 +35,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
     imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
-        renderer::ctx().m_allocator,
+        g_ctx.gpu_allocator,
         &imageCreateInfo,
         &imageAllocCreateInfo,
         &resource.color.image,
@@ -65,7 +65,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        renderer::ctx().m_device,
+        g_ctx.device,
         &imageViewCreateInfo,
         nullptr,
         &resource.color.image_view));
@@ -92,33 +92,26 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateSampler(
-        renderer::ctx().m_device,
-        &samplerCreateInfo,
-        nullptr,
-        &resource.color.sampler));
+        g_ctx.device, &samplerCreateInfo, nullptr, &resource.color.sampler));
   }
 }
 
 static inline void destroy_color_target(re_canvas_t *canvas) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
 
     if (resource.color.image != VK_NULL_HANDLE) {
-      vkDestroyImageView(
-          renderer::ctx().m_device, resource.color.image_view, nullptr);
+      vkDestroyImageView(g_ctx.device, resource.color.image_view, nullptr);
     }
 
     if (resource.color.sampler != VK_NULL_HANDLE) {
-      vkDestroySampler(
-          renderer::ctx().m_device, resource.color.sampler, nullptr);
+      vkDestroySampler(g_ctx.device, resource.color.sampler, nullptr);
     }
 
     if (resource.color.image != VK_NULL_HANDLE) {
       vmaDestroyImage(
-          renderer::ctx().m_allocator,
-          resource.color.image,
-          resource.color.allocation);
+          g_ctx.gpu_allocator, resource.color.image, resource.color.allocation);
     }
 
     resource.color.image = VK_NULL_HANDLE;
@@ -159,7 +152,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
-        renderer::ctx().m_allocator,
+        g_ctx.gpu_allocator,
         &imageCreateInfo,
         &allocInfo,
         &resource.depth.image,
@@ -190,7 +183,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        renderer::ctx().m_device,
+        g_ctx.device,
         &imageViewCreateInfo,
         nullptr,
         &resource.depth.image_view));
@@ -198,21 +191,18 @@ static inline void create_depth_target(re_canvas_t *canvas) {
 }
 
 static inline void destroy_depth_target(re_canvas_t *canvas) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
 
     if (resource.depth.image != VK_NULL_HANDLE) {
       vmaDestroyImage(
-          renderer::ctx().m_allocator,
-          resource.depth.image,
-          resource.depth.allocation);
+          g_ctx.gpu_allocator, resource.depth.image, resource.depth.allocation);
     }
 
     if (resource.depth.image_view != VK_NULL_HANDLE) {
-      vkDestroyImageView(
-          renderer::ctx().m_device, resource.depth.image_view, nullptr);
+      vkDestroyImageView(g_ctx.device, resource.depth.image_view, nullptr);
     }
   }
 }
@@ -221,7 +211,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
 
-    auto &set_layout = renderer::ctx().resource_manager.set_layouts.fullscreen;
+    auto &set_layout = g_ctx.resource_manager.set_layouts.fullscreen;
     resource.resource_set = re_allocate_resource_set(&set_layout);
 
     VkDescriptorImageInfo descriptor = {
@@ -246,7 +236,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
     };
 
     vkUpdateDescriptorSets(
-        renderer::ctx().m_device,
+        g_ctx.device,
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
@@ -255,9 +245,9 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
 }
 
 static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.fullscreen;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.fullscreen;
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
@@ -287,19 +277,18 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateFramebuffer(
-        renderer::ctx().m_device, &createInfo, nullptr, &resource.framebuffer));
+        g_ctx.device, &createInfo, nullptr, &resource.framebuffer));
   }
 }
 
 static inline void destroy_framebuffers(re_canvas_t *canvas) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
 
     if (resource.framebuffer != VK_NULL_HANDLE) {
-      vkDestroyFramebuffer(
-          renderer::ctx().m_device, resource.framebuffer, nullptr);
+      vkDestroyFramebuffer(g_ctx.device, resource.framebuffer, nullptr);
     }
   }
 }
@@ -393,17 +382,17 @@ static inline void create_render_pass(re_canvas_t *canvas) {
   };
 
   VK_CHECK(vkCreateRenderPass(
-      renderer::ctx().m_device,
+      g_ctx.device,
       &renderPassCreateInfo,
       nullptr,
       &canvas->render_target.render_pass));
 }
 
 static inline void destroy_render_pass(re_canvas_t *canvas) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (canvas->render_target.render_pass != VK_NULL_HANDLE) {
     vkDestroyRenderPass(
-        renderer::ctx().m_device, canvas->render_target.render_pass, nullptr);
+        g_ctx.device, canvas->render_target.render_pass, nullptr);
   }
 }
 
@@ -416,7 +405,8 @@ void re_canvas_init(
   canvas->height = height;
   canvas->color_format = color_format;
   canvas->render_target.sample_count = VK_SAMPLE_COUNT_1_BIT;
-  assert(renderer::ctx().getSupportedDepthFormat(&canvas->depth_format));
+
+  assert(re_context_get_supported_depth_format(&g_ctx, &canvas->depth_format));
 
   create_color_target(canvas);
   create_depth_target(canvas);
@@ -491,7 +481,7 @@ void re_canvas_draw(
 
 void re_canvas_resize(
     re_canvas_t *canvas, const uint32_t width, const uint32_t height) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   canvas->width = width;
   canvas->height = height;
 

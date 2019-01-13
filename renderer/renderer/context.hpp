@@ -8,82 +8,63 @@
 #include <vulkan/vulkan.h>
 
 #ifndef NDEBUG
-#define VKR_ENABLE_VALIDATION
+#define RE_ENABLE_VALIDATION
 #endif
 
-namespace renderer {
+#define RE_THREAD_COUNT 4
 
-const uint32_t VKR_THREAD_COUNT = 4;
-
-class Context;
-
-Context &ctx();
-
-#ifdef VKR_ENABLE_VALIDATION
-const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {
+#ifdef RE_ENABLE_VALIDATION
+const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
     "VK_LAYER_LUNARG_standard_validation",
 };
 #else
-const std::vector<const char *> REQUIRED_VALIDATION_LAYERS = {};
+const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {};
 #endif
 
-const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
+const char *const RE_REQUIRED_DEVICE_EXTENSIONS[] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
-class Context {
-public:
-  Context();
-  ~Context();
+struct re_context_t {
+  VkInstance instance;
+  VkDevice device;
+  VkPhysicalDevice physical_device;
 
-  Context(const Context &) = delete;
-  Context &operator=(const Context &) = delete;
+  VkDebugReportCallbackEXT debug_callback;
 
-  void preInitialize(
-      const std::vector<const char *> &requiredWindowVulkanExtensions);
-  void lateInitialize(VkSurfaceKHR &surface);
+  uint32_t graphics_queue_family_index;
+  uint32_t present_queue_family_index;
+  uint32_t transfer_queue_family_index;
 
-  VkSampleCountFlagBits getMaxUsableSampleCount();
+  std::mutex queue_mutex;
+  VkQueue graphics_queue;
+  VkQueue present_queue;
+  VkQueue transfer_queue;
 
-  bool getSupportedDepthFormat(VkFormat *depthFormat);
+  VmaAllocator gpu_allocator;
 
-  VkInstance m_instance = VK_NULL_HANDLE;
-  VkDevice m_device = VK_NULL_HANDLE;
-  VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+  VkCommandPool graphics_command_pool;
+  VkCommandPool transient_command_pool;
 
-  VkDebugReportCallbackEXT m_callback = VK_NULL_HANDLE;
-
-  uint32_t m_graphicsQueueFamilyIndex = -1;
-  uint32_t m_presentQueueFamilyIndex = -1;
-  uint32_t m_transferQueueFamilyIndex = -1;
-
-  std::mutex m_queueMutex;
-  VkQueue m_graphicsQueue = VK_NULL_HANDLE;
-  VkQueue m_presentQueue = VK_NULL_HANDLE;
-  VkQueue m_transferQueue = VK_NULL_HANDLE;
-
-  VmaAllocator m_allocator = VK_NULL_HANDLE;
-
-  VkCommandPool m_graphicsCommandPool = VK_NULL_HANDLE;
-  VkCommandPool m_transientCommandPool = VK_NULL_HANDLE;
-
-  VkCommandPool m_threadCommandPools[VKR_THREAD_COUNT];
+  VkCommandPool thread_command_pools[RE_THREAD_COUNT];
 
   re_resource_manager_t resource_manager;
 
-  re_texture_t m_white_texture;
-  re_texture_t m_black_texture;
-
-private:
-  void createInstance(
-      const std::vector<const char *> &requiredWindowVulkanExtensions);
-  void setupDebugCallback();
-  void createDevice(VkSurfaceKHR &surface);
-  void getDeviceQueues();
-  void setupMemoryAllocator();
-  void createGraphicsCommandPool();
-  void createTransientCommandPool();
-  void createThreadCommandPools();
+  re_texture_t white_texture;
+  re_texture_t black_texture;
 };
 
-} // namespace renderer
+extern re_context_t g_ctx;
+
+void re_context_pre_init(
+    re_context_t *ctx,
+    const std::vector<const char *> &required_window_vulkan_extensions);
+
+void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR *surface);
+
+VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx);
+
+bool re_context_get_supported_depth_format(
+    re_context_t *ctx, VkFormat *depthFormat);
+
+void re_context_destroy(re_context_t *ctx);

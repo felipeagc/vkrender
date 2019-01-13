@@ -25,7 +25,7 @@ void engine::loadComponent<BillboardComponent>(
 BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
     : m_textureIndex(textureAsset.index) {
   // Allocate material descriptor sets
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.material;
   for (size_t i = 0; i < ARRAYSIZE(m_materialDescriptorSets); i++) {
     m_materialDescriptorSets[i] = re_allocate_resource_set(&set_layout);
   }
@@ -50,7 +50,7 @@ BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
     };
 
     vkUpdateDescriptorSets(
-        renderer::ctx().m_device,
+        g_ctx.device,
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
@@ -59,9 +59,9 @@ BillboardComponent::BillboardComponent(const TextureAsset &textureAsset)
 }
 
 BillboardComponent::~BillboardComponent() {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.material;
   for (auto &set : m_materialDescriptorSets) {
     re_free_resource_set(&set_layout, &set);
   }

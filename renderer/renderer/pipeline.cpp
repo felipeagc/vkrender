@@ -85,8 +85,7 @@ default_rasterization_state() {
 static inline VkPipelineMultisampleStateCreateInfo
 default_multisample_state(VkSampleCountFlagBits sampleCount) {
   VkPhysicalDeviceFeatures deviceFeatures;
-  vkGetPhysicalDeviceFeatures(
-      renderer::ctx().m_physicalDevice, &deviceFeatures);
+  vkGetPhysicalDeviceFeatures(g_ctx.physical_device, &deviceFeatures);
   VkBool32 hasSampleShading = deviceFeatures.sampleRateShading;
 
   VkBool32 sampleShadingEnable =
@@ -219,7 +218,7 @@ void re_pipeline_init_graphics(
   };
 
   VK_CHECK(vkCreateGraphicsPipelines(
-      renderer::ctx().m_device,
+      g_ctx.device,
       VK_NULL_HANDLE,
       1,
       &pipelineCreateInfo,
@@ -228,9 +227,9 @@ void re_pipeline_init_graphics(
 }
 
 void re_pipeline_destroy(re_pipeline_t *pipeline) {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (pipeline->pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(renderer::ctx().m_device, pipeline->pipeline, nullptr);
+    vkDestroyPipeline(g_ctx.device, pipeline->pipeline, nullptr);
   }
 }

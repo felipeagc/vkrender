@@ -4,8 +4,6 @@
 #include "util.hpp"
 #include <stb_image.h>
 
-using namespace renderer;
-
 static inline void create_image(
     VkImage *image,
     VmaAllocation *allocation,
@@ -39,7 +37,7 @@ static inline void create_image(
   imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      ctx().m_allocator,
+      g_ctx.gpu_allocator,
       &imageCreateInfo,
       &imageAllocCreateInfo,
       image,
@@ -69,7 +67,7 @@ static inline void create_image(
   };
 
   VK_CHECK(vkCreateImageView(
-      ctx().m_device, &imageViewCreateInfo, nullptr, imageView));
+      g_ctx.device, &imageViewCreateInfo, nullptr, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -92,8 +90,7 @@ static inline void create_image(
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(
-      vkCreateSampler(ctx().m_device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, nullptr, sampler));
 }
 
 bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
@@ -158,12 +155,12 @@ VkDescriptorImageInfo re_texture_descriptor(const re_texture_t *texture) {
 }
 
 void re_texture_destroy(re_texture_t *texture) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (texture->image != VK_NULL_HANDLE) {
-    vkDestroyImageView(ctx().m_device, texture->image_view, nullptr);
-    vkDestroySampler(ctx().m_device, texture->sampler, nullptr);
-    vmaDestroyImage(ctx().m_allocator, texture->image, texture->allocation);
+    vkDestroyImageView(g_ctx.device, texture->image_view, nullptr);
+    vkDestroySampler(g_ctx.device, texture->sampler, nullptr);
+    vmaDestroyImage(g_ctx.gpu_allocator, texture->image, texture->allocation);
 
     texture->image = VK_NULL_HANDLE;
     texture->allocation = VK_NULL_HANDLE;

@@ -146,7 +146,7 @@ static inline VkPresentModeKHR get_swapchain_present_mode(
 
 static inline bool create_vulkan_surface(re_window_t *window) {
   return SDL_Vulkan_CreateSurface(
-      window->sdl_window, ctx().m_instance, &window->surface);
+      window->sdl_window, g_ctx.instance, &window->surface);
 }
 
 static inline void create_sync_objects(re_window_t *window) {
@@ -157,13 +157,13 @@ static inline void create_sync_objects(re_window_t *window) {
     semaphoreCreateInfo.flags = 0;
 
     VK_CHECK(vkCreateSemaphore(
-        ctx().m_device,
+        g_ctx.device,
         &semaphoreCreateInfo,
         nullptr,
         &resources.image_available_semaphore));
 
     VK_CHECK(vkCreateSemaphore(
-        ctx().m_device,
+        g_ctx.device,
         &semaphoreCreateInfo,
         nullptr,
         &resources.rendering_finished_semaphore));
@@ -174,34 +174,33 @@ static inline void create_sync_objects(re_window_t *window) {
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     VK_CHECK(vkCreateFence(
-        ctx().m_device, &fenceCreateInfo, nullptr, &resources.fence));
+        g_ctx.device, &fenceCreateInfo, nullptr, &resources.fence));
   }
 }
 
 static inline void
 create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   for (uint32_t i = 0; i < window->swapchain_image_count; i++) {
-    vkDestroyImageView(
-        ctx().m_device, window->swapchain_image_views[i], nullptr);
+    vkDestroyImageView(g_ctx.device, window->swapchain_image_views[i], nullptr);
   }
 
   VkSurfaceCapabilitiesKHR surfaceCapabilities;
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-      ctx().m_physicalDevice, window->surface, &surfaceCapabilities);
+      g_ctx.physical_device, window->surface, &surfaceCapabilities);
 
   uint32_t count;
 
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      ctx().m_physicalDevice, window->surface, &count, nullptr);
+      g_ctx.physical_device, window->surface, &count, nullptr);
   ftl::small_vector<VkSurfaceFormatKHR> surfaceFormats(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      ctx().m_physicalDevice, window->surface, &count, surfaceFormats.data());
+      g_ctx.physical_device, window->surface, &count, surfaceFormats.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      ctx().m_physicalDevice, window->surface, &count, nullptr);
+      g_ctx.physical_device, window->surface, &count, nullptr);
   ftl::small_vector<VkPresentModeKHR> presentModes(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      ctx().m_physicalDevice, window->surface, &count, presentModes.data());
+      g_ctx.physical_device, window->surface, &count, presentModes.data());
 
   auto desiredNumImages = get_swapchain_num_images(surfaceCapabilities);
   auto desiredFormat = get_swapchain_format(surfaceFormats);
@@ -233,18 +232,17 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
       oldSwapchain                       // oldSwapchain
   };
 
-  vkCreateSwapchainKHR(
-      ctx().m_device, &createInfo, nullptr, &window->swapchain);
+  vkCreateSwapchainKHR(g_ctx.device, &createInfo, nullptr, &window->swapchain);
 
   if (oldSwapchain) {
-    vkDestroySwapchainKHR(ctx().m_device, oldSwapchain, nullptr);
+    vkDestroySwapchainKHR(g_ctx.device, oldSwapchain, nullptr);
   }
 
   window->swapchain_image_format = desiredFormat.format;
   window->swapchain_extent = desiredExtent;
 
   VK_CHECK(vkGetSwapchainImagesKHR(
-      ctx().m_device,
+      g_ctx.device,
       window->swapchain,
       &window->swapchain_image_count,
       nullptr));
@@ -252,7 +250,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   window->swapchain_images =
       (VkImage *)malloc(sizeof(VkImage) * window->swapchain_image_count);
   VK_CHECK(vkGetSwapchainImagesKHR(
-      ctx().m_device, window->swapchain, &count, window->swapchain_images));
+      g_ctx.device, window->swapchain, &count, window->swapchain_images));
 }
 
 static inline void create_swapchain_image_views(re_window_t *window) {
@@ -276,10 +274,7 @@ static inline void create_swapchain_image_views(re_window_t *window) {
         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
     VK_CHECK(vkCreateImageView(
-        ctx().m_device,
-        &createInfo,
-        nullptr,
-        &window->swapchain_image_views[i]));
+        g_ctx.device, &createInfo, nullptr, &window->swapchain_image_views[i]));
   }
 }
 
@@ -287,14 +282,13 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
   VkCommandBufferAllocateInfo allocateInfo = {};
   allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocateInfo.pNext = nullptr;
-  allocateInfo.commandPool = ctx().m_graphicsCommandPool;
+  allocateInfo.commandPool = g_ctx.graphics_command_pool;
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
   ftl::small_vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
 
-  vkAllocateCommandBuffers(
-      ctx().m_device, &allocateInfo, commandBuffers.data());
+  vkAllocateCommandBuffers(g_ctx.device, &allocateInfo, commandBuffers.data());
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     window->frame_resources[i].command_buffer = commandBuffers[i];
@@ -303,7 +297,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
 // Populates the depthStencil member struct
 static inline void create_depth_stencil_resources(re_window_t *window) {
-  assert(ctx().getSupportedDepthFormat(&window->depth_format));
+  assert(re_context_get_supported_depth_format(&g_ctx, &window->depth_format));
 
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
@@ -332,7 +326,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      ctx().m_allocator,
+      g_ctx.gpu_allocator,
       &imageCreateInfo,
       &allocInfo,
       &window->depth_stencil.image,
@@ -362,7 +356,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   };
 
   VK_CHECK(vkCreateImageView(
-      ctx().m_device,
+      g_ctx.device,
       &imageViewCreateInfo,
       nullptr,
       &window->depth_stencil.view));
@@ -459,7 +453,7 @@ static inline void create_render_pass(re_window_t *window) {
   };
 
   VK_CHECK(vkCreateRenderPass(
-      ctx().m_device,
+      g_ctx.device,
       &renderPassCreateInfo,
       nullptr,
       &window->render_target.render_pass));
@@ -469,7 +463,7 @@ static inline void regen_framebuffer(
     re_window_t *window,
     VkFramebuffer &framebuffer,
     VkImageView &swapchainImageView) {
-  vkDestroyFramebuffer(ctx().m_device, framebuffer, nullptr);
+  vkDestroyFramebuffer(g_ctx.device, framebuffer, nullptr);
 
   VkImageView attachments[]{
       swapchainImageView,
@@ -489,32 +483,31 @@ static inline void regen_framebuffer(
   };
 
   VK_CHECK(
-      vkCreateFramebuffer(ctx().m_device, &createInfo, nullptr, &framebuffer));
+      vkCreateFramebuffer(g_ctx.device, &createInfo, nullptr, &framebuffer));
 }
 
 static inline void destroy_resizables(re_window_t *window) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (auto &resources : window->frame_resources) {
     vkFreeCommandBuffers(
-        ctx().m_device,
-        ctx().m_graphicsCommandPool,
+        g_ctx.device,
+        g_ctx.graphics_command_pool,
         1,
         &resources.command_buffer);
   }
 
   if (window->depth_stencil.image) {
-    vkDestroyImageView(ctx().m_device, window->depth_stencil.view, nullptr);
+    vkDestroyImageView(g_ctx.device, window->depth_stencil.view, nullptr);
     vmaDestroyImage(
-        ctx().m_allocator,
+        g_ctx.gpu_allocator,
         window->depth_stencil.image,
         window->depth_stencil.allocation);
     window->depth_stencil.image = nullptr;
     window->depth_stencil.allocation = VK_NULL_HANDLE;
   }
 
-  vkDestroyRenderPass(
-      ctx().m_device, window->render_target.render_pass, nullptr);
+  vkDestroyRenderPass(g_ctx.device, window->render_target.render_pass, nullptr);
 }
 
 // When window gets resized, call this.
@@ -538,7 +531,7 @@ bool re_window_init(
   window->time_before = 0;
 
   window->swapchain = VK_NULL_HANDLE;
-  window->surface= VK_NULL_HANDLE;
+  window->surface = VK_NULL_HANDLE;
   window->swapchain_image_count = 0;
 
   window->current_frame = 0;
@@ -578,24 +571,25 @@ bool re_window_init(
 
   // These context initialization functions only run if the context is
   // uninitialized
-  ctx().preInitialize(sdlExtensions);
+  re_context_pre_init(&g_ctx, sdlExtensions);
 
   create_vulkan_surface(window);
 
   // Lazily create vulkan context stuff
-  ctx().lateInitialize(window->surface);
+  re_context_late_inint(&g_ctx, &window->surface);
 
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(
-      ctx().m_physicalDevice,
-      ctx().m_presentQueueFamilyIndex,
+      g_ctx.physical_device,
+      g_ctx.present_queue_family_index,
       window->surface,
       &supported);
   if (!supported) {
     return false;
   }
 
-  window->max_samples = ctx().getMaxUsableSampleCount();
+  window->max_samples = re_context_get_max_sample_count(&g_ctx);
+  ;
 
   create_sync_objects(window);
 
@@ -620,27 +614,26 @@ void re_window_get_size(
 }
 
 void re_window_destroy(re_window_t *window) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   destroy_resizables(window);
 
   for (uint32_t i = 0; i < window->swapchain_image_count; i++) {
-    vkDestroyImageView(
-        ctx().m_device, window->swapchain_image_views[i], nullptr);
+    vkDestroyImageView(g_ctx.device, window->swapchain_image_views[i], nullptr);
   }
 
-  vkDestroySwapchainKHR(ctx().m_device, window->swapchain, nullptr);
+  vkDestroySwapchainKHR(g_ctx.device, window->swapchain, nullptr);
 
   for (auto &frameResource : window->frame_resources) {
-    vkDestroyFramebuffer(ctx().m_device, frameResource.framebuffer, nullptr);
+    vkDestroyFramebuffer(g_ctx.device, frameResource.framebuffer, nullptr);
     vkDestroySemaphore(
-        ctx().m_device, frameResource.image_available_semaphore, nullptr);
+        g_ctx.device, frameResource.image_available_semaphore, nullptr);
     vkDestroySemaphore(
-        ctx().m_device, frameResource.rendering_finished_semaphore, nullptr);
-    vkDestroyFence(ctx().m_device, frameResource.fence, nullptr);
+        g_ctx.device, frameResource.rendering_finished_semaphore, nullptr);
+    vkDestroyFence(g_ctx.device, frameResource.fence, nullptr);
   }
 
-  vkDestroySurfaceKHR(ctx().m_instance, window->surface, nullptr);
+  vkDestroySurfaceKHR(g_ctx.instance, window->surface, nullptr);
 
   SDL_DestroyWindow(window->sdl_window);
 
@@ -669,17 +662,17 @@ void re_window_begin_frame(re_window_t *window) {
 
   // Begin
   vkWaitForFences(
-      ctx().m_device,
+      g_ctx.device,
       1,
       &window->frame_resources[window->current_frame].fence,
       VK_TRUE,
       UINT64_MAX);
 
   vkResetFences(
-      ctx().m_device, 1, &window->frame_resources[window->current_frame].fence);
+      g_ctx.device, 1, &window->frame_resources[window->current_frame].fence);
 
   if (vkAcquireNextImageKHR(
-          ctx().m_device,
+          g_ctx.device,
           window->swapchain,
           UINT64_MAX,
           window->frame_resources[window->current_frame]
@@ -712,7 +705,7 @@ void re_window_begin_frame(re_window_t *window) {
 
   VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
-  if (ctx().m_presentQueue != ctx().m_graphicsQueue) {
+  if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromPresentToDraw = {
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
         nullptr,                                  // pNext
@@ -720,8 +713,8 @@ void re_window_begin_frame(re_window_t *window) {
         VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
         VK_IMAGE_LAYOUT_UNDEFINED,                // oldLayout
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // newLayout
-        ctx().m_presentQueueFamilyIndex,          // srcQueueFamilyIndex
-        ctx().m_graphicsQueueFamilyIndex,         // dstQueueFamilyIndex
+        g_ctx.present_queue_family_index,         // srcQueueFamilyIndex
+        g_ctx.graphics_queue_family_index,        // dstQueueFamilyIndex
         window->swapchain_images[window->current_image_index], // image
         imageSubresourceRange, // subresourceRange
     };
@@ -752,7 +745,7 @@ void re_window_end_frame(re_window_t *window) {
       1,                         // layerCount
   };
 
-  if (ctx().m_presentQueue != ctx().m_graphicsQueue) {
+  if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromDrawToPresent{
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
         nullptr,                                  // pNext
@@ -760,8 +753,8 @@ void re_window_end_frame(re_window_t *window) {
         VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // oldLayout
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,          // newLayout
-        ctx().m_graphicsQueueFamilyIndex,         // srcQueueFamilyIndex
-        ctx().m_presentQueueFamilyIndex,          // dstQueueFamilyIndex
+        g_ctx.graphics_queue_family_index,        // srcQueueFamilyIndex
+        g_ctx.present_queue_family_index,         // dstQueueFamilyIndex
         window->swapchain_images[window->current_image_index], // image
         imageSubresourceRange, // subresourceRange
     };
@@ -799,9 +792,9 @@ void re_window_end_frame(re_window_t *window) {
            .rendering_finished_semaphore, // pSignalSemaphores
   };
 
-  renderer::ctx().m_queueMutex.lock();
+  g_ctx.queue_mutex.lock();
   vkQueueSubmit(
-      ctx().m_graphicsQueue,
+      g_ctx.graphics_queue,
       1,
       &submitInfo,
       window->frame_resources[window->current_frame].fence);
@@ -818,13 +811,13 @@ void re_window_end_frame(re_window_t *window) {
       nullptr,                            // pResults
   };
 
-  VkResult result = vkQueuePresentKHR(ctx().m_presentQueue, &presentInfo);
+  VkResult result = vkQueuePresentKHR(g_ctx.present_queue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     update_size(window);
   } else {
     assert(result == VK_SUCCESS);
   }
-  renderer::ctx().m_queueMutex.unlock();
+  g_ctx.queue_mutex.unlock();
 
   window->current_frame = (window->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 

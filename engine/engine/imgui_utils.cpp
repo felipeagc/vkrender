@@ -19,7 +19,7 @@ void statsWindow(const re_window_t *window) {
   ImGui::Begin("Stats");
 
   VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(renderer::ctx().m_physicalDevice, &properties);
+  vkGetPhysicalDeviceProperties(g_ctx.physical_device, &properties);
 
   ImGui::Text("Physical device: %s", properties.deviceName);
   ImGui::Text("Delta time: %.3f s", window->delta_time);

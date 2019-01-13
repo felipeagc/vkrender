@@ -4,8 +4,6 @@
 #include "util.hpp"
 #include <stdlib.h>
 
-using namespace renderer;
-
 void re_resource_set_layout_init(
     re_resource_set_layout_t *layout,
     uint32_t max_sets,
@@ -31,7 +29,7 @@ void re_resource_set_layout_init(
   };
 
   VK_CHECK(vkCreateDescriptorSetLayout(
-      ctx().m_device, &createInfo, nullptr, &layout->descriptor_set_layout));
+      g_ctx.device, &createInfo, nullptr, &layout->descriptor_set_layout));
 }
 
 re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
@@ -59,7 +57,7 @@ void re_free_resource_set(
 }
 
 void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (layout->descriptor_sets != NULL) {
     free(layout->descriptor_sets);
@@ -67,7 +65,7 @@ void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
 
   if (layout->descriptor_set_layout != VK_NULL_HANDLE) {
     vkDestroyDescriptorSetLayout(
-        ctx().m_device, layout->descriptor_set_layout, nullptr);
+        g_ctx.device, layout->descriptor_set_layout, nullptr);
   }
 }
 
@@ -117,7 +115,7 @@ void re_resource_set_provider_init(
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      ctx().m_device, &createInfo, nullptr, &provider->descriptor_pool));
+      g_ctx.device, &createInfo, nullptr, &provider->descriptor_pool));
 
   ftl::small_vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
@@ -142,7 +140,7 @@ void re_resource_set_provider_init(
   };
 
   VK_CHECK(vkCreatePipelineLayout(
-      ctx().m_device,
+      g_ctx.device,
       &pipelineLayoutCreateInfo,
       nullptr,
       &provider->pipeline_layout));
@@ -169,20 +167,20 @@ void re_resource_set_provider_init(
     };
 
     VK_CHECK(vkAllocateDescriptorSets(
-        ctx().m_device, &allocateInfo, set_layout->descriptor_sets));
+        g_ctx.device, &allocateInfo, set_layout->descriptor_sets));
 
     free(layouts);
   }
 }
 
 void re_resource_set_provider_destroy(re_resource_set_provider_t *provider) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (provider->pipeline_layout != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(ctx().m_device, provider->pipeline_layout, nullptr);
+    vkDestroyPipelineLayout(g_ctx.device, provider->pipeline_layout, nullptr);
   }
 
   if (provider->descriptor_pool != VK_NULL_HANDLE) {
-    vkDestroyDescriptorPool(ctx().m_device, provider->descriptor_pool, nullptr);
+    vkDestroyDescriptorPool(g_ctx.device, provider->descriptor_pool, nullptr);
   }
 }
 

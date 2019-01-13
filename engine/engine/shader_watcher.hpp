@@ -39,7 +39,7 @@ public:
       ftl::debug("Shader \"%s\" was modified", filename.c_str());
       auto lock = this->lockPipeline();
 
-      VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+      VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
       try {
         re_pipeline_destroy(&this->pipeline);

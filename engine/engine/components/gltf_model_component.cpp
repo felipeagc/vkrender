@@ -26,7 +26,7 @@ void engine::loadComponent<GltfModelComponent>(
 GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
     : m_modelIndex(modelAsset.index) {
   // Create uniform buffers and descriptors
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.mesh;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.mesh;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_init_uniform(&m_uniformBuffers[i], sizeof(ModelUniform));
@@ -53,20 +53,19 @@ GltfModelComponent::GltfModelComponent(const GltfModelAsset &modelAsset)
         nullptr,                            // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(
-        renderer::ctx().m_device, 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(g_ctx.device, 1, &descriptorWrite, 0, nullptr);
   }
 }
 
 GltfModelComponent::~GltfModelComponent() {
-  VK_CHECK(vkDeviceWaitIdle(renderer::ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(m_uniformBuffers); i++) {
     re_buffer_unmap_memory(&m_uniformBuffers[i]);
     re_buffer_destroy(&m_uniformBuffers[i]);
   }
 
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.mesh;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.mesh;
   for (auto &set : this->m_descriptorSets) {
     re_free_resource_set(&set_layout, &set);
   }

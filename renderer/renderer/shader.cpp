@@ -9,8 +9,6 @@
 #include <ftl/logging.hpp>
 #include <glslang/Public/ShaderLang.h>
 
-using namespace renderer;
-
 static bool glslangInitialized = false;
 
 enum shader_type_t {
@@ -139,7 +137,7 @@ create_shader_module(const uint32_t *code, size_t code_size) {
   VkShaderModuleCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, code_size, code};
 
-  VK_CHECK(vkCreateShaderModule(ctx().m_device, &createInfo, nullptr, &module));
+  VK_CHECK(vkCreateShaderModule(g_ctx.device, &createInfo, nullptr, &module));
   return module;
 }
 
@@ -175,12 +173,12 @@ void re_shader_init_spirv(
 }
 
 void re_shader_destroy(re_shader_t *shader) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (shader->vertex_module != VK_NULL_HANDLE &&
       shader->fragment_module != VK_NULL_HANDLE) {
-    vkDestroyShaderModule(ctx().m_device, shader->vertex_module, nullptr);
-    vkDestroyShaderModule(ctx().m_device, shader->fragment_module, nullptr);
+    vkDestroyShaderModule(g_ctx.device, shader->vertex_module, nullptr);
+    vkDestroyShaderModule(g_ctx.device, shader->fragment_module, nullptr);
     shader->vertex_module = VK_NULL_HANDLE;
     shader->fragment_module = VK_NULL_HANDLE;
   }

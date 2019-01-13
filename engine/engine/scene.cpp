@@ -16,7 +16,7 @@ namespace engine {
 
 static inline void
 loadAssets(const sdf::SceneFile &scene, AssetManager &assetManager) {
-  renderer::ThreadPool threadPool(renderer::VKR_THREAD_COUNT);
+  renderer::ThreadPool threadPool(RE_THREAD_COUNT);
   for (auto &asset : scene.assets) {
     renderer::Job job;
     if (strcmp(asset.type, "GltfModel") == 0) {

@@ -7,11 +7,11 @@
 using namespace renderer;
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {
-  assert(threadID < VKR_THREAD_COUNT);
+  assert(threadID < RE_THREAD_COUNT);
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
-      ctx().m_threadCommandPools[threadID], // commandPool
+      g_ctx.thread_command_pools[threadID], // commandPool
       VK_COMMAND_BUFFER_LEVEL_PRIMARY,      // level
       1,                                    // commandBufferCount
   };
@@ -19,7 +19,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
   VkCommandBuffer command_buffer;
 
   VK_CHECK(
-      vkAllocateCommandBuffers(ctx().m_device, &allocateInfo, &command_buffer));
+      vkAllocateCommandBuffers(g_ctx.device, &allocateInfo, &command_buffer));
 
   VkCommandBufferBeginInfo commandBufferBeginInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -35,7 +35,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
 
 static inline void
 end_single_time_command_buffer(VkCommandBuffer command_buffer) {
-  assert(threadID < VKR_THREAD_COUNT);
+  assert(threadID < RE_THREAD_COUNT);
   VK_CHECK(vkEndCommandBuffer(command_buffer));
 
   VkSubmitInfo submitInfo{
@@ -50,15 +50,14 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
       nullptr,         // pSignalSemaphores
   };
 
-  renderer::ctx().m_queueMutex.lock();
-  VK_CHECK(
-      vkQueueSubmit(ctx().m_transferQueue, 1, &submitInfo, VK_NULL_HANDLE));
+  g_ctx.queue_mutex.lock();
+  VK_CHECK(vkQueueSubmit(g_ctx.transfer_queue, 1, &submitInfo, VK_NULL_HANDLE));
 
-  VK_CHECK(vkQueueWaitIdle(ctx().m_transferQueue));
-  renderer::ctx().m_queueMutex.unlock();
+  VK_CHECK(vkQueueWaitIdle(g_ctx.transfer_queue));
+  g_ctx.queue_mutex.unlock();
 
   vkFreeCommandBuffers(
-      ctx().m_device, ctx().m_threadCommandPools[threadID], 1, &command_buffer);
+      g_ctx.device, g_ctx.thread_command_pools[threadID], 1, &command_buffer);
 }
 
 static inline void create_buffer(
@@ -84,7 +83,7 @@ static inline void create_buffer(
   allocInfo.requiredFlags = memory_property;
 
   VK_CHECK(vmaCreateBuffer(
-      ctx().m_allocator,
+      g_ctx.gpu_allocator,
       &bufferCreateInfo,
       &allocInfo,
       buffer,
@@ -133,12 +132,12 @@ void re_buffer_init_staging(re_buffer_t *buffer, size_t size) {
 }
 
 bool re_buffer_map_memory(re_buffer_t *buffer, void **dest) {
-  return vmaMapMemory(ctx().m_allocator, buffer->allocation, dest) ==
+  return vmaMapMemory(g_ctx.gpu_allocator, buffer->allocation, dest) ==
          VK_SUCCESS;
 }
 
 void re_buffer_unmap_memory(re_buffer_t *buffer) {
-  vmaUnmapMemory(ctx().m_allocator, buffer->allocation);
+  vmaUnmapMemory(g_ctx.gpu_allocator, buffer->allocation);
 }
 
 void re_buffer_transfer_to_buffer(
@@ -201,11 +200,11 @@ void re_buffer_transfer_to_image(
 }
 
 void re_buffer_destroy(re_buffer_t *buffer) {
-  VK_CHECK(vkDeviceWaitIdle(ctx().m_device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (buffer->buffer != VK_NULL_HANDLE &&
       buffer->allocation != VK_NULL_HANDLE) {
-    vmaDestroyBuffer(ctx().m_allocator, buffer->buffer, buffer->allocation);
+    vmaDestroyBuffer(g_ctx.gpu_allocator, buffer->buffer, buffer->allocation);
   }
 
   buffer->buffer = VK_NULL_HANDLE;

@@ -35,21 +35,21 @@ void engine::loadAsset<GltfModelAsset>(
 }
 
 void GltfModelAsset::Material::load(const GltfModelAsset &model) {
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.material;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     this->descriptorSets[i] = re_allocate_resource_set(&set_layout);
 
     VkDescriptorImageInfo albedoDescriptorInfo =
-        re_texture_descriptor(&renderer::ctx().m_white_texture);
+        re_texture_descriptor(&g_ctx.white_texture);
     VkDescriptorImageInfo normalDescriptorInfo =
-        re_texture_descriptor(&renderer::ctx().m_white_texture);
+        re_texture_descriptor(&g_ctx.white_texture);
     VkDescriptorImageInfo metallicRoughnessDescriptorInfo =
-        re_texture_descriptor(&renderer::ctx().m_white_texture);
+        re_texture_descriptor(&g_ctx.white_texture);
     VkDescriptorImageInfo occlusionDescriptorInfo =
-        re_texture_descriptor(&renderer::ctx().m_white_texture);
+        re_texture_descriptor(&g_ctx.white_texture);
     VkDescriptorImageInfo emissiveDescriptorInfo =
-        re_texture_descriptor(&renderer::ctx().m_black_texture);
+        re_texture_descriptor(&g_ctx.black_texture);
 
     // Albedo
     if (this->baseColorTextureIndex != -1) {
@@ -146,7 +146,7 @@ void GltfModelAsset::Material::load(const GltfModelAsset &model) {
     };
 
     vkUpdateDescriptorSets(
-        renderer::ctx().m_device,
+        g_ctx.device,
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
@@ -171,7 +171,7 @@ GltfModelAsset::Primitive::Primitive(
 GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
   this->ubo.matrix = matrix;
 
-  auto &set_layout = renderer::ctx().resource_manager.set_layouts.mesh;
+  auto &set_layout = g_ctx.resource_manager.set_layouts.mesh;
 
   for (uint32_t i = 0; i < renderer::MAX_FRAMES_IN_FLIGHT; i++) {
     this->descriptorSets[i] = re_allocate_resource_set(&set_layout);
@@ -201,7 +201,7 @@ GltfModelAsset::Mesh::Mesh(glm::mat4 matrix) {
     };
 
     vkUpdateDescriptorSets(
-        renderer::ctx().m_device,
+        g_ctx.device,
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
@@ -334,14 +334,14 @@ GltfModelAsset::~GltfModelAsset() {
       re_buffer_destroy(&uniformBuffer);
     }
 
-    auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+    auto &set_layout = g_ctx.resource_manager.set_layouts.material;
     for (auto &set : mesh.descriptorSets) {
       re_free_resource_set(&set_layout, &set);
     }
   }
 
   for (auto &material : m_materials) {
-    auto &set_layout = renderer::ctx().resource_manager.set_layouts.material;
+    auto &set_layout = g_ctx.resource_manager.set_layouts.material;
     for (auto &set : material.descriptorSets) {
       re_free_resource_set(&set_layout, &set);
     }
