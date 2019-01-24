@@ -4,13 +4,11 @@
 #include "context.hpp"
 #include "pipeline.hpp"
 #include "shader.hpp"
-#include "thread_pool.hpp"
 #include "util.hpp"
 #include <ftl/logging.hpp>
 #include <stb_image.h>
 #include <util/file.hpp>
-
-using namespace renderer;
+#include <util/task_scheduler.hpp>
 
 struct camera_uniform_t {
   glm::mat4 view;
@@ -323,13 +321,13 @@ static void bake_cubemap(
   re_shader_destroy(&shader);
 
   // Allocate command buffer
-  assert(threadID < RE_THREAD_COUNT);
+  assert(ut_worker_id < RE_THREAD_COUNT);
   VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   {
     VkCommandBufferAllocateInfo allocateInfo = {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = g_ctx.thread_command_pools[threadID];
+    allocateInfo.commandPool = g_ctx.thread_command_pools[ut_worker_id];
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandBufferCount = 1;
 
@@ -449,9 +447,9 @@ static void bake_cubemap(
   vkDestroySampler(g_ctx.device, hdrSampler, nullptr);
   vmaDestroyImage(g_ctx.gpu_allocator, hdrImage, hdrAllocation);
 
-  assert(threadID < RE_THREAD_COUNT);
+  assert(ut_worker_id < RE_THREAD_COUNT);
   vkFreeCommandBuffers(
-      g_ctx.device, g_ctx.thread_command_pools[threadID], 1, &commandBuffer);
+      g_ctx.device, g_ctx.thread_command_pools[ut_worker_id], 1, &commandBuffer);
 
   stbi_image_free(hdrData);
 

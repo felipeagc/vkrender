@@ -1,19 +1,17 @@
 #include "buffer.hpp"
 #include "context.hpp"
-#include "thread_pool.hpp"
 #include "util.hpp"
 #include <ftl/logging.hpp>
-
-using namespace renderer;
+#include <util/task_scheduler.hpp>
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {
-  assert(threadID < RE_THREAD_COUNT);
+  assert(ut_worker_id < RE_THREAD_COUNT);
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       nullptr,
-      g_ctx.thread_command_pools[threadID], // commandPool
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY,      // level
-      1,                                    // commandBufferCount
+      g_ctx.thread_command_pools[ut_worker_id], // commandPool
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY,          // level
+      1,                                        // commandBufferCount
   };
 
   VkCommandBuffer command_buffer;
@@ -35,7 +33,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
 
 static inline void
 end_single_time_command_buffer(VkCommandBuffer command_buffer) {
-  assert(threadID < RE_THREAD_COUNT);
+  assert(ut_worker_id < RE_THREAD_COUNT);
   VK_CHECK(vkEndCommandBuffer(command_buffer));
 
   VkSubmitInfo submitInfo{
@@ -57,7 +55,7 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
   g_ctx.queue_mutex.unlock();
 
   vkFreeCommandBuffers(
-      g_ctx.device, g_ctx.thread_command_pools[threadID], 1, &command_buffer);
+      g_ctx.device, g_ctx.thread_command_pools[ut_worker_id], 1, &command_buffer);
 }
 
 static inline void create_buffer(

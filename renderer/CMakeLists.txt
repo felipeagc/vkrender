@@ -15,7 +15,6 @@ set(
   renderer/pipeline.cpp
   renderer/canvas.cpp
   renderer/imgui.cpp
-  renderer/thread_pool.cpp
   )
 
 add_library(

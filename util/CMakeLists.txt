@@ -1,6 +1,7 @@
 set(
   UTIL_SOURCES
   util/bump_allocator.cpp
+  util/task_scheduler.cpp
   )
 
 add_library(

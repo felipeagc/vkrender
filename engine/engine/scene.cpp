@@ -10,31 +10,61 @@
 #include "components/name_component.hpp"
 #include "components/transform_component.hpp"
 #include <renderer/context.hpp>
-#include <renderer/thread_pool.hpp>
+#include <util/task_scheduler.hpp>
 
 namespace engine {
 
+struct asset_load_bundle_t {
+  sdf::AssetBlock const *asset;
+  AssetManager *assetManager;
+};
+
+void *load_gltf_model(void *args) {
+  asset_load_bundle_t *bundle = (asset_load_bundle_t *)args;
+  loadAsset<GltfModelAsset>(*bundle->asset, *bundle->assetManager);
+
+  free(bundle);
+  return NULL;
+}
+
+void *load_environment(void *args) {
+  asset_load_bundle_t *bundle = (asset_load_bundle_t *)args;
+  loadAsset<EnvironmentAsset>(*bundle->asset, *bundle->assetManager);
+
+  free(bundle);
+  return NULL;
+}
+
+void *load_texture(void *args) {
+  asset_load_bundle_t *bundle = (asset_load_bundle_t *)args;
+  loadAsset<TextureAsset>(*bundle->asset, *bundle->assetManager);
+
+  free(bundle);
+  return NULL;
+}
+
 static inline void
 loadAssets(const sdf::SceneFile &scene, AssetManager &assetManager) {
-  renderer::ThreadPool threadPool(RE_THREAD_COUNT);
+  ut_task_scheduler scheduler;
+  ut_scheduler_init(&scheduler, RE_THREAD_COUNT);
+
   for (auto &asset : scene.assets) {
-    renderer::Job job;
+    asset_load_bundle_t *bundle =
+        (asset_load_bundle_t *)malloc(sizeof(asset_load_bundle_t));
+    bundle->asset = &asset;
+    bundle->assetManager = &assetManager;
     if (strcmp(asset.type, "GltfModel") == 0) {
-      job = [&]() { loadAsset<GltfModelAsset>(asset, assetManager); };
+      ut_scheduler_add_task(&scheduler, load_gltf_model, bundle);
     } else if (strcmp(asset.type, "Texture") == 0) {
-      job = [&]() { loadAsset<TextureAsset>(asset, assetManager); };
+      ut_scheduler_add_task(&scheduler, load_texture, bundle);
     } else if (strcmp(asset.type, "Environment") == 0) {
-      job = [&]() { loadAsset<EnvironmentAsset>(asset, assetManager); };
+      ut_scheduler_add_task(&scheduler, load_environment, bundle);
     } else {
       ftl::warn("Unsupported asset type: %s", asset.type);
     }
-
-    if (job) {
-      threadPool.addJob(job);
-    }
   }
 
-  threadPool.wait();
+  ut_scheduler_destroy(&scheduler);
 }
 
 static inline void loadEntities(
