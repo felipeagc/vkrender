@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *load_string_from_file(const char *path) {
+char *ut_load_string_from_file(const char *path) {
   FILE *file = fopen(path, "r");
   if (file == NULL)
     return NULL;
@@ -23,7 +23,7 @@ char *load_string_from_file(const char *path) {
   return buffer;
 }
 
-unsigned char *load_bytes_from_file(const char *path, size_t *size) {
+unsigned char *ut_load_bytes_from_file(const char *path, size_t *size) {
   FILE *file = fopen(path, "rb");
   if (file == NULL)
     return NULL;

@@ -18,7 +18,7 @@
 #include <windows.h>
 #endif
 
-static uint64_t time_ns() {
+uint64_t ut_time_ns() {
   static uint64_t is_init = 0;
 #if defined(__APPLE__)
   static mach_timebase_info_data_t info;

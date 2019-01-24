@@ -99,7 +99,7 @@ public:
           "Asset index is in use: " + std::to_string(assetIndex));
     }
 
-    void *ptr = bump_alloc(&m_allocator, A);
+    void *ptr = ut_bump_alloc(&m_allocator, A);
     A *asset = new (ptr) A(std::forward<Args>(args)...);
 
     std::scoped_lock<std::mutex> lock(m_mutex);
@@ -128,7 +128,7 @@ public:
   }
 
 private:
-  bump_allocator_t m_allocator;
+  ut_bump_allocator_t m_allocator;
 
   // Indexed by asset index
   std::vector<Asset *> m_assets;

@@ -2,7 +2,7 @@
 
 using namespace engine;
 
-AssetManager::AssetManager() { bump_allocator_init(&m_allocator, 16384); }
+AssetManager::AssetManager() { ut_bump_allocator_init(&m_allocator, 16384); }
 
 AssetManager::~AssetManager() {
   std::scoped_lock<std::mutex> lock(m_mutex);
@@ -13,5 +13,5 @@ AssetManager::~AssetManager() {
     }
   }
 
-  bump_allocator_destroy(&m_allocator);
+  ut_bump_allocator_destroy(&m_allocator);
 }

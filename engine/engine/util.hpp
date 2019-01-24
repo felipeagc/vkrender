@@ -10,8 +10,8 @@ inline void eg_init_pipeline(
     const char *fragment_path,
     const re_pipeline_parameters_t params) {
   re_shader_t shader;
-  char *vertex_code = load_string_from_file(vertex_path);
-  char *fragment_code = load_string_from_file(fragment_path);
+  char *vertex_code = ut_load_string_from_file(vertex_path);
+  char *fragment_code = ut_load_string_from_file(fragment_path);
 
   re_shader_init_glsl(&shader, vertex_code, fragment_code);
 

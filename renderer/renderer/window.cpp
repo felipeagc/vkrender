@@ -659,7 +659,7 @@ bool re_window_poll_event(re_window_t *window, SDL_Event *event) {
 }
 
 void re_window_begin_frame(re_window_t *window) {
-  window->time_before_ns = time_ns();
+  window->time_before_ns = ut_time_ns();
 
   // Begin
   vkWaitForFences(
@@ -822,7 +822,7 @@ void re_window_end_frame(re_window_t *window) {
 
   window->current_frame = (window->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 
-  uint64_t elapsed_time_ns = time_ns() - window->time_before_ns;
+  uint64_t elapsed_time_ns = ut_time_ns() - window->time_before_ns;
 
   window->delta_time = (double)elapsed_time_ns / 1.0e9;
 }
