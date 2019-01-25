@@ -318,7 +318,6 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
       0,
       nullptr,
       VK_IMAGE_LAYOUT_UNDEFINED,
-
   };
 
   VmaAllocationCreateInfo allocInfo{};

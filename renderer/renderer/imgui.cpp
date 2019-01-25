@@ -126,6 +126,8 @@ void re_imgui_process_event(re_imgui_t *, SDL_Event *event) {
 }
 
 void re_imgui_destroy(re_imgui_t *imgui) {
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplSDL2_Shutdown();
   ImGui::DestroyContext();
