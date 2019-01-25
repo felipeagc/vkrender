@@ -6,3 +6,4 @@ endmacro()
 
 add_example(gltf_ecs)
 add_example(mandelbrot)
+add_example(rewrite)
