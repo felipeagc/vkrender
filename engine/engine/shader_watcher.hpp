@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file_watcher.hpp"
+#include "pipelines.hpp"
 #include "util.hpp"
 #include <ftl/logging.hpp>
 #include <functional>

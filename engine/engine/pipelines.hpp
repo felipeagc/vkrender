@@ -1,7 +1,6 @@
 #pragma once
 
 #include <renderer/pipeline.hpp>
-#include <renderer/shader.hpp>
 
 re_pipeline_parameters_t eg_standard_pipeline_parameters();
 
