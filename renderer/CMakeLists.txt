@@ -39,6 +39,7 @@ target_link_libraries(
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
   util
+  vmath
   ftl
   vma
 
