@@ -1,7 +1,6 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <ftl/logging.hpp>
 #include <util/task_scheduler.hpp>
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {

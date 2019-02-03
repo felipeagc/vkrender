@@ -3,6 +3,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <stb_image.h>
+#include <string.h>
 
 static inline void create_image(
     VkImage *image,

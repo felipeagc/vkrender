@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bitset>
-#include <ftl/vector.hpp>
 #include <vulkan/vulkan.h>
 
 const size_t RE_GLOBAL_MAX_DESCRIPTOR_SETS = 1000;

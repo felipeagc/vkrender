@@ -40,7 +40,6 @@ target_link_libraries(
   ${Vulkan_LIBRARIES}
   util
   vmath
-  ftl
   vma
 
   PRIVATE

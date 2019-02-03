@@ -6,8 +6,8 @@
 #include <StandAlone/ResourceLimits.h>
 #include <cstdio>
 #include <cstring>
-#include <ftl/logging.hpp>
 #include <glslang/Public/ShaderLang.h>
+#include <util/log.hpp>
 
 static bool glslangInitialized = false;
 
@@ -88,7 +88,7 @@ static inline uint32_t *compile_glsl(
           messages,
           &preprocessedGLSL,
           includer)) {
-    ftl::error(
+    ut_log_error(
         "GLSL preprocessing failed: %s\n%s",
         shader.getInfoLog(),
         shader.getInfoDebugLog());
@@ -99,7 +99,7 @@ static inline uint32_t *compile_glsl(
   shader.setStrings(&preprocessedCStr, 1);
 
   if (!shader.parse(&resources, 100, false, messages)) {
-    ftl::error(
+    ut_log_error(
         "GLSL parsing failed: %s\n%s",
         shader.getInfoLog(),
         shader.getInfoDebugLog());
@@ -110,7 +110,7 @@ static inline uint32_t *compile_glsl(
   program.addShader(&shader);
 
   if (!program.link(messages)) {
-    ftl::error(
+    ut_log_error(
         "GLSL linking failed: %s\n%s",
         shader.getInfoLog(),
         shader.getInfoDebugLog());

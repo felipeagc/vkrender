@@ -3,6 +3,8 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 void re_resource_set_layout_init(
     re_resource_set_layout_t *layout,
@@ -73,7 +75,7 @@ void re_resource_set_provider_init(
     re_resource_set_provider_t *provider,
     re_resource_set_layout_t **set_layouts,
     uint32_t set_layout_count) {
-  ftl::small_vector<VkDescriptorPoolSize> poolSizes;
+  std::vector<VkDescriptorPoolSize> poolSizes;
 
   uint32_t pool_max_sets = 0;
 
@@ -117,7 +119,7 @@ void re_resource_set_provider_init(
   VK_CHECK(vkCreateDescriptorPool(
       g_ctx.device, &createInfo, nullptr, &provider->descriptor_pool));
 
-  ftl::small_vector<VkDescriptorSetLayout> descriptorSetLayouts;
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
   for (uint32_t i = 0; i < set_layout_count; i++) {
     descriptorSetLayouts.push_back(set_layouts[i]->descriptor_set_layout);

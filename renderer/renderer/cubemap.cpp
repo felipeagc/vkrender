@@ -5,7 +5,6 @@
 #include "pipeline.hpp"
 #include "shader.hpp"
 #include "util.hpp"
-#include <ftl/logging.hpp>
 #include <stb_image.h>
 #include <util/file.hpp>
 #include <util/task_scheduler.hpp>

@@ -2,8 +2,9 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
-#include <ftl/logging.hpp>
+#include <util/log.hpp>
 #include <util/time.hpp>
+#include <vector>
 
 static inline uint32_t
 get_swapchain_num_images(const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
@@ -18,7 +19,7 @@ get_swapchain_num_images(const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
 }
 
 static inline VkSurfaceFormatKHR
-get_swapchain_format(const ftl::small_vector<VkSurfaceFormatKHR> &formats) {
+get_swapchain_format(const std::vector<VkSurfaceFormatKHR> &formats) {
   if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
     return {VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR};
   }
@@ -68,7 +69,7 @@ get_swapchain_usage_flags(const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
            VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
 
-  ftl::fatal(
+  ut_log_fatal(
       "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by the "
       "swapchain!\n"
       "Supported swapchain image usages include:\n"
@@ -115,30 +116,30 @@ get_swapchain_transform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
   }
 }
 
-static inline VkPresentModeKHR get_swapchain_present_mode(
-    const ftl::small_vector<VkPresentModeKHR> &presentModes) {
+static inline VkPresentModeKHR
+get_swapchain_present_mode(const std::vector<VkPresentModeKHR> &presentModes) {
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-      ftl::debug("Recreating swapchain using immediate present mode");
+      ut_log_debug("Recreating swapchain using immediate present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
-      ftl::debug("Recreating swapchain using FIFO present mode");
+      ut_log_debug("Recreating swapchain using FIFO present mode");
       return presentMode;
     }
   }
 
   for (const auto &presentMode : presentModes) {
     if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-      ftl::debug("Recreating swapchain using mailbox present mode");
+      ut_log_debug("Recreating swapchain using mailbox present mode");
       return presentMode;
     }
   }
 
-  ftl::fatal("FIFO present mode is not supported by the swapchain!");
+  ut_log_fatal("FIFO present mode is not supported by the swapchain!");
 
   return static_cast<VkPresentModeKHR>(-1);
 }
@@ -191,13 +192,13 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
 
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       g_ctx.physical_device, window->surface, &count, nullptr);
-  ftl::small_vector<VkSurfaceFormatKHR> surfaceFormats(count);
+  std::vector<VkSurfaceFormatKHR> surfaceFormats(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       g_ctx.physical_device, window->surface, &count, surfaceFormats.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       g_ctx.physical_device, window->surface, &count, nullptr);
-  ftl::small_vector<VkPresentModeKHR> presentModes(count);
+  std::vector<VkPresentModeKHR> presentModes(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       g_ctx.physical_device, window->surface, &count, presentModes.data());
 
@@ -285,7 +286,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocateInfo.commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT;
 
-  ftl::small_vector<VkCommandBuffer> commandBuffers(RE_MAX_FRAMES_IN_FLIGHT);
+  std::vector<VkCommandBuffer> commandBuffers(RE_MAX_FRAMES_IN_FLIGHT);
 
   vkAllocateCommandBuffers(g_ctx.device, &allocateInfo, commandBuffers.data());
 
