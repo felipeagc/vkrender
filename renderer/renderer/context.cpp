@@ -165,7 +165,7 @@ static inline bool check_physical_device_properties(
   uint32_t presentQueueFamilyIndex = UINT32_MAX;
   uint32_t transferQueueFamilyIndex = UINT32_MAX;
 
-  // TODO: figure out better logic to single out a transfer queue
+  // @TODO: figure out better logic to single out a transfer queue
 
   for (uint32_t i = 0; i < queueFamilyProperties.size(); i++) {
     VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(

@@ -104,7 +104,7 @@ void re_resource_set_provider_init(
     pool_max_sets += set_layout->max_sets;
   }
 
-  // @todo: look at these sizes and see if they're correct
+  // @TODO: look at these sizes and see if they're correct
   VkDescriptorPoolCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, // sType
       nullptr,                                       // pNext

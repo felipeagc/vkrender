@@ -15,7 +15,7 @@ int main() {
 
   window.clear_color = {0.15, 0.15, 0.15, 1.0};
 
-  // @note: Using this scope to destroy stuff in order for now
+  // @NOTE: Using this scope to destroy stuff in order for now
   {
     engine::Scene scene("../assets/main.sdf");
     auto &world = scene.m_world;

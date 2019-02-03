@@ -419,7 +419,7 @@ void re_canvas_begin(
     re_canvas_t *canvas, const VkCommandBuffer command_buffer) {
   auto &resource = canvas->resources[0];
 
-  // @todo: make this customizable
+  // @TODO: make this customizable
   VkClearValue clearValues[2] = {};
   clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
   clearValues[1].depthStencil = {1.0f, 0};

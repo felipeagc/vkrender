@@ -16,13 +16,13 @@ struct re_canvas_t {
   VkFormat depth_format;
   VkFormat color_format;
 
-  // @note: we could have multiple of these resources per frame-in-flight,
+  // @NOTE: we could have multiple of these resources per frame-in-flight,
   // but from initial testing there's no real performance gain
   struct {
     struct {
       VkImage image;
       VmaAllocation allocation;
-      // @todo: no need for multiple samplers
+      // @TODO: no need for multiple samplers
       VkSampler sampler;
       VkImageView image_view;
     } color;

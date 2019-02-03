@@ -15,7 +15,7 @@ int main() {
   re_canvas_t canvas;
   re_canvas_init(&canvas, width, height);
 
-  // @note: Using this scope to destroy stuff in order for now
+  // @NOTE: Using this scope to destroy stuff in order for now
   {
     // Create shaders & pipelines
     engine::ShaderWatcher shaderWatcher(

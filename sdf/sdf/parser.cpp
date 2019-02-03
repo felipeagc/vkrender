@@ -76,7 +76,7 @@ Result<Token> Scanner::scan_string() {
   size_t strpos = 0;
   String str = "";
 
-  // @todo: allow \" inside strings
+  // @TODO: allow \" inside strings
 
   while (peek() != '"' && !is_at_end()) {
     if (peek() == '\n')

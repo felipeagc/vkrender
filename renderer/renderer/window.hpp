@@ -24,7 +24,7 @@ struct re_window_t {
 
   VkFormat depth_format;
 
-  // @note: might wanna make one of these per frame
+  // @NOTE: might wanna make one of these per frame
   struct {
     VkImage image;
     VmaAllocation allocation;
