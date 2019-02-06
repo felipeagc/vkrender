@@ -9,7 +9,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
 
     VkImageCreateInfo imageCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        nullptr,
+        NULL,
         0,                    // flags
         VK_IMAGE_TYPE_2D,     // imageType
         canvas->color_format, // format
@@ -27,7 +27,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
         0,                                       // queueFamilyIndexCount
-        nullptr,                                 // pQueueFamilyIndices
+        NULL,                                 // pQueueFamilyIndices
         VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
     };
 
@@ -40,11 +40,11 @@ static inline void create_color_target(re_canvas_t *canvas) {
         &imageAllocCreateInfo,
         &resource.color.image,
         &resource.color.allocation,
-        nullptr));
+        NULL));
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        nullptr,
+        NULL,
         0,                     // flags
         resource.color.image,  // image
         VK_IMAGE_VIEW_TYPE_2D, // viewType
@@ -67,12 +67,12 @@ static inline void create_color_target(re_canvas_t *canvas) {
     VK_CHECK(vkCreateImageView(
         g_ctx.device,
         &imageViewCreateInfo,
-        nullptr,
+        NULL,
         &resource.color.image_view));
 
     VkSamplerCreateInfo samplerCreateInfo = {
         VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        nullptr,
+        NULL,
         0,                                       // flags
         VK_FILTER_LINEAR,                        // magFilter
         VK_FILTER_LINEAR,                        // minFilter
@@ -92,7 +92,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateSampler(
-        g_ctx.device, &samplerCreateInfo, nullptr, &resource.color.sampler));
+        g_ctx.device, &samplerCreateInfo, NULL, &resource.color.sampler));
   }
 }
 
@@ -102,11 +102,11 @@ static inline void destroy_color_target(re_canvas_t *canvas) {
     auto &resource = canvas->resources[i];
 
     if (resource.color.image != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource.color.image_view, nullptr);
+      vkDestroyImageView(g_ctx.device, resource.color.image_view, NULL);
     }
 
     if (resource.color.sampler != VK_NULL_HANDLE) {
-      vkDestroySampler(g_ctx.device, resource.color.sampler, nullptr);
+      vkDestroySampler(g_ctx.device, resource.color.sampler, NULL);
     }
 
     if (resource.color.image != VK_NULL_HANDLE) {
@@ -127,7 +127,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
 
     VkImageCreateInfo imageCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-        nullptr,                             // pNext
+        NULL,                             // pNext
         0,                                   // flags
         VK_IMAGE_TYPE_2D,                    // imageType
         canvas->depth_format,                // format
@@ -144,7 +144,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
             VK_IMAGE_USAGE_SAMPLED_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,      // sharingMode
         0,                              // queueFamiylIndexCount
-        nullptr,                        // pQueueFamilyIndices
+        NULL,                        // pQueueFamilyIndices
         VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
     };
 
@@ -157,11 +157,11 @@ static inline void create_depth_target(re_canvas_t *canvas) {
         &allocInfo,
         &resource.depth.image,
         &resource.depth.allocation,
-        nullptr));
+        NULL));
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        nullptr,                                  // pNext
+        NULL,                                  // pNext
         0,                                        // flags
         resource.depth.image,                     // image
         VK_IMAGE_VIEW_TYPE_2D,                    // viewType
@@ -185,7 +185,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
     VK_CHECK(vkCreateImageView(
         g_ctx.device,
         &imageViewCreateInfo,
-        nullptr,
+        NULL,
         &resource.depth.image_view));
   }
 }
@@ -202,7 +202,7 @@ static inline void destroy_depth_target(re_canvas_t *canvas) {
     }
 
     if (resource.depth.image_view != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource.depth.image_view, nullptr);
+      vkDestroyImageView(g_ctx.device, resource.depth.image_view, NULL);
     }
   }
 }
@@ -223,15 +223,15 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
     VkWriteDescriptorSet descriptorWrites[] = {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            nullptr,
+            NULL,
             resource.resource_set.descriptor_set,      // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
             &descriptor,                               // pImageInfo
-            nullptr,                                   // pBufferInfo
-            nullptr,                                   // pTexelBufferView
+            NULL,                                   // pBufferInfo
+            NULL,                                   // pTexelBufferView
         },
     };
 
@@ -240,7 +240,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
         ARRAYSIZE(descriptorWrites),
         descriptorWrites,
         0,
-        nullptr);
+        NULL);
   }
 }
 
@@ -266,7 +266,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
 
     VkFramebufferCreateInfo createInfo = {
         VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
-        nullptr,                                       // pNext
+        NULL,                                       // pNext
         0,                                             // flags
         canvas->render_target.render_pass,             // renderPass
         static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
@@ -277,7 +277,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateFramebuffer(
-        g_ctx.device, &createInfo, nullptr, &resource.framebuffer));
+        g_ctx.device, &createInfo, NULL, &resource.framebuffer));
   }
 }
 
@@ -288,7 +288,7 @@ static inline void destroy_framebuffers(re_canvas_t *canvas) {
     auto &resource = canvas->resources[i];
 
     if (resource.framebuffer != VK_NULL_HANDLE) {
-      vkDestroyFramebuffer(g_ctx.device, resource.framebuffer, nullptr);
+      vkDestroyFramebuffer(g_ctx.device, resource.framebuffer, NULL);
     }
   }
 }
@@ -336,13 +336,13 @@ static inline void create_render_pass(re_canvas_t *canvas) {
       {},                              // flags
       VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
       0,                               // inputAttachmentCount
-      nullptr,                         // pInputAttachments
+      NULL,                         // pInputAttachments
       1,                               // colorAttachmentCount
       &colorAttachmentReference,       // pColorAttachments
-      nullptr,                         // pResolveAttachments
+      NULL,                         // pResolveAttachments
       &depthAttachmentReference,       // pDepthStencilAttachment
       0,                               // preserveAttachmentCount
-      nullptr,                         // pPreserveAttachments
+      NULL,                         // pPreserveAttachments
   };
 
   VkSubpassDependency dependencies[] = {
@@ -370,7 +370,7 @@ static inline void create_render_pass(re_canvas_t *canvas) {
 
   VkRenderPassCreateInfo renderPassCreateInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
-      nullptr,                                   // pNext
+      NULL,                                   // pNext
       0,                                         // flags
       static_cast<uint32_t>(
           ARRAYSIZE(attachmentDescriptions)),         // attachmentCount
@@ -384,7 +384,7 @@ static inline void create_render_pass(re_canvas_t *canvas) {
   VK_CHECK(vkCreateRenderPass(
       g_ctx.device,
       &renderPassCreateInfo,
-      nullptr,
+      NULL,
       &canvas->render_target.render_pass));
 }
 
@@ -392,7 +392,7 @@ static inline void destroy_render_pass(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (canvas->render_target.render_pass != VK_NULL_HANDLE) {
     vkDestroyRenderPass(
-        g_ctx.device, canvas->render_target.render_pass, nullptr);
+        g_ctx.device, canvas->render_target.render_pass, NULL);
   }
 }
 
@@ -426,7 +426,7 @@ void re_canvas_begin(
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,  // sType
-      nullptr,                                   // pNext
+      NULL,                                   // pNext
       canvas->render_target.render_pass,         // renderPass
       resource.framebuffer,                      // framebuffer
       {{0, 0}, {canvas->width, canvas->height}}, // renderArea
@@ -474,7 +474,7 @@ void re_canvas_draw(
       1,
       &resource.resource_set.descriptor_set,
       0,
-      nullptr);
+      NULL);
 
   vkCmdDraw(command_buffer, 3, 1, 0, 0);
 }

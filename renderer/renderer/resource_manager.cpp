@@ -24,14 +24,14 @@ void re_resource_set_layout_init(
 
   VkDescriptorSetLayoutCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, // sType
-      nullptr,                                             // pNext
+      NULL,                                             // pNext
       0,                                                   // flags,
       layout->binding_count,                               // bindingCount
       layout->bindings,                                    // pBindings
   };
 
   VK_CHECK(vkCreateDescriptorSetLayout(
-      g_ctx.device, &createInfo, nullptr, &layout->descriptor_set_layout));
+      g_ctx.device, &createInfo, NULL, &layout->descriptor_set_layout));
 }
 
 re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
@@ -67,7 +67,7 @@ void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
 
   if (layout->descriptor_set_layout != VK_NULL_HANDLE) {
     vkDestroyDescriptorSetLayout(
-        g_ctx.device, layout->descriptor_set_layout, nullptr);
+        g_ctx.device, layout->descriptor_set_layout, NULL);
   }
 }
 
@@ -84,7 +84,7 @@ void re_resource_set_provider_init(
     for (uint32_t j = 0; j < set_layout->binding_count; j++) {
       auto &binding = set_layout->bindings[j];
 
-      VkDescriptorPoolSize *foundp = nullptr;
+      VkDescriptorPoolSize *foundp = NULL;
       for (auto &poolSize : poolSizes) {
         if (poolSize.type == binding.descriptorType) {
           foundp = &poolSize;
@@ -92,7 +92,7 @@ void re_resource_set_provider_init(
         }
       }
 
-      if (foundp == nullptr) {
+      if (foundp == NULL) {
         poolSizes.push_back({
             binding.descriptorType,
             binding.descriptorCount * set_layout->max_sets,
@@ -109,7 +109,7 @@ void re_resource_set_provider_init(
   // @TODO: look at these sizes and see if they're correct
   VkDescriptorPoolCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, // sType
-      nullptr,                                       // pNext
+      NULL,                                       // pNext
       0,                                             // flags
       pool_max_sets,                                 // maxSets
       static_cast<uint32_t>(poolSizes.size()),       // poolSizeCount
@@ -117,7 +117,7 @@ void re_resource_set_provider_init(
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      g_ctx.device, &createInfo, nullptr, &provider->descriptor_pool));
+      g_ctx.device, &createInfo, NULL, &provider->descriptor_pool));
 
   std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
@@ -133,7 +133,7 @@ void re_resource_set_provider_init(
 
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      nullptr,
+      NULL,
       0,
       static_cast<uint32_t>(descriptorSetLayouts.size()), // setLayoutCount
       descriptorSetLayouts.data(),                        // pSetLayouts
@@ -144,7 +144,7 @@ void re_resource_set_provider_init(
   VK_CHECK(vkCreatePipelineLayout(
       g_ctx.device,
       &pipelineLayoutCreateInfo,
-      nullptr,
+      NULL,
       &provider->pipeline_layout));
 
   for (uint32_t i = 0; i < set_layout_count; i++) {
@@ -162,7 +162,7 @@ void re_resource_set_provider_init(
 
     VkDescriptorSetAllocateInfo allocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,
+        NULL,
         provider->descriptor_pool,
         set_layout->max_sets,
         layouts,
@@ -178,11 +178,11 @@ void re_resource_set_provider_init(
 void re_resource_set_provider_destroy(re_resource_set_provider_t *provider) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (provider->pipeline_layout != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(g_ctx.device, provider->pipeline_layout, nullptr);
+    vkDestroyPipelineLayout(g_ctx.device, provider->pipeline_layout, NULL);
   }
 
   if (provider->descriptor_pool != VK_NULL_HANDLE) {
-    vkDestroyDescriptorPool(g_ctx.device, provider->descriptor_pool, nullptr);
+    vkDestroyDescriptorPool(g_ctx.device, provider->descriptor_pool, NULL);
   }
 }
 
@@ -192,7 +192,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
       1,                                 // descriptorCount
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
-      nullptr, // pImmutableSamplers
+      NULL, // pImmutableSamplers
   }};
   re_resource_set_layout_init(
       &manager->set_layouts.camera,
@@ -205,7 +205,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
       1,                                 // descriptorCount
       VK_SHADER_STAGE_VERTEX_BIT,        // stageFlags
-      nullptr,                           // pImmutableSamplers
+      NULL,                           // pImmutableSamplers
   }};
   re_resource_set_layout_init(
       &manager->set_layouts.mesh, 100, mesh_bindings, ARRAYSIZE(mesh_bindings));
@@ -215,7 +215,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
       1,                                 // descriptorCount
       VK_SHADER_STAGE_VERTEX_BIT,        // stageFlags
-      nullptr,                           // pImmutableSamplers
+      NULL,                           // pImmutableSamplers
   }};
   re_resource_set_layout_init(
       &manager->set_layouts.model,
@@ -229,35 +229,35 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           1,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           2,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           3,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           4,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       }};
   re_resource_set_layout_init(
       &manager->set_layouts.material,
@@ -271,35 +271,35 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
           VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
           1,                                 // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,      // stageFlags
-          nullptr,                           // pImmutableSamplers
+          NULL,                           // pImmutableSamplers
       },
       {
           1,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           2,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           3,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       },
       {
           4,                                         // binding
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
           1,                                         // descriptorCount
           VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-          nullptr,                                   // pImmutableSamplers
+          NULL,                                   // pImmutableSamplers
       }};
   re_resource_set_layout_init(
       &manager->set_layouts.environment,
@@ -312,7 +312,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
       1,                                         // descriptorCount
       VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-      nullptr,                                   // pImmutableSamplers
+      NULL,                                   // pImmutableSamplers
   }};
   re_resource_set_layout_init(
       &manager->set_layouts.fullscreen,

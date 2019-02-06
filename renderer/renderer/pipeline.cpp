@@ -21,7 +21,7 @@ default_vertex_input_state() {
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
+      NULL,                                                   // pNext
       0,                                                         // flags
       ARRAYSIZE(vertexBindingDescriptions),   // vertexBindingDescriptionCount
       vertexBindingDescriptions,              // pVertexBindingDescriptions
@@ -36,7 +36,7 @@ static inline VkPipelineInputAssemblyStateCreateInfo
 default_input_assembly_state() {
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                                   // flags
       VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, // topology
       VK_FALSE                             // primitiveRestartEnable
@@ -50,12 +50,12 @@ static inline VkPipelineViewportStateCreateInfo default_viewport_state() {
   // dynamic state
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,       // flags
       1,       // viewportCount
-      nullptr, // pViewports
+      NULL, // pViewports
       1,       // scissorCount
-      nullptr  // pScissors
+      NULL  // pScissors
   };
 
   return viewportStateCreateInfo;
@@ -65,7 +65,7 @@ static inline VkPipelineRasterizationStateCreateInfo
 default_rasterization_state() {
   VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                       // flags
       VK_FALSE,                // depthClampEnable
       VK_FALSE,                // rasterizerDiscardEnable
@@ -93,12 +93,12 @@ default_multisample_state(VkSampleCountFlagBits sampleCount) {
 
   VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,           // flags
       sampleCount, // rasterizationSamples
       VK_FALSE,    // sampleShadingEnable
       0.25f,       // minSampleShading
-      nullptr,     // pSampleMask
+      NULL,     // pSampleMask
       VK_FALSE,    // alphaToCoverageEnable
       VK_FALSE     // alphaToOneEnable
   };
@@ -115,7 +115,7 @@ default_depth_stencil_state() {
   VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
   depthStencilStateCreateInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencilStateCreateInfo.pNext = nullptr;
+  depthStencilStateCreateInfo.pNext = NULL;
   depthStencilStateCreateInfo.flags = 0;
   depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
   depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
@@ -141,7 +141,7 @@ static inline VkPipelineColorBlendStateCreateInfo default_color_blend_state() {
 
   VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                          // flags
       VK_FALSE,                   // logicOpEnable
       VK_LOGIC_OP_COPY,           // logicOp
@@ -161,7 +161,7 @@ static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
 
   VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                                               // flags
       static_cast<uint32_t>(ARRAYSIZE(dynamicStates)), // dynamicStateCount
       dynamicStates,                                   // pDyanmicStates
@@ -197,13 +197,13 @@ void re_pipeline_init_graphics(
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                                // flags
       ARRAYSIZE(pipeline_stages),       // stageCount
       pipeline_stages,                  // pStages
       &parameters.vertex_input_state,   // pVertexInputState
       &parameters.input_assembly_state, // pInputAssemblyState
-      nullptr,                          // pTesselationState
+      NULL,                          // pTesselationState
       &parameters.viewport_state,       // pViewportState
       &parameters.rasterization_state,  // pRasterizationState
       &multisample_state,               // multisampleState
@@ -222,7 +222,7 @@ void re_pipeline_init_graphics(
       VK_NULL_HANDLE,
       1,
       &pipelineCreateInfo,
-      nullptr,
+      NULL,
       &pipeline->pipeline));
 }
 
@@ -230,6 +230,6 @@ void re_pipeline_destroy(re_pipeline_t *pipeline) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (pipeline->pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(g_ctx.device, pipeline->pipeline, nullptr);
+    vkDestroyPipeline(g_ctx.device, pipeline->pipeline, NULL);
   }
 }

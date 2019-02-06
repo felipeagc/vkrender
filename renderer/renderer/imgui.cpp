@@ -24,7 +24,7 @@ static inline void create_descriptor_pool(re_imgui_t *imgui) {
 
   VkDescriptorPoolCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,           // sType
-      nullptr,                                                 // pNext
+      NULL,                                                 // pNext
       VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,       // flags
       1000 * static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)), // maxSets
       static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)),        // poolSizeCount
@@ -32,13 +32,13 @@ static inline void create_descriptor_pool(re_imgui_t *imgui) {
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      g_ctx.device, &createInfo, nullptr, &imgui->descriptor_pool));
+      g_ctx.device, &createInfo, NULL, &imgui->descriptor_pool));
 }
 
 static inline void destroy_descriptor_pool(re_imgui_t *imgui) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (imgui->descriptor_pool != VK_NULL_HANDLE) {
-    vkDestroyDescriptorPool(g_ctx.device, imgui->descriptor_pool, nullptr);
+    vkDestroyDescriptorPool(g_ctx.device, imgui->descriptor_pool, NULL);
   }
 }
 
@@ -61,7 +61,7 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
   init_info.Queue = g_ctx.graphics_queue;
   init_info.PipelineCache = VK_NULL_HANDLE;
   init_info.DescriptorPool = imgui->descriptor_pool;
-  init_info.Allocator = nullptr;
+  init_info.Allocator = NULL;
   init_info.CheckVkResultFn = [](VkResult result) {
     if (result != VK_SUCCESS) {
       throw std::runtime_error("Failed to initialize IMGUI!");
@@ -81,9 +81,9 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
     VK_CHECK(vkResetCommandPool(g_ctx.device, commandPool, 0));
     VkCommandBufferBeginInfo beginInfo = {
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
-        nullptr,                                     // pNext
+        NULL,                                     // pNext
         VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-        nullptr,                                     // pInheritanceInfo
+        NULL,                                     // pInheritanceInfo
     };
 
     VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));

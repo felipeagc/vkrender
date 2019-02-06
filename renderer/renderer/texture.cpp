@@ -14,7 +14,7 @@ static inline void create_image(
     uint32_t height) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                        // flags
       VK_IMAGE_TYPE_2D,         // imageType
       VK_FORMAT_R8G8B8A8_UNORM, // format
@@ -30,7 +30,7 @@ static inline void create_image(
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      nullptr,                   // pQueueFamilyIndices
+      NULL,                   // pQueueFamilyIndices
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
@@ -43,11 +43,11 @@ static inline void create_image(
       &imageAllocCreateInfo,
       image,
       allocation,
-      nullptr));
+      NULL));
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                        // flags
       *image,                   // image
       VK_IMAGE_VIEW_TYPE_2D,    // viewType
@@ -68,11 +68,11 @@ static inline void create_image(
   };
 
   VK_CHECK(vkCreateImageView(
-      g_ctx.device, &imageViewCreateInfo, nullptr, imageView));
+      g_ctx.device, &imageViewCreateInfo, NULL, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                                       // flags
       VK_FILTER_LINEAR,                        // magFilter
       VK_FILTER_LINEAR,                        // minFilter
@@ -91,7 +91,7 @@ static inline void create_image(
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, NULL, sampler));
 }
 
 bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
@@ -159,8 +159,8 @@ void re_texture_destroy(re_texture_t *texture) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (texture->image != VK_NULL_HANDLE) {
-    vkDestroyImageView(g_ctx.device, texture->image_view, nullptr);
-    vkDestroySampler(g_ctx.device, texture->sampler, nullptr);
+    vkDestroyImageView(g_ctx.device, texture->image_view, NULL);
+    vkDestroySampler(g_ctx.device, texture->sampler, NULL);
     vmaDestroyImage(g_ctx.gpu_allocator, texture->image, texture->allocation);
 
     texture->image = VK_NULL_HANDLE;

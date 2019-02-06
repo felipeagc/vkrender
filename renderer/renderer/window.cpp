@@ -153,35 +153,35 @@ static inline void create_sync_objects(re_window_t *window) {
   for (auto &resources : window->frame_resources) {
     VkSemaphoreCreateInfo semaphoreCreateInfo = {};
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphoreCreateInfo.pNext = nullptr;
+    semaphoreCreateInfo.pNext = NULL;
     semaphoreCreateInfo.flags = 0;
 
     VK_CHECK(vkCreateSemaphore(
         g_ctx.device,
         &semaphoreCreateInfo,
-        nullptr,
+        NULL,
         &resources.image_available_semaphore));
 
     VK_CHECK(vkCreateSemaphore(
         g_ctx.device,
         &semaphoreCreateInfo,
-        nullptr,
+        NULL,
         &resources.rendering_finished_semaphore));
 
     VkFenceCreateInfo fenceCreateInfo = {};
     fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceCreateInfo.pNext = nullptr;
+    fenceCreateInfo.pNext = NULL;
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     VK_CHECK(vkCreateFence(
-        g_ctx.device, &fenceCreateInfo, nullptr, &resources.fence));
+        g_ctx.device, &fenceCreateInfo, NULL, &resources.fence));
   }
 }
 
 static inline void
 create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   for (uint32_t i = 0; i < window->swapchain_image_count; i++) {
-    vkDestroyImageView(g_ctx.device, window->swapchain_image_views[i], nullptr);
+    vkDestroyImageView(g_ctx.device, window->swapchain_image_views[i], NULL);
   }
 
   VkSurfaceCapabilitiesKHR surfaceCapabilities;
@@ -191,13 +191,13 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   uint32_t count;
 
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      g_ctx.physical_device, window->surface, &count, nullptr);
+      g_ctx.physical_device, window->surface, &count, NULL);
   std::vector<VkSurfaceFormatKHR> surfaceFormats(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
       g_ctx.physical_device, window->surface, &count, surfaceFormats.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      g_ctx.physical_device, window->surface, &count, nullptr);
+      g_ctx.physical_device, window->surface, &count, NULL);
   std::vector<VkPresentModeKHR> presentModes(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
       g_ctx.physical_device, window->surface, &count, presentModes.data());
@@ -213,7 +213,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
 
   VkSwapchainCreateInfoKHR createInfo{
       VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
-      nullptr,                                     // pNext
+      NULL,                                     // pNext
       0,                                           // flags
       window->surface,
       desiredNumImages,                  // minImageCount
@@ -224,7 +224,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
       desiredUsage,                      // imageUsage
       VK_SHARING_MODE_EXCLUSIVE,         // imageSharingMode
       0,                                 // queueFamilyIndexCount
-      nullptr,                           // pQueueFamiylIndices
+      NULL,                           // pQueueFamiylIndices
       desiredTransform,                  // preTransform
       VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, // compositeAlpha
       desiredPresentMode,                // presentMode
@@ -232,10 +232,10 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
       oldSwapchain                       // oldSwapchain
   };
 
-  vkCreateSwapchainKHR(g_ctx.device, &createInfo, nullptr, &window->swapchain);
+  vkCreateSwapchainKHR(g_ctx.device, &createInfo, NULL, &window->swapchain);
 
   if (oldSwapchain) {
-    vkDestroySwapchainKHR(g_ctx.device, oldSwapchain, nullptr);
+    vkDestroySwapchainKHR(g_ctx.device, oldSwapchain, NULL);
   }
 
   window->swapchain_image_format = desiredFormat.format;
@@ -245,7 +245,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
       g_ctx.device,
       window->swapchain,
       &window->swapchain_image_count,
-      nullptr));
+      NULL));
 
   window->swapchain_images =
       (VkImage *)malloc(sizeof(VkImage) * window->swapchain_image_count);
@@ -260,7 +260,7 @@ static inline void create_swapchain_image_views(re_window_t *window) {
   for (size_t i = 0; i < window->swapchain_image_count; i++) {
     VkImageViewCreateInfo createInfo{
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        nullptr,                                  // pNext
+        NULL,                                  // pNext
         0,                                        // flags
         window->swapchain_images[i],
         VK_IMAGE_VIEW_TYPE_2D,
@@ -274,14 +274,14 @@ static inline void create_swapchain_image_views(re_window_t *window) {
         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device, &createInfo, nullptr, &window->swapchain_image_views[i]));
+        g_ctx.device, &createInfo, NULL, &window->swapchain_image_views[i]));
   }
 }
 
 static inline void allocate_graphics_command_buffers(re_window_t *window) {
   VkCommandBufferAllocateInfo allocateInfo = {};
   allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocateInfo.pNext = nullptr;
+  allocateInfo.pNext = NULL;
   allocateInfo.commandPool = g_ctx.graphics_command_pool;
   allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocateInfo.commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT;
@@ -301,7 +301,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
 
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-      nullptr,                             // pNext
+      NULL,                             // pNext
       0,                                   // flags
       VK_IMAGE_TYPE_2D,
       window->depth_format,
@@ -317,7 +317,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_SHARING_MODE_EXCLUSIVE,
       0,
-      nullptr,
+      NULL,
       VK_IMAGE_LAYOUT_UNDEFINED,
   };
 
@@ -330,11 +330,11 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
       &allocInfo,
       &window->depth_stencil.image,
       &window->depth_stencil.allocation,
-      nullptr));
+      NULL));
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-      nullptr,                                  // pNext
+      NULL,                                  // pNext
       0,                                        // flags
       window->depth_stencil.image,
       VK_IMAGE_VIEW_TYPE_2D,
@@ -357,7 +357,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   VK_CHECK(vkCreateImageView(
       g_ctx.device,
       &imageViewCreateInfo,
-      nullptr,
+      NULL,
       &window->depth_stencil.view));
 }
 
@@ -406,13 +406,13 @@ static inline void create_render_pass(re_window_t *window) {
       {},                              // flags
       VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
       0,                               // inputAttachmentCount
-      nullptr,                         // pInputAttachments
+      NULL,                         // pInputAttachments
       1,                               // colorAttachmentCount
       &colorAttachmentReference,       // pColorAttachments
-      nullptr,                         // pResolveAttachments
+      NULL,                         // pResolveAttachments
       &depthAttachmentReference,       // pDepthStencilAttachment
       0,                               // preserveAttachmentCount
-      nullptr,                         // pPreserveAttachments
+      NULL,                         // pPreserveAttachments
   };
 
   VkSubpassDependency dependencies[] = {
@@ -440,7 +440,7 @@ static inline void create_render_pass(re_window_t *window) {
 
   VkRenderPassCreateInfo renderPassCreateInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
-      nullptr,                                   // pNext
+      NULL,                                   // pNext
       0,                                         // flags
       static_cast<uint32_t>(
           ARRAYSIZE(attachmentDescriptions)),         // attachmentCount
@@ -454,7 +454,7 @@ static inline void create_render_pass(re_window_t *window) {
   VK_CHECK(vkCreateRenderPass(
       g_ctx.device,
       &renderPassCreateInfo,
-      nullptr,
+      NULL,
       &window->render_target.render_pass));
 }
 
@@ -462,7 +462,7 @@ static inline void regen_framebuffer(
     re_window_t *window,
     VkFramebuffer &framebuffer,
     VkImageView &swapchainImageView) {
-  vkDestroyFramebuffer(g_ctx.device, framebuffer, nullptr);
+  vkDestroyFramebuffer(g_ctx.device, framebuffer, NULL);
 
   VkImageView attachments[]{
       swapchainImageView,
@@ -471,7 +471,7 @@ static inline void regen_framebuffer(
 
   VkFramebufferCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
-      nullptr,                                       // pNext
+      NULL,                                       // pNext
       0,                                             // flags
       window->render_target.render_pass,             // renderPass
       static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
@@ -482,7 +482,7 @@ static inline void regen_framebuffer(
   };
 
   VK_CHECK(
-      vkCreateFramebuffer(g_ctx.device, &createInfo, nullptr, &framebuffer));
+      vkCreateFramebuffer(g_ctx.device, &createInfo, NULL, &framebuffer));
 }
 
 static inline void destroy_resizables(re_window_t *window) {
@@ -497,16 +497,16 @@ static inline void destroy_resizables(re_window_t *window) {
   }
 
   if (window->depth_stencil.image) {
-    vkDestroyImageView(g_ctx.device, window->depth_stencil.view, nullptr);
+    vkDestroyImageView(g_ctx.device, window->depth_stencil.view, NULL);
     vmaDestroyImage(
         g_ctx.gpu_allocator,
         window->depth_stencil.image,
         window->depth_stencil.allocation);
-    window->depth_stencil.image = nullptr;
+    window->depth_stencil.image = NULL;
     window->depth_stencil.allocation = VK_NULL_HANDLE;
   }
 
-  vkDestroyRenderPass(g_ctx.device, window->render_target.render_pass, nullptr);
+  vkDestroyRenderPass(g_ctx.device, window->render_target.render_pass, NULL);
 }
 
 // When window gets resized, call this.
@@ -563,7 +563,7 @@ bool re_window_init(
 
   uint32_t sdl_extension_count = 0;
   SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &sdl_extension_count, nullptr);
+      window->sdl_window, &sdl_extension_count, NULL);
   const char **sdl_extensions =
       (const char **)malloc(sizeof(const char *) * sdl_extension_count);
   SDL_Vulkan_GetInstanceExtensions(
@@ -620,21 +620,21 @@ void re_window_destroy(re_window_t *window) {
   destroy_resizables(window);
 
   for (uint32_t i = 0; i < window->swapchain_image_count; i++) {
-    vkDestroyImageView(g_ctx.device, window->swapchain_image_views[i], nullptr);
+    vkDestroyImageView(g_ctx.device, window->swapchain_image_views[i], NULL);
   }
 
-  vkDestroySwapchainKHR(g_ctx.device, window->swapchain, nullptr);
+  vkDestroySwapchainKHR(g_ctx.device, window->swapchain, NULL);
 
   for (auto &frameResource : window->frame_resources) {
-    vkDestroyFramebuffer(g_ctx.device, frameResource.framebuffer, nullptr);
+    vkDestroyFramebuffer(g_ctx.device, frameResource.framebuffer, NULL);
     vkDestroySemaphore(
-        g_ctx.device, frameResource.image_available_semaphore, nullptr);
+        g_ctx.device, frameResource.image_available_semaphore, NULL);
     vkDestroySemaphore(
-        g_ctx.device, frameResource.rendering_finished_semaphore, nullptr);
-    vkDestroyFence(g_ctx.device, frameResource.fence, nullptr);
+        g_ctx.device, frameResource.rendering_finished_semaphore, NULL);
+    vkDestroyFence(g_ctx.device, frameResource.fence, NULL);
   }
 
-  vkDestroySurfaceKHR(g_ctx.instance, window->surface, nullptr);
+  vkDestroySurfaceKHR(g_ctx.instance, window->surface, NULL);
 
   SDL_DestroyWindow(window->sdl_window);
 
@@ -699,7 +699,7 @@ void re_window_begin_frame(re_window_t *window) {
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-  beginInfo.pInheritanceInfo = nullptr;
+  beginInfo.pInheritanceInfo = NULL;
 
   auto &commandBuffer =
       window->frame_resources[window->current_frame].command_buffer;
@@ -709,7 +709,7 @@ void re_window_begin_frame(re_window_t *window) {
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromPresentToDraw = {
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
-        nullptr,                                  // pNext
+        NULL,                                  // pNext
         VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
         VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
         VK_IMAGE_LAYOUT_UNDEFINED,                // oldLayout
@@ -726,9 +726,9 @@ void re_window_begin_frame(re_window_t *window) {
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         0,
         0,
-        nullptr,
+        NULL,
         0,
-        nullptr,
+        NULL,
         1,
         &barrierFromPresentToDraw);
   }
@@ -749,7 +749,7 @@ void re_window_end_frame(re_window_t *window) {
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromDrawToPresent{
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
-        nullptr,                                  // pNext
+        NULL,                                  // pNext
         VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
         VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // oldLayout
@@ -766,9 +766,9 @@ void re_window_end_frame(re_window_t *window) {
         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         0,
         0,
-        nullptr,
+        NULL,
         0,
-        nullptr,
+        NULL,
         1,
         &barrierFromDrawToPresent);
   }
@@ -781,7 +781,7 @@ void re_window_end_frame(re_window_t *window) {
 
   VkSubmitInfo submitInfo = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
-      nullptr,                       // pNext
+      NULL,                       // pNext
       1,                             // waitSemaphoreCount
       &window->frame_resources[window->current_frame]
            .image_available_semaphore, // pWaitSemaphores
@@ -802,14 +802,14 @@ void re_window_end_frame(re_window_t *window) {
 
   VkPresentInfoKHR presentInfo = {
       VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-      nullptr, // pNext
+      NULL, // pNext
       1,       // waitSemaphoreCount
       &window->frame_resources[window->current_frame]
            .rendering_finished_semaphore, // pWaitSemaphores
       1,                                  // swapchainCount
       &window->swapchain,                 // pSwapchains
       &window->current_image_index,       // pImageIndices
-      nullptr,                            // pResults
+      NULL,                            // pResults
   };
 
   VkResult result = vkQueuePresentKHR(g_ctx.present_queue, &presentInfo);
@@ -842,7 +842,7 @@ void re_window_begin_render_pass(re_window_t *window) {
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,                   // sType
-      nullptr,                                                    // pNext
+      NULL,                                                    // pNext
       window->render_target.render_pass,                          // renderPass
       window->frame_resources[window->current_frame].framebuffer, // framebuffer
       {{0, 0}, window->swapchain_extent},                         // renderArea
@@ -898,17 +898,17 @@ void re_window_warp_mouse(re_window_t *window, int x, int y) {
 }
 
 bool re_window_is_mouse_left_pressed(const re_window_t *) {
-  auto state = SDL_GetMouseState(nullptr, nullptr);
+  auto state = SDL_GetMouseState(NULL, NULL);
   return (state & SDL_BUTTON(SDL_BUTTON_LEFT));
 }
 
 bool re_window_is_mouse_right_pressed(const re_window_t *) {
-  auto state = SDL_GetMouseState(nullptr, nullptr);
+  auto state = SDL_GetMouseState(NULL, NULL);
   return (state & SDL_BUTTON(SDL_BUTTON_RIGHT));
 }
 
 bool re_window_is_scancode_pressed(const re_window_t *, SDL_Scancode scancode) {
-  const Uint8 *state = SDL_GetKeyboardState(nullptr);
+  const Uint8 *state = SDL_GetKeyboardState(NULL);
   return (bool)state[scancode];
 }
 

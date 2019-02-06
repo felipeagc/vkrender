@@ -5,7 +5,7 @@
 #include "shader.hpp"
 #include <vulkan/vulkan.h>
 
-struct re_pipeline_parameters_t {
+typedef struct re_pipeline_parameters_t {
   VkPipelineVertexInputStateCreateInfo vertex_input_state;
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
   VkPipelineViewportStateCreateInfo viewport_state;
@@ -14,21 +14,21 @@ struct re_pipeline_parameters_t {
   VkPipelineColorBlendStateCreateInfo color_blend_state;
   VkPipelineDynamicStateCreateInfo dynamic_state;
   VkPipelineLayout layout;
-};
+} re_pipeline_parameters_t;
 
 // Does not have a default pipeline layout
 re_pipeline_parameters_t re_default_pipeline_parameters();
 
-struct re_vertex_t {
+typedef struct re_vertex_t {
   glm::vec3 pos;
   glm::vec3 normal;
   glm::vec2 uv;
-};
+} re_vertex_t;
 
-struct re_pipeline_t {
+typedef struct re_pipeline_t {
   VkPipeline pipeline;
   VkPipelineLayout layout;
-};
+} re_pipeline_t;
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,

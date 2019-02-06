@@ -3,7 +3,7 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-struct re_texture_t {
+typedef struct re_texture_t {
   VkImage image;
   VmaAllocation allocation;
   VkImageView image_view;
@@ -11,7 +11,7 @@ struct re_texture_t {
 
   uint32_t width;
   uint32_t height;
-};
+} re_texture_t;
 
 bool re_texture_init_from_path(re_texture_t *texture, const char *path);
 

@@ -3,4 +3,5 @@ macro(add_example name)
   target_link_libraries(${name} PRIVATE engine)
 endmacro()
 
-# add_example(rewrite)
+add_example(rewrite)
+add_example(vmath_example)

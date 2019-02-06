@@ -11,7 +11,7 @@ void re_set_image_layout(
   // Create an image barrier object
   VkImageMemoryBarrier imageMemoryBarrier = {};
   imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  imageMemoryBarrier.pNext = nullptr;
+  imageMemoryBarrier.pNext = NULL;
   imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   imageMemoryBarrier.oldLayout = oldImageLayout;
@@ -122,9 +122,9 @@ void re_set_image_layout(
       dstStageMask,
       0,
       0,
-      nullptr,
+      NULL,
       0,
-      nullptr,
+      NULL,
       1,
       &imageMemoryBarrier);
 }

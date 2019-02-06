@@ -7,7 +7,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
   assert(ut_worker_id < RE_THREAD_COUNT);
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      nullptr,
+      NULL,
       g_ctx.thread_command_pools[ut_worker_id], // commandPool
       VK_COMMAND_BUFFER_LEVEL_PRIMARY,          // level
       1,                                        // commandBufferCount
@@ -20,9 +20,9 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
 
   VkCommandBufferBeginInfo commandBufferBeginInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-      nullptr,
+      NULL,
       VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-      nullptr,                                     // pInheritanceInfo
+      NULL,                                     // pInheritanceInfo
   };
 
   VK_CHECK(vkBeginCommandBuffer(command_buffer, &commandBufferBeginInfo));
@@ -37,14 +37,14 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
 
   VkSubmitInfo submitInfo{
       VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      nullptr,
+      NULL,
       0,               // waitSemaphoreCount
-      nullptr,         // pWaitSemaphores
-      nullptr,         // pWaitDstStageMask
+      NULL,         // pWaitSemaphores
+      NULL,         // pWaitDstStageMask
       1,               // commandBufferCount
       &command_buffer, // pCommandBuffers
       0,               // signalSemaphoreCount
-      nullptr,         // pSignalSemaphores
+      NULL,         // pSignalSemaphores
   };
 
   g_ctx.queue_mutex.lock();
@@ -66,13 +66,13 @@ static inline void create_buffer(
     VkMemoryPropertyFlags memory_property) {
   VkBufferCreateInfo bufferCreateInfo = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                         // flags
       size,                      // size
       buffer_usage,              // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      nullptr                    // pQueueFamilyIndices
+      NULL                    // pQueueFamilyIndices
   };
 
   VmaAllocationCreateInfo allocInfo = {};
@@ -85,7 +85,7 @@ static inline void create_buffer(
       &allocInfo,
       buffer,
       allocation,
-      nullptr));
+      NULL));
 }
 
 void re_buffer_init_vertex(re_buffer_t *buffer, size_t size) {

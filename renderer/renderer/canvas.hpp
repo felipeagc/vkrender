@@ -7,7 +7,7 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-struct re_canvas_t {
+typedef struct re_canvas_t {
   re_render_target_t render_target;
 
   uint32_t width;
@@ -38,7 +38,7 @@ struct re_canvas_t {
     // For rendering this render target's image to another render target
     re_resource_set_t resource_set;
   } resources[1];
-};
+} re_canvas_t;
 
 void re_canvas_init(
     re_canvas_t *canvas,

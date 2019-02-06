@@ -1,13 +1,13 @@
 set(
   ENGINE_SOURCES
-  #engine/world.cpp
-  #engine/camera.cpp
-  #engine/systems.cpp
+  engine/world.cpp
+  engine/camera.cpp
+  engine/systems/fps_camera_system.cpp
   engine/pipelines.cpp
-  #engine/environment.cpp
+  engine/environment.cpp
 
-  #engine/assets/asset.cpp
-  #engine/assets/environment_asset.cpp
+  engine/asset.cpp
+  engine/assets/environment_asset.cpp
   )
 
 add_library(

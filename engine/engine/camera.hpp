@@ -1,0 +1,39 @@
+#pragma once
+
+#include <renderer/buffer.hpp>
+#include <renderer/common.hpp>
+#include <renderer/resource_manager.hpp>
+#include <vmath/vmath.h>
+
+typedef struct eg_camera_uniform_t {
+  mat4_t view;
+  mat4_t proj;
+  vec4_t pos;
+} eg_camera_uniform_t;
+
+typedef struct eg_camera_t {
+  re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
+  void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
+  re_resource_set_t resource_sets[RE_MAX_FRAMES_IN_FLIGHT];
+
+  float near;
+  float far;
+
+  float fov;
+  eg_camera_uniform_t uniform;
+
+  vec3_t position;
+  quat_t rotation;
+} eg_camera_t;
+
+void eg_camera_init(eg_camera_t *camera);
+
+void eg_camera_update(eg_camera_t *camera, struct re_window_t *window);
+
+void eg_camera_bind(
+    eg_camera_t *camera,
+    struct re_window_t *window,
+    struct re_pipeline_t *pipeline,
+    uint32_t set_index);
+
+void eg_camera_destroy(eg_camera_t *camera);

@@ -41,7 +41,7 @@ TEST(mat4, identity) {
 
 TEST(mat4, transpose_identity) {
   mat4_t mata = mat4_identity();
-  mat4_t matb = mat4_transpose(&mata);
+  mat4_t matb = mat4_transpose(mata);
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -58,7 +58,7 @@ TEST(mat4, transpose) {
   mata.columns[1][3] = 8.0f;
   mata.columns[2][3] = 9.0f;
   mata.columns[3][2] = 10.0f;
-  mat4_t matb = mat4_transpose(&mata);
+  mat4_t matb = mat4_transpose(mata);
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -75,7 +75,7 @@ TEST(mat4, addition) {
   matb.columns[0][3] = 5.0f;
   matb.columns[1][2] = 3.0f;
 
-  mat4_t sum = mat4_add(&mata, &matb);
+  mat4_t sum = mat4_add(mata, matb);
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -92,7 +92,7 @@ TEST(mat4, subtraction) {
   matb.columns[0][3] = 5.0f;
   matb.columns[1][2] = 3.0f;
 
-  mat4_t sub = mat4_sub(&mata, &matb);
+  mat4_t sub = mat4_sub(mata, matb);
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -103,7 +103,7 @@ TEST(mat4, subtraction) {
 
 TEST(mat4, multiplication_scalar) {
   mat4_t mat = mat4_identity();
-  mat4_t mul = mat4_muls(&mat, 5.0f);
+  mat4_t mul = mat4_muls(mat, 5.0f);
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -114,7 +114,7 @@ TEST(mat4, multiplication_scalar) {
 
 TEST(mat4, division_scalar) {
   mat4_t mat = mat4_identity();
-  mat4_t div = mat4_divs(&mat, 5.0f);
+  mat4_t div = mat4_divs(mat, 5.0f);
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -138,7 +138,7 @@ TEST(mat4, multiplication) {
       {1, 1, 1, 1},
   }};
 
-  mat4_t mul = mat4_mul(&mata, &matb);
+  mat4_t mul = mat4_mul(mata, matb);
 
   mat4_t expected = {{
       {16, 28, 5, 5},

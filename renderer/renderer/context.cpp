@@ -33,7 +33,7 @@ VkResult CreateDebugReportCallbackEXT(
     VkDebugReportCallbackEXT *pCallback) {
   auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(
       instance, "vkCreateDebugReportCallbackEXT");
-  if (func != nullptr) {
+  if (func != NULL) {
     return func(instance, pCreateInfo, pAllocator, pCallback);
   } else {
     return VK_ERROR_EXTENSION_NOT_PRESENT;
@@ -46,14 +46,14 @@ void DestroyDebugReportCallbackEXT(
     const VkAllocationCallbacks *pAllocator) {
   auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(
       instance, "vkDestroyDebugReportCallbackEXT");
-  if (func != nullptr) {
+  if (func != NULL) {
     func(instance, callback, pAllocator);
   }
 }
 
 static inline bool check_validation_layer_support() {
   uint32_t count;
-  vkEnumerateInstanceLayerProperties(&count, nullptr);
+  vkEnumerateInstanceLayerProperties(&count, NULL);
   VkLayerProperties *availableLayers =
       (VkLayerProperties *)malloc(sizeof(VkLayerProperties) * count);
   vkEnumerateInstanceLayerProperties(&count, availableLayers);
@@ -110,11 +110,11 @@ static inline bool check_physical_device_properties(
     uint32_t *transferQueueFamily) {
   uint32_t count;
   vkEnumerateDeviceExtensionProperties(
-      physicalDevice, nullptr, &count, nullptr);
+      physicalDevice, NULL, &count, NULL);
   VkExtensionProperties *availableExtensions =
       (VkExtensionProperties *)malloc(sizeof(VkExtensionProperties) * count);
   vkEnumerateDeviceExtensionProperties(
-      physicalDevice, nullptr, &count, availableExtensions);
+      physicalDevice, NULL, &count, availableExtensions);
 
   VkPhysicalDeviceProperties deviceProperties;
   vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
@@ -161,7 +161,7 @@ static inline bool check_physical_device_properties(
     return false;
   }
 
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, NULL);
   std::vector<VkQueueFamilyProperties> queueFamilyProperties(count);
   vkGetPhysicalDeviceQueueFamilyProperties(
       physicalDevice, &count, queueFamilyProperties.data());
@@ -246,7 +246,7 @@ static inline void create_instance(
 
   VkApplicationInfo appInfo = {};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pNext = nullptr;
+  appInfo.pNext = NULL;
   appInfo.pApplicationName = "App";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "No engine";
@@ -264,7 +264,7 @@ static inline void create_instance(
   createInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
 #else
   createInfo.enabledLayerCount = 0;
-  createInfo.ppEnabledLayerNames = nullptr;
+  createInfo.ppEnabledLayerNames = NULL;
 #endif
 
   // Set required instance extensions
@@ -284,7 +284,7 @@ static inline void create_instance(
   createInfo.enabledExtensionCount = extension_count;
   createInfo.ppEnabledExtensionNames = extensions;
 
-  VK_CHECK(vkCreateInstance(&createInfo, nullptr, &ctx->instance));
+  VK_CHECK(vkCreateInstance(&createInfo, NULL, &ctx->instance));
 
   free(extensions);
 }
@@ -297,12 +297,12 @@ static inline void setup_debug_callback(re_context_t *ctx) {
   createInfo.pfnCallback = debug_callback;
 
   VK_CHECK(CreateDebugReportCallbackEXT(
-      ctx->instance, &createInfo, nullptr, &ctx->debug_callback));
+      ctx->instance, &createInfo, NULL, &ctx->debug_callback));
 }
 
 static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   uint32_t count;
-  vkEnumeratePhysicalDevices(ctx->instance, &count, nullptr);
+  vkEnumeratePhysicalDevices(ctx->instance, &count, NULL);
   std::vector<VkPhysicalDevice> physicalDevices(count);
   vkEnumeratePhysicalDevices(ctx->instance, &count, physicalDevices.data());
 
@@ -333,7 +333,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
 
   queueCreateInfos.push_back({
       VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,
       ctx->graphics_queue_family_index,
       static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
@@ -343,7 +343,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   if (ctx->present_queue_family_index != ctx->graphics_queue_family_index) {
     queueCreateInfos.push_back({
         VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        nullptr,
+        NULL,
         0,
         ctx->present_queue_family_index,
         static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
@@ -354,7 +354,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   if (ctx->transfer_queue_family_index != ctx->graphics_queue_family_index) {
     queueCreateInfos.push_back({
         VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        nullptr,
+        NULL,
         0,
         ctx->transfer_queue_family_index,
         static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
@@ -376,7 +376,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   deviceCreateInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
 #else
   deviceCreateInfo.enabledLayerCount = 0;
-  deviceCreateInfo.ppEnabledLayerNames = nullptr;
+  deviceCreateInfo.ppEnabledLayerNames = NULL;
 #endif
 
   deviceCreateInfo.enabledExtensionCount =
@@ -389,7 +389,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   deviceCreateInfo.pEnabledFeatures = &features;
 
   VK_CHECK(vkCreateDevice(
-      ctx->physical_device, &deviceCreateInfo, nullptr, &ctx->device));
+      ctx->physical_device, &deviceCreateInfo, NULL, &ctx->device));
 }
 
 static inline void get_device_queues(re_context_t *ctx) {
@@ -417,7 +417,7 @@ static inline void create_graphics_command_pool(re_context_t *ctx) {
   createInfo.queueFamilyIndex = ctx->graphics_queue_family_index;
 
   VK_CHECK(vkCreateCommandPool(
-      ctx->device, &createInfo, nullptr, &ctx->graphics_command_pool));
+      ctx->device, &createInfo, NULL, &ctx->graphics_command_pool));
 }
 
 static inline void create_transient_command_pool(re_context_t *ctx) {
@@ -428,7 +428,7 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
   createInfo.queueFamilyIndex = ctx->graphics_queue_family_index;
 
   VK_CHECK(vkCreateCommandPool(
-      ctx->device, &createInfo, nullptr, &ctx->transient_command_pool));
+      ctx->device, &createInfo, NULL, &ctx->transient_command_pool));
 }
 
 static inline void create_thread_command_pools(re_context_t *ctx) {
@@ -440,7 +440,7 @@ static inline void create_thread_command_pools(re_context_t *ctx) {
     createInfo.queueFamilyIndex = ctx->graphics_queue_family_index;
 
     VK_CHECK(vkCreateCommandPool(
-        ctx->device, &createInfo, nullptr, &ctx->thread_command_pools[i]));
+        ctx->device, &createInfo, NULL, &ctx->thread_command_pools[i]));
   }
 }
 
@@ -571,21 +571,21 @@ void re_context_destroy(re_context_t *ctx) {
 
   re_resource_manager_destroy(&ctx->resource_manager);
 
-  vkDestroyCommandPool(ctx->device, ctx->transient_command_pool, nullptr);
+  vkDestroyCommandPool(ctx->device, ctx->transient_command_pool, NULL);
 
-  vkDestroyCommandPool(ctx->device, ctx->graphics_command_pool, nullptr);
+  vkDestroyCommandPool(ctx->device, ctx->graphics_command_pool, NULL);
 
   for (auto &command_pool : ctx->thread_command_pools) {
-    vkDestroyCommandPool(ctx->device, command_pool, nullptr);
+    vkDestroyCommandPool(ctx->device, command_pool, NULL);
   }
 
   vmaDestroyAllocator(ctx->gpu_allocator);
 
-  vkDestroyDevice(ctx->device, nullptr);
+  vkDestroyDevice(ctx->device, NULL);
 
-  DestroyDebugReportCallbackEXT(ctx->instance, ctx->debug_callback, nullptr);
+  DestroyDebugReportCallbackEXT(ctx->instance, ctx->debug_callback, NULL);
 
-  vkDestroyInstance(ctx->instance, nullptr);
+  vkDestroyInstance(ctx->instance, NULL);
 
   SDL_Quit();
 }

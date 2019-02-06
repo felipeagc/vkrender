@@ -5,12 +5,12 @@
 
 const size_t RE_GLOBAL_MAX_DESCRIPTOR_SETS = 1000;
 
-struct re_resource_set_t {
+typedef struct re_resource_set_t {
   VkDescriptorSet descriptor_set;
   uint32_t allocation;
-};
+} re_resource_set_t;
 
-struct re_resource_set_layout_t {
+typedef struct re_resource_set_layout_t {
   VkDescriptorSetLayout descriptor_set_layout;
   VkDescriptorSetLayoutBinding *bindings;
   uint32_t binding_count;
@@ -19,7 +19,7 @@ struct re_resource_set_layout_t {
   VkDescriptorSet *descriptor_sets;
   uint32_t max_sets;
   std::bitset<RE_GLOBAL_MAX_DESCRIPTOR_SETS> bitset;
-};
+} re_resource_set_layout_t;
 
 void re_resource_set_layout_init(
     re_resource_set_layout_t *layout,
@@ -34,10 +34,10 @@ void re_free_resource_set(
 
 void re_resource_set_layout_destroy(re_resource_set_layout_t *layout);
 
-struct re_resource_set_provider_t {
+typedef struct re_resource_set_provider_t {
   VkPipelineLayout pipeline_layout;
   VkDescriptorPool descriptor_pool;
-};
+} re_resource_set_provider_t;
 
 void re_resource_set_provider_init(
     re_resource_set_provider_t *provider,
@@ -46,7 +46,7 @@ void re_resource_set_provider_init(
 
 void re_resource_set_provider_destroy(re_resource_set_provider_t *provider);
 
-struct re_resource_manager_t {
+typedef struct re_resource_manager_t {
   struct {
     re_resource_set_layout_t camera;
     re_resource_set_layout_t mesh;
@@ -64,7 +64,7 @@ struct re_resource_manager_t {
     re_resource_set_provider_t fullscreen;
     re_resource_set_provider_t bake_cubemap;
   } providers;
-};
+} re_resource_manager_t;
 
 void re_resource_manager_init(re_resource_manager_t *manager);
 

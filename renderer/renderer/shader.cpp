@@ -135,9 +135,9 @@ create_shader_module(const uint32_t *code, size_t code_size) {
   VkShaderModule module;
 
   VkShaderModuleCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, code_size, code};
+      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, NULL, 0, code_size, code};
 
-  VK_CHECK(vkCreateShaderModule(g_ctx.device, &createInfo, nullptr, &module));
+  VK_CHECK(vkCreateShaderModule(g_ctx.device, &createInfo, NULL, &module));
   return module;
 }
 
@@ -177,8 +177,8 @@ void re_shader_destroy(re_shader_t *shader) {
 
   if (shader->vertex_module != VK_NULL_HANDLE &&
       shader->fragment_module != VK_NULL_HANDLE) {
-    vkDestroyShaderModule(g_ctx.device, shader->vertex_module, nullptr);
-    vkDestroyShaderModule(g_ctx.device, shader->fragment_module, nullptr);
+    vkDestroyShaderModule(g_ctx.device, shader->vertex_module, NULL);
+    vkDestroyShaderModule(g_ctx.device, shader->fragment_module, NULL);
     shader->vertex_module = VK_NULL_HANDLE;
     shader->fragment_module = VK_NULL_HANDLE;
   }

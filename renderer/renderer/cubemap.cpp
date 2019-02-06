@@ -51,7 +51,7 @@ static void create_image_and_image_view(
     VkImageUsageFlags usage) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                // flags
       VK_IMAGE_TYPE_2D, // imageType
       format,           // format
@@ -67,7 +67,7 @@ static void create_image_and_image_view(
       usage,                     // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      nullptr,                   // pQueueFamilyIndices
+      NULL,                   // pQueueFamilyIndices
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
@@ -80,11 +80,11 @@ static void create_image_and_image_view(
       &imageAllocCreateInfo,
       image,
       allocation,
-      nullptr));
+      NULL));
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                     // flags
       *image,                // image
       VK_IMAGE_VIEW_TYPE_2D, // viewType
@@ -105,13 +105,13 @@ static void create_image_and_image_view(
   };
 
   VK_CHECK(vkCreateImageView(
-      g_ctx.device, &imageViewCreateInfo, nullptr, imageView));
+      g_ctx.device, &imageViewCreateInfo, NULL, imageView));
 }
 
 static void create_sampler(VkSampler *sampler) {
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                                       // flags
       VK_FILTER_LINEAR,                        // magFilter
       VK_FILTER_LINEAR,                        // minFilter
@@ -130,7 +130,7 @@ static void create_sampler(VkSampler *sampler) {
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, NULL, sampler));
 }
 
 static void copy_side_image_to_cubemap(
@@ -218,7 +218,7 @@ static void bake_cubemap(
   int hdrWidth, hdrHeight, nrComponents;
   float *hdrData = stbi_loadf(hdrFile, &hdrWidth, &hdrHeight, &nrComponents, 4);
 
-  assert(hdrData != nullptr);
+  assert(hdrData != NULL);
 
   // Create HDR VkImage and stuff
   VkImage hdrImage = VK_NULL_HANDLE;
@@ -267,18 +267,18 @@ static void bake_cubemap(
 
     VkWriteDescriptorSet hdrDescriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        nullptr,
+        NULL,
         hdr_resource_set.descriptor_set,           // dstSet
         1,                                         // dstBinding
         0,                                         // dstArrayElement
         1,                                         // descriptorCount
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         &hdrImageDescriptor,                       // pImageInfo
-        nullptr,                                   // pBufferInfo
-        nullptr,                                   // pTexelBufferView
+        NULL,                                   // pBufferInfo
+        NULL,                                   // pTexelBufferView
     };
 
-    vkUpdateDescriptorSets(g_ctx.device, 1, &hdrDescriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(g_ctx.device, 1, &hdrDescriptorWrite, 0, NULL);
   }
 
   // Camera matrices
@@ -295,12 +295,12 @@ static void bake_cubemap(
       g_ctx.resource_manager.providers.bake_cubemap.pipeline_layout;
   pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
+      NULL,                                                   // pNext
       0,                                                         // flags
       0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
+      NULL, // pVertexBindingDescriptions
       0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
+      NULL, // pVertexAttributeDescriptions
   };
 
   re_pipeline_t pipeline;
@@ -325,7 +325,7 @@ static void bake_cubemap(
   {
     VkCommandBufferAllocateInfo allocateInfo = {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
+    allocateInfo.pNext = NULL;
     allocateInfo.commandPool = g_ctx.thread_command_pools[ut_worker_id];
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandBufferCount = 1;
@@ -337,7 +337,7 @@ static void bake_cubemap(
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-  beginInfo.pInheritanceInfo = nullptr;
+  beginInfo.pInheritanceInfo = NULL;
 
   VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
@@ -399,7 +399,7 @@ static void bake_cubemap(
           1,
           &hdr_resource_set.descriptor_set,
           0,
-          nullptr);
+          NULL);
 
       vkCmdDraw(commandBuffer, 36, 1, 0, 0);
     }
@@ -424,14 +424,14 @@ static void bake_cubemap(
 
   VkSubmitInfo submitInfo = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
-      nullptr,                       // pNext
+      NULL,                       // pNext
       0,                             // waitSemaphoreCount
-      nullptr,                       // pWaitSemaphores
+      NULL,                       // pWaitSemaphores
       &waitDstStageMask,             // pWaitDstStageMask
       1,                             // commandBufferCount
       &commandBuffer,                // pCommandBuffers
       0,                             // signalSemaphoreCount
-      nullptr,                       // pSignalSemaphores
+      NULL,                       // pSignalSemaphores
   };
 
   g_ctx.queue_mutex.lock();
@@ -442,8 +442,8 @@ static void bake_cubemap(
 
   re_free_resource_set(&set_layout, &hdr_resource_set);
 
-  vkDestroyImageView(g_ctx.device, hdrImageView, nullptr);
-  vkDestroySampler(g_ctx.device, hdrSampler, nullptr);
+  vkDestroyImageView(g_ctx.device, hdrImageView, NULL);
+  vkDestroySampler(g_ctx.device, hdrSampler, NULL);
   vmaDestroyImage(g_ctx.gpu_allocator, hdrImage, hdrAllocation);
 
   assert(ut_worker_id < RE_THREAD_COUNT);
@@ -468,7 +468,7 @@ static void create_cubemap_image(
     uint32_t levels = 1) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      nullptr,                             // pNext
+      NULL,                             // pNext
       VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, // flags
       VK_IMAGE_TYPE_2D,                    // imageType
       format,                              // format
@@ -484,7 +484,7 @@ static void create_cubemap_image(
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      nullptr,                   // pQueueFamilyIndices
+      NULL,                   // pQueueFamilyIndices
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
@@ -497,11 +497,11 @@ static void create_cubemap_image(
       &imageAllocCreateInfo,
       image,
       allocation,
-      nullptr));
+      NULL));
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                       // flags
       *image,                  // image
       VK_IMAGE_VIEW_TYPE_CUBE, // viewType
@@ -522,11 +522,11 @@ static void create_cubemap_image(
   };
 
   VK_CHECK(vkCreateImageView(
-      g_ctx.device, &imageViewCreateInfo, nullptr, imageView));
+      g_ctx.device, &imageViewCreateInfo, NULL, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                                       // flags
       VK_FILTER_LINEAR,                        // magFilter
       VK_FILTER_LINEAR,                        // minFilter
@@ -545,7 +545,7 @@ static void create_cubemap_image(
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, nullptr, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, NULL, sampler));
 }
 
 void re_cubemap_init_from_hdr_equirec(
@@ -613,8 +613,8 @@ void re_cubemap_destroy(re_cubemap_t *cubemap) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   if (cubemap->image != VK_NULL_HANDLE) {
-    vkDestroyImageView(g_ctx.device, cubemap->image_view, nullptr);
-    vkDestroySampler(g_ctx.device, cubemap->sampler, nullptr);
+    vkDestroyImageView(g_ctx.device, cubemap->image_view, NULL);
+    vkDestroySampler(g_ctx.device, cubemap->sampler, NULL);
     vmaDestroyImage(g_ctx.gpu_allocator, cubemap->image, cubemap->allocation);
 
     cubemap->image = VK_NULL_HANDLE;

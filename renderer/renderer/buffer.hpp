@@ -3,10 +3,10 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-struct re_buffer_t {
+typedef struct re_buffer_t {
   VkBuffer buffer = VK_NULL_HANDLE;
   VmaAllocation allocation = VK_NULL_HANDLE;
-};
+} re_buffer_t;
 
 void re_buffer_init_vertex(re_buffer_t *buffer, size_t size);
 

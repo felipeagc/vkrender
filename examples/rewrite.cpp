@@ -1,9 +1,8 @@
-#include <eg/assets/environment_asset.hpp>
-#include <eg/camera.hpp>
-#include <eg/environment.hpp>
-#include <eg/pipelines.hpp>
-#include <eg/systems.hpp>
-#include <eg/world.hpp>
+#include <engine/assets/environment_asset.hpp>
+#include <engine/camera.hpp>
+#include <engine/pipelines.hpp>
+#include <engine/systems/fps_camera_system.hpp>
+#include <engine/world.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
 
@@ -24,8 +23,8 @@ int main() {
       "../shaders/skybox.frag",
       eg_skybox_pipeline_parameters());
 
-  eg_asset_manager_t asset_manager;
-  eg_asset_manager_init(&asset_manager);
+  // eg_asset_manager_t asset_manager;
+  // eg_asset_manager_init(&asset_manager);
 
   const char *radiance_paths[] = {
       "../assets/ice_lake/radiance_0_1600x800.hdr",
@@ -39,10 +38,9 @@ int main() {
       "../assets/ice_lake/radiance_8_6x3.hdr",
   };
 
-  eg_environment_asset_t *environment_asset =
-      eg_asset_alloc(&asset_manager, eg_environment_asset_t);
+  eg_environment_asset_t environment_asset;
   eg_environment_asset_init(
-      environment_asset,
+      &environment_asset,
       1024,
       1024,
       "../assets/ice_lake/skybox.hdr",
@@ -52,16 +50,16 @@ int main() {
       "../assets/brdf_lut.png");
 
   eg_world_t world;
-  eg_world_init(&world, environment_asset);
+  eg_world_init(&world, &environment_asset);
 
   eg_fps_camera_system_t fps_system;
-  eg_fps_camera_init(&fps_system);
+  eg_fps_camera_system_init(&fps_system);
 
   while (!window.should_close) {
     SDL_Event event;
     while (re_window_poll_event(&window, &event)) {
       re_imgui_process_event(&imgui, &event);
-      eg_fps_camera_event(&fps_system, &window, &event);
+      eg_fps_camera_system_process_event(&fps_system, &window, &event);
 
       switch (event.type) {
       case SDL_QUIT:
@@ -70,9 +68,15 @@ int main() {
       }
     }
 
+    // Per-frame updates
+    eg_environment_update(&world.environment, &window);
+
     re_imgui_begin(&imgui);
 
     if (ImGui::Begin("Hello!")) {
+      float deg = to_degrees(world.camera.fov);
+      ImGui::DragFloat("FOV", &deg, 0.1f);
+      world.camera.fov = to_radians(deg);
       ImGui::End();
     }
 
@@ -80,7 +84,7 @@ int main() {
 
     re_window_begin_frame(&window);
 
-    eg_fps_camera_update(&fps_system, &world, &window);
+    eg_fps_camera_system_update(&fps_system, &window, &world.camera);
 
     re_window_begin_render_pass(&window);
 
@@ -95,8 +99,8 @@ int main() {
   }
 
   eg_world_destroy(&world);
-  eg_environment_asset_destroy(environment_asset);
-  eg_asset_manager_destroy(&asset_manager);
+  eg_environment_asset_destroy(&environment_asset);
+  // eg_asset_manager_destroy(&asset_manager);
 
   re_pipeline_destroy(&skybox_pipeline);
 

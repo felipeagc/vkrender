@@ -7,7 +7,7 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-struct re_window_t {
+typedef struct re_window_t {
   glm::vec4 clear_color;
 
   re_render_target_t render_target;
@@ -53,7 +53,7 @@ struct re_window_t {
   uint32_t swapchain_image_count;
   VkImage *swapchain_images;
   VkImageView *swapchain_image_views;
-};
+} re_window_t;
 
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height);
@@ -73,7 +73,8 @@ bool re_window_get_relative_mouse(const re_window_t *window);
 void re_window_set_relative_mouse(re_window_t *window, bool relative);
 
 void re_window_get_mouse_state(const re_window_t *window, int *x, int *y);
-void re_window_get_relative_mouse_state(const re_window_t *window, int *x, int *y);
+void re_window_get_relative_mouse_state(
+    const re_window_t *window, int *x, int *y);
 
 void re_window_warp_mouse(re_window_t *window, int x, int y);
 

@@ -20,12 +20,12 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
 
   params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
+      NULL,                                                   // pNext
       0,                                                         // flags
       0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
+      NULL, // pVertexBindingDescriptions
       0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
+      NULL, // pVertexAttributeDescriptions
   };
 
   params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
@@ -54,12 +54,12 @@ re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
 
   params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
+      NULL,                                                   // pNext
       0,                                                         // flags
       0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
+      NULL, // pVertexBindingDescriptions
       0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
+      NULL, // pVertexAttributeDescriptions
   };
 
   params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
@@ -76,12 +76,12 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
 
   params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      nullptr,                                                   // pNext
+      NULL,                                                   // pNext
       0,                                                         // flags
       0,       // vertexBindingDescriptionCount
-      nullptr, // pVertexBindingDescriptions
+      NULL, // pVertexBindingDescriptions
       0,       // vertexAttributeDescriptionCount
-      nullptr, // pVertexAttributeDescriptions
+      NULL, // pVertexAttributeDescriptions
   };
 
   params.rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
@@ -103,7 +103,7 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
 
   params.color_blend_state = VkPipelineColorBlendStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-      nullptr,
+      NULL,
       0,                          // flags
       VK_FALSE,                   // logicOpEnable
       VK_LOGIC_OP_COPY,           // logicOp

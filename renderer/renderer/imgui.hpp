@@ -3,10 +3,10 @@
 #include "common.hpp"
 #include "window.hpp"
 
-struct re_imgui_t {
+typedef struct re_imgui_t {
   re_window_t *window;
   VkDescriptorPool descriptor_pool;
-};
+} re_imgui_t;
 
 void re_imgui_init(re_imgui_t *imgui, re_window_t *window);
 
