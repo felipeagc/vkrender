@@ -1,14 +1,14 @@
 #pragma once
 
 #include "common.hpp"
-#include "glm.hpp"
 #include "render_target.hpp"
 #include <SDL2/SDL.h>
+#include <vmath/vmath.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 typedef struct re_window_t {
-  glm::vec4 clear_color;
+  vec4_t clear_color;
 
   re_render_target_t render_target;
   SDL_Window *sdl_window;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "glm.hpp"
 #include "render_target.hpp"
 #include "shader.hpp"
+#include <vmath/vmath.h>
 #include <vulkan/vulkan.h>
 
 typedef struct re_pipeline_parameters_t {
@@ -20,9 +20,9 @@ typedef struct re_pipeline_parameters_t {
 re_pipeline_parameters_t re_default_pipeline_parameters();
 
 typedef struct re_vertex_t {
-  glm::vec3 pos;
-  glm::vec3 normal;
-  glm::vec2 uv;
+  vec3_t pos;
+  vec3_t normal;
+  vec2_t uv;
 } re_vertex_t;
 
 typedef struct re_pipeline_t {

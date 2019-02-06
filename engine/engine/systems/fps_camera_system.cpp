@@ -11,7 +11,7 @@ void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
   system->cam_front = {0.0, 0.0, 1.0};
   system->cam_right = {};
 
-  system->cam_yaw = glm::radians(90.0f);
+  system->cam_yaw = to_radians(90.0f);
   system->cam_pitch = 0.0f;
 
   system->prev_mouse_x = 0;
@@ -46,10 +46,10 @@ void eg_fps_camera_system_process_event(
       int dy = event->motion.yrel;
 
       if (re_window_get_relative_mouse(window)) {
-        system->cam_yaw += glm::radians((float)dx) * system->sensitivity;
-        system->cam_pitch -= glm::radians((float)dy) * system->sensitivity;
-        system->cam_pitch = glm::clamp(
-            system->cam_pitch, glm::radians(-89.0f), glm::radians(89.0f));
+        system->cam_yaw += to_radians((float)dx) * system->sensitivity;
+        system->cam_pitch -= to_radians((float)dy) * system->sensitivity;
+        system->cam_pitch =
+            clamp(system->cam_pitch, to_radians(-89.0f), to_radians(89.0f));
       }
     }
     break;
@@ -99,7 +99,8 @@ void eg_fps_camera_system_update(
   camera->position = vec3_lerp(
       camera->position, system->cam_target, window->delta_time * 10.0f);
 
-  camera->rotation = quat_conjugate(quat_look_at(system->cam_front, system->cam_up));
+  camera->rotation =
+      quat_conjugate(quat_look_at(system->cam_front, system->cam_up));
 
   eg_camera_update(camera, window);
 }

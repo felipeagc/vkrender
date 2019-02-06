@@ -7,9 +7,9 @@
 
 void eg_environment_init(
     eg_environment_t *environment, eg_environment_asset_t *asset) {
-  environment->uniform.sun_direction = {0.0, -1.0, 0.0};
+  environment->uniform.sun_direction = vec3_t{0.0, -1.0, 0.0};
   environment->uniform.exposure = 8.0f;
-  environment->uniform.sun_color = {1.0f, 1.0f, 1.0f};
+  environment->uniform.sun_color = vec3_t{1.0f, 1.0f, 1.0f};
   environment->uniform.sun_intensity = 1.0f;
   environment->uniform.radiance_mip_levels = 1.0f;
   environment->uniform.point_light_count = 0;
@@ -166,13 +166,16 @@ void eg_environment_draw_skybox(
 }
 
 bool eg_environment_add_point_light(
-    eg_environment_t *environment, const glm::vec3 pos, const glm::vec3 color) {
+    eg_environment_t *environment, const vec3_t pos, const vec3_t color) {
   if (environment->uniform.point_light_count + 1 == EG_MAX_POINT_LIGHTS) {
     return false;
   }
 
   environment->uniform.point_lights[environment->uniform.point_light_count] =
-      eg_point_light_t{glm::vec4(pos, 1.0), glm::vec4(color, 1.0)};
+      eg_point_light_t{
+          vec4_t{pos.x, pos.y, pos.z, 1.0},
+          vec4_t{color.x, color.y, color.z, 1.0},
+      };
   environment->uniform.point_light_count++;
   return true;
 }

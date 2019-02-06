@@ -10,35 +10,35 @@
 #include <util/task_scheduler.hpp>
 
 struct camera_uniform_t {
-  glm::mat4 view;
-  glm::mat4 proj;
+  mat4_t view;
+  mat4_t proj;
 };
 
-static const glm::mat4 camera_views[] = {
-    glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(1.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f)),
-    glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(-1.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f)),
-    glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)),
-    glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, -1.0f)),
-    glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f)),
-    glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, -1.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f)),
+static const mat4_t camera_views[] = {
+    mat4_look_at(
+        vec3_t{0.0f, 0.0f, 0.0f},
+        vec3_t{1.0f, 0.0f, 0.0f},
+        vec3_t{0.0f, -1.0f, 0.0f}),
+    mat4_look_at(
+        vec3_t{0.0f, 0.0f, 0.0f},
+        vec3_t{-1.0f, 0.0f, 0.0f},
+        vec3_t{0.0f, -1.0f, 0.0f}),
+    mat4_look_at(
+        vec3_t{0.0f, 0.0f, 0.0f},
+        vec3_t{0.0f, 1.0f, 0.0f},
+        vec3_t{0.0f, 0.0f, 1.0f}),
+    mat4_look_at(
+        vec3_t{0.0f, 0.0f, 0.0f},
+        vec3_t{0.0f, -1.0f, 0.0f},
+        vec3_t{0.0f, 0.0f, -1.0f}),
+    mat4_look_at(
+        vec3_t{0.0f, 0.0f, 0.0f},
+        vec3_t{0.0f, 0.0f, 1.0f},
+        vec3_t{0.0f, -1.0f, 0.0f}),
+    mat4_look_at(
+        vec3_t{0.0f, 0.0f, 0.0f},
+        vec3_t{0.0f, 0.0f, -1.0f},
+        vec3_t{0.0f, -1.0f, 0.0f}),
 };
 
 static void create_image_and_image_view(
@@ -67,7 +67,7 @@ static void create_image_and_image_view(
       usage,                     // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      NULL,                   // pQueueFamilyIndices
+      NULL,                      // pQueueFamilyIndices
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
@@ -104,8 +104,8 @@ static void create_image_and_image_view(
       },                             // subresourceRange
   };
 
-  VK_CHECK(vkCreateImageView(
-      g_ctx.device, &imageViewCreateInfo, NULL, imageView));
+  VK_CHECK(
+      vkCreateImageView(g_ctx.device, &imageViewCreateInfo, NULL, imageView));
 }
 
 static void create_sampler(VkSampler *sampler) {
@@ -274,8 +274,8 @@ static void bake_cubemap(
         1,                                         // descriptorCount
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         &hdrImageDescriptor,                       // pImageInfo
-        NULL,                                   // pBufferInfo
-        NULL,                                   // pTexelBufferView
+        NULL,                                      // pBufferInfo
+        NULL,                                      // pTexelBufferView
     };
 
     vkUpdateDescriptorSets(g_ctx.device, 1, &hdrDescriptorWrite, 0, NULL);
@@ -283,7 +283,7 @@ static void bake_cubemap(
 
   // Camera matrices
   camera_uniform_t cameraUBO;
-  cameraUBO.proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+  cameraUBO.proj = mat4_perspective(to_radians(90.0f), 1.0f, 0.1f, 10.0f);
 
   re_canvas_t canvas;
   re_canvas_init(
@@ -295,11 +295,11 @@ static void bake_cubemap(
       g_ctx.resource_manager.providers.bake_cubemap.pipeline_layout;
   pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      NULL,                                                   // pNext
+      NULL,                                                      // pNext
       0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
+      0,    // vertexBindingDescriptionCount
       NULL, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
+      0,    // vertexAttributeDescriptionCount
       NULL, // pVertexAttributeDescriptions
   };
 
@@ -307,7 +307,8 @@ static void bake_cubemap(
 
   re_shader_t shader;
   char *vertex_code = ut_load_string_from_file("../shaders/bake_cubemap.vert");
-  char *fragment_code = ut_load_string_from_file("../shaders/bake_cubemap.frag");
+  char *fragment_code =
+      ut_load_string_from_file("../shaders/bake_cubemap.frag");
 
   re_shader_init_glsl(&shader, vertex_code, fragment_code);
 
@@ -424,14 +425,14 @@ static void bake_cubemap(
 
   VkSubmitInfo submitInfo = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
-      NULL,                       // pNext
+      NULL,                          // pNext
       0,                             // waitSemaphoreCount
-      NULL,                       // pWaitSemaphores
+      NULL,                          // pWaitSemaphores
       &waitDstStageMask,             // pWaitDstStageMask
       1,                             // commandBufferCount
       &commandBuffer,                // pCommandBuffers
       0,                             // signalSemaphoreCount
-      NULL,                       // pSignalSemaphores
+      NULL,                          // pSignalSemaphores
   };
 
   g_ctx.queue_mutex.lock();
@@ -448,7 +449,10 @@ static void bake_cubemap(
 
   assert(ut_worker_id < RE_THREAD_COUNT);
   vkFreeCommandBuffers(
-      g_ctx.device, g_ctx.thread_command_pools[ut_worker_id], 1, &commandBuffer);
+      g_ctx.device,
+      g_ctx.thread_command_pools[ut_worker_id],
+      1,
+      &commandBuffer);
 
   stbi_image_free(hdrData);
 
@@ -468,7 +472,7 @@ static void create_cubemap_image(
     uint32_t levels = 1) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      NULL,                             // pNext
+      NULL,                                // pNext
       VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, // flags
       VK_IMAGE_TYPE_2D,                    // imageType
       format,                              // format
@@ -484,7 +488,7 @@ static void create_cubemap_image(
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      NULL,                   // pQueueFamilyIndices
+      NULL,                      // pQueueFamilyIndices
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
@@ -521,8 +525,8 @@ static void create_cubemap_image(
       },                             // subresourceRange
   };
 
-  VK_CHECK(vkCreateImageView(
-      g_ctx.device, &imageViewCreateInfo, NULL, imageView));
+  VK_CHECK(
+      vkCreateImageView(g_ctx.device, &imageViewCreateInfo, NULL, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,

@@ -2,20 +2,20 @@
 
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
-#include <renderer/glm.hpp>
 #include <renderer/resource_manager.hpp>
+#include <vmath/vmath.h>
 
 #define EG_MAX_POINT_LIGHTS 20
 
 typedef struct eg_point_light_t {
-  glm::vec4 pos;
-  glm::vec4 color;
+  vec4_t pos;
+  vec4_t color;
 } eg_point_light_t;
 
 typedef struct eg_environment_uniform_t {
-  glm::vec3 sun_direction;
+  vec3_t sun_direction;
   float exposure;
-  glm::vec3 sun_color;
+  vec3_t sun_color;
   float sun_intensity;
   float radiance_mip_levels;
   uint32_t point_light_count;
@@ -48,7 +48,7 @@ void eg_environment_draw_skybox(
     struct re_pipeline_t *pipeline);
 
 bool eg_environment_add_point_light(
-    eg_environment_t *environment, const glm::vec3 pos, const glm::vec3 color);
+    eg_environment_t *environment, const vec3_t pos, const vec3_t color);
 
 void eg_environment_reset_point_lights(eg_environment_t *environment);
 

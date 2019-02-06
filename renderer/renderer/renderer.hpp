@@ -4,7 +4,6 @@
 #include "canvas.hpp"
 #include "context.hpp"
 #include "cubemap.hpp"
-#include "glm.hpp"
 #include "imgui.hpp"
 #include "pipeline.hpp"
 #include "render_target.hpp"

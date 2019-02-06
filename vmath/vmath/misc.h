@@ -12,6 +12,10 @@ inline vec3_t vec3_lerp(vec3_t v1, vec3_t v2, float t) {
   return vec3_add(v1, vec3_muls(vec3_sub(v2, v1), t));
 }
 
+inline float clamp(float value, float min_val, float max_val) {
+  return fmin(fmax(value, min_val), max_val);
+}
+
 inline float to_radians(float degrees) { return degrees * (M_PI / 180.0f); }
 
 inline float to_degrees(float radians) { return radians / (M_PI / 180.0f); }

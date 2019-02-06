@@ -173,8 +173,8 @@ static inline void create_sync_objects(re_window_t *window) {
     fenceCreateInfo.pNext = NULL;
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    VK_CHECK(vkCreateFence(
-        g_ctx.device, &fenceCreateInfo, NULL, &resources.fence));
+    VK_CHECK(
+        vkCreateFence(g_ctx.device, &fenceCreateInfo, NULL, &resources.fence));
   }
 }
 
@@ -213,7 +213,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
 
   VkSwapchainCreateInfoKHR createInfo{
       VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
-      NULL,                                     // pNext
+      NULL,                                        // pNext
       0,                                           // flags
       window->surface,
       desiredNumImages,                  // minImageCount
@@ -224,7 +224,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
       desiredUsage,                      // imageUsage
       VK_SHARING_MODE_EXCLUSIVE,         // imageSharingMode
       0,                                 // queueFamilyIndexCount
-      NULL,                           // pQueueFamiylIndices
+      NULL,                              // pQueueFamiylIndices
       desiredTransform,                  // preTransform
       VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, // compositeAlpha
       desiredPresentMode,                // presentMode
@@ -242,10 +242,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   window->swapchain_extent = desiredExtent;
 
   VK_CHECK(vkGetSwapchainImagesKHR(
-      g_ctx.device,
-      window->swapchain,
-      &window->swapchain_image_count,
-      NULL));
+      g_ctx.device, window->swapchain, &window->swapchain_image_count, NULL));
 
   window->swapchain_images =
       (VkImage *)malloc(sizeof(VkImage) * window->swapchain_image_count);
@@ -260,7 +257,7 @@ static inline void create_swapchain_image_views(re_window_t *window) {
   for (size_t i = 0; i < window->swapchain_image_count; i++) {
     VkImageViewCreateInfo createInfo{
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        NULL,                                  // pNext
+        NULL,                                     // pNext
         0,                                        // flags
         window->swapchain_images[i],
         VK_IMAGE_VIEW_TYPE_2D,
@@ -301,7 +298,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
 
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-      NULL,                             // pNext
+      NULL,                                // pNext
       0,                                   // flags
       VK_IMAGE_TYPE_2D,
       window->depth_format,
@@ -334,7 +331,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
 
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-      NULL,                                  // pNext
+      NULL,                                     // pNext
       0,                                        // flags
       window->depth_stencil.image,
       VK_IMAGE_VIEW_TYPE_2D,
@@ -355,10 +352,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   };
 
   VK_CHECK(vkCreateImageView(
-      g_ctx.device,
-      &imageViewCreateInfo,
-      NULL,
-      &window->depth_stencil.view));
+      g_ctx.device, &imageViewCreateInfo, NULL, &window->depth_stencil.view));
 }
 
 static inline void create_render_pass(re_window_t *window) {
@@ -406,13 +400,13 @@ static inline void create_render_pass(re_window_t *window) {
       {},                              // flags
       VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
       0,                               // inputAttachmentCount
-      NULL,                         // pInputAttachments
+      NULL,                            // pInputAttachments
       1,                               // colorAttachmentCount
       &colorAttachmentReference,       // pColorAttachments
-      NULL,                         // pResolveAttachments
+      NULL,                            // pResolveAttachments
       &depthAttachmentReference,       // pDepthStencilAttachment
       0,                               // preserveAttachmentCount
-      NULL,                         // pPreserveAttachments
+      NULL,                            // pPreserveAttachments
   };
 
   VkSubpassDependency dependencies[] = {
@@ -440,7 +434,7 @@ static inline void create_render_pass(re_window_t *window) {
 
   VkRenderPassCreateInfo renderPassCreateInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
-      NULL,                                   // pNext
+      NULL,                                      // pNext
       0,                                         // flags
       static_cast<uint32_t>(
           ARRAYSIZE(attachmentDescriptions)),         // attachmentCount
@@ -471,7 +465,7 @@ static inline void regen_framebuffer(
 
   VkFramebufferCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
-      NULL,                                       // pNext
+      NULL,                                          // pNext
       0,                                             // flags
       window->render_target.render_pass,             // renderPass
       static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
@@ -481,8 +475,7 @@ static inline void regen_framebuffer(
       1,                                             // layers
   };
 
-  VK_CHECK(
-      vkCreateFramebuffer(g_ctx.device, &createInfo, NULL, &framebuffer));
+  VK_CHECK(vkCreateFramebuffer(g_ctx.device, &createInfo, NULL, &framebuffer));
 }
 
 static inline void destroy_resizables(re_window_t *window) {
@@ -525,7 +518,7 @@ static inline void update_size(re_window_t *window) {
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height) {
   window->should_close = false;
-  window->clear_color = glm::vec4(0.0, 0.0, 0.0, 1.0);
+  window->clear_color = vec4_t{0.0, 0.0, 0.0, 1.0};
   window->delta_time = 0.0f;
   window->time_before_ns = 0;
 
@@ -709,7 +702,7 @@ void re_window_begin_frame(re_window_t *window) {
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromPresentToDraw = {
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
-        NULL,                                  // pNext
+        NULL,                                     // pNext
         VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
         VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
         VK_IMAGE_LAYOUT_UNDEFINED,                // oldLayout
@@ -749,7 +742,7 @@ void re_window_end_frame(re_window_t *window) {
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromDrawToPresent{
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
-        NULL,                                  // pNext
+        NULL,                                     // pNext
         VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
         VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // oldLayout
@@ -781,7 +774,7 @@ void re_window_end_frame(re_window_t *window) {
 
   VkSubmitInfo submitInfo = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
-      NULL,                       // pNext
+      NULL,                          // pNext
       1,                             // waitSemaphoreCount
       &window->frame_resources[window->current_frame]
            .image_available_semaphore, // pWaitSemaphores
@@ -803,13 +796,13 @@ void re_window_end_frame(re_window_t *window) {
   VkPresentInfoKHR presentInfo = {
       VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
       NULL, // pNext
-      1,       // waitSemaphoreCount
+      1,    // waitSemaphoreCount
       &window->frame_resources[window->current_frame]
            .rendering_finished_semaphore, // pWaitSemaphores
       1,                                  // swapchainCount
       &window->swapchain,                 // pSwapchains
       &window->current_image_index,       // pImageIndices
-      NULL,                            // pResults
+      NULL,                               // pResults
   };
 
   VkResult result = vkQueuePresentKHR(g_ctx.present_queue, &presentInfo);
@@ -842,7 +835,7 @@ void re_window_begin_render_pass(re_window_t *window) {
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,                   // sType
-      NULL,                                                    // pNext
+      NULL,                                                       // pNext
       window->render_target.render_pass,                          // renderPass
       window->frame_resources[window->current_frame].framebuffer, // framebuffer
       {{0, 0}, window->swapchain_extent},                         // renderArea
