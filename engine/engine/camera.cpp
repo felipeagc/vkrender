@@ -58,8 +58,8 @@ void eg_camera_update(eg_camera_t *camera, struct re_window_t *window) {
   mat4_t correction = {{
       {1.0, 0.0, 0.0, 0.0},
       {0.0, -1.0, 0.0, 0.0},
-      {0.0, 0.0, 0.5, 0.5},
-      {0.0, 0.0, 0.0, 1.0},
+      {0.0, 0.0, 0.5, 0.0},
+      {0.0, 0.0, 0.5, 1.0},
   }};
 
   camera->uniform.proj = mat4_mul(correction, camera->uniform.proj);
