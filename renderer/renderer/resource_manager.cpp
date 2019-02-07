@@ -34,6 +34,18 @@ void re_resource_set_layout_init(
       g_ctx.device, &createInfo, NULL, &layout->descriptor_set_layout));
 }
 
+void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  free(layout->descriptor_sets);
+  free(layout->bindings);
+
+  if (layout->descriptor_set_layout != VK_NULL_HANDLE) {
+    vkDestroyDescriptorSetLayout(
+        g_ctx.device, layout->descriptor_set_layout, NULL);
+  }
+}
+
 re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
   uint32_t found = -1;
   for (uint32_t i = 0; i < layout->max_sets; i++) {
@@ -55,17 +67,6 @@ void re_free_resource_set(
   if (layout->bitset[resource_set->allocation] == 1) {
     layout->bitset[resource_set->allocation] = 0;
     resource_set->descriptor_set = VK_NULL_HANDLE;
-  }
-}
-
-void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  free(layout->descriptor_sets);
-
-  if (layout->descriptor_set_layout != VK_NULL_HANDLE) {
-    vkDestroyDescriptorSetLayout(
-        g_ctx.device, layout->descriptor_set_layout, NULL);
   }
 }
 
@@ -146,7 +147,12 @@ void re_resource_set_provider_init(
       &provider->pipeline_layout));
 
   for (uint32_t i = 0; i < set_layout_count; i++) {
-    auto &set_layout = set_layouts[i];
+    re_resource_set_layout_t *set_layout = set_layouts[i];
+
+    // If this set_layout is already initialized, skip it
+    if (set_layout->descriptor_sets != NULL) {
+      continue;
+    }
 
     set_layout->descriptor_sets = (VkDescriptorSet *)malloc(
         sizeof(VkDescriptorSet) * set_layout->max_sets);
