@@ -2,7 +2,7 @@
 
 #include "resource_manager.hpp"
 #include "texture.hpp"
-#include <mutex>
+#include <pthread.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -35,7 +35,7 @@ struct re_context_t {
   uint32_t present_queue_family_index;
   uint32_t transfer_queue_family_index;
 
-  std::mutex queue_mutex;
+  pthread_mutex_t queue_mutex;
   VkQueue graphics_queue;
   VkQueue present_queue;
   VkQueue transfer_queue;

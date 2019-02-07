@@ -786,7 +786,7 @@ void re_window_end_frame(re_window_t *window) {
            .rendering_finished_semaphore, // pSignalSemaphores
   };
 
-  g_ctx.queue_mutex.lock();
+  pthread_mutex_lock(&g_ctx.queue_mutex);
   vkQueueSubmit(
       g_ctx.graphics_queue,
       1,
@@ -811,7 +811,8 @@ void re_window_end_frame(re_window_t *window) {
   } else {
     assert(result == VK_SUCCESS);
   }
-  g_ctx.queue_mutex.unlock();
+
+  pthread_mutex_unlock(&g_ctx.queue_mutex);
 
   window->current_frame = (window->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 

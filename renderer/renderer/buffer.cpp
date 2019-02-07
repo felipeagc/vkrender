@@ -47,11 +47,11 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
       NULL,         // pSignalSemaphores
   };
 
-  g_ctx.queue_mutex.lock();
+  pthread_mutex_lock(&g_ctx.queue_mutex);
   VK_CHECK(vkQueueSubmit(g_ctx.transfer_queue, 1, &submitInfo, VK_NULL_HANDLE));
 
   VK_CHECK(vkQueueWaitIdle(g_ctx.transfer_queue));
-  g_ctx.queue_mutex.unlock();
+  pthread_mutex_unlock(&g_ctx.queue_mutex);
 
   vkFreeCommandBuffers(
       g_ctx.device, g_ctx.thread_command_pools[ut_worker_id], 1, &command_buffer);

@@ -4,8 +4,8 @@
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
 #include <StandAlone/ResourceLimits.h>
-#include <cstdio>
-#include <cstring>
+#include <stdio.h>
+#include <string.h>
 #include <glslang/Public/ShaderLang.h>
 #include <util/log.hpp>
 

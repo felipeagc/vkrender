@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cassert>
+#include <assert.h>
 #include <vulkan/vulkan.h>
 
 #define VK_CHECK(exp)                                                          \

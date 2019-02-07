@@ -24,7 +24,7 @@ static inline void create_descriptor_pool(re_imgui_t *imgui) {
 
   VkDescriptorPoolCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,           // sType
-      NULL,                                                 // pNext
+      NULL,                                                    // pNext
       VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,       // flags
       1000 * static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)), // maxSets
       static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)),        // poolSizeCount
@@ -81,9 +81,9 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
     VK_CHECK(vkResetCommandPool(g_ctx.device, commandPool, 0));
     VkCommandBufferBeginInfo beginInfo = {
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
-        NULL,                                     // pNext
+        NULL,                                        // pNext
         VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-        NULL,                                     // pInheritanceInfo
+        NULL,                                        // pInheritanceInfo
     };
 
     VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
@@ -97,9 +97,9 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
-    g_ctx.queue_mutex.lock();
+    pthread_mutex_lock(&g_ctx.queue_mutex);
     VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &endInfo, VK_NULL_HANDLE));
-    g_ctx.queue_mutex.unlock();
+    pthread_mutex_unlock(&g_ctx.queue_mutex);
 
     VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

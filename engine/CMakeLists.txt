@@ -7,6 +7,7 @@ set(
   engine/environment.cpp
 
   engine/asset.cpp
+  engine/asset_manager.cpp
   engine/assets/environment_asset.cpp
   )
 

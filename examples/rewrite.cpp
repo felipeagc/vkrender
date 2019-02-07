@@ -1,3 +1,4 @@
+#include <engine/asset_manager.hpp>
 #include <engine/assets/environment_asset.hpp>
 #include <engine/camera.hpp>
 #include <engine/pipelines.hpp>
@@ -23,8 +24,8 @@ int main() {
       "../shaders/skybox.frag",
       eg_skybox_pipeline_parameters());
 
-  // eg_asset_manager_t asset_manager;
-  // eg_asset_manager_init(&asset_manager);
+  eg_asset_manager_t asset_manager;
+  eg_asset_manager_init(&asset_manager);
 
   const char *radiance_paths[] = {
       "../assets/ice_lake/radiance_0_1600x800.hdr",
@@ -38,9 +39,10 @@ int main() {
       "../assets/ice_lake/radiance_8_6x3.hdr",
   };
 
-  eg_environment_asset_t environment_asset;
+  eg_environment_asset_t *environment_asset =
+      eg_asset_alloc(&asset_manager, eg_environment_asset_t);
   eg_environment_asset_init(
-      &environment_asset,
+      environment_asset,
       1024,
       1024,
       "../assets/ice_lake/skybox.hdr",
@@ -50,7 +52,7 @@ int main() {
       "../assets/brdf_lut.png");
 
   eg_world_t world;
-  eg_world_init(&world, &environment_asset);
+  eg_world_init(&world, environment_asset);
 
   eg_fps_camera_system_t fps_system;
   eg_fps_camera_system_init(&fps_system);
@@ -99,8 +101,8 @@ int main() {
   }
 
   eg_world_destroy(&world);
-  eg_environment_asset_destroy(&environment_asset);
-  // eg_asset_manager_destroy(&asset_manager);
+  eg_environment_asset_destroy(environment_asset);
+  eg_asset_manager_destroy(&asset_manager);
 
   re_pipeline_destroy(&skybox_pipeline);
 
