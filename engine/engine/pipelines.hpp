@@ -1,7 +1,7 @@
 #pragma once
 
 #include <renderer/pipeline.hpp>
-#include <util/file.hpp>
+#include <util/file.h>
 
 inline void eg_init_pipeline(
     re_pipeline_t *pipeline,

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <glslang/Public/ShaderLang.h>
-#include <util/log.hpp>
+#include <util/log.h>
 
 static bool glslangInitialized = false;
 

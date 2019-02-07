@@ -1,10 +1,15 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "common.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-extern thread_local uint32_t ut_worker_id;
+extern UT_THREAD_LOCAL uint32_t ut_worker_id;
 
 typedef void *(*ut_routine_t)(void *);
 
@@ -38,3 +43,7 @@ void ut_scheduler_add_task(
     ut_task_scheduler_t *scheduler, ut_routine_t routine, void *args);
 
 void ut_scheduler_destroy(ut_task_scheduler_t *scheduler);
+
+#ifdef __cplusplus
+}
+#endif

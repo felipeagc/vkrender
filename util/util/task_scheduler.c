@@ -1,7 +1,7 @@
-#include "task_scheduler.hpp"
+#include "task_scheduler.h"
 #include <stdlib.h>
 
-thread_local uint32_t ut_worker_id = 0;
+UT_THREAD_LOCAL uint32_t ut_worker_id = 0;
 
 static inline void task_init(ut_task_t *task, ut_routine_t routine, void* args) {
   task->routine = routine;

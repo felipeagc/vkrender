@@ -2,8 +2,8 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
-#include <util/log.hpp>
-#include <util/time.hpp>
+#include <util/log.h>
+#include <util/time.h>
 #include <vector>
 
 static inline uint32_t

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <util/bump_allocator.hpp>
+#include <util/bump_allocator.h>
 
 TEST(bump_allocator, create_destroy) {
   ut_bump_allocator_t allocator;

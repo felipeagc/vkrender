@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 #if defined(__linux)
@@ -53,3 +57,7 @@ uint64_t ut_time_ns() {
   return (uint64_t)((1e9 * now.QuadPart) / win_frequency.QuadPart);
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,7 +1,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include "window.hpp"
-#include <util/log.hpp>
+#include <util/log.h>
 #include <vector>
 
 re_context_t g_ctx;

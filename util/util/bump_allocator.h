@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -25,3 +29,7 @@ void ut_bump_allocator_destroy(ut_bump_allocator_t *allocator);
 // @TODO: make this function thread safe
 void *ut_bump_allocator_alloc(
     ut_bump_allocator_t *allocator, size_t size, size_t alignment);
+
+#ifdef __cplusplus
+}
+#endif

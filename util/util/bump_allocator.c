@@ -1,4 +1,4 @@
-#include "bump_allocator.hpp"
+#include "bump_allocator.h"
 #include <stdlib.h>
 
 static inline void bump_block_init(ut_bump_block_t *block, size_t block_size) {

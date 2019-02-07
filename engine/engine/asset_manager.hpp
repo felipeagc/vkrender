@@ -1,6 +1,6 @@
 #pragma once
 
-#include <util/bump_allocator.hpp>
+#include <util/bump_allocator.h>
 
 #define eg_asset_alloc(asset_manager, type)                                    \
   ((type *)eg_asset_manager_alloc(asset_manager, sizeof(type), alignof(type)))

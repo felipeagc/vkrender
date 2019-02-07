@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,7 +16,7 @@ char *ut_load_string_from_file(const char *path) {
   size_t size = ftell(file);
   fseek(file, 0, SEEK_SET);
 
-  char *buffer = (char *)malloc(size+1);
+  char *buffer = (char *)malloc(size + 1);
 
   fread(buffer, sizeof(char), size, file);
 
@@ -40,3 +44,7 @@ unsigned char *ut_load_bytes_from_file(const char *path, size_t *size) {
 
   return buffer;
 }
+
+#ifdef __cplusplus
+}
+#endif

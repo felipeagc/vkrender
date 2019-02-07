@@ -6,8 +6,8 @@
 #include "shader.hpp"
 #include "util.hpp"
 #include <stb_image.h>
-#include <util/file.hpp>
-#include <util/task_scheduler.hpp>
+#include <util/file.h>
+#include <util/task_scheduler.h>
 
 struct camera_uniform_t {
   mat4_t view;

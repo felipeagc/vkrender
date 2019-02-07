@@ -1,7 +1,7 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <util/task_scheduler.hpp>
+#include <util/task_scheduler.h>
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {
   assert(ut_worker_id < RE_THREAD_COUNT);
