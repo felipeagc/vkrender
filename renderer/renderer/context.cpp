@@ -496,7 +496,7 @@ void re_context_pre_init(
   ctx->graphics_command_pool = VK_NULL_HANDLE;
   ctx->transient_command_pool = VK_NULL_HANDLE;
 
-  pthread_mutex_init(&ctx->queue_mutex, NULL);
+  ut_mutex_init(&ctx->queue_mutex);
 
   for (uint32_t i = 0; i < ARRAYSIZE(ctx->thread_command_pools); i++) {
     ctx->thread_command_pools[i] = VK_NULL_HANDLE;
@@ -623,7 +623,7 @@ void re_context_destroy(re_context_t *ctx) {
 
   vkDestroyInstance(ctx->instance, NULL);
 
-  pthread_mutex_destroy(&ctx->queue_mutex);
+  ut_mutex_destroy(&ctx->queue_mutex);
 
   SDL_Quit();
 }

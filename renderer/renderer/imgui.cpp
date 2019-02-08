@@ -100,9 +100,9 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
 
     VK_CHECK(vkEndCommandBuffer(command_buffer));
 
-    pthread_mutex_lock(&g_ctx.queue_mutex);
+    ut_mutex_lock(&g_ctx.queue_mutex);
     VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &end_info, VK_NULL_HANDLE));
-    pthread_mutex_unlock(&g_ctx.queue_mutex);
+    ut_mutex_unlock(&g_ctx.queue_mutex);
 
     VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

@@ -435,9 +435,9 @@ static void bake_cubemap(
       NULL,                          // pSignalSemaphores
   };
 
-  pthread_mutex_lock(&g_ctx.queue_mutex);
+  ut_mutex_lock(&g_ctx.queue_mutex);
   vkQueueSubmit(g_ctx.graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
-  pthread_mutex_unlock(&g_ctx.queue_mutex);
+  ut_mutex_unlock(&g_ctx.queue_mutex);
 
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

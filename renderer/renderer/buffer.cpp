@@ -22,7 +22,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
       NULL,
       VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-      NULL,                                     // pInheritanceInfo
+      NULL,                                        // pInheritanceInfo
   };
 
   VK_CHECK(vkBeginCommandBuffer(command_buffer, &commandBufferBeginInfo));
@@ -39,22 +39,25 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
       VK_STRUCTURE_TYPE_SUBMIT_INFO,
       NULL,
       0,               // waitSemaphoreCount
-      NULL,         // pWaitSemaphores
-      NULL,         // pWaitDstStageMask
+      NULL,            // pWaitSemaphores
+      NULL,            // pWaitDstStageMask
       1,               // commandBufferCount
       &command_buffer, // pCommandBuffers
       0,               // signalSemaphoreCount
-      NULL,         // pSignalSemaphores
+      NULL,            // pSignalSemaphores
   };
 
-  pthread_mutex_lock(&g_ctx.queue_mutex);
+  ut_mutex_lock(&g_ctx.queue_mutex);
   VK_CHECK(vkQueueSubmit(g_ctx.transfer_queue, 1, &submitInfo, VK_NULL_HANDLE));
 
   VK_CHECK(vkQueueWaitIdle(g_ctx.transfer_queue));
-  pthread_mutex_unlock(&g_ctx.queue_mutex);
+  ut_mutex_unlock(&g_ctx.queue_mutex);
 
   vkFreeCommandBuffers(
-      g_ctx.device, g_ctx.thread_command_pools[ut_worker_id], 1, &command_buffer);
+      g_ctx.device,
+      g_ctx.thread_command_pools[ut_worker_id],
+      1,
+      &command_buffer);
 }
 
 static inline void create_buffer(
@@ -72,7 +75,7 @@ static inline void create_buffer(
       buffer_usage,              // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      NULL                    // pQueueFamilyIndices
+      NULL                       // pQueueFamilyIndices
   };
 
   VmaAllocationCreateInfo allocInfo = {};
