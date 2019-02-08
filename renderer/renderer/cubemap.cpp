@@ -231,8 +231,8 @@ static void bake_cubemap(
       &hdrAllocation,
       &hdrImageView,
       cubemapImageFormat,
-      static_cast<uint32_t>(hdrWidth),
-      static_cast<uint32_t>(hdrHeight),
+      (uint32_t)hdrWidth,
+      (uint32_t)hdrHeight,
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
   create_sampler(&hdrSampler);
@@ -373,12 +373,12 @@ static void bake_cubemap(
         &cameraUBO);
 
     VkViewport viewport{
-        0.0f,                                   // x
-        0.0f,                                   // y
-        static_cast<float>(cubemapImageWidth),  // width
-        static_cast<float>(cubemapImageHeight), // height
-        0.0f,                                   // minDepth
-        1.0f,                                   // maxDepth
+        0.0f,                      // x
+        0.0f,                      // y
+        (float)cubemapImageWidth,  // width
+        (float)cubemapImageHeight, // height
+        0.0f,                      // minDepth
+        1.0f,                      // maxDepth
     };
 
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -544,7 +544,7 @@ static void create_cubemap_image(
       VK_FALSE,                                // compareEnable
       VK_COMPARE_OP_NEVER,                     // compareOp
       0.0f,                                    // minLod
-      static_cast<float>(levels),              // maxLod
+      (float)levels,                           // maxLod
       VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, // borderColor
       VK_FALSE,                                // unnormalizedCoordinates
   };

@@ -6,9 +6,10 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_vulkan.h>
+#include <util/log.h>
 
 static inline void create_descriptor_pool(re_imgui_t *imgui) {
-  VkDescriptorPoolSize imguiPoolSizes[] = {
+  VkDescriptorPoolSize imgui_pool_sizes[] = {
       {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
@@ -22,17 +23,17 @@ static inline void create_descriptor_pool(re_imgui_t *imgui) {
       {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000},
   };
 
-  VkDescriptorPoolCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,           // sType
-      NULL,                                                    // pNext
-      VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,       // flags
-      1000 * static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)), // maxSets
-      static_cast<uint32_t>(ARRAYSIZE(imguiPoolSizes)),        // poolSizeCount
-      imguiPoolSizes,                                          // pPoolSizes
+  VkDescriptorPoolCreateInfo create_info = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,     // sType
+      NULL,                                              // pNext
+      VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, // flags
+      1000 * (uint32_t)ARRAYSIZE(imgui_pool_sizes),      // maxSets
+      (uint32_t)ARRAYSIZE(imgui_pool_sizes),             // poolSizeCount
+      imgui_pool_sizes,                                  // pPoolSizes
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      g_ctx.device, &createInfo, NULL, &imgui->descriptor_pool));
+      g_ctx.device, &create_info, NULL, &imgui->descriptor_pool));
 }
 
 static inline void destroy_descriptor_pool(re_imgui_t *imgui) {
@@ -64,7 +65,8 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
   init_info.Allocator = NULL;
   init_info.CheckVkResultFn = [](VkResult result) {
     if (result != VK_SUCCESS) {
-      throw std::runtime_error("Failed to initialize IMGUI!");
+      ut_log_fatal("Failed to initialize IMGUI!");
+      abort();
     }
   };
   ImGui_ImplVulkan_Init(&init_info, imgui->window->render_target.render_pass);
@@ -75,30 +77,31 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
   // Upload Fonts
   {
     // Use any command queue
-    VkCommandPool commandPool = g_ctx.graphics_command_pool;
-    auto commandBuffer = re_window_get_current_command_buffer(imgui->window);
+    VkCommandPool command_pool = g_ctx.graphics_command_pool;
+    VkCommandBuffer command_buffer =
+        re_window_get_current_command_buffer(imgui->window);
 
-    VK_CHECK(vkResetCommandPool(g_ctx.device, commandPool, 0));
-    VkCommandBufferBeginInfo beginInfo = {
+    VK_CHECK(vkResetCommandPool(g_ctx.device, command_pool, 0));
+    VkCommandBufferBeginInfo begin_info = {
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
         NULL,                                        // pNext
         VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
         NULL,                                        // pInheritanceInfo
     };
 
-    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+    VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin_info));
 
-    ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
 
-    VkSubmitInfo endInfo = {};
-    endInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    endInfo.commandBufferCount = 1;
-    endInfo.pCommandBuffers = &commandBuffer;
+    VkSubmitInfo end_info = {};
+    end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    end_info.commandBufferCount = 1;
+    end_info.pCommandBuffers = &command_buffer;
 
-    VK_CHECK(vkEndCommandBuffer(commandBuffer));
+    VK_CHECK(vkEndCommandBuffer(command_buffer));
 
     pthread_mutex_lock(&g_ctx.queue_mutex);
-    VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &endInfo, VK_NULL_HANDLE));
+    VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &end_info, VK_NULL_HANDLE));
     pthread_mutex_unlock(&g_ctx.queue_mutex);
 
     VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
@@ -116,7 +119,8 @@ void re_imgui_begin(re_imgui_t *imgui) {
 void re_imgui_end(re_imgui_t *) { ImGui::Render(); }
 
 void re_imgui_draw(re_imgui_t *imgui) {
-  auto command_buffer = re_window_get_current_command_buffer(imgui->window);
+  VkCommandBuffer command_buffer =
+      re_window_get_current_command_buffer(imgui->window);
 
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
 }

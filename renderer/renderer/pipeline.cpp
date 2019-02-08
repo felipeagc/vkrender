@@ -21,7 +21,7 @@ default_vertex_input_state() {
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      NULL,                                                   // pNext
+      NULL,                                                      // pNext
       0,                                                         // flags
       ARRAYSIZE(vertexBindingDescriptions),   // vertexBindingDescriptionCount
       vertexBindingDescriptions,              // pVertexBindingDescriptions
@@ -51,10 +51,10 @@ static inline VkPipelineViewportStateCreateInfo default_viewport_state() {
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
       NULL,
-      0,       // flags
-      1,       // viewportCount
+      0,    // flags
+      1,    // viewportCount
       NULL, // pViewports
-      1,       // scissorCount
+      1,    // scissorCount
       NULL  // pScissors
   };
 
@@ -98,7 +98,7 @@ default_multisample_state(VkSampleCountFlagBits sampleCount) {
       sampleCount, // rasterizationSamples
       VK_FALSE,    // sampleShadingEnable
       0.25f,       // minSampleShading
-      NULL,     // pSampleMask
+      NULL,        // pSampleMask
       VK_FALSE,    // alphaToCoverageEnable
       VK_FALSE     // alphaToOneEnable
   };
@@ -162,9 +162,9 @@ static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
   VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
       NULL,
-      0,                                               // flags
-      static_cast<uint32_t>(ARRAYSIZE(dynamicStates)), // dynamicStateCount
-      dynamicStates,                                   // pDyanmicStates
+      0,                                  // flags
+      (uint32_t)ARRAYSIZE(dynamicStates), // dynamicStateCount
+      dynamicStates,                      // pDyanmicStates
   };
 
   return dynamicStateCreateInfo;
@@ -203,7 +203,7 @@ void re_pipeline_init_graphics(
       pipeline_stages,                  // pStages
       &parameters.vertex_input_state,   // pVertexInputState
       &parameters.input_assembly_state, // pInputAssemblyState
-      NULL,                          // pTesselationState
+      NULL,                             // pTesselationState
       &parameters.viewport_state,       // pViewportState
       &parameters.rasterization_state,  // pRasterizationState
       &multisample_state,               // multisampleState

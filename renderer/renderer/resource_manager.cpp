@@ -4,7 +4,6 @@
 #include "util.hpp"
 #include <stdlib.h>
 #include <string.h>
-#include <vector>
 
 void re_resource_set_layout_init(
     re_resource_set_layout_t *layout,
@@ -74,28 +73,40 @@ void re_resource_set_provider_init(
     re_resource_set_provider_t *provider,
     re_resource_set_layout_t **set_layouts,
     uint32_t set_layout_count) {
-  std::vector<VkDescriptorPoolSize> pool_sizes;
+
+  uint32_t pool_size_limit = 0;
+  uint32_t pool_size_count = 0;
+
+  for (uint32_t i = 0; i < set_layout_count; i++) {
+    re_resource_set_layout_t *set_layout = set_layouts[i];
+    for (uint32_t j = 0; j < set_layout->binding_count; j++) {
+      pool_size_limit++;
+    }
+  }
+
+  VkDescriptorPoolSize *pool_sizes = (VkDescriptorPoolSize *)malloc(
+      sizeof(VkDescriptorPoolSize) * pool_size_limit);
 
   uint32_t pool_max_sets = 0;
 
   for (uint32_t i = 0; i < set_layout_count; i++) {
-    auto &set_layout = set_layouts[i];
+    re_resource_set_layout_t *set_layout = set_layouts[i];
     for (uint32_t j = 0; j < set_layout->binding_count; j++) {
-      auto &binding = set_layout->bindings[j];
+      VkDescriptorSetLayoutBinding binding = set_layout->bindings[j];
 
       VkDescriptorPoolSize *foundp = NULL;
-      for (auto &pool_size : pool_sizes) {
-        if (pool_size.type == binding.descriptorType) {
-          foundp = &pool_size;
+      for (uint32_t k = 0; k < pool_size_count; k++) {
+        if (pool_sizes[k].type == binding.descriptorType) {
+          foundp = &pool_sizes[k];
           break;
         }
       }
 
       if (foundp == NULL) {
-        pool_sizes.push_back({
+        pool_sizes[pool_size_count++] = VkDescriptorPoolSize{
             binding.descriptorType,
             binding.descriptorCount * set_layout->max_sets,
-        });
+        };
       } else {
         foundp->descriptorCount +=
             binding.descriptorCount * set_layout->max_sets;
@@ -111,17 +122,21 @@ void re_resource_set_provider_init(
       NULL,                                          // pNext
       0,                                             // flags
       pool_max_sets,                                 // maxSets
-      static_cast<uint32_t>(pool_sizes.size()),      // poolSizeCount
-      pool_sizes.data(),                             // pPoolSizes
+      pool_size_count,                               // poolSizeCount
+      pool_sizes,                                    // pPoolSizes
   };
 
   VK_CHECK(vkCreateDescriptorPool(
       g_ctx.device, &create_info, NULL, &provider->descriptor_pool));
 
-  std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
+  free(pool_sizes);
+
+  VkDescriptorSetLayout *descriptor_set_layouts =
+      (VkDescriptorSetLayout *)malloc(
+          sizeof(VkDescriptorSetLayout) * set_layout_count);
 
   for (uint32_t i = 0; i < set_layout_count; i++) {
-    descriptor_set_layouts.push_back(set_layouts[i]->descriptor_set_layout);
+    descriptor_set_layouts[i] = set_layouts[i]->descriptor_set_layout;
   }
 
   VkPushConstantRange push_constant_range = {};
@@ -134,10 +149,10 @@ void re_resource_set_provider_init(
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       NULL,
       0,
-      static_cast<uint32_t>(descriptor_set_layouts.size()), // setLayoutCount
-      descriptor_set_layouts.data(),                        // pSetLayouts
-      1,                    // pushConstantRangeCount
-      &push_constant_range, // pPushConstantRanges
+      set_layout_count,       // setLayoutCount
+      descriptor_set_layouts, // pSetLayouts
+      1,                      // pushConstantRangeCount
+      &push_constant_range,   // pPushConstantRanges
   };
 
   VK_CHECK(vkCreatePipelineLayout(
@@ -145,6 +160,8 @@ void re_resource_set_provider_init(
       &pipeline_layout_create_info,
       NULL,
       &provider->pipeline_layout));
+
+  free(descriptor_set_layouts);
 
   for (uint32_t i = 0; i < set_layout_count; i++) {
     re_resource_set_layout_t *set_layout = set_layouts[i];

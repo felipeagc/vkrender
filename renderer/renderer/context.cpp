@@ -2,7 +2,6 @@
 #include "util.hpp"
 #include "window.hpp"
 #include <util/log.h>
-#include <vector>
 
 re_context_t g_ctx;
 
@@ -86,7 +85,9 @@ static inline void get_required_extensions(
   *out_extension_count = extension_count;
 
 #ifdef RE_ENABLE_VALIDATION
-  (*out_extension_count)++;
+  if (check_validation_layer_support()) {
+    (*out_extension_count)++;
+  }
 #endif
 
   if (out_extensions == NULL) {
@@ -98,31 +99,34 @@ static inline void get_required_extensions(
   }
 
 #ifdef RE_ENABLE_VALIDATION
-  out_extensions[extension_count] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+  if (check_validation_layer_support()) {
+    out_extensions[extension_count] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+  }
 #endif
 }
 
 static inline bool check_physical_device_properties(
-    VkPhysicalDevice physicalDevice,
+    VkPhysicalDevice physical_device,
     VkSurfaceKHR surface,
-    uint32_t *graphicsQueueFamily,
-    uint32_t *presentQueueFamily,
-    uint32_t *transferQueueFamily) {
-  uint32_t count;
+    uint32_t *graphics_queue_family,
+    uint32_t *present_queue_family,
+    uint32_t *transfer_queue_family) {
+  uint32_t extension_count;
   vkEnumerateDeviceExtensionProperties(
-      physicalDevice, NULL, &count, NULL);
-  VkExtensionProperties *availableExtensions =
-      (VkExtensionProperties *)malloc(sizeof(VkExtensionProperties) * count);
+      physical_device, NULL, &extension_count, NULL);
+  VkExtensionProperties *available_extensions = (VkExtensionProperties *)malloc(
+      sizeof(VkExtensionProperties) * extension_count);
   vkEnumerateDeviceExtensionProperties(
-      physicalDevice, NULL, &count, availableExtensions);
+      physical_device, NULL, &extension_count, available_extensions);
 
-  VkPhysicalDeviceProperties deviceProperties;
-  vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+  VkPhysicalDeviceProperties device_properties;
+  vkGetPhysicalDeviceProperties(physical_device, &device_properties);
 
-  for (const auto &requiredExtension : RE_REQUIRED_DEVICE_EXTENSIONS) {
+  for (uint32_t i = 0; i < ARRAYSIZE(RE_REQUIRED_DEVICE_EXTENSIONS); i++) {
+    const char *required_extension = RE_REQUIRED_DEVICE_EXTENSIONS[i];
     bool found = false;
-    for (uint32_t i = 0; i < count; i++) {
-      if (strcmp(requiredExtension, availableExtensions[i].extensionName) ==
+    for (uint32_t i = 0; i < extension_count; i++) {
+      if (strcmp(required_extension, available_extensions[i].extensionName) ==
           0) {
         found = true;
       }
@@ -131,101 +135,120 @@ static inline bool check_physical_device_properties(
     if (!found) {
       ut_log_warn(
           "Physical device {} doesn't support extension named \"{}\"",
-          deviceProperties.deviceName,
-          requiredExtension);
-      free(availableExtensions);
+          device_properties.deviceName,
+          required_extension);
+      free(available_extensions);
       return false;
     }
   }
 
-  free(availableExtensions);
+  free(available_extensions);
 
-  uint32_t majorVersion = VK_VERSION_MAJOR(deviceProperties.apiVersion);
+  uint32_t major_version = VK_VERSION_MAJOR(device_properties.apiVersion);
   // uint32_t minorVersion = VK_VERSION_MINOR(deviceProperties.apiVersion);
   // uint32_t patchVersion = VK_VERSION_PATCH(deviceProperties.apiVersion);
 
-  if (majorVersion < 1 && deviceProperties.limits.maxImageDimension2D < 4096) {
+  if (major_version < 1 &&
+      device_properties.limits.maxImageDimension2D < 4096) {
     ut_log_warn(
         "Physical device {} doesn't support required parameters!",
-        deviceProperties.deviceName);
+        device_properties.deviceName);
     return false;
   }
 
   // Check for required device features
   VkPhysicalDeviceFeatures features = {};
-  vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+  vkGetPhysicalDeviceFeatures(physical_device, &features);
   if (!features.wideLines) {
     ut_log_warn(
         "Physical device {} doesn't support required features!",
-        deviceProperties.deviceName);
+        device_properties.deviceName);
     return false;
   }
 
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, NULL);
-  std::vector<VkQueueFamilyProperties> queueFamilyProperties(count);
+  uint32_t queue_family_prop_count;
   vkGetPhysicalDeviceQueueFamilyProperties(
-      physicalDevice, &count, queueFamilyProperties.data());
+      physical_device, &queue_family_prop_count, NULL);
+  VkQueueFamilyProperties *queue_family_properties =
+      (VkQueueFamilyProperties *)malloc(
+          sizeof(VkQueueFamilyProperties) * queue_family_prop_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physical_device, &queue_family_prop_count, queue_family_properties);
 
-  std::vector<VkBool32> queuePresentSupport(queueFamilyProperties.size());
-  std::vector<VkBool32> queueTransferSupport(queueFamilyProperties.size());
+  VkBool32 *queue_present_support =
+      (VkBool32 *)malloc(sizeof(VkBool32) * queue_family_prop_count);
+  VkBool32 *queue_transfer_support =
+      (VkBool32 *)malloc(sizeof(VkBool32) * queue_family_prop_count);
 
-  uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
-  uint32_t presentQueueFamilyIndex = UINT32_MAX;
-  uint32_t transferQueueFamilyIndex = UINT32_MAX;
+  uint32_t graphics_queue_family_index = UINT32_MAX;
+  uint32_t present_queue_family_index = UINT32_MAX;
+  uint32_t transfer_queue_family_index = UINT32_MAX;
 
   // @TODO: figure out better logic to single out a transfer queue
 
-  for (uint32_t i = 0; i < queueFamilyProperties.size(); i++) {
+  for (uint32_t i = 0; i < queue_family_prop_count; i++) {
     VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
-        physicalDevice, i, surface, &queuePresentSupport[i]));
+        physical_device, i, surface, &queue_present_support[i]));
 
-    if (queueFamilyProperties[i].queueCount > 0 &&
-        queueFamilyProperties[i].queueFlags & VK_QUEUE_TRANSFER_BIT &&
-        !(queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
-      transferQueueFamilyIndex = i;
+    if (queue_family_properties[i].queueCount > 0 &&
+        queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT &&
+        !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+      transfer_queue_family_index = i;
     }
 
-    if (queueFamilyProperties[i].queueCount > 0 &&
-        queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      if (graphicsQueueFamilyIndex == UINT32_MAX) {
-        graphicsQueueFamilyIndex = i;
+    if (queue_family_properties[i].queueCount > 0 &&
+        queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      if (graphics_queue_family_index == UINT32_MAX) {
+        graphics_queue_family_index = i;
       }
 
-      if (queuePresentSupport[i]) {
-        if (transferQueueFamilyIndex == UINT32_MAX) {
-          *transferQueueFamily = i;
+      if (queue_present_support[i]) {
+        if (transfer_queue_family_index == UINT32_MAX) {
+          *transfer_queue_family = i;
         }
-        *graphicsQueueFamily = i;
-        *presentQueueFamily = i;
+        *graphics_queue_family = i;
+        *present_queue_family = i;
+
+        free(queue_family_properties);
+        free(queue_present_support);
+        free(queue_transfer_support);
         return true;
       }
     }
   }
 
-  if (transferQueueFamilyIndex == UINT32_MAX) {
-    transferQueueFamilyIndex = graphicsQueueFamilyIndex;
+  if (transfer_queue_family_index == UINT32_MAX) {
+    transfer_queue_family_index = graphics_queue_family_index;
   }
 
-  for (uint32_t i = 0; i < queueFamilyProperties.size(); i++) {
-    if (queuePresentSupport[i]) {
-      presentQueueFamilyIndex = i;
+  for (uint32_t i = 0; i < queue_family_prop_count; i++) {
+    if (queue_present_support[i]) {
+      present_queue_family_index = i;
       break;
     }
   }
 
-  if (graphicsQueueFamilyIndex == UINT32_MAX ||
-      presentQueueFamilyIndex == UINT32_MAX ||
-      transferQueueFamilyIndex == UINT32_MAX) {
+  if (graphics_queue_family_index == UINT32_MAX ||
+      present_queue_family_index == UINT32_MAX ||
+      transfer_queue_family_index == UINT32_MAX) {
     ut_log_warn(
         "Could not find queue family with requested properties on physical "
         "device {}",
-        deviceProperties.deviceName);
+        device_properties.deviceName);
+
+    free(queue_family_properties);
+    free(queue_present_support);
+    free(queue_transfer_support);
     return false;
   }
 
-  *graphicsQueueFamily = graphicsQueueFamilyIndex;
-  *presentQueueFamily = presentQueueFamilyIndex;
-  *transferQueueFamily = transferQueueFamilyIndex;
+  *graphics_queue_family = graphics_queue_family_index;
+  *present_queue_family = present_queue_family_index;
+  *transfer_queue_family = transfer_queue_family_index;
+
+  free(queue_family_properties);
+  free(queue_present_support);
+  free(queue_transfer_support);
 
   return true;
 }
@@ -236,9 +259,10 @@ static inline void create_instance(
     uint32_t window_extension_count) {
   ut_log_debug("Creating vulkan instance");
 #ifdef RE_ENABLE_VALIDATION
-  ut_log_debug("Using validation layers");
-  if (!check_validation_layer_support()) {
-    throw std::runtime_error("Validation layers requested, but not available");
+  if (check_validation_layer_support()) {
+    ut_log_debug("Using validation layers");
+  } else {
+    ut_log_debug("Validation layers requested but not available");
   }
 #else
   ut_log_debug("Not using validation layers");
@@ -258,13 +282,15 @@ static inline void create_instance(
   createInfo.flags = 0;
   createInfo.pApplicationInfo = &appInfo;
 
-#ifdef RE_ENABLE_VALIDATION
-  createInfo.enabledLayerCount =
-      (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
-  createInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
-#else
   createInfo.enabledLayerCount = 0;
   createInfo.ppEnabledLayerNames = NULL;
+
+#ifdef RE_ENABLE_VALIDATION
+  if (check_validation_layer_support()) {
+    createInfo.enabledLayerCount =
+        (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
+    createInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
+  }
 #endif
 
   // Set required instance extensions
@@ -301,26 +327,30 @@ static inline void setup_debug_callback(re_context_t *ctx) {
 }
 
 static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
-  uint32_t count;
-  vkEnumeratePhysicalDevices(ctx->instance, &count, NULL);
-  std::vector<VkPhysicalDevice> physicalDevices(count);
-  vkEnumeratePhysicalDevices(ctx->instance, &count, physicalDevices.data());
+  uint32_t physical_device_count;
+  vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, NULL);
+  VkPhysicalDevice *physical_devices = (VkPhysicalDevice *)malloc(
+      sizeof(VkPhysicalDevice) * physical_device_count);
+  vkEnumeratePhysicalDevices(
+      ctx->instance, &physical_device_count, physical_devices);
 
-  for (auto physical_device : physicalDevices) {
+  for (uint32_t i = 0; i < physical_device_count; i++) {
     if (check_physical_device_properties(
-            physical_device,
+            physical_devices[i],
             surface,
             &ctx->graphics_queue_family_index,
             &ctx->present_queue_family_index,
             &ctx->transfer_queue_family_index)) {
-      ctx->physical_device = physical_device;
+      ctx->physical_device = physical_devices[i];
       break;
     }
   }
 
+  free(physical_devices);
+
   if (!ctx->physical_device) {
-    throw std::runtime_error(
-        "Could not select physical device based on chosen properties");
+    ut_log_fatal("Could not select physical device based on chosen properties");
+    abort();
   }
 
   VkPhysicalDeviceProperties properties;
@@ -328,55 +358,57 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
 
   ut_log_debug("Using physical device: %s", properties.deviceName);
 
-  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  float queuePriorities[] = {1.0f};
+  uint32_t queue_create_info_count = 0;
+  VkDeviceQueueCreateInfo queue_create_infos[3] = {};
+  float queue_priorities[] = {1.0f};
 
-  queueCreateInfos.push_back({
+  queue_create_infos[queue_create_info_count++] = VkDeviceQueueCreateInfo{
       VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
       NULL,
       0,
       ctx->graphics_queue_family_index,
-      static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
-      queuePriorities,
-  });
+      (uint32_t)ARRAYSIZE(queue_priorities),
+      queue_priorities,
+  };
 
   if (ctx->present_queue_family_index != ctx->graphics_queue_family_index) {
-    queueCreateInfos.push_back({
+    queue_create_infos[queue_create_info_count++] = VkDeviceQueueCreateInfo{
         VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
         NULL,
         0,
         ctx->present_queue_family_index,
-        static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
-        queuePriorities,
-    });
+        (uint32_t)ARRAYSIZE(queue_priorities),
+        queue_priorities,
+    };
   }
 
   if (ctx->transfer_queue_family_index != ctx->graphics_queue_family_index) {
-    queueCreateInfos.push_back({
+    queue_create_infos[queue_create_info_count++] = VkDeviceQueueCreateInfo{
         VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
         NULL,
         0,
         ctx->transfer_queue_family_index,
-        static_cast<uint32_t>(ARRAYSIZE(queuePriorities)),
-        queuePriorities,
-    });
+        (uint32_t)ARRAYSIZE(queue_priorities),
+        queue_priorities,
+    };
   }
 
   VkDeviceCreateInfo deviceCreateInfo = {};
   deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   deviceCreateInfo.flags = 0;
-  deviceCreateInfo.queueCreateInfoCount =
-      static_cast<uint32_t>(queueCreateInfos.size());
-  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+  deviceCreateInfo.queueCreateInfoCount = queue_create_info_count;
+  deviceCreateInfo.pQueueCreateInfos = queue_create_infos;
+
+  deviceCreateInfo.enabledLayerCount = 0;
+  deviceCreateInfo.ppEnabledLayerNames = NULL;
 
   // Validation layer stuff
 #ifdef RE_ENABLE_VALIDATION
-  deviceCreateInfo.enabledLayerCount =
-      (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
-  deviceCreateInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
-#else
-  deviceCreateInfo.enabledLayerCount = 0;
-  deviceCreateInfo.ppEnabledLayerNames = NULL;
+  if (check_validation_layer_support()) {
+    deviceCreateInfo.enabledLayerCount =
+        (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
+    deviceCreateInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
+  }
 #endif
 
   deviceCreateInfo.enabledExtensionCount =
@@ -473,7 +505,9 @@ void re_context_pre_init(
   create_instance(
       ctx, required_window_vulkan_extensions, window_extension_count);
 #ifdef RE_ENABLE_VALIDATION
-  setup_debug_callback(ctx);
+  if (check_validation_layer_support()) {
+    setup_debug_callback(ctx);
+  }
 #endif
 }
 

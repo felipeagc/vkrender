@@ -27,7 +27,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
         0,                                       // queueFamilyIndexCount
-        NULL,                                 // pQueueFamilyIndices
+        NULL,                                    // pQueueFamilyIndices
         VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
     };
 
@@ -65,10 +65,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device,
-        &imageViewCreateInfo,
-        NULL,
-        &resource.color.image_view));
+        g_ctx.device, &imageViewCreateInfo, NULL, &resource.color.image_view));
 
     VkSamplerCreateInfo samplerCreateInfo = {
         VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -127,7 +124,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
 
     VkImageCreateInfo imageCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-        NULL,                             // pNext
+        NULL,                                // pNext
         0,                                   // flags
         VK_IMAGE_TYPE_2D,                    // imageType
         canvas->depth_format,                // format
@@ -144,7 +141,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
             VK_IMAGE_USAGE_SAMPLED_BIT, // usage
         VK_SHARING_MODE_EXCLUSIVE,      // sharingMode
         0,                              // queueFamiylIndexCount
-        NULL,                        // pQueueFamilyIndices
+        NULL,                           // pQueueFamilyIndices
         VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
     };
 
@@ -161,7 +158,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        NULL,                                  // pNext
+        NULL,                                     // pNext
         0,                                        // flags
         resource.depth.image,                     // image
         VK_IMAGE_VIEW_TYPE_2D,                    // viewType
@@ -183,10 +180,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device,
-        &imageViewCreateInfo,
-        NULL,
-        &resource.depth.image_view));
+        g_ctx.device, &imageViewCreateInfo, NULL, &resource.depth.image_view));
   }
 }
 
@@ -230,17 +224,13 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
             1,                                         // descriptorCount
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
             &descriptor,                               // pImageInfo
-            NULL,                                   // pBufferInfo
-            NULL,                                   // pTexelBufferView
+            NULL,                                      // pBufferInfo
+            NULL,                                      // pTexelBufferView
         },
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device,
-        ARRAYSIZE(descriptorWrites),
-        descriptorWrites,
-        0,
-        NULL);
+        g_ctx.device, ARRAYSIZE(descriptorWrites), descriptorWrites, 0, NULL);
   }
 }
 
@@ -265,15 +255,15 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
     };
 
     VkFramebufferCreateInfo createInfo = {
-        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,     // sType
-        NULL,                                       // pNext
-        0,                                             // flags
-        canvas->render_target.render_pass,             // renderPass
-        static_cast<uint32_t>(ARRAYSIZE(attachments)), // attachmentCount
-        attachments,                                   // pAttachments
-        canvas->width,                                 // width
-        canvas->height,                                // height
-        1,                                             // layers
+        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
+        NULL,                                      // pNext
+        0,                                         // flags
+        canvas->render_target.render_pass,         // renderPass
+        (uint32_t)ARRAYSIZE(attachments),          // attachmentCount
+        attachments,                               // pAttachments
+        canvas->width,                             // width
+        canvas->height,                            // height
+        1,                                         // layers
     };
 
     VK_CHECK(vkCreateFramebuffer(
@@ -336,13 +326,13 @@ static inline void create_render_pass(re_canvas_t *canvas) {
       {},                              // flags
       VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
       0,                               // inputAttachmentCount
-      NULL,                         // pInputAttachments
+      NULL,                            // pInputAttachments
       1,                               // colorAttachmentCount
       &colorAttachmentReference,       // pColorAttachments
-      NULL,                         // pResolveAttachments
+      NULL,                            // pResolveAttachments
       &depthAttachmentReference,       // pDepthStencilAttachment
       0,                               // preserveAttachmentCount
-      NULL,                         // pPreserveAttachments
+      NULL,                            // pPreserveAttachments
   };
 
   VkSubpassDependency dependencies[] = {
@@ -369,16 +359,15 @@ static inline void create_render_pass(re_canvas_t *canvas) {
   };
 
   VkRenderPassCreateInfo renderPassCreateInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
-      NULL,                                   // pNext
-      0,                                         // flags
-      static_cast<uint32_t>(
-          ARRAYSIZE(attachmentDescriptions)),         // attachmentCount
-      attachmentDescriptions,                         // pAttachments
-      1,                                              // subpassCount
-      &subpassDescription,                            // pSubpasses
-      static_cast<uint32_t>(ARRAYSIZE(dependencies)), // dependencyCount
-      dependencies,                                   // pDependencies
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,   // sType
+      NULL,                                        // pNext
+      0,                                           // flags
+      (uint32_t)ARRAYSIZE(attachmentDescriptions), // attachmentCount
+      attachmentDescriptions,                      // pAttachments
+      1,                                           // subpassCount
+      &subpassDescription,                         // pSubpasses
+      (uint32_t)ARRAYSIZE(dependencies),           // dependencyCount
+      dependencies,                                // pDependencies
   };
 
   VK_CHECK(vkCreateRenderPass(
@@ -391,8 +380,7 @@ static inline void create_render_pass(re_canvas_t *canvas) {
 static inline void destroy_render_pass(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   if (canvas->render_target.render_pass != VK_NULL_HANDLE) {
-    vkDestroyRenderPass(
-        g_ctx.device, canvas->render_target.render_pass, NULL);
+    vkDestroyRenderPass(g_ctx.device, canvas->render_target.render_pass, NULL);
   }
 }
 
@@ -426,7 +414,7 @@ void re_canvas_begin(
 
   VkRenderPassBeginInfo renderPassBeginInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,  // sType
-      NULL,                                   // pNext
+      NULL,                                      // pNext
       canvas->render_target.render_pass,         // renderPass
       resource.framebuffer,                      // framebuffer
       {{0, 0}, {canvas->width, canvas->height}}, // renderArea
@@ -438,12 +426,12 @@ void re_canvas_begin(
       command_buffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport{
-      0.0f,                               // x
-      0.0f,                               // y
-      static_cast<float>(canvas->width),  // width
-      static_cast<float>(canvas->height), // height
-      0.0f,                               // minDepth
-      1.0f,                               // maxDepth
+      0.0f,                  // x
+      0.0f,                  // y
+      (float)canvas->width,  // width
+      (float)canvas->height, // height
+      0.0f,                  // minDepth
+      1.0f,                  // maxDepth
   };
 
   vkCmdSetViewport(command_buffer, 0, 1, &viewport);

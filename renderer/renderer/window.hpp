@@ -7,6 +7,16 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
+typedef struct re_frame_resources_t {
+  VkSemaphore image_available_semaphore;
+  VkSemaphore rendering_finished_semaphore;
+  VkFence fence;
+
+  VkFramebuffer framebuffer;
+
+  VkCommandBuffer command_buffer;
+} re_frame_resources_t;
+
 typedef struct re_window_t {
   vec4_t clear_color;
 
@@ -31,15 +41,7 @@ typedef struct re_window_t {
     VkImageView view;
   } depth_stencil;
 
-  struct FrameResources {
-    VkSemaphore image_available_semaphore;
-    VkSemaphore rendering_finished_semaphore;
-    VkFence fence;
-
-    VkFramebuffer framebuffer;
-
-    VkCommandBuffer command_buffer;
-  } frame_resources[RE_MAX_FRAMES_IN_FLIGHT];
+  re_frame_resources_t frame_resources[RE_MAX_FRAMES_IN_FLIGHT];
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
   uint32_t current_frame;
