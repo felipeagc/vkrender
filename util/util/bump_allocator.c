@@ -26,14 +26,21 @@ void ut_bump_allocator_init(ut_bump_allocator_t *allocator, size_t block_size) {
   bump_block_init(&allocator->base_block, block_size);
 
   allocator->last_block = &allocator->base_block;
+
+  ut_mutex_init(&allocator->mutex);
 }
 
 void ut_bump_allocator_destroy(ut_bump_allocator_t *allocator) {
+  ut_mutex_lock(&allocator->mutex);
   bump_block_destroy(&allocator->base_block);
+  ut_mutex_unlock(&allocator->mutex);
+  ut_mutex_destroy(&allocator->mutex);
 }
 
 void *ut_bump_allocator_alloc(
     ut_bump_allocator_t *allocator, size_t size, size_t alignment) {
+  ut_mutex_lock(&allocator->mutex);
+
   // For ensuring aligned memory allocations
   size_t padding = 0;
   if (allocator->last_block->filled % alignment != 0) {
@@ -41,6 +48,7 @@ void *ut_bump_allocator_alloc(
   }
 
   if ((size + padding) > allocator->block_size) {
+    ut_mutex_unlock(&allocator->mutex);
     return NULL;
   }
 
@@ -60,6 +68,8 @@ void *ut_bump_allocator_alloc(
       (void *)&allocator->last_block->storage[allocator->last_block->filled];
 
   allocator->last_block->filled += size;
+
+  ut_mutex_unlock(&allocator->mutex);
 
   return ptr;
 }

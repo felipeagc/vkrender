@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+#include "thread.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -20,13 +21,13 @@ typedef struct ut_bump_allocator_t {
   ut_bump_block_t base_block;
   ut_bump_block_t *last_block;
   size_t block_size;
+  ut_mutex_t mutex;
 } ut_bump_allocator_t;
 
 void ut_bump_allocator_init(ut_bump_allocator_t *allocator, size_t block_size);
 
 void ut_bump_allocator_destroy(ut_bump_allocator_t *allocator);
 
-// @TODO: make this function thread safe
 void *ut_bump_allocator_alloc(
     ut_bump_allocator_t *allocator, size_t size, size_t alignment);
 
