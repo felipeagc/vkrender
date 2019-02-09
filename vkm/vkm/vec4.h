@@ -7,7 +7,7 @@ extern "C" {
 #include "common.h"
 #include <xmmintrin.h>
 
-typedef struct VMATH_ALIGN(16) vec4_t {
+typedef struct VKM_ALIGN(16) vec4_t {
   float x, y, z, w;
 } vec4_t;
 
@@ -16,7 +16,7 @@ inline vec4_t vec4_zero() { return {0.0f, 0.0f, 0.0f, 0.0f}; }
 inline vec4_t vec4_one() { return {1.0f, 1.0f, 1.0f, 1.0f}; }
 
 inline void vec4_add_to(vec4_t *dest, vec4_t left, vec4_t right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   _mm_store_ps(
       (float *)dest,
       _mm_add_ps(_mm_load_ps((float *)&left), _mm_load_ps((float *)&right)));
@@ -35,7 +35,7 @@ inline vec4_t vec4_add(vec4_t left, vec4_t right) {
 }
 
 inline void vec4_mul_to(vec4_t *dest, vec4_t left, vec4_t right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   _mm_store_ps(
       (float *)dest,
       _mm_mul_ps(_mm_load_ps((float *)&left), _mm_load_ps((float *)&right)));
@@ -54,7 +54,7 @@ inline vec4_t vec4_mul(vec4_t left, vec4_t right) {
 }
 
 inline void vec4_dot_to(float *dest, vec4_t left, vec4_t right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   __m128 rone = _mm_mul_ps(*((__m128 *)&left), *((__m128 *)&right));
   __m128 rtwo = _mm_shuffle_ps(rone, rone, _MM_SHUFFLE(2, 3, 0, 1));
   rone = _mm_add_ps(rone, rtwo);

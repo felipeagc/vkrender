@@ -1,10 +1,10 @@
-add_library(vmath INTERFACE)
+add_library(vkm INTERFACE)
 
 target_include_directories(
-  vmath INTERFACE
+  vkm INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 target_link_libraries(
-  vmath INTERFACE m
+  vkm INTERFACE m
 )

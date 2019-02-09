@@ -11,4 +11,4 @@ macro(add_example name)
 endmacro()
 
 add_example(rewrite)
-add_example(vmath_example)
+add_example(vkm_example)

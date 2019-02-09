@@ -1,4 +1,4 @@
-#define VMATH_USE_SSE
+#define VKM_USE_SSE
 
 #include "common.h"
 #include "vec2.h"

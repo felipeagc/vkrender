@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <vmath/vmath.h>
+#include <vkm/vkm.h>
 
 TEST(mat4, zero) {
   mat4_t mat = mat4_zero();

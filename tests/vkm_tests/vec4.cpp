@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <vmath/vmath.h>
+#include <vkm/vkm.h>
 
 TEST(vec4, addition) {
   vec4_t v1 = {1, 2, 3, 4};

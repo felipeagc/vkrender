@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "render_target.hpp"
 #include <SDL2/SDL.h>
-#include <vmath/vmath.h>
+#include <vkm/vkm.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 

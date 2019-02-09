@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <vmath/vmath.h>
+#include <vkm/vkm.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

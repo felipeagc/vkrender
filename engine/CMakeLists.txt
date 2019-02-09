@@ -23,7 +23,7 @@ target_link_libraries(
   PUBLIC
   util
   renderer
-  vmath
+  vkm
   )
 
 target_include_directories(

@@ -30,7 +30,7 @@ endif()
 include(cotire)
 
 add_subdirectory(thirdparty)
-add_subdirectory(vmath)
+add_subdirectory(vkm)
 add_subdirectory(util)
 add_subdirectory(renderer)
 add_subdirectory(engine)

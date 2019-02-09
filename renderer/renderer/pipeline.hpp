@@ -2,7 +2,7 @@
 
 #include "render_target.hpp"
 #include "shader.hpp"
-#include <vmath/vmath.h>
+#include <vkm/vkm.h>
 #include <vulkan/vulkan.h>
 
 typedef struct re_pipeline_parameters_t {

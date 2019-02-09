@@ -9,10 +9,10 @@ extern "C" {
 #include <math.h>
 #include <xmmintrin.h>
 
-typedef union VMATH_ALIGN(16) mat4_t {
+typedef union VKM_ALIGN(16) mat4_t {
   float columns[4][4];
   float elems[16];
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   __m128 sse_columns[4];
 #endif
 } mat4_t;
@@ -41,7 +41,7 @@ inline mat4_t mat4_identity() { return mat4_diagonal(1.0f); }
 
 inline void mat4_transpose_to(mat4_t *result, mat4_t mat) {
   *result = mat;
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   _MM_TRANSPOSE4_PS(
       result->sse_columns[0],
       result->sse_columns[1],
@@ -73,7 +73,7 @@ inline mat4_t mat4_transpose(mat4_t mat) {
 }
 
 inline void mat4_add_to(mat4_t *res, mat4_t left, mat4_t right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   res->sse_columns[0] = _mm_add_ps(left.sse_columns[0], right.sse_columns[0]);
   res->sse_columns[1] = _mm_add_ps(left.sse_columns[1], right.sse_columns[1]);
   res->sse_columns[2] = _mm_add_ps(left.sse_columns[2], right.sse_columns[2]);
@@ -92,7 +92,7 @@ inline mat4_t mat4_add(mat4_t left, mat4_t right) {
 }
 
 inline void mat4_sub_to(mat4_t *res, mat4_t left, mat4_t right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   res->sse_columns[0] = _mm_sub_ps(left.sse_columns[0], right.sse_columns[0]);
   res->sse_columns[1] = _mm_sub_ps(left.sse_columns[1], right.sse_columns[1]);
   res->sse_columns[2] = _mm_sub_ps(left.sse_columns[2], right.sse_columns[2]);
@@ -111,7 +111,7 @@ inline mat4_t mat4_sub(mat4_t left, mat4_t right) {
 }
 
 inline void mat4_muls_to(mat4_t *res, mat4_t left, float right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   __m128 sse_scalar = _mm_load_ps1(&right);
   res->sse_columns[0] = _mm_mul_ps(left.sse_columns[0], sse_scalar);
   res->sse_columns[1] = _mm_mul_ps(left.sse_columns[1], sse_scalar);
@@ -131,7 +131,7 @@ inline mat4_t mat4_muls(mat4_t left, float right) {
 }
 
 inline void mat4_divs_to(mat4_t *res, mat4_t left, float right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   __m128 sse_scalar = _mm_load_ps1(&right);
   res->sse_columns[0] = _mm_div_ps(left.sse_columns[0], sse_scalar);
   res->sse_columns[1] = _mm_div_ps(left.sse_columns[1], sse_scalar);
@@ -151,7 +151,7 @@ inline mat4_t mat4_divs(mat4_t left, float right) {
 }
 
 inline void mat4_mul_to(mat4_t *res, mat4_t left, mat4_t right) {
-#ifdef VMATH_USE_SSE
+#ifdef VKM_USE_SSE
   for (int i = 0; i < 4; i++) {
     __m128 brod1 = _mm_set1_ps(left.elems[4 * i + 0]);
     __m128 brod2 = _mm_set1_ps(left.elems[4 * i + 1]);
