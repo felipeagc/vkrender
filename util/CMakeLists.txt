@@ -1,6 +1,7 @@
 set(
   UTIL_SOURCES
   util/bump_allocator.c
+  util/general_allocator.c
   util/task_scheduler.c
   util/thread.c
   )

@@ -10,3 +10,4 @@ function(f_add_test test)
 endfunction()
 
 f_add_test(bump_allocator)
+f_add_test(general_allocator)
