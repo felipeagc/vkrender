@@ -1,9 +1,9 @@
-#include "mesh.hpp"
+#include "mesh_asset.hpp"
 #include <renderer/window.hpp>
 #include <string.h>
 
-void eg_mesh_init(
-    eg_mesh_t *mesh,
+void eg_mesh_asset_init(
+    eg_mesh_asset_t *mesh,
     re_vertex_t *vertices,
     uint32_t vertex_count,
     uint32_t *indices,
@@ -37,7 +37,7 @@ void eg_mesh_init(
   re_buffer_destroy(&staging_buffer);
 }
 
-void eg_mesh_draw(eg_mesh_t *mesh, struct re_window_t *window) {
+void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, struct re_window_t *window) {
   VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
 
   vkCmdBindIndexBuffer(
@@ -48,7 +48,7 @@ void eg_mesh_draw(eg_mesh_t *mesh, struct re_window_t *window) {
   vkCmdDrawIndexed(command_buffer, mesh->index_count, 1, 0, 0, 0);
 }
 
-void eg_mesh_destroy(eg_mesh_t *mesh) {
+void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
   re_buffer_destroy(&mesh->vertex_buffer);
   re_buffer_destroy(&mesh->index_buffer);
 }

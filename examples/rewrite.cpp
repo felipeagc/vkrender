@@ -1,7 +1,7 @@
 #include <engine/asset_manager.hpp>
 #include <engine/assets/environment_asset.hpp>
+#include <engine/assets/mesh_asset.hpp>
 #include <engine/camera.hpp>
-#include <engine/mesh.hpp>
 #include <engine/pbr.hpp>
 #include <engine/pipelines.hpp>
 #include <engine/systems/fps_camera_system.hpp>
@@ -76,9 +76,9 @@ int main() {
 
   uint32_t indices[] = {0, 1, 2, 2, 3, 0};
 
-  eg_mesh_t mesh;
-  eg_mesh_init(
-      &mesh, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
+  eg_mesh_asset_t *mesh = eg_asset_alloc(&asset_manager, eg_mesh_asset_t);
+  eg_mesh_asset_init(
+      mesh, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
 
   eg_pbr_material_t material;
   eg_pbr_material_init(&material, NULL, NULL, NULL, NULL, NULL);
@@ -132,7 +132,7 @@ int main() {
     eg_pbr_model_update_uniform(&model, &window);
     eg_pbr_model_bind(&local_model, &window, &pbr_pipeline, 2);
     eg_pbr_model_bind(&model, &window, &pbr_pipeline, 3);
-    eg_mesh_draw(&mesh, &window);
+    eg_mesh_asset_draw(mesh, &window);
 
     re_imgui_draw(&imgui);
 
@@ -144,7 +144,7 @@ int main() {
   eg_pbr_model_destroy(&local_model);
   eg_pbr_model_destroy(&model);
   eg_pbr_material_destroy(&material);
-  eg_mesh_destroy(&mesh);
+  eg_mesh_asset_destroy(mesh);
 
   eg_world_destroy(&world);
   eg_environment_asset_destroy(environment_asset);

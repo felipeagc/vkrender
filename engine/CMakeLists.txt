@@ -6,12 +6,12 @@ set(
   engine/pipelines.cpp
   engine/environment.cpp
 
-  engine/mesh.cpp
   engine/pbr.cpp
 
   engine/asset.cpp
   engine/asset_manager.cpp
   engine/assets/environment_asset.cpp
+  engine/assets/mesh_asset.cpp
   )
 
 add_library(
