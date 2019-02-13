@@ -27,6 +27,7 @@ target_link_libraries(
   util
   renderer
   vkm
+  cgltf
   )
 
 target_include_directories(
