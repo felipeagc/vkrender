@@ -12,5 +12,5 @@ target_include_directories(
   vma
   PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}"
-  ${VULKAN_INCLUDE_DIRS}
+  "${VULKAN_INCLUDE_DIRS}"
   )
