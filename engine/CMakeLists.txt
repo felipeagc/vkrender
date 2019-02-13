@@ -1,12 +1,14 @@
 set(
   ENGINE_SOURCES
   engine/world.cpp
-  engine/camera.cpp
-  engine/systems/fps_camera_system.cpp
   engine/pipelines.cpp
-  engine/environment.cpp
-
   engine/pbr.cpp
+
+  engine/camera.cpp
+  engine/environment.cpp
+  engine/mesh.cpp
+
+  engine/systems/fps_camera_system.cpp
 
   engine/asset.cpp
   engine/asset_manager.cpp

@@ -2,6 +2,7 @@
 #include <engine/assets/environment_asset.hpp>
 #include <engine/assets/mesh_asset.hpp>
 #include <engine/camera.hpp>
+#include <engine/mesh.hpp>
 #include <engine/pbr.hpp>
 #include <engine/pipelines.hpp>
 #include <engine/systems/fps_camera_system.hpp>
@@ -76,17 +77,16 @@ int main() {
 
   uint32_t indices[] = {0, 1, 2, 2, 3, 0};
 
-  eg_mesh_asset_t *mesh = eg_asset_alloc(&asset_manager, eg_mesh_asset_t);
+  eg_mesh_asset_t *mesh_asset = eg_asset_alloc(&asset_manager, eg_mesh_asset_t);
   eg_mesh_asset_init(
-      mesh, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
+      mesh_asset, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
 
-  eg_pbr_material_t material;
-  eg_pbr_material_init(&material, NULL, NULL, NULL, NULL, NULL);
+  eg_pbr_material_t *material =
+      eg_asset_alloc(&asset_manager, eg_pbr_material_t);
+  eg_pbr_material_init(material, NULL, NULL, NULL, NULL, NULL);
 
-  eg_pbr_model_t model;
-  eg_pbr_model_init(&model, mat4_identity());
-  eg_pbr_model_t local_model;
-  eg_pbr_model_init(&local_model, mat4_identity());
+  eg_mesh_t mesh;
+  eg_mesh_init(&mesh, mesh_asset, material);
 
   while (!window.should_close) {
     SDL_Event event;
@@ -127,12 +127,8 @@ int main() {
     re_pipeline_bind_graphics(&pbr_pipeline, &window);
     eg_camera_bind(&world.camera, &window, &pbr_pipeline, 0);
     eg_environment_bind(&world.environment, &window, &pbr_pipeline, 4);
-    eg_pbr_material_bind(&material, &window, &pbr_pipeline, 1);
-    eg_pbr_model_update_uniform(&local_model, &window);
-    eg_pbr_model_update_uniform(&model, &window);
-    eg_pbr_model_bind(&local_model, &window, &pbr_pipeline, 2);
-    eg_pbr_model_bind(&model, &window, &pbr_pipeline, 3);
-    eg_mesh_asset_draw(mesh, &window);
+
+    eg_mesh_draw(&mesh, &window, &pbr_pipeline);
 
     re_imgui_draw(&imgui);
 
@@ -141,10 +137,9 @@ int main() {
     re_window_end_frame(&window);
   }
 
-  eg_pbr_model_destroy(&local_model);
-  eg_pbr_model_destroy(&model);
-  eg_pbr_material_destroy(&material);
-  eg_mesh_asset_destroy(mesh);
+  eg_mesh_destroy(&mesh);
+  eg_pbr_material_destroy(material);
+  eg_mesh_asset_destroy(mesh_asset);
 
   eg_world_destroy(&world);
   eg_environment_asset_destroy(environment_asset);
