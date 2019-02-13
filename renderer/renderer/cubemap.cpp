@@ -6,6 +6,7 @@
 #include "shader.hpp"
 #include "util.hpp"
 #include <stb_image.h>
+#include <string.h>
 #include <util/file.h>
 #include <util/task_scheduler.h>
 

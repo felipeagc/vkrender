@@ -52,5 +52,3 @@ target_link_libraries(
   glslang-default-resource-limits
   SPIRV
   )
-
-cotire(renderer)

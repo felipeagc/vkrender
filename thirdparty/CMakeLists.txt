@@ -1,9 +1,6 @@
-set(GLM_TEST_ENABLE OFF CACHE BOOL "Enable building glm tests" FORCE)
-
 add_subdirectory(vma)
 add_subdirectory(stb_image)
 add_subdirectory(spirv-cross)
 add_subdirectory(glslang)
-add_subdirectory(glm)
 add_subdirectory(googletest)
 add_subdirectory(imgui)
