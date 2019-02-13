@@ -6,7 +6,7 @@ set(
   engine/pipelines.cpp
   engine/environment.cpp
 
-  engine/shape.cpp
+  engine/mesh.cpp
   engine/pbr.cpp
 
   engine/asset.cpp

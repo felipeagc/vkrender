@@ -4,19 +4,19 @@
 #include <renderer/buffer.hpp>
 #include <renderer/pipeline.hpp>
 
-typedef struct eg_shape_t {
+typedef struct eg_mesh_t {
   re_buffer_t vertex_buffer;
   re_buffer_t index_buffer;
   uint32_t index_count;
-} eg_shape_t;
+} eg_mesh_t;
 
-void eg_shape_init(
-    eg_shape_t *shape,
+void eg_mesh_init(
+    eg_mesh_t *mesh,
     re_vertex_t *vertices,
     uint32_t vertex_count,
     uint32_t *indices,
     uint32_t index_count);
 
-void eg_shape_draw(eg_shape_t *shape, struct re_window_t *window);
+void eg_mesh_draw(eg_mesh_t *mesh, struct re_window_t *window);
 
-void eg_shape_destroy(eg_shape_t *shape);
+void eg_mesh_destroy(eg_mesh_t *mesh);
