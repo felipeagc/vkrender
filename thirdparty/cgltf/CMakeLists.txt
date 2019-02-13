@@ -1,10 +1,10 @@
 add_library(
   cgltf
-  INTERFACE
+  cgltf/cgltf.c
   )
 
 target_include_directories(
   cgltf
-  INTERFACE
+  PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}"
   )
