@@ -6,6 +6,7 @@ extern "C" {
 
 #include "common.h"
 #include "vec3.h"
+#include "vec4.h"
 #include <math.h>
 #include <xmmintrin.h>
 
@@ -236,14 +237,48 @@ inline mat4_t mat4_look_at(vec3_t eye, vec3_t center, vec3_t up) {
 }
 
 // @todo: make compatible with glm version
-inline mat4_t mat4_translation(vec3_t translation) {
-  mat4_t result = mat4_identity();
+inline void mat4_translate_to(mat4_t *res, mat4_t mat, vec3_t translation) {
+  *res = mat4_identity();
 
-  result.columns[3][0] = translation.x;
-  result.columns[3][1] = translation.y;
-  result.columns[3][2] = translation.z;
+  vec4_t c3 = vec4_zero();
+  c3 = vec4_add(
+      c3,
+      vec4_t{mat.columns[0][0] * translation.x,
+             mat.columns[0][1] * translation.x,
+             mat.columns[0][2] * translation.x,
+             mat.columns[0][3] * translation.x});
+  c3 = vec4_add(
+      c3,
+      vec4_t{mat.columns[1][0] * translation.y,
+             mat.columns[1][1] * translation.y,
+             mat.columns[1][2] * translation.y,
+             mat.columns[1][3] * translation.y});
+  c3 = vec4_add(
+      c3,
+      vec4_t{mat.columns[2][0] * translation.z,
+             mat.columns[2][1] * translation.z,
+             mat.columns[2][2] * translation.z,
+             mat.columns[2][3] * translation.z});
 
-  return result;
+  c3 = vec4_add(
+      c3,
+      vec4_t{
+          mat.columns[3][0],
+          mat.columns[3][1],
+          mat.columns[3][2],
+          mat.columns[3][3],
+      });
+
+  res->columns[3][0] = c3.x;
+  res->columns[3][1] = c3.y;
+  res->columns[3][2] = c3.z;
+  res->columns[3][3] = c3.w;
+}
+
+inline mat4_t mat4_translate(mat4_t mat, vec3_t translation) {
+  mat4_t res;
+  mat4_translate_to(&res, mat, translation);
+  return res;
 }
 
 #ifdef __cplusplus

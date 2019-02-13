@@ -8,7 +8,7 @@ void eg_camera_init(eg_camera_t *camera) {
   camera->near = 0.001f;
   camera->far = 300.0f;
 
-  camera->fov = to_radians(100.0f);
+  camera->fov = to_radians(70.0f);
 
   camera->position = {0.0f, 0.0f, 0.0f};
   camera->rotation = {};
@@ -62,12 +62,7 @@ void eg_camera_update(eg_camera_t *camera, struct re_window_t *window) {
       {0.0, 0.0, 0.5, 1.0},
   }};
 
-  camera->uniform.proj = mat4_mul(correction, camera->uniform.proj);
-
-  camera->uniform.view = mat4_identity();
-  camera->uniform.view = mat4_mul(
-      quat_to_mat4(camera->rotation),
-      mat4_translation(vec3_muls(camera->position, -1.0f)));
+  camera->uniform.proj = mat4_mul(camera->uniform.proj, correction);
 
   camera->uniform.pos = {
       camera->position.x, camera->position.y, camera->position.z, 1.0};

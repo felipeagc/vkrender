@@ -221,16 +221,6 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       camera_bindings,
       ARRAYSIZE(camera_bindings));
 
-  VkDescriptorSetLayoutBinding mesh_bindings[] = {{
-      0,                                 // binding
-      VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-      1,                                 // descriptorCount
-      VK_SHADER_STAGE_VERTEX_BIT,        // stageFlags
-      NULL,                              // pImmutableSamplers
-  }};
-  re_resource_set_layout_init(
-      &manager->set_layouts.mesh, 100, mesh_bindings, ARRAYSIZE(mesh_bindings));
-
   VkDescriptorSetLayoutBinding model_bindings[] = {{
       0,                                 // binding
       VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
@@ -240,7 +230,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
   }};
   re_resource_set_layout_init(
       &manager->set_layouts.model,
-      100,
+      200,
       model_bindings,
       ARRAYSIZE(model_bindings));
 
@@ -344,7 +334,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
   re_resource_set_layout_t *standard_set_layouts[] = {
       &manager->set_layouts.camera,
       &manager->set_layouts.material,
-      &manager->set_layouts.mesh,
+      &manager->set_layouts.model,
       &manager->set_layouts.model,
       &manager->set_layouts.environment};
   re_resource_set_provider_init(
@@ -406,7 +396,6 @@ void re_resource_manager_destroy(re_resource_manager_t *manager) {
   re_resource_set_provider_destroy(&manager->providers.bake_cubemap);
 
   re_resource_set_layout_destroy(&manager->set_layouts.camera);
-  re_resource_set_layout_destroy(&manager->set_layouts.mesh);
   re_resource_set_layout_destroy(&manager->set_layouts.model);
   re_resource_set_layout_destroy(&manager->set_layouts.material);
   re_resource_set_layout_destroy(&manager->set_layouts.environment);

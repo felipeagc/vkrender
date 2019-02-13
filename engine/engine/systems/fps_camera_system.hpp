@@ -17,6 +17,9 @@ typedef struct eg_fps_camera_system_t {
   float sensitivity;
 
   bool first_frame;
+  bool transitioning_fov;
+
+  float time;
 } eg_fps_camera_system_t;
 
 void eg_fps_camera_system_init(eg_fps_camera_system_t *system);

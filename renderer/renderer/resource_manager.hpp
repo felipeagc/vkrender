@@ -49,7 +49,6 @@ void re_resource_set_provider_destroy(re_resource_set_provider_t *provider);
 typedef struct re_resource_manager_t {
   struct {
     re_resource_set_layout_t camera;
-    re_resource_set_layout_t mesh;
     re_resource_set_layout_t model;
     re_resource_set_layout_t material;
     re_resource_set_layout_t environment;

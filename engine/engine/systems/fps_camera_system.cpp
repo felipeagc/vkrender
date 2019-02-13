@@ -3,6 +3,17 @@
 #include <SDL2/SDL.h>
 #include <imgui/imgui.h>
 #include <renderer/window.hpp>
+#include <util/log.h>
+
+#define INITIAL_FOV to_radians(160)
+#define GOAL_FOV to_radians(70)
+#define TRANSITION_TIME 1.0f
+
+float out_expo(float t, float b, float c, float d) {
+  if (t == d)
+    return b + c;
+  return c * 1.001f * (-pow(2, -10 * t / d) + 1) + b;
+}
 
 void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
   system->cam_target = {};
@@ -20,6 +31,9 @@ void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
   system->first_frame = true;
 
   system->sensitivity = 0.07f;
+
+  system->time = 0.0f;
+  system->transitioning_fov = true;
 }
 
 void eg_fps_camera_system_process_event(
@@ -60,10 +74,12 @@ void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     struct re_window_t *window,
     struct eg_camera_t *camera) {
+  system->time += window->delta_time;
 
   if (system->first_frame) {
     system->first_frame = false;
     system->cam_target = camera->position;
+    camera->fov = INITIAL_FOV;
   }
 
   system->cam_front.x = cos(system->cam_yaw) * cos(system->cam_pitch);
@@ -101,6 +117,28 @@ void eg_fps_camera_system_update(
 
   camera->rotation =
       quat_conjugate(quat_look_at(system->cam_front, system->cam_up));
+
+  camera->uniform.view =
+      mat4_translate(mat4_identity(), vec3_muls(camera->position, -1.0f));
+  camera->uniform.view =
+      mat4_mul(camera->uniform.view, quat_to_mat4(camera->rotation));
+
+  if (system->transitioning_fov) {
+    float progress =
+        system->time <= TRANSITION_TIME ? system->time : TRANSITION_TIME;
+    progress = remap(progress, 0.0f, TRANSITION_TIME, 0.0, 0.05f);
+
+    camera->fov =
+        out_expo(progress, camera->fov, GOAL_FOV - camera->fov, GOAL_FOV);
+
+    if (camera->fov <= GOAL_FOV + 0.001f) {
+      system->transitioning_fov = false;
+      camera->fov = GOAL_FOV;
+      ut_log_info("Done transition");
+    }
+  }
+
+  // camera->fov = to_radians(lerp(camera->fov, GOAL_FOV, progress));
 
   eg_camera_update(camera, window);
 }

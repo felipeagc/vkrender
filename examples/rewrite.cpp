@@ -1,7 +1,9 @@
 #include <engine/asset_manager.hpp>
 #include <engine/assets/environment_asset.hpp>
 #include <engine/camera.hpp>
+#include <engine/pbr.hpp>
 #include <engine/pipelines.hpp>
+#include <engine/shape.hpp>
 #include <engine/systems/fps_camera_system.hpp>
 #include <engine/world.hpp>
 #include <imgui/imgui.h>
@@ -15,6 +17,14 @@ int main() {
   re_imgui_init(&imgui, &window);
 
   window.clear_color = {1.0, 1.0, 1.0, 1.0};
+
+  re_pipeline_t pbr_pipeline;
+  eg_init_pipeline(
+      &pbr_pipeline,
+      window.render_target,
+      "../shaders/model_pbr.vert",
+      "../shaders/model_pbr.frag",
+      eg_standard_pipeline_parameters());
 
   re_pipeline_t skybox_pipeline;
   eg_init_pipeline(
@@ -57,6 +67,27 @@ int main() {
   eg_fps_camera_system_t fps_system;
   eg_fps_camera_system_init(&fps_system);
 
+  re_vertex_t vertices[] = {
+      {{-1, -1, 0}, {0, 0, 0}, {0, 0}},
+      {{1, -1, 0}, {0, 0, 0}, {1, 0}},
+      {{1, 1, 0}, {0, 0, 0}, {1, 1}},
+      {{-1, 1, 0}, {0, 0, 0}, {0, 1}},
+  };
+
+  uint32_t indices[] = {0, 1, 2, 2, 3, 0};
+
+  eg_shape_t shape;
+  eg_shape_init(
+      &shape, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
+
+  eg_pbr_material_t material;
+  eg_pbr_material_init(&material, NULL, NULL, NULL, NULL, NULL);
+
+  eg_pbr_model_t model;
+  eg_pbr_model_init(&model, mat4_identity());
+  eg_pbr_model_t local_model;
+  eg_pbr_model_init(&local_model, mat4_identity());
+
   while (!window.should_close) {
     SDL_Event event;
     while (re_window_poll_event(&window, &event)) {
@@ -93,6 +124,16 @@ int main() {
     eg_camera_bind(&world.camera, &window, &skybox_pipeline, 0);
     eg_environment_draw_skybox(&world.environment, &window, &skybox_pipeline);
 
+    re_pipeline_bind_graphics(&pbr_pipeline, &window);
+    eg_camera_bind(&world.camera, &window, &pbr_pipeline, 0);
+    eg_environment_bind(&world.environment, &window, &pbr_pipeline, 4);
+    eg_pbr_material_bind(&material, &window, &pbr_pipeline, 1);
+    eg_pbr_model_update_uniform(&local_model, &window);
+    eg_pbr_model_update_uniform(&model, &window);
+    eg_pbr_model_bind(&local_model, &window, &pbr_pipeline, 2);
+    eg_pbr_model_bind(&model, &window, &pbr_pipeline, 3);
+    eg_shape_draw(&shape, &window);
+
     re_imgui_draw(&imgui);
 
     re_window_end_render_pass(&window);
@@ -100,10 +141,16 @@ int main() {
     re_window_end_frame(&window);
   }
 
+  eg_pbr_model_destroy(&local_model);
+  eg_pbr_model_destroy(&model);
+  eg_pbr_material_destroy(&material);
+  eg_shape_destroy(&shape);
+
   eg_world_destroy(&world);
   eg_environment_asset_destroy(environment_asset);
   eg_asset_manager_destroy(&asset_manager);
 
+  re_pipeline_destroy(&pbr_pipeline);
   re_pipeline_destroy(&skybox_pipeline);
 
   re_imgui_destroy(&imgui);

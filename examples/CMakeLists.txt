@@ -4,8 +4,8 @@ macro(add_example name)
   # target_compile_options(${name} PRIVATE -fsanitize=memory -fno-omit-frame-pointer)
   # target_link_options(${name} PRIVATE -fsanitize=memory -fno-omit-frame-pointer)
 
-  target_compile_options(${name} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(${name} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+  # target_compile_options(${name} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+  # target_link_options(${name} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
 
   target_link_libraries(${name} PRIVATE engine)
 endmacro()

@@ -6,6 +6,9 @@ set(
   engine/pipelines.cpp
   engine/environment.cpp
 
+  engine/shape.cpp
+  engine/pbr.cpp
+
   engine/asset.cpp
   engine/asset_manager.cpp
   engine/assets/environment_asset.cpp

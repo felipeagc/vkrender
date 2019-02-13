@@ -13,9 +13,9 @@ layout (set = 0, binding = 0) uniform CameraUniform {
   mat4 proj;
 } camera_ubo;
 
-layout (set = 2, binding = 0) uniform MeshUniform {
+layout (set = 2, binding = 0) uniform LocalModelUniform {
   mat4 matrix;
-} mesh_ubo;
+} local_model_ubo;
 
 layout (set = 3, binding = 0) uniform ModelUniform {
   mat4 matrix;
@@ -28,7 +28,7 @@ layout (location = 2) out vec3 normal0;
 void main() {
   texCoords0 = texCoords;
 
-  mat4 model = model_ubo.matrix * mesh_ubo.matrix;
+  mat4 model = model_ubo.matrix * local_model_ubo.matrix;
 
   vec4 locPos = model * vec4(pos, 1.0);
   normal0 = mat3(transpose(inverse(model))) * normal;
