@@ -81,9 +81,9 @@ int main() {
   eg_mesh_asset_init(
       mesh_asset, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
 
-  eg_pbr_material_t *material =
-      eg_asset_alloc(&asset_manager, eg_pbr_material_t);
-  eg_pbr_material_init(material, NULL, NULL, NULL, NULL, NULL);
+  eg_pbr_material_asset_t *material =
+      eg_asset_alloc(&asset_manager, eg_pbr_material_asset_t);
+  eg_pbr_material_asset_init(material, NULL, NULL, NULL, NULL, NULL);
 
   eg_mesh_t mesh;
   eg_mesh_init(&mesh, mesh_asset, material);
@@ -138,11 +138,8 @@ int main() {
   }
 
   eg_mesh_destroy(&mesh);
-  eg_pbr_material_destroy(material);
-  eg_mesh_asset_destroy(mesh_asset);
 
   eg_world_destroy(&world);
-  eg_environment_asset_destroy(environment_asset);
   eg_asset_manager_destroy(&asset_manager);
 
   re_pipeline_destroy(&pbr_pipeline);

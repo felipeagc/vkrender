@@ -1,5 +1,6 @@
 #pragma once
 
+#include "asset.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
 #include <renderer/context.hpp>
@@ -39,23 +40,24 @@ typedef struct eg_pbr_material_uniform_t {
   float has_normal_texture;
 } eg_pbr_material_uniform_t;
 
-typedef struct eg_pbr_material_t {
+typedef struct eg_pbr_material_asset_t {
+  eg_asset_t asset;
   eg_pbr_material_uniform_t uniform;
   re_resource_set_t resource_sets[RE_MAX_FRAMES_IN_FLIGHT];
-} eg_pbr_material_t;
+} eg_pbr_material_asset_t;
 
-void eg_pbr_material_init(
-    eg_pbr_material_t *material,
+void eg_pbr_material_asset_init(
+    eg_pbr_material_asset_t *material,
     struct re_texture_t *albedo_texture,
     struct re_texture_t *normal_texture,
     struct re_texture_t *metallic_roughness_texture,
     struct re_texture_t *occlusion_texture,
     struct re_texture_t *emissive_texture);
 
-void eg_pbr_material_bind(
-    eg_pbr_material_t *material,
+void eg_pbr_material_asset_bind(
+    eg_pbr_material_asset_t *material,
     struct re_window_t *window,
     struct re_pipeline_t *pipeline,
     uint32_t set_index);
 
-void eg_pbr_material_destroy(eg_pbr_material_t *material);
+void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material);

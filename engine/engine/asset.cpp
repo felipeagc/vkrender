@@ -2,9 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-void eg_asset_init(eg_asset_t *asset) { asset->name = NULL; }
+void eg_asset_init(eg_asset_t *asset, eg_asset_destructor_t destructor) {
+  asset->name = NULL;
+  asset->destructor = destructor;
+}
 
-void eg_asset_init_named(eg_asset_t *asset, const char *name) {
+void eg_asset_init_named(
+    eg_asset_t *asset, eg_asset_destructor_t destructor, const char *name) {
+  asset->destructor = destructor;
   if (strlen(name) == 0) {
     asset->name = NULL;
   } else {

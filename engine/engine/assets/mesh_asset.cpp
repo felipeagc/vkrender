@@ -8,6 +8,7 @@ void eg_mesh_asset_init(
     uint32_t vertex_count,
     uint32_t *indices,
     uint32_t index_count) {
+  eg_asset_init(&mesh->asset, (eg_asset_destructor_t)eg_mesh_asset_destroy);
   mesh->index_count = index_count;
 
   size_t vertex_buffer_size = sizeof(re_vertex_t) * vertex_count;
@@ -51,4 +52,5 @@ void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, struct re_window_t *window) {
 void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
   re_buffer_destroy(&mesh->vertex_buffer);
   re_buffer_destroy(&mesh->index_buffer);
+  eg_asset_destroy(&mesh->asset);
 }

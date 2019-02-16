@@ -4,7 +4,7 @@
 void eg_mesh_init(
     eg_mesh_t *mesh,
     struct eg_mesh_asset_t *asset,
-    eg_pbr_material_t *material) {
+    eg_pbr_material_asset_t *material) {
   eg_pbr_model_init(&mesh->model, mat4_identity());
   eg_pbr_model_init(&mesh->local_model, mat4_identity());
 
@@ -16,7 +16,7 @@ void eg_mesh_draw(
     eg_mesh_t *mesh,
     struct re_window_t *window,
     struct re_pipeline_t *pipeline) {
-  eg_pbr_material_bind(mesh->material, window, pipeline, 1);
+  eg_pbr_material_asset_bind(mesh->material, window, pipeline, 1);
   eg_pbr_model_update_uniform(&mesh->local_model, window);
   eg_pbr_model_update_uniform(&mesh->model, window);
   eg_pbr_model_bind(&mesh->local_model, window, pipeline, 2);

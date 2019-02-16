@@ -1,10 +1,13 @@
 #pragma once
 
+#include "../asset.hpp"
 #include "../pbr.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/pipeline.hpp>
 
 typedef struct eg_mesh_asset_t {
+  eg_asset_t asset;
+
   re_buffer_t vertex_buffer;
   re_buffer_t index_buffer;
   uint32_t index_count;

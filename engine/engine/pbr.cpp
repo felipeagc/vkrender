@@ -72,13 +72,16 @@ void eg_pbr_model_destroy(eg_pbr_model_t *model) {
   }
 }
 
-void eg_pbr_material_init(
-    eg_pbr_material_t *material,
+void eg_pbr_material_asset_init(
+    eg_pbr_material_asset_t *material,
     re_texture_t *albedo_texture,
     re_texture_t *normal_texture,
     re_texture_t *metallic_roughness_texture,
     re_texture_t *occlusion_texture,
     re_texture_t *emissive_texture) {
+  eg_asset_init(
+      &material->asset, (eg_asset_destructor_t)eg_pbr_material_asset_destroy);
+
   material->uniform.base_color_factor = {1.0, 1.0, 1.0, 1.0};
   material->uniform.metallic = 1.0;
   material->uniform.roughness = 1.0;
@@ -189,8 +192,8 @@ void eg_pbr_material_init(
   }
 }
 
-void eg_pbr_material_bind(
-    eg_pbr_material_t *material,
+void eg_pbr_material_asset_bind(
+    eg_pbr_material_asset_t *material,
     re_window_t *window,
     re_pipeline_t *pipeline,
     uint32_t set_index) {
@@ -216,10 +219,12 @@ void eg_pbr_material_bind(
       NULL);
 }
 
-void eg_pbr_material_destroy(eg_pbr_material_t *material) {
+void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_free_resource_set(
         &g_ctx.resource_manager.set_layouts.material,
         &material->resource_sets[i]);
   }
+
+  eg_asset_destroy(&material->asset);
 }
