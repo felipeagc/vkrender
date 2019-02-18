@@ -85,8 +85,8 @@ int main() {
       eg_asset_alloc(&asset_manager, eg_pbr_material_asset_t);
   eg_pbr_material_asset_init(material, NULL, NULL, NULL, NULL, NULL);
 
-  eg_mesh_t mesh;
-  eg_mesh_init(&mesh, mesh_asset, material);
+  EG_ADD_COMP_INIT(
+      &world, eg_world_add_entity(&world), eg_mesh_t, mesh_asset, material);
 
   while (!window.should_close) {
     SDL_Event event;
@@ -128,7 +128,10 @@ int main() {
     eg_camera_bind(&world.camera, &window, &pbr_pipeline, 0);
     eg_environment_bind(&world.environment, &window, &pbr_pipeline, 4);
 
-    eg_mesh_draw(&mesh, &window, &pbr_pipeline);
+    // Draw all meshes
+    EG_FOR_EVERY_COMP(&world, eg_mesh_t, mesh, {
+      eg_mesh_draw(mesh, &window, &pbr_pipeline);
+    })
 
     re_imgui_draw(&imgui);
 
@@ -136,8 +139,6 @@ int main() {
 
     re_window_end_frame(&window);
   }
-
-  eg_mesh_destroy(&mesh);
 
   eg_world_destroy(&world);
   eg_asset_manager_destroy(&asset_manager);
