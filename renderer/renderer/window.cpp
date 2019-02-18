@@ -259,6 +259,10 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
 
   VK_CHECK(vkGetSwapchainImagesKHR(
       g_ctx.device, window->swapchain, &window->swapchain_image_count, NULL));
+
+  if (window->swapchain_images != NULL) {
+    free(window->swapchain_images);
+  }
   window->swapchain_images =
       (VkImage *)malloc(sizeof(VkImage) * window->swapchain_image_count);
   VK_CHECK(vkGetSwapchainImagesKHR(
@@ -272,6 +276,9 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
 }
 
 static inline void create_swapchain_image_views(re_window_t *window) {
+  if (window->swapchain_image_views != NULL) {
+    free(window->swapchain_image_views);
+  }
   window->swapchain_image_views = (VkImageView *)malloc(
       sizeof(VkImageView) * window->swapchain_image_count);
 
@@ -551,6 +558,8 @@ bool re_window_init(
   window->swapchain = VK_NULL_HANDLE;
   window->surface = VK_NULL_HANDLE;
   window->swapchain_image_count = 0;
+  window->swapchain_images = NULL;
+  window->swapchain_image_views = NULL;
 
   window->current_frame = 0;
   // Index of the current swapchain image
