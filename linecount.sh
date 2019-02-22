@@ -5,10 +5,10 @@ wc -l \
 	./engine/**/*.cpp \
 	./renderer/**/*.cpp \
 	./renderer/**/*.hpp \
+	./util/**/*.h \
+	./util/**/*.c \
 	./examples/*.cpp \
-	./ftl/**/*.hpp \
-	./sdf/**/*.hpp \
-	./sdf/**/*.cpp \
+	./vkm/**/*.h \
 	./shaders/*.vert \
 	./shaders/*.frag \
 	| sort -n -r -k1
