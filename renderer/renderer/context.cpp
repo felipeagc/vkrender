@@ -538,12 +538,13 @@ VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx) {
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(ctx->physical_device, &properties);
 
-  VkSampleCountFlags colorSamples =
+  VkSampleCountFlags color_samples =
       properties.limits.framebufferColorSampleCounts;
-  VkSampleCountFlags depthSamples =
+  VkSampleCountFlags depth_samples =
       properties.limits.framebufferDepthSampleCounts;
 
-  VkSampleCountFlags counts = std::min(colorSamples, depthSamples);
+  VkSampleCountFlags counts =
+      color_samples < depth_samples ? color_samples : depth_samples;
 
   if (counts & VK_SAMPLE_COUNT_64_BIT) {
     ut_log_debug("Max samples: %d", 64);

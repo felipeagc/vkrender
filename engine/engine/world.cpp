@@ -11,26 +11,6 @@
     }                                                                          \
   }
 
-static bool bitset_at(eg_bitset_t *bitset, uint32_t pos) {
-  uint32_t index = pos / 8;
-  uint32_t bit = pos % 8;
-
-  return bitset->bytes[index] & (1 << (bit));
-}
-
-static void bitset_set(eg_bitset_t *bitset, uint32_t pos, bool val) {
-  uint32_t index = pos / 8;
-  uint32_t bit = pos % 8;
-  bitset->bytes[index] = (val ? 1 : 0) << bit;
-}
-
-// Sets the bitset to zero
-static void bitset_reset(eg_bitset_t *bitset) {
-  for (uint32_t i = 0; i < EG_MAX_ENTITIES / 8; i++) {
-    bitset->bytes[i] = 0;
-  }
-}
-
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset) {
   eg_camera_init(&world->camera);
@@ -40,7 +20,8 @@ void eg_world_init(
   EG_INIT_COMPS(world, eg_mesh_t);
 
   for (uint32_t i = 0; i < EG_COMP_COUNT; i++) {
-    bitset_reset(&world->entities.components[i].bitset);
+    ut_bitset_reset(
+        (uint8_t *)&world->entities.components[i].bitset, EG_MAX_ENTITIES);
   }
 }
 
@@ -48,7 +29,8 @@ eg_entity_t eg_world_add_entity(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     bool empty = true;
     for (uint32_t c = 0; c < EG_COMP_COUNT; c++) {
-      if (bitset_at(&world->entities.components[c].bitset, e)) {
+      if (ut_bitset_at(
+              (uint8_t *)&world->entities.components[c].bitset, e)) {
         empty = false;
         break;
       }
@@ -65,24 +47,28 @@ eg_entity_t eg_world_add_entity(eg_world_t *world) {
 void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     for (uint32_t c = 0; c < EG_COMP_COUNT; c++) {
-      bitset_set(&world->entities.components[c].bitset, entity, true);
+      ut_bitset_set(
+          (uint8_t *)&world->entities.components[c].bitset, entity, true);
     }
   }
 }
 
 void eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_index_t comp) {
-  bitset_set(&world->entities.components[comp].bitset, entity, true);
+  ut_bitset_set(
+      (uint8_t *)&world->entities.components[comp].bitset, entity, true);
 }
 
 bool eg_world_has_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_index_t comp) {
-  return bitset_at(&world->entities.components[comp].bitset, entity);
+  return ut_bitset_at(
+      (uint8_t *)&world->entities.components[comp].bitset, entity);
 }
 
 void eg_world_remove_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_index_t comp) {
-  bitset_set(&world->entities.components[comp].bitset, entity, false);
+  ut_bitset_set(
+      (uint8_t *)&world->entities.components[comp].bitset, entity, false);
 }
 
 void eg_world_destroy(eg_world_t *world) {

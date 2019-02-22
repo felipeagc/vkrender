@@ -21,6 +21,8 @@ void re_resource_set_layout_init(
       bindings,
       sizeof(VkDescriptorSetLayoutBinding) * binding_count);
 
+  ut_bitset_reset((uint8_t *)&layout->bitset, RE_GLOBAL_MAX_DESCRIPTOR_SETS);
+
   VkDescriptorSetLayoutCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, // sType
       NULL,                                                // pNext
@@ -48,8 +50,8 @@ void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
 re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
   uint32_t found = -1;
   for (uint32_t i = 0; i < layout->max_sets; i++) {
-    if (layout->bitset[i] == 0) {
-      layout->bitset[i] = 1;
+    if (!ut_bitset_at((uint8_t *)&layout->bitset, i)) {
+      ut_bitset_set((uint8_t *)&layout->bitset, i, true);
       found = i;
       break;
     }
@@ -63,8 +65,8 @@ re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
 
 void re_free_resource_set(
     re_resource_set_layout_t *layout, re_resource_set_t *resource_set) {
-  if (layout->bitset[resource_set->allocation] == 1) {
-    layout->bitset[resource_set->allocation] = 0;
+  if (ut_bitset_at((uint8_t *)&layout->bitset, resource_set->allocation)) {
+    ut_bitset_set((uint8_t *)&layout->bitset, resource_set->allocation, false);
     resource_set->descriptor_set = VK_NULL_HANDLE;
   }
 }

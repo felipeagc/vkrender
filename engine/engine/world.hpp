@@ -3,6 +3,7 @@
 #include "camera.hpp"
 #include "environment.hpp"
 #include "mesh.hpp"
+#include <util/bitset.h>
 
 #define EG_MAX_ENTITIES 128
 
@@ -49,13 +50,15 @@ typedef enum {
 
 typedef uint32_t eg_entity_t;
 
+typedef UT_BITSET(EG_MAX_ENTITIES) eg_entities_bitset_t;
+
 typedef struct {
   uint8_t bytes[EG_MAX_ENTITIES / 8];
 } eg_bitset_t;
 
 typedef struct {
   void *array;
-  eg_bitset_t bitset;
+  eg_entities_bitset_t bitset;
 } eg_component_bundle_t;
 
 typedef struct eg_entities_t {
