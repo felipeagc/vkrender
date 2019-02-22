@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_LOG_H
+#define UT_LOG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,7 +9,7 @@ extern "C" {
 #include <string.h>
 
 inline void ut_vprintf(const char *prefix, const char *format, va_list args) {
-  static char buf[512];
+  char buf[512];
   strcpy(buf, "");
   strcat(buf, prefix);
   strcat(buf, format);
@@ -55,4 +56,6 @@ inline void ut_log_debug(const char *format, ...) {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

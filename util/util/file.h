@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_FILE_H
+#define UT_FILE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,4 +48,6 @@ unsigned char *ut_load_bytes_from_file(const char *path, size_t *size) {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

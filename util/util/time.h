@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_TIME_H
+#define UT_TIME_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,4 +61,6 @@ uint64_t ut_time_ns() {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

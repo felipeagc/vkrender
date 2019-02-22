@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_TASK_SCHEDULER_H
+#define UT_TASK_SCHEDULER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,4 +44,6 @@ void ut_scheduler_destroy(ut_task_scheduler_t *scheduler);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

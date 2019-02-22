@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_THREAD_H
+#define UT_THREAD_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,4 +43,6 @@ void ut_cond_wait(ut_cond_t *cond, ut_mutex_t *mutex);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

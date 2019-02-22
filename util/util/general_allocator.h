@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_GENERAL_ALLOCATOR_H
+#define UT_GENERAL_ALLOCATOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,7 +9,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define ut_general_alloc(allocator, type)                                      \
+#define UT_GENERAL_ALLOC(allocator, type)                                      \
   (type *)ut_general_allocator_alloc(allocator, sizeof(type))
 
 typedef struct ut_general_alloc_header_t {
@@ -45,4 +46,6 @@ void ut_general_allocator_free(ut_general_allocator_t *allocator, void *ptr);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

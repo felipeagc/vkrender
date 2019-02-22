@@ -1,4 +1,9 @@
-#pragma once
+#ifndef UT_BITSET_H
+#define UT_BITSET_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -27,3 +32,9 @@ inline void ut_bitset_reset(uint8_t *bitset, uint32_t size) {
     bitset[i] = 0;
   }
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

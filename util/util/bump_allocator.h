@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UT_BUMP_ALLOCATOR_H
+#define UT_BUMP_ALLOCATOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,7 +9,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define ut_bump_alloc(allocator, type)                                         \
+#define UT_BUMP_ALLOC(allocator, type)                                         \
   ((type *)ut_bump_allocator_alloc(allocator, sizeof(type), alignof(type)))
 
 typedef struct ut_bump_block_t {
@@ -33,4 +34,6 @@ void *ut_bump_allocator_alloc(
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
