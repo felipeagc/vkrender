@@ -1,134 +1,12 @@
 #include "shader.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <SPIRV/GlslangToSpv.h>
-#include <StandAlone/DirStackFileIncluder.h>
-#include <StandAlone/ResourceLimits.h>
+#include <shaderc/shaderc.h>
 #include <stdio.h>
 #include <string.h>
-#include <glslang/Public/ShaderLang.h>
 #include <util/log.h>
 
-static bool glslangInitialized = false;
-
-enum shader_type_t {
-  SHADER_TYPE_VERTEX,
-  SHADER_TYPE_TESS_CONTROL,
-  SHADER_TYPE_TESS_EVALUATION,
-  SHADER_TYPE_GEOMETRY,
-  SHADER_TYPE_FRAGMENT,
-  SHADER_TYPE_COMPUTE,
-};
-
-static inline uint32_t *compile_glsl(
-    const char *glsl_code, const shader_type_t shader_type, size_t *code_size) {
-  if (!glslangInitialized) {
-    glslang::InitializeProcess();
-  }
-
-  EShLanguage shaderType_;
-  switch (shader_type) {
-  case SHADER_TYPE_VERTEX:
-    shaderType_ = EShLangVertex;
-    break;
-  case SHADER_TYPE_TESS_CONTROL:
-    shaderType_ = EShLangTessControl;
-    break;
-  case SHADER_TYPE_TESS_EVALUATION:
-    shaderType_ = EShLangTessEvaluation;
-    break;
-  case SHADER_TYPE_GEOMETRY:
-    shaderType_ = EShLangGeometry;
-    break;
-  case SHADER_TYPE_FRAGMENT:
-    shaderType_ = EShLangFragment;
-    break;
-  case SHADER_TYPE_COMPUTE:
-    shaderType_ = EShLangCompute;
-    break;
-  default:
-    assert(0);
-    break;
-  }
-
-  glslang::TShader shader(shaderType_);
-
-  shader.setStrings(&glsl_code, 1);
-
-  int clientInputSemanticsVersion = 100;
-
-  auto vulkanClientVersion = glslang::EShTargetVulkan_1_0;
-  auto targetVersion = glslang::EShTargetSpv_1_0;
-
-  shader.setEnvInput(
-      glslang::EShSourceGlsl,
-      shaderType_,
-      glslang::EShClientVulkan,
-      clientInputSemanticsVersion);
-  shader.setEnvClient(glslang::EShClientVulkan, vulkanClientVersion);
-  shader.setEnvTarget(glslang::EshTargetSpv, targetVersion);
-
-  TBuiltInResource resources = glslang::DefaultTBuiltInResource;
-  EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
-
-  const int defaultVersion = 100;
-
-  DirStackFileIncluder includer;
-
-  // includer.pushExternalLocalDirectory(dir);
-
-  std::string preprocessedGLSL;
-
-  if (!shader.preprocess(
-          &resources,
-          defaultVersion,
-          ENoProfile,
-          false,
-          false,
-          messages,
-          &preprocessedGLSL,
-          includer)) {
-    ut_log_error(
-        "GLSL preprocessing failed: %s\n%s",
-        shader.getInfoLog(),
-        shader.getInfoDebugLog());
-    assert(0);
-  }
-
-  const char *preprocessedCStr = preprocessedGLSL.c_str();
-  shader.setStrings(&preprocessedCStr, 1);
-
-  if (!shader.parse(&resources, 100, false, messages)) {
-    ut_log_error(
-        "GLSL parsing failed: %s\n%s",
-        shader.getInfoLog(),
-        shader.getInfoDebugLog());
-    assert(0);
-  }
-
-  glslang::TProgram program;
-  program.addShader(&shader);
-
-  if (!program.link(messages)) {
-    ut_log_error(
-        "GLSL linking failed: %s\n%s",
-        shader.getInfoLog(),
-        shader.getInfoDebugLog());
-    assert(0);
-  }
-
-  std::vector<unsigned int> spirv;
-  spv::SpvBuildLogger logger;
-  glslang::SpvOptions spvOptions;
-  glslang::GlslangToSpv(
-      *program.getIntermediate(shaderType_), spirv, &logger, &spvOptions);
-
-  *code_size = spirv.size() * sizeof(uint32_t);
-
-  uint32_t *code = new uint32_t[spirv.size()];
-  memcpy(code, spirv.data(), *code_size);
-  return code;
-}
+static shaderc_compiler_t g_compiler;
 
 static inline VkShaderModule
 create_shader_module(const uint32_t *code, size_t code_size) {
@@ -141,24 +19,48 @@ create_shader_module(const uint32_t *code, size_t code_size) {
   return module;
 }
 
+void re_shader_init_compiler() {
+  g_compiler = shaderc_compiler_initialize();
+}
+
+void re_shader_destroy_compiler() {
+  shaderc_compiler_release(g_compiler);
+}
+
 void re_shader_init_glsl(
     re_shader_t *shader,
+    const char *vertex_path,
     const char *vertex_glsl_code,
+    const char *fragment_path,
     const char *fragment_glsl_code) {
-  size_t vertex_spirv_code_size, fragment_spirv_code_size;
+  // On the same, other or multiple simultaneous threads.
+  shaderc_compilation_result_t vertex_result = shaderc_compile_into_spv(
+      g_compiler,
+      vertex_glsl_code,
+      strlen(vertex_glsl_code),
+      shaderc_glsl_vertex_shader,
+      vertex_path,
+      "main",
+      NULL);
 
-  uint32_t *vertex_spirv_code = compile_glsl(
-      vertex_glsl_code, SHADER_TYPE_VERTEX, &vertex_spirv_code_size);
-  uint32_t *fragment_spirv_code = compile_glsl(
-      fragment_glsl_code, SHADER_TYPE_FRAGMENT, &fragment_spirv_code_size);
+  shaderc_compilation_result_t fragment_result = shaderc_compile_into_spv(
+      g_compiler,
+      fragment_glsl_code,
+      strlen(fragment_glsl_code),
+      shaderc_glsl_fragment_shader,
+      fragment_path,
+      "main",
+      NULL);
 
-  shader->vertex_module =
-      create_shader_module(vertex_spirv_code, vertex_spirv_code_size);
-  shader->fragment_module =
-      create_shader_module(fragment_spirv_code, fragment_spirv_code_size);
+  shader->vertex_module = create_shader_module(
+      (uint32_t *)shaderc_result_get_bytes(vertex_result),
+      shaderc_result_get_length(vertex_result));
+  shader->fragment_module = create_shader_module(
+      (uint32_t *)shaderc_result_get_bytes(fragment_result),
+      shaderc_result_get_length(fragment_result));
 
-  delete[] vertex_spirv_code;
-  delete[] fragment_spirv_code;
+  shaderc_result_release(vertex_result);
+  shaderc_result_release(fragment_result);
 }
 
 void re_shader_init_spirv(

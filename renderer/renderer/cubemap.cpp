@@ -306,12 +306,15 @@ static void bake_cubemap(
 
   re_pipeline_t pipeline;
 
-  re_shader_t shader;
-  char *vertex_code = ut_load_string_from_file("../shaders/bake_cubemap.vert");
-  char *fragment_code =
-      ut_load_string_from_file("../shaders/bake_cubemap.frag");
+  const char *vertex_path = "../shaders/bake_cubemap.vert";
+  const char *fragment_path = "../shaders/bake_cubemap.frag";
 
-  re_shader_init_glsl(&shader, vertex_code, fragment_code);
+  re_shader_t shader;
+  char *vertex_code = ut_load_string_from_file(vertex_path);
+  char *fragment_code = ut_load_string_from_file(fragment_path);
+
+  re_shader_init_glsl(
+      &shader, vertex_path, vertex_code, fragment_path, fragment_code);
 
   re_pipeline_init_graphics(
       &pipeline, canvas.render_target, shader, pipeline_params);

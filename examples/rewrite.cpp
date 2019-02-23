@@ -13,6 +13,7 @@
 int main() {
   re_window_t window;
   re_window_init(&window, "Re-write", 1600, 900);
+  re_shader_init_compiler();
 
   re_imgui_t imgui;
   re_imgui_init(&imgui, &window);
@@ -23,8 +24,8 @@ int main() {
   eg_init_pipeline(
       &pbr_pipeline,
       window.render_target,
-      "../shaders/model_pbr.vert",
-      "../shaders/model_pbr.frag",
+      "../shaders/pbr.vert",
+      "../shaders/pbr.frag",
       eg_standard_pipeline_parameters());
 
   re_pipeline_t skybox_pipeline;
@@ -146,6 +147,7 @@ int main() {
   re_pipeline_destroy(&pbr_pipeline);
   re_pipeline_destroy(&skybox_pipeline);
 
+  re_shader_destroy_compiler();
   re_imgui_destroy(&imgui);
   re_window_destroy(&window);
   re_context_destroy(&g_ctx);

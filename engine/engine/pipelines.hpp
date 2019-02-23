@@ -13,7 +13,8 @@ inline void eg_init_pipeline(
   char *vertex_code = ut_load_string_from_file(vertex_path);
   char *fragment_code = ut_load_string_from_file(fragment_path);
 
-  re_shader_init_glsl(&shader, vertex_code, fragment_code);
+  re_shader_init_glsl(
+      &shader, vertex_path, vertex_code, fragment_path, fragment_code);
 
   re_pipeline_init_graphics(pipeline, render_target, shader, params);
 

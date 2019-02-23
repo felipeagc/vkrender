@@ -1,7 +1,12 @@
+set(SHADERC_SKIP_TESTS ON)
+
 add_subdirectory(vma)
 add_subdirectory(stb_image)
 add_subdirectory(spirv-cross)
+add_subdirectory(SPIRV-Headers)
+add_subdirectory(SPIRV-Tools)
 add_subdirectory(glslang)
+add_subdirectory(shaderc)
 add_subdirectory(googletest)
 add_subdirectory(imgui)
 add_subdirectory(cgltf)

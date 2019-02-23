@@ -12,7 +12,6 @@ configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -pedantic -Werror-pointer-arith -Wextra -std=c++11")
 
 # Ccache
 find_program(CCACHE_PROGRAM ccache)
@@ -28,6 +27,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 add_subdirectory(thirdparty)
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -pedantic -Werror-pointer-arith -Wextra -std=c++11")
+
 add_subdirectory(vkm)
 add_subdirectory(util)
 add_subdirectory(renderer)
