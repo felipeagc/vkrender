@@ -10,9 +10,7 @@ void eg_environment_asset_init(
     const char **radiance_paths,
     const char *brdf_lut_path) {
   eg_asset_init_named(
-      &environment->asset,
-      (eg_asset_destructor_t)eg_environment_asset_destroy,
-      skybox_path);
+      &environment->asset, EG_ENVIRONMENT_ASSET_TYPE, skybox_path);
 
   re_cubemap_init_from_hdr_equirec(
       &environment->skybox_cubemap, skybox_path, width, height);

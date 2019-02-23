@@ -30,8 +30,9 @@ VkResult CreateDebugReportCallbackEXT(
     const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
     const VkAllocationCallbacks *pAllocator,
     VkDebugReportCallbackEXT *pCallback) {
-  auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(
-      instance, "vkCreateDebugReportCallbackEXT");
+  PFN_vkCreateDebugReportCallbackEXT func =
+      (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(
+          instance, "vkCreateDebugReportCallbackEXT");
   if (func != NULL) {
     return func(instance, pCreateInfo, pAllocator, pCallback);
   } else {
@@ -43,8 +44,9 @@ void DestroyDebugReportCallbackEXT(
     VkInstance instance,
     VkDebugReportCallbackEXT callback,
     const VkAllocationCallbacks *pAllocator) {
-  auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(
-      instance, "vkDestroyDebugReportCallbackEXT");
+  PFN_vkDestroyDebugReportCallbackEXT func =
+      (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(
+          instance, "vkDestroyDebugReportCallbackEXT");
   if (func != NULL) {
     func(instance, callback, pAllocator);
   }
@@ -578,20 +580,20 @@ VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx) {
 
 bool re_context_get_supported_depth_format(
     re_context_t *ctx, VkFormat *depthFormat) {
-  VkFormat depthFormats[] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
-                             VK_FORMAT_D32_SFLOAT,
-                             VK_FORMAT_D24_UNORM_S8_UINT,
-                             VK_FORMAT_D16_UNORM_S8_UINT,
-                             VK_FORMAT_D16_UNORM};
-  for (auto &format : depthFormats) {
+  VkFormat depth_formats[] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
+                              VK_FORMAT_D32_SFLOAT,
+                              VK_FORMAT_D24_UNORM_S8_UINT,
+                              VK_FORMAT_D16_UNORM_S8_UINT,
+                              VK_FORMAT_D16_UNORM};
+  for (uint32_t i = 0; i < ARRAYSIZE(depth_formats); i++) {
     VkFormatProperties formatProps;
     vkGetPhysicalDeviceFormatProperties(
-        ctx->physical_device, format, &formatProps);
+        ctx->physical_device, depth_formats[i], &formatProps);
 
     if (formatProps.optimalTilingFeatures &
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-      *depthFormat = format;
-      return format;
+      *depthFormat = depth_formats[i];
+      return depth_formats[i];
       return true;
     }
   }
@@ -612,8 +614,8 @@ void re_context_destroy(re_context_t *ctx) {
 
   vkDestroyCommandPool(ctx->device, ctx->graphics_command_pool, NULL);
 
-  for (auto &command_pool : ctx->thread_command_pools) {
-    vkDestroyCommandPool(ctx->device, command_pool, NULL);
+  for (uint32_t i = 0; i < ARRAYSIZE(ctx->thread_command_pools); i++) {
+    vkDestroyCommandPool(ctx->device, ctx->thread_command_pools[i], NULL);
   }
 
   vmaDestroyAllocator(ctx->gpu_allocator);

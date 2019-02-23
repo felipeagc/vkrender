@@ -2,7 +2,7 @@
 #include <engine/assets/environment_asset.hpp>
 #include <engine/assets/mesh_asset.hpp>
 #include <engine/camera.hpp>
-#include <engine/mesh.hpp>
+#include <engine/components/mesh_component.hpp>
 #include <engine/pbr.hpp>
 #include <engine/pipelines.hpp>
 #include <engine/systems/fps_camera_system.hpp>
@@ -86,8 +86,12 @@ int main() {
       eg_asset_alloc(&asset_manager, eg_pbr_material_asset_t);
   eg_pbr_material_asset_init(material, NULL, NULL, NULL, NULL, NULL);
 
-  EG_ADD_COMP_INIT(
-      &world, eg_world_add_entity(&world), eg_mesh_t, mesh_asset, material);
+  {
+    eg_entity_t ent = eg_world_add_entity(&world);
+    eg_world_add_comp(&world, ent, EG_MESH_COMPONENT_TYPE);
+    eg_mesh_component_init(
+        EG_GET_COMP(&world, eg_mesh_component_t, ent), mesh_asset, material);
+  }
 
   while (!window.should_close) {
     SDL_Event event;
@@ -130,8 +134,8 @@ int main() {
     eg_environment_bind(&world.environment, &window, &pbr_pipeline, 4);
 
     // Draw all meshes
-    EG_FOR_EVERY_COMP(&world, eg_mesh_t, mesh, {
-      eg_mesh_draw(mesh, &window, &pbr_pipeline);
+    EG_FOR_EVERY_COMP(&world, eg_mesh_component_t, mesh, {
+      eg_mesh_component_draw(mesh, &window, &pbr_pipeline);
     })
 
     re_imgui_draw(&imgui);

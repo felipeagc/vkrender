@@ -1,11 +1,18 @@
 #include "asset_manager.hpp"
-#include "asset.hpp"
+#include "assets/asset_types.hpp"
+#include "assets/environment_asset.hpp"
+#include "assets/mesh_asset.hpp"
+#include "assets/pbr_material_asset.hpp"
 #include <assert.h>
 #include <stdlib.h>
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
   // Allocator with 16k blocks
   ut_bump_allocator_init(&asset_manager->allocator, 2 << 13);
+
+  EG_REGISTER_ASSET(eg_environment_asset_t);
+  EG_REGISTER_ASSET(eg_mesh_asset_t);
+  EG_REGISTER_ASSET(eg_pbr_material_asset_t);
 
   asset_manager->asset_count = 0;
   asset_manager->assets =
@@ -34,12 +41,8 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
 
     if (asset == NULL)
       continue;
-    if (asset->destructor == NULL)
-      continue;
 
-    eg_asset_destructor_t destructor = asset->destructor;
-
-    destructor(asset);
+    eg_asset_destructors[asset->type](asset);
   }
 
   free(asset_manager->assets);

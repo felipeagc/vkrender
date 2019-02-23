@@ -134,11 +134,8 @@ void eg_fps_camera_system_update(
     if (camera->fov <= GOAL_FOV + 0.001f) {
       system->transitioning_fov = false;
       camera->fov = GOAL_FOV;
-      ut_log_info("Done transition");
     }
   }
-
-  // camera->fov = to_radians(lerp(camera->fov, GOAL_FOV, progress));
 
   eg_camera_update(camera, window);
 }

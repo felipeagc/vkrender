@@ -8,7 +8,7 @@ void eg_mesh_asset_init(
     uint32_t vertex_count,
     uint32_t *indices,
     uint32_t index_count) {
-  eg_asset_init(&mesh->asset, (eg_asset_destructor_t)eg_mesh_asset_destroy);
+  eg_asset_init(&mesh->asset, EG_MESH_ASSET_TYPE);
   mesh->index_count = index_count;
 
   size_t vertex_buffer_size = sizeof(re_vertex_t) * vertex_count;

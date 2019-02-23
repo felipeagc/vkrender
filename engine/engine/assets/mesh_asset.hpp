@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../asset.hpp"
 #include "../pbr.hpp"
+#include "asset_types.hpp"
 #include <renderer/buffer.hpp>
 #include <renderer/pipeline.hpp>
 

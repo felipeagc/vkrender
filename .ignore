@@ -1,8 +1,7 @@
-thirdparty/rapidjson
-thirdparty/fmt
-thirdparty/glm
 thirdparty/glslang
-thirdparty/spirv-cross
-thirdparty/tiny_gltf
+thirdparty/SPIRV-Cross
+thirdparty/SPIRV-Tools
+thirdparty/SPIRV-Headers
+thirdparty/shaderc
 thirdparty/googletest
 

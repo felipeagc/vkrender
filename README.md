@@ -1,6 +1,14 @@
 # VKRender
 
 ## TODO
+
+### Rewrite
+- [x] General purpose global allocator
+- [x] Decide on how to handle entities
+- [x] Basic shape rendering
+- [ ] Light billboard rendering
+- [ ] Gltf models with cgltf
+
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang
 - [x] Shader live refresh
@@ -9,14 +17,9 @@
 - [ ] File system utility functions
 - [ ] Configurable assets path
 
-### Camera
-- [x] Camera options
-- [x] Use quaternion for camera
-- [x] First person camera
-
 ### GLTF models
-- [x] Load glTF models
-- [x] Figure out UV flipping of GltfModels
+- [ ] Load glTF models
+- [ ] Figure out UV flipping of GltfModels
 - [ ] Animation
 - [ ] Alpha blending
 
@@ -31,16 +34,8 @@
 - [x] Occlusion maps
 - [ ] Normal maps
 
-### Mesh generation
-- [x] Shape asset
-- [ ] MeshComponent class
-
 ### Utilities
 - [ ] Noise
-
-### Lighting
-- [x] Multiple lights
-- [x] Add directional light (sun)
 
 ### Window
 - [ ] Better event system
@@ -50,16 +45,7 @@
 - [ ] Add SDL2 as a submodule
 
 ### Assets
-- [x] Make AssetManager thread safe
-- [x] Multi-threaded asset loading
-
-### ECS
-- [x] More organized system abstraction
-
-### FTL
-- [x] Stack allocator with regions
-- [x] String
-- [ ] String builder
+- [ ] Multi-threaded asset loading
 
 ### Portability
 - [ ] Windows file watcher

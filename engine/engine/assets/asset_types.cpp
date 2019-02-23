@@ -1,15 +1,17 @@
-#include "asset.hpp"
+#include "asset_types.hpp"
 #include <stdlib.h>
 #include <string.h>
 
-void eg_asset_init(eg_asset_t *asset, eg_asset_destructor_t destructor) {
+eg_asset_destructor_t eg_asset_destructors[EG_ASSET_TYPE_COUNT];
+
+void eg_asset_init(eg_asset_t *asset, eg_asset_type_t type) {
+  asset->type = type;
   asset->name = NULL;
-  asset->destructor = destructor;
 }
 
 void eg_asset_init_named(
-    eg_asset_t *asset, eg_asset_destructor_t destructor, const char *name) {
-  asset->destructor = destructor;
+    eg_asset_t *asset, eg_asset_type_t type, const char *name) {
+  asset->type = type;
   if (strlen(name) == 0) {
     asset->name = NULL;
   } else {

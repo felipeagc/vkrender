@@ -1,19 +1,22 @@
 set(
   ENGINE_SOURCES
   engine/world.cpp
+  engine/asset_manager.cpp
   engine/pipelines.cpp
   engine/pbr.cpp
 
   engine/camera.cpp
   engine/environment.cpp
-  engine/mesh.cpp
+
+  engine/components/component_types.cpp
+  engine/components/mesh_component.cpp
 
   engine/systems/fps_camera_system.cpp
 
-  engine/asset.cpp
-  engine/asset_manager.cpp
+  engine/assets/asset_types.cpp
   engine/assets/environment_asset.cpp
   engine/assets/mesh_asset.cpp
+  engine/assets/pbr_material_asset.cpp
   )
 
 add_library(

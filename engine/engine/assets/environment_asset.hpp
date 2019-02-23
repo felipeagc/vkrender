@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../asset.hpp"
+#include "asset_types.hpp"
 #include <renderer/cubemap.hpp>
 #include <renderer/texture.hpp>
 #include <stdint.h>

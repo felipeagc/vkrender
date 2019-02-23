@@ -1,6 +1,7 @@
 macro(add_example name)
   add_executable(${name} ${name}.cpp)
 
+  # TODO: not working:
   # target_compile_options(${name} PRIVATE -fsanitize=memory -fno-omit-frame-pointer)
   # target_link_options(${name} PRIVATE -fsanitize=memory -fno-omit-frame-pointer)
 
