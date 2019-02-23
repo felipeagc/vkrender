@@ -1,5 +1,7 @@
+set(SHADERC_SKIP_INSTALL ON)
 set(SHADERC_SKIP_TESTS ON)
 set(SPIRV_SKIP_TESTS ON)
+set(SKIP_SPIRV_TOOLS_INSTALL ON)
 
 add_subdirectory(vma)
 add_subdirectory(stb_image)

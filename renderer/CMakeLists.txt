@@ -44,12 +44,5 @@ target_link_libraries(
 
   PRIVATE
   stb_image
-  spirv-cross-core
-  spirv-cross-glsl
-  spirv-cross-cpp
-  spirv-cross-reflect
-  glslang
-  glslang-default-resource-limits
-  SPIRV
   shaderc
   )
