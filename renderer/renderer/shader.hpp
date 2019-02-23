@@ -11,7 +11,7 @@ void re_shader_init_compiler();
 
 void re_shader_destroy_compiler();
 
-void re_shader_init_glsl(
+bool re_shader_init_glsl(
     re_shader_t *shader,
     const char *vertex_path,
     const char *vertex_glsl_code,

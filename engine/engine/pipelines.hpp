@@ -3,7 +3,7 @@
 #include <renderer/pipeline.hpp>
 #include <util/file.h>
 
-inline void eg_init_pipeline(
+inline bool eg_init_pipeline(
     re_pipeline_t *pipeline,
     const re_render_target_t render_target,
     const char *vertex_path,
@@ -13,8 +13,10 @@ inline void eg_init_pipeline(
   char *vertex_code = ut_load_string_from_file(vertex_path);
   char *fragment_code = ut_load_string_from_file(fragment_path);
 
-  re_shader_init_glsl(
-      &shader, vertex_path, vertex_code, fragment_path, fragment_code);
+  if (!re_shader_init_glsl(
+          &shader, vertex_path, vertex_code, fragment_path, fragment_code)) {
+    return false;
+  }
 
   re_pipeline_init_graphics(pipeline, render_target, shader, params);
 
@@ -22,6 +24,8 @@ inline void eg_init_pipeline(
   free(fragment_code);
 
   re_shader_destroy(&shader);
+
+  return true;
 }
 
 re_pipeline_parameters_t eg_standard_pipeline_parameters();

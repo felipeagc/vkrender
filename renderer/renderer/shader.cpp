@@ -19,15 +19,11 @@ create_shader_module(const uint32_t *code, size_t code_size) {
   return module;
 }
 
-void re_shader_init_compiler() {
-  g_compiler = shaderc_compiler_initialize();
-}
+void re_shader_init_compiler() { g_compiler = shaderc_compiler_initialize(); }
 
-void re_shader_destroy_compiler() {
-  shaderc_compiler_release(g_compiler);
-}
+void re_shader_destroy_compiler() { shaderc_compiler_release(g_compiler); }
 
-void re_shader_init_glsl(
+bool re_shader_init_glsl(
     re_shader_t *shader,
     const char *vertex_path,
     const char *vertex_glsl_code,
@@ -43,6 +39,15 @@ void re_shader_init_glsl(
       "main",
       NULL);
 
+  if (shaderc_result_get_compilation_status(vertex_result) !=
+      shaderc_compilation_status_success) {
+    ut_log_error(
+        "Failed to compile vertex shader:\n%s\n",
+        shaderc_result_get_error_message(vertex_result));
+    shaderc_result_release(vertex_result);
+    return false;
+  }
+
   shaderc_compilation_result_t fragment_result = shaderc_compile_into_spv(
       g_compiler,
       fragment_glsl_code,
@@ -51,6 +56,16 @@ void re_shader_init_glsl(
       fragment_path,
       "main",
       NULL);
+
+  if (shaderc_result_get_compilation_status(fragment_result) !=
+      shaderc_compilation_status_success) {
+    ut_log_error(
+        "Failed to compile fragment shader:\n%s\n",
+        shaderc_result_get_error_message(fragment_result));
+    shaderc_result_release(vertex_result);
+    shaderc_result_release(fragment_result);
+    return false;
+  }
 
   shader->vertex_module = create_shader_module(
       (uint32_t *)shaderc_result_get_bytes(vertex_result),
@@ -61,6 +76,8 @@ void re_shader_init_glsl(
 
   shaderc_result_release(vertex_result);
   shaderc_result_release(fragment_result);
+
+  return true;
 }
 
 void re_shader_init_spirv(
