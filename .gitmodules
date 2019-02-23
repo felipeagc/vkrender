@@ -1,9 +1,0 @@
-[submodule "spirv-cross"]
-	path = thirdparty/spirv-cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross
-[submodule "glslang"]
-	path = thirdparty/glslang
-	url = https://github.com/KhronosGroup/glslang
-[submodule "googletest"]
-	path = thirdparty/googletest
-	url = https://github.com/google/googletest.git
