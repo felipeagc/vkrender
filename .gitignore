@@ -3,4 +3,6 @@ build-gcc/
 build-clang/
 build_gcc/
 build_clang/
+tags
 **/.cquery_cached_index
+**/.ccls-cache
