@@ -1,6 +1,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include "window.hpp"
+#include <util/array.h>
 #include <util/log.h>
 
 re_context_t g_ctx;

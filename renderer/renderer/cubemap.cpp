@@ -9,6 +9,7 @@
 #include <string.h>
 #include <util/file.h>
 #include <util/task_scheduler.h>
+#include <util/array.h>
 
 struct camera_uniform_t {
   mat4_t view;

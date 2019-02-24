@@ -4,6 +4,7 @@
 #include "util.hpp"
 #include <stdlib.h>
 #include <string.h>
+#include <util/array.h>
 
 void re_resource_set_layout_init(
     re_resource_set_layout_t *layout,

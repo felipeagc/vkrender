@@ -3,6 +3,7 @@
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>
+#include <util/array.h>
 
 void eg_camera_init(eg_camera_t *camera) {
   camera->near = 0.001f;

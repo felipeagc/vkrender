@@ -2,6 +2,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include "window.hpp"
+#include <util/array.h>
 
 static inline void create_color_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {

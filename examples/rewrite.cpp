@@ -9,6 +9,8 @@
 #include <engine/world.hpp>
 #include <imgui/imgui.h>
 #include <renderer/renderer.hpp>
+#include <util/array.h>
+#include <util/log.h>
 
 int main() {
   re_window_t window;

@@ -4,6 +4,7 @@
 #include <SDL2/SDL_vulkan.h>
 #include <util/log.h>
 #include <util/time.h>
+#include <util/array.h>
 
 static inline uint32_t
 get_swapchain_num_images(VkSurfaceCapabilitiesKHR *surface_capabilities) {

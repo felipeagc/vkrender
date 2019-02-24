@@ -7,6 +7,7 @@
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_vulkan.h>
 #include <util/log.h>
+#include <util/array.h>
 
 static inline void create_descriptor_pool(re_imgui_t *imgui) {
   VkDescriptorPoolSize imgui_pool_sizes[] = {

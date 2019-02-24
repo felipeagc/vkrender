@@ -9,8 +9,6 @@
     assert(result == VK_SUCCESS);                                              \
   } while (0)
 
-#define ARRAYSIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 void re_set_image_layout(
     VkCommandBuffer cmdbuffer,
     VkImage image,
