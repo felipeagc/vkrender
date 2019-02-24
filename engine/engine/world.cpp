@@ -1,5 +1,6 @@
 #include "world.hpp"
 #include <string.h>
+#include <util/log.h>
 
 static inline void eg_init_comps(eg_world_t *world, eg_component_type_t comp) {
   world->entities.components[comp].array =
@@ -19,7 +20,7 @@ void eg_world_init(
 
   for (uint32_t i = 0; i < EG_COMPONENT_TYPE_COUNT; i++) {
     ut_bitset_reset(
-        (uint8_t *)&world->entities.components[i].bitset, EG_MAX_ENTITIES);
+        world->entities.components[i].bitset.bytes, EG_MAX_ENTITIES);
   }
 }
 
@@ -27,7 +28,7 @@ eg_entity_t eg_world_add_entity(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     bool empty = true;
     for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-      if (ut_bitset_at((uint8_t *)&world->entities.components[c].bitset, e)) {
+      if (ut_bitset_at(world->entities.components[c].bitset.bytes, e)) {
         empty = false;
         break;
       }
@@ -46,16 +47,14 @@ void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity) {
     for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
       eg_component_destructors[c](
           &world->entities.components[c].array[entity * eg_component_sizes[c]]);
-      ut_bitset_set(
-          (uint8_t *)&world->entities.components[c].bitset, entity, true);
+      ut_bitset_set(world->entities.components[c].bitset.bytes, entity, true);
     }
   }
 }
 
 void *eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  ut_bitset_set(
-      (uint8_t *)&world->entities.components[comp].bitset, entity, true);
+  ut_bitset_set(world->entities.components[comp].bitset.bytes, entity, true);
   memset(
       &world->entities.components[comp]
            .array[entity * eg_component_sizes[comp]],
@@ -68,8 +67,7 @@ void *eg_world_add_comp(
 
 bool eg_world_has_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  return ut_bitset_at(
-      (uint8_t *)&world->entities.components[comp].bitset, entity);
+  return ut_bitset_at(world->entities.components[comp].bitset.bytes, entity);
 }
 
 void eg_world_remove_comp(
@@ -93,8 +91,7 @@ void eg_world_remove_comp(
              .array[entity * eg_component_sizes[comp]]);
   }
 
-  ut_bitset_set(
-      (uint8_t *)&world->entities.components[comp].bitset, entity, false);
+  ut_bitset_set(world->entities.components[comp].bitset.bytes, entity, false);
 }
 
 void eg_world_destroy(eg_world_t *world) {

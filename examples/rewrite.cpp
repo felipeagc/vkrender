@@ -93,6 +93,14 @@ int main() {
     eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
         &world, ent, EG_MESH_COMPONENT_TYPE);
     eg_mesh_component_init(mesh_comp, mesh_asset, material);
+
+  }
+
+  {
+    eg_entity_t ent = eg_world_add_entity(&world);
+    eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
+        &world, ent, EG_MESH_COMPONENT_TYPE);
+    eg_mesh_component_init(mesh_comp, mesh_asset, material);
   }
 
   while (!window.should_close) {
@@ -113,10 +121,25 @@ int main() {
 
     re_imgui_begin(&imgui);
 
-    if (ImGui::Begin("Hello!")) {
+    if (ImGui::Begin("Camera")) {
       float deg = to_degrees(world.camera.fov);
       ImGui::DragFloat("FOV", &deg, 0.1f);
       world.camera.fov = to_radians(deg);
+      ImGui::End();
+    }
+
+    if (ImGui::Begin("Meshes")) {
+      EG_FOR_EVERY_COMP(&world, eg_mesh_component_t, mesh, {
+        ImGui::PushID(e);
+
+        ImGui::Text("Entity: %d", e);
+        ImGui::DragFloat3("Position", mesh->model.uniform.transform.columns[3], 0.1f);
+        ImGui::DragFloat3(
+            "Local Position", mesh->local_model.uniform.transform.columns[3], 0.1f);
+        ImGui::Separator();
+
+        ImGui::PopID();
+      })
       ImGui::End();
     }
 
