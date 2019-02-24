@@ -93,7 +93,6 @@ int main() {
     eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
         &world, ent, EG_MESH_COMPONENT_TYPE);
     eg_mesh_component_init(mesh_comp, mesh_asset, material);
-
   }
 
   {
@@ -129,17 +128,26 @@ int main() {
     }
 
     if (ImGui::Begin("Meshes")) {
-      EG_FOR_EVERY_COMP(&world, eg_mesh_component_t, mesh, {
-        ImGui::PushID(e);
+      for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
+        if (eg_world_has_comp(&world, entity, EG_MESH_COMPONENT_TYPE)) {
+          eg_mesh_component_t *mesh =
+              EG_GET_COMP(&world, entity, eg_mesh_component_t);
 
-        ImGui::Text("Entity: %d", e);
-        ImGui::DragFloat3("Position", mesh->model.uniform.transform.columns[3], 0.1f);
-        ImGui::DragFloat3(
-            "Local Position", mesh->local_model.uniform.transform.columns[3], 0.1f);
-        ImGui::Separator();
+          ImGui::PushID(entity);
 
-        ImGui::PopID();
-      })
+          ImGui::Text("Entity: %d", entity);
+          ImGui::DragFloat3(
+              "Position", mesh->model.uniform.transform.columns[3], 0.1f);
+          ImGui::DragFloat3(
+              "Local Position",
+              mesh->local_model.uniform.transform.columns[3],
+              0.1f);
+          ImGui::Separator();
+
+          ImGui::PopID();
+        }
+      }
+
       ImGui::End();
     }
 
@@ -159,9 +167,14 @@ int main() {
     eg_environment_bind(&world.environment, &window, &pbr_pipeline, 4);
 
     // Draw all meshes
-    EG_FOR_EVERY_COMP(&world, eg_mesh_component_t, mesh, {
-      eg_mesh_component_draw(mesh, &window, &pbr_pipeline);
-    })
+    for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
+      if (eg_world_has_comp(&world, entity, EG_MESH_COMPONENT_TYPE)) {
+        eg_mesh_component_t *mesh =
+            EG_GET_COMP(&world, entity, eg_mesh_component_t);
+
+        eg_mesh_component_draw(mesh, &window, &pbr_pipeline);
+      }
+    }
 
     re_imgui_draw(&imgui);
 
