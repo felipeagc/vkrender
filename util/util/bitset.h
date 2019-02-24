@@ -17,13 +17,13 @@ inline bool ut_bitset_at(uint8_t *bitset, uint32_t pos) {
   uint32_t index = pos / 8;
   uint32_t bit = pos % 8;
 
-  return bitset[index] & (1 << (bit));
+  return (bitset[index] & (1UL << bit)) ? true : false;
 }
 
 inline void ut_bitset_set(uint8_t *bitset, uint32_t pos, bool val) {
   uint32_t index = pos / 8;
   uint32_t bit = pos % 8;
-  bitset[index] = (val ? 1 : 0) << bit;
+  bitset[index] |= (val ? 1UL : 0UL) << bit;
 }
 
 // Sets the bitset to zero
