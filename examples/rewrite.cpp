@@ -90,9 +90,9 @@ int main() {
 
   {
     eg_entity_t ent = eg_world_add_entity(&world);
-    eg_world_add_comp(&world, ent, EG_MESH_COMPONENT_TYPE);
-    eg_mesh_component_init(
-        EG_GET_COMP(&world, eg_mesh_component_t, ent), mesh_asset, material);
+    eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
+        &world, ent, EG_MESH_COMPONENT_TYPE);
+    eg_mesh_component_init(mesh_comp, mesh_asset, material);
   }
 
   while (!window.should_close) {

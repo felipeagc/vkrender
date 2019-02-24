@@ -8,32 +8,15 @@
 
 #define EG_MAX_ENTITIES 128
 
-#define EG_GET_ALL_COMPS(world, comp_type)                                     \
-  ((comp_type *)(world)->entities.components[EG_COMP_TYPE(comp_type)].array)
-
-#define EG_GET_COMP(world, comp_type, entity)                                  \
-  (&EG_GET_ALL_COMPS(world, comp_type)[entity])
-
 #define EG_FOR_EVERY_COMP(world, comp_type, comp_var, ...)                     \
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {                             \
     if (eg_world_has_comp(world, e, EG_COMP_TYPE(comp_type))) {                \
-      comp_type *comp_var = EG_GET_COMP(world, comp_type, e);                  \
+      comp_type *comp_var =                                                    \
+          &((comp_type *)(world)                                               \
+                ->entities.components[EG_COMP_TYPE(comp_type)]                 \
+                .array)[e];                                                    \
       __VA_ARGS__                                                              \
     }                                                                          \
-  }
-
-#define EG_ADD_COMP(world, entity, comp_type)                                  \
-  {                                                                            \
-    eg_entity_t e = entity;                                                    \
-    eg_world_add_comp(world, e, EG_COMP_TYPE(comp_type));                      \
-  }
-
-#define EG_ADD_COMP_INIT(world, entity, comp_type, ...)                        \
-  {                                                                            \
-    eg_entity_t e = entity;                                                    \
-    EG_COMP_INIT(comp_type)                                                    \
-    (EG_GET_COMP(world, comp_type, e), __VA_ARGS__);                           \
-    eg_world_add_comp(world, e, EG_COMP_TYPE(comp_type));                      \
   }
 
 typedef uint32_t eg_entity_t;
@@ -67,7 +50,7 @@ eg_entity_t eg_world_add_entity(eg_world_t *world);
 
 void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity);
 
-void eg_world_add_comp(
+void *eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp);
 
 bool eg_world_has_comp(

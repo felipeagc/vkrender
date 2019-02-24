@@ -2,9 +2,19 @@
 
 #include <stddef.h>
 
+/*
+  To add a new asset type:
+  1. Add it to the eg_asset_type_t enum
+  2. Add the EG_ASSET macros for it
+  3. Register it in asset_manager.hpp
+  4. Make sure to have the first member in the specific asset struct be an
+     eg_asset_t and to initialize/destroy it in the specific asset's
+     initialization/destruction functions
+ */
+
 typedef void (*eg_asset_destructor_t)(void *);
 
-typedef enum {
+typedef enum eg_asset_type_t {
   EG_ENVIRONMENT_ASSET_TYPE,
   EG_MESH_ASSET_TYPE,
   EG_PBR_MATERIAL_ASSET_TYPE,
@@ -13,27 +23,10 @@ typedef enum {
 
 extern eg_asset_destructor_t eg_asset_destructors[EG_ASSET_TYPE_COUNT];
 
-#define EG_REGISTER_ASSET(asset)                                               \
-  {                                                                            \
-    eg_asset_destructors[EG_ASSET_TYPE(asset)] =                               \
-        (eg_asset_destructor_t)EG_ASSET_DESTROY(asset);                        \
-  }
-
-#define EG_ASSET_TYPE(asset) EG_ASSET_TYPE_##asset
-#define EG_ASSET_INIT(asset) EG_ASSET_INIT_##asset
-#define EG_ASSET_DESTROY(asset) EG_ASSET_DESTROY_##asset
-
-#define EG_ASSET_TYPE_eg_environment_asset_t EG_ENVIRONMENT_ASSET_TYPE
-#define EG_ASSET_INIT_eg_environment_asset_t eg_environment_asset_init
-#define EG_ASSET_DESTROY_eg_environment_asset_t eg_environment_asset_destroy
-
-#define EG_ASSET_TYPE_eg_mesh_asset_t EG_MESH_ASSET_TYPE
-#define EG_ASSET_INIT_eg_mesh_asset_t eg_mesh_asset_init
-#define EG_ASSET_DESTROY_eg_mesh_asset_t eg_mesh_asset_destroy
-
-#define EG_ASSET_TYPE_eg_pbr_material_asset_t EG_PBR_MATERIAL_ASSET_TYPE
-#define EG_ASSET_INIT_eg_pbr_material_asset_t eg_pbr_material_asset_init
-#define EG_ASSET_DESTROY_eg_pbr_material_asset_t eg_pbr_material_asset_destroy
+inline void eg_register_asset(
+    eg_asset_type_t asset_type, eg_asset_destructor_t destructor) {
+  eg_asset_destructors[asset_type] = destructor;
+}
 
 typedef struct eg_asset_t {
   eg_asset_type_t type;

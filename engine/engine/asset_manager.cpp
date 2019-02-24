@@ -10,17 +10,18 @@ void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
   // Allocator with 16k blocks
   ut_bump_allocator_init(&asset_manager->allocator, 2 << 13);
 
-  EG_REGISTER_ASSET(eg_environment_asset_t);
-  EG_REGISTER_ASSET(eg_mesh_asset_t);
-  EG_REGISTER_ASSET(eg_pbr_material_asset_t);
+  eg_register_asset(
+      EG_ENVIRONMENT_ASSET_TYPE,
+      (eg_asset_destructor_t)eg_environment_asset_destroy);
+  eg_register_asset(
+      EG_MESH_ASSET_TYPE, (eg_asset_destructor_t)eg_mesh_asset_destroy);
+  eg_register_asset(
+      EG_PBR_MATERIAL_ASSET_TYPE,
+      (eg_asset_destructor_t)eg_pbr_material_asset_destroy);
 
   asset_manager->asset_count = 0;
   asset_manager->assets =
-      (eg_asset_t **)malloc(sizeof(eg_asset_t *) * EG_MAX_ASSETS);
-
-  for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
-    asset_manager->assets[i] = NULL;
-  }
+      (eg_asset_t **)calloc(EG_MAX_ASSETS, sizeof(eg_asset_t *));
 }
 
 eg_asset_t *eg_asset_manager_alloc(
