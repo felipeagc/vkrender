@@ -16,7 +16,7 @@ vec2 pos[6] = vec2[](
   vec2(-0.5, 0.5)
 );
 
-vec2 texCoords[6] = vec2[](
+vec2 tex_coords[6] = vec2[](
   // Bottom left
   vec2(0.0, 0.0),
   // Bottom right
@@ -47,18 +47,18 @@ layout (push_constant) uniform BillboardUniform {
   vec4 color;
 } billboard;
 
-layout (location = 0) out vec2 texCoords0;
+layout (location = 0) out vec2 tex_coords0;
 
 void main() {
-  mat4 invView = inverse(camera_ubo.view);
-  vec3 cameraRightWorldSpace = vec3(invView[0][0], invView[0][1], invView[0][2]);
-  vec3 cameraUpWorldSpace = -vec3(invView[1][0], invView[1][1], invView[1][2]);
+  mat4 inv_view = inverse(camera_ubo.view);
+  vec3 camera_right_world_space = vec3(inv_view[0][0], inv_view[0][1], inv_view[0][2]);
+  vec3 camera_up_world_space = -vec3(inv_view[1][0], inv_view[1][1], inv_view[1][2]);
 
-  vec3 worldPos =
-    cameraRightWorldSpace * pos[gl_VertexIndex].x +
-    cameraUpWorldSpace * pos[gl_VertexIndex].y;
+  vec3 world_pos =
+    camera_right_world_space * pos[gl_VertexIndex].x +
+    camera_up_world_space * pos[gl_VertexIndex].y;
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * billboard.model * vec4(worldPos, 1.0);
-  texCoords0 = texCoords[gl_VertexIndex];
-  texCoords0.y = 1.0 - texCoords0.y;
+  gl_Position = camera_ubo.proj * camera_ubo.view * billboard.model * vec4(world_pos, 1.0);
+  tex_coords0 = tex_coords[gl_VertexIndex];
+  tex_coords0.y = 1.0 - tex_coords0.y;
 }

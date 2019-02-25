@@ -1,19 +1,19 @@
 #version 450
 
-layout (location = 0) in vec3 texCoords;
+layout (location = 0) in vec3 tex_coords;
 
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
-  vec3 sunDirection;
+  vec3 sun_direction;
   float exposure;
-  vec4 sunColor;
+  vec4 sun_color;
 } environment;
 
-layout (set = 1, binding = 1) uniform samplerCube envMap;
+layout (set = 1, binding = 1) uniform samplerCube env_map;
 
-layout (location = 0) out vec4 outColor;
+layout (location = 0) out vec4 out_color;
 
 void main() {
-  outColor = pow(vec4(texture(envMap, texCoords).rgb, 1.0), vec4(2.2));
-  outColor = vec4(1.0) - exp(-outColor * environment.exposure);
-  outColor = pow(outColor, vec4(1.0/2.2));
+  out_color = pow(vec4(texture(env_map, tex_coords).rgb, 1.0), vec4(2.2));
+  out_color = vec4(1.0) - exp(-out_color * environment.exposure);
+  out_color = pow(out_color, vec4(1.0/2.2));
 }

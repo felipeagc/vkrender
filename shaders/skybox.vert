@@ -53,10 +53,10 @@ layout(set = 0, binding = 0) uniform CameraUniform {
   mat4 proj;
 } camera_ubo;
 
-layout(location = 0) out vec3 texCoords0;
+layout(location = 0) out vec3 tex_coords0;
 
 void main() {
-  texCoords0 = pos[gl_VertexIndex];
+  tex_coords0 = pos[gl_VertexIndex];
 
   mat4 view = camera_ubo.view;
   view[3][0] = 0.0;

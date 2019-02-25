@@ -53,9 +53,9 @@ layout (push_constant) uniform CameraPushConstant {
   mat4 proj;
 } camera;
 
-layout (location = 0) out vec3 worldPos;
+layout (location = 0) out vec3 world_pos;
 
 void main() {
-  worldPos = pos[gl_VertexIndex];
-  gl_Position = camera.proj * camera.view * vec4(worldPos, 1.0);
+  world_pos = pos[gl_VertexIndex];
+  gl_Position = camera.proj * camera.view * vec4(world_pos, 1.0);
 }

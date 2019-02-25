@@ -2,7 +2,7 @@
 
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec3 normal;
-layout (location = 2) in vec2 texCoords;
+layout (location = 2) in vec2 tex_coords;
 
 out gl_PerVertex {
   vec4 gl_Position;
@@ -21,19 +21,19 @@ layout (set = 3, binding = 0) uniform ModelUniform {
   mat4 matrix;
 } model_ubo;
 
-layout (location = 0) out vec2 texCoords0;
-layout (location = 1) out vec3 worldPos;
+layout (location = 0) out vec2 tex_coords0;
+layout (location = 1) out vec3 world_pos;
 layout (location = 2) out vec3 normal0;
 
 void main() {
-  texCoords0 = texCoords;
+  tex_coords0 = tex_coords;
 
   mat4 model = model_ubo.matrix * local_model_ubo.matrix;
 
-  vec4 locPos = model * vec4(pos, 1.0);
+  vec4 loc_pos = model * vec4(pos, 1.0);
   normal0 = mat3(transpose(inverse(model))) * normal;
 
-  worldPos = locPos.xyz / locPos.w;
+  world_pos = loc_pos.xyz / loc_pos.w;
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * vec4(worldPos, 1.0);
+  gl_Position = camera_ubo.proj * camera_ubo.view * vec4(world_pos, 1.0);
 }
