@@ -5,19 +5,31 @@
 #include <stb_image.h>
 #include <string.h>
 
+static inline VkFormat convert_format(re_format_t format) {
+  switch (format) {
+  case RE_FORMAT_RGBA8_UNORM:
+    return VK_FORMAT_R8G8B8A8_UNORM;
+  case RE_FORMAT_R16_SFLOAT:
+    return VK_FORMAT_R16_SFLOAT;
+  default:
+    return VK_FORMAT_UNDEFINED;
+  }
+}
+
 static inline void create_image(
     VkImage *image,
     VmaAllocation *allocation,
     VkImageView *imageView,
     VkSampler *sampler,
+    VkFormat format,
     uint32_t width,
     uint32_t height) {
   VkImageCreateInfo imageCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       NULL,
-      0,                        // flags
-      VK_IMAGE_TYPE_2D,         // imageType
-      VK_FORMAT_R8G8B8A8_UNORM, // format
+      0,                // flags
+      VK_IMAGE_TYPE_2D, // imageType
+      format,           // format
       {
           width,               // width
           height,              // height
@@ -30,7 +42,7 @@ static inline void create_image(
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // usage
       VK_SHARING_MODE_EXCLUSIVE, // sharingMode
       0,                         // queueFamilyIndexCount
-      NULL,                   // pQueueFamilyIndices
+      NULL,                      // pQueueFamilyIndices
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
@@ -48,10 +60,10 @@ static inline void create_image(
   VkImageViewCreateInfo imageViewCreateInfo = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
       NULL,
-      0,                        // flags
-      *image,                   // image
-      VK_IMAGE_VIEW_TYPE_2D,    // viewType
-      VK_FORMAT_R8G8B8A8_UNORM, // format
+      0,                     // flags
+      *image,                // image
+      VK_IMAGE_VIEW_TYPE_2D, // viewType
+      format,                // format
       {
           VK_COMPONENT_SWIZZLE_IDENTITY, // r
           VK_COMPONENT_SWIZZLE_IDENTITY, // g
@@ -67,8 +79,8 @@ static inline void create_image(
       },                             // subresourceRange
   };
 
-  VK_CHECK(vkCreateImageView(
-      g_ctx.device, &imageViewCreateInfo, NULL, imageView));
+  VK_CHECK(
+      vkCreateImageView(g_ctx.device, &imageViewCreateInfo, NULL, imageView));
 
   VkSamplerCreateInfo samplerCreateInfo = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -99,7 +111,7 @@ bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
   stbi_uc *pixels =
       stbi_load(path, &iwidth, &iheight, &channels, STBI_rgb_alpha);
 
-  size_t imageSize = (size_t)(iwidth * iheight * 4);
+  size_t imageSize = (size_t)(iwidth * iheight * channels);
 
   uint32_t width = (uint32_t)iwidth;
   uint32_t height = (uint32_t)iheight;
@@ -108,7 +120,18 @@ bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
     return false;
   }
 
-  re_texture_init(texture, pixels, imageSize, width, height);
+  re_format_t format;
+
+  switch (channels) {
+  case 4:
+    format = RE_FORMAT_RGBA8_UNORM;
+    break;
+  default:
+    stbi_image_free(pixels);
+    return false;
+  }
+
+  re_texture_init(texture, pixels, imageSize, width, height, format);
 
   stbi_image_free(pixels);
 
@@ -120,7 +143,8 @@ void re_texture_init(
     const uint8_t *data,
     const size_t data_size,
     const uint32_t width,
-    const uint32_t height) {
+    const uint32_t height,
+    re_format_t format) {
   texture->width = width;
   texture->height = height;
 
@@ -129,6 +153,7 @@ void re_texture_init(
       &texture->allocation,
       &texture->image_view,
       &texture->sampler,
+      convert_format(format),
       texture->width,
       texture->height);
 

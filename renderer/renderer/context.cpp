@@ -533,8 +533,10 @@ void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR surface) {
 
   uint8_t white[] = {255, 255, 255, 255};
   uint8_t black[] = {0, 0, 0, 255};
-  re_texture_init(&ctx->white_texture, white, sizeof(white), 1, 1);
-  re_texture_init(&ctx->black_texture, black, sizeof(black), 1, 1);
+  re_texture_init(
+      &ctx->white_texture, white, sizeof(white), 1, 1, RE_FORMAT_RGBA8_UNORM);
+  re_texture_init(
+      &ctx->black_texture, black, sizeof(black), 1, 1, RE_FORMAT_RGBA8_UNORM);
 }
 
 VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx) {
