@@ -7,9 +7,9 @@
 #include "util.hpp"
 #include <stb_image.h>
 #include <string.h>
+#include <util/array.h>
 #include <util/file.h>
 #include <util/task_scheduler.h>
-#include <util/array.h>
 
 struct camera_uniform_t {
   mat4_t view;
@@ -576,6 +576,12 @@ void re_cubemap_init_from_hdr_equirec(
 
   bake_cubemap(
       path, cubemap->image, VK_FORMAT_R32G32B32A32_SFLOAT, width, height);
+
+  cubemap->descriptor = VkDescriptorImageInfo{
+      cubemap->sampler,
+      cubemap->image_view,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+  };
 }
 
 void re_cubemap_init_from_hdr_equirec_mipmaps(
@@ -608,10 +614,8 @@ void re_cubemap_init_from_hdr_equirec_mipmaps(
         height / pow(2, i),
         i);
   }
-}
 
-VkDescriptorImageInfo re_cubemap_descriptor(const re_cubemap_t *cubemap) {
-  return {
+  cubemap->descriptor = VkDescriptorImageInfo{
       cubemap->sampler,
       cubemap->image_view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

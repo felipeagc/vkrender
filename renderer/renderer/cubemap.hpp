@@ -9,6 +9,8 @@ typedef struct re_cubemap_t {
   VkImageView image_view;
   VkSampler sampler;
 
+  VkDescriptorImageInfo descriptor;
+
   uint32_t width;
   uint32_t height;
 
@@ -27,7 +29,5 @@ void re_cubemap_init_from_hdr_equirec_mipmaps(
     const uint32_t path_count,
     const uint32_t width,
     const uint32_t height);
-
-VkDescriptorImageInfo re_cubemap_descriptor(const re_cubemap_t *cubemap);
 
 void re_cubemap_destroy(re_cubemap_t *cubemap);
