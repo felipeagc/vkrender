@@ -71,6 +71,15 @@ bool eg_world_has_comp(
   return ut_bitset_at(world->component_bitsets[comp].bytes, entity);
 }
 
+bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity) {
+  for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
+    if (eg_world_has_comp(world, entity, (eg_component_type_t)c)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void eg_world_remove_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
   if (!eg_world_has_comp(world, entity, comp)) {

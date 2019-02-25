@@ -2,14 +2,13 @@
 
 #include "camera.hpp"
 #include "components/component_types.hpp"
-#include "components/mesh_component.hpp"
 #include "environment.hpp"
 #include <util/bitset.h>
 
 #define EG_MAX_ENTITIES 128
 
 #define EG_GET_COMP(world, entity, comp_type)                                  \
-  ((comp_type *)&(world)->components[EG_COMP_TYPE(                               \
+  ((comp_type *)&(world)->components[EG_COMP_TYPE(                             \
       comp_type)][entity * eg_component_sizes[EG_COMP_TYPE(comp_type)]]);
 
 typedef uint32_t eg_entity_t;
@@ -40,6 +39,8 @@ void *eg_world_add_comp(
 
 bool eg_world_has_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp);
+
+bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity);
 
 void eg_world_remove_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp);

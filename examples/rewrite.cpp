@@ -3,6 +3,8 @@
 #include <engine/assets/mesh_asset.hpp>
 #include <engine/camera.hpp>
 #include <engine/components/mesh_component.hpp>
+#include <engine/components/transform_component.hpp>
+#include <engine/inspector.hpp>
 #include <engine/pbr.hpp>
 #include <engine/pipelines.hpp>
 #include <engine/systems/fps_camera_system.hpp>
@@ -90,6 +92,10 @@ int main() {
 
   {
     eg_entity_t ent = eg_world_add_entity(&world);
+    eg_transform_component_t *transform_comp =
+        (eg_transform_component_t *)eg_world_add_comp(
+            &world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+    eg_transform_component_init(transform_comp);
     eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
         &world, ent, EG_MESH_COMPONENT_TYPE);
     eg_mesh_component_init(mesh_comp, mesh_asset, material);
@@ -97,6 +103,10 @@ int main() {
 
   {
     eg_entity_t ent = eg_world_add_entity(&world);
+    eg_transform_component_t *transform_comp =
+        (eg_transform_component_t *)eg_world_add_comp(
+            &world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+    eg_transform_component_init(transform_comp);
     eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
         &world, ent, EG_MESH_COMPONENT_TYPE);
     eg_mesh_component_init(mesh_comp, mesh_asset, material);
@@ -120,36 +130,7 @@ int main() {
 
     re_imgui_begin(&imgui);
 
-    if (ImGui::Begin("Camera")) {
-      float deg = to_degrees(world.camera.fov);
-      ImGui::DragFloat("FOV", &deg, 0.1f);
-      world.camera.fov = to_radians(deg);
-      ImGui::End();
-    }
-
-    if (ImGui::Begin("Meshes")) {
-      for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
-        if (eg_world_has_comp(&world, entity, EG_MESH_COMPONENT_TYPE)) {
-          eg_mesh_component_t *mesh =
-              EG_GET_COMP(&world, entity, eg_mesh_component_t);
-
-          ImGui::PushID(entity);
-
-          ImGui::Text("Entity: %d", entity);
-          ImGui::DragFloat3(
-              "Position", mesh->model.uniform.transform.columns[3], 0.1f);
-          ImGui::DragFloat3(
-              "Local Position",
-              mesh->local_model.uniform.transform.columns[3],
-              0.1f);
-          ImGui::Separator();
-
-          ImGui::PopID();
-        }
-      }
-
-      ImGui::End();
-    }
+    eg_draw_inspector(&world, &asset_manager);
 
     re_imgui_end(&imgui);
 
@@ -168,10 +149,15 @@ int main() {
 
     // Draw all meshes
     for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
-      if (eg_world_has_comp(&world, entity, EG_MESH_COMPONENT_TYPE)) {
+      if (eg_world_has_comp(&world, entity, EG_MESH_COMPONENT_TYPE) &&
+          eg_world_has_comp(&world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
         eg_mesh_component_t *mesh =
             EG_GET_COMP(&world, entity, eg_mesh_component_t);
+        eg_transform_component_t *transform =
+            EG_GET_COMP(&world, entity, eg_transform_component_t);
 
+        mesh->model.uniform.transform =
+            eg_transform_component_to_mat4(transform);
         eg_mesh_component_draw(mesh, &window, &pbr_pipeline);
       }
     }

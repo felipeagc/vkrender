@@ -2,6 +2,7 @@ set(
   ENGINE_SOURCES
   engine/world.cpp
   engine/asset_manager.cpp
+  engine/inspector.cpp
   engine/pipelines.cpp
   engine/pbr.cpp
 
