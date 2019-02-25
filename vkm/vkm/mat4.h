@@ -5,18 +5,9 @@ extern "C" {
 #endif
 
 #include "common.h"
-#include "vec3.h"
-#include "vec4.h"
+#include "types.h"
 #include <math.h>
 #include <xmmintrin.h>
-
-typedef union VKM_ALIGN(16) mat4_t {
-  float columns[4][4];
-  float elems[16];
-#ifdef VKM_USE_SSE
-  __m128 sse_columns[4];
-#endif
-} mat4_t;
 
 inline mat4_t mat4_zero() {
   mat4_t mat = {{
@@ -185,7 +176,7 @@ inline mat4_t mat4_mul(mat4_t left, mat4_t right) {
   return result;
 }
 
-// @note: compatible with glm::perspective
+// @NOTE: compatible with glm::perspective
 inline void mat4_perspective_to(
     mat4_t *res, float fovy, float aspect_ratio, float znear, float zfar) {
   *res = mat4_diagonal(0.0f);
@@ -205,7 +196,7 @@ mat4_perspective(float fovy, float aspect_ratio, float znear, float zfar) {
   return mat;
 }
 
-// @note: compatible with glm::lookAt
+// @NOTE: compatible with glm::lookAt
 inline void mat4_look_at_to(mat4_t *res, vec3_t eye, vec3_t center, vec3_t up) {
   vec3_t f = vec3_normalize(vec3_sub(center, eye));
   vec3_t s = vec3_normalize(vec3_cross(f, up));
@@ -236,48 +227,80 @@ inline mat4_t mat4_look_at(vec3_t eye, vec3_t center, vec3_t up) {
   return result;
 }
 
-// @todo: make compatible with glm version
+inline void mat4_to_quat_to(quat_t *res, mat4_t mat) {
+  float trace = mat.columns[0][0] + mat.columns[1][1] + mat.columns[2][2];
+  if (trace > 0.0f) {
+    float s = sqrt(1.0f + trace) * 2.0f;
+    res->w = 0.25f * s;
+    res->x = (mat.columns[1][2] - mat.columns[2][1]) / s;
+    res->y = (mat.columns[2][0] - mat.columns[0][2]) / s;
+    res->z = (mat.columns[0][1] - mat.columns[1][0]) / s;
+  } else if (mat.columns[0][0] > mat.columns[1][1] && mat.columns[0][0] > mat.columns[2][2]) {
+    float s = sqrt(1.0f + mat.columns[0][0] - mat.columns[1][1] - mat.columns[2][2]) * 2.0f;
+    res->w = (mat.columns[1][2] - mat.columns[2][1]) / s;
+    res->x = 0.25f * s;
+    res->y = (mat.columns[1][0] + mat.columns[0][1]) / s;
+    res->z = (mat.columns[2][0] + mat.columns[0][2]) / s;
+  } else if (mat.columns[1][1] > mat.columns[2][2]) {
+    float s = sqrt(1.0f + mat.columns[1][1] - mat.columns[0][0] - mat.columns[2][2]) * 2.0f;
+    res->w = (mat.columns[2][0] - mat.columns[0][2]) / s;
+    res->x = (mat.columns[1][0] + mat.columns[0][1]) / s;
+    res->y = 0.25f * s;
+    res->z = (mat.columns[2][1] + mat.columns[1][2]) / s;
+  } else {
+    float s = sqrt(1.0f + mat.columns[2][2] - mat.columns[0][0] - mat.columns[1][1]) * 2.0f;
+    res->w = (mat.columns[0][1] - mat.columns[1][0]) / s;
+    res->x = (mat.columns[2][0] + mat.columns[0][2]) / s;
+    res->y = (mat.columns[2][1] + mat.columns[1][2]) / s;
+    res->z = 0.25f * s;
+  }
+}
+
+inline quat_t mat4_to_quat(mat4_t mat) {
+  quat_t quat;
+  mat4_to_quat_to(&quat, mat);
+  return quat;
+}
+
+// @TODO: make compatible with glm version
 inline void mat4_translate_to(mat4_t *res, mat4_t mat, vec3_t translation) {
-  *res = mat4_identity();
+  *res = mat;
 
-  vec4_t c3 = vec4_zero();
-  c3 = vec4_add(
-      c3,
-      vec4_t{mat.columns[0][0] * translation.x,
-             mat.columns[0][1] * translation.x,
-             mat.columns[0][2] * translation.x,
-             mat.columns[0][3] * translation.x});
-  c3 = vec4_add(
-      c3,
-      vec4_t{mat.columns[1][0] * translation.y,
-             mat.columns[1][1] * translation.y,
-             mat.columns[1][2] * translation.y,
-             mat.columns[1][3] * translation.y});
-  c3 = vec4_add(
-      c3,
-      vec4_t{mat.columns[2][0] * translation.z,
-             mat.columns[2][1] * translation.z,
-             mat.columns[2][2] * translation.z,
-             mat.columns[2][3] * translation.z});
-
-  c3 = vec4_add(
-      c3,
-      vec4_t{
-          mat.columns[3][0],
-          mat.columns[3][1],
-          mat.columns[3][2],
-          mat.columns[3][3],
-      });
-
-  res->columns[3][0] = c3.x;
-  res->columns[3][1] = c3.y;
-  res->columns[3][2] = c3.z;
-  res->columns[3][3] = c3.w;
+  res->columns[3][0] += translation.x;
+  res->columns[3][1] += translation.y;
+  res->columns[3][2] += translation.z;
 }
 
 inline mat4_t mat4_translate(mat4_t mat, vec3_t translation) {
   mat4_t res;
   mat4_translate_to(&res, mat, translation);
+  return res;
+}
+
+// @TODO: make compatible with glm version
+inline void mat4_scale_to(mat4_t *res, mat4_t mat, vec3_t scale) {
+  *res = mat;
+  res->columns[0][0] *= scale.x;
+  res->columns[1][1] *= scale.y;
+  res->columns[2][2] *= scale.z;
+}
+
+inline mat4_t mat4_scale(mat4_t mat, vec3_t scale) {
+  mat4_t res;
+  mat4_scale_to(&res, mat, scale);
+  return res;
+}
+
+extern mat4_t quat_to_mat4(quat_t left);
+
+// @TODO: make compatible with glm version
+inline void mat4_rotate_to(mat4_t *res, mat4_t mat, quat_t rotation) {
+  *res = mat4_mul(mat, quat_to_mat4(rotation));
+}
+
+inline mat4_t mat4_rotate(mat4_t mat, quat_t rotation) {
+  mat4_t res;
+  mat4_rotate_to(&res, mat, rotation);
   return res;
 }
 

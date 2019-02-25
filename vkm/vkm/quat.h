@@ -5,34 +5,12 @@ extern "C" {
 #endif
 
 #include "common.h"
-#include "mat4.h"
-#include "vec3.h"
+#include "types.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 
-typedef struct quat_t {
-  float x, y, z, w;
-} quat_t;
-
-// @todo: make compatible with glm version
-inline void quat_from_axis_angle_to(quat_t *res, vec3_t axis, float angle) {
-  float axis_norm = sqrt(vec3_dot(axis, axis));
-  float sine_of_rotation = sin(angle / 2.0f);
-  vec3_t rotated_vector = vec3_muls(axis, sine_of_rotation);
-
-  res->w = cos(angle / 2.0f);
-
-  vec3_divs_to((vec3_t *)&res->x, rotated_vector, axis_norm);
-}
-
-inline quat_t quat_from_axis_angle(vec3_t axis, float angle) {
-  quat_t quat;
-  quat_from_axis_angle_to(&quat, axis, angle);
-  return quat;
-}
-
-// @todo: make compatible with glm version
+// @TODO: make compatible with glm version
 inline void quat_dot_to(float *res, quat_t left, quat_t right) {
   *res = (left.x * right.x) + (left.y * right.y) + (left.z * right.z) +
          (left.w * right.w);
@@ -57,7 +35,7 @@ inline quat_t quat_divs(quat_t left, float right) {
   return quat;
 }
 
-// @todo: make compatible with glm version
+// @TODO: make compatible with glm version
 inline void quat_normalize_to(quat_t *res, quat_t left) {
   float length = sqrt(quat_dot(left, left));
   *res = quat_divs(left, length);
@@ -69,7 +47,37 @@ inline quat_t quat_normalize(quat_t left) {
   return quat;
 }
 
-// @todo: make compatible with glm version
+// @TODO: make compatible with glm version
+inline void quat_from_axis_angle_to(quat_t *res, vec3_t axis, float angle) {
+  float s = sin(angle / 2.0f);
+  res->x = axis.x * s;
+  res->y = axis.y * s;
+  res->z = axis.z * s;
+  res->w = cos(angle / 2.0f);
+}
+
+inline quat_t quat_from_axis_angle(vec3_t axis, float angle) {
+  quat_t quat;
+  quat_from_axis_angle_to(&quat, axis, angle);
+  return quat;
+}
+
+inline void quat_to_axis_angle(quat_t quat, vec3_t *axis, float *angle) {
+  quat = quat_normalize(quat);
+  *angle = 2.0f * acos(quat.w);
+  float s = sqrt(1.0f - quat.w * quat.w);
+  if (s < 0.001) {
+    axis->x = quat.x;
+    axis->y = quat.y;
+    axis->z = quat.z;
+  } else {
+    axis->x = quat.x / s;
+    axis->y = quat.y / s;
+    axis->z = quat.z / s;
+  }
+}
+
+// @TODO: make compatible with glm version
 inline void quat_conjugate_to(quat_t *res, quat_t left) {
   res->w = left.w;
   res->x = -left.x;
@@ -83,7 +91,7 @@ inline quat_t quat_conjugate(quat_t left) {
   return quat;
 }
 
-// @todo: make compatible with glm version
+// @TODO: make compatible with glm version
 inline void quat_to_mat4_to(mat4_t *res, quat_t left) {
   *res = mat4_identity();
 

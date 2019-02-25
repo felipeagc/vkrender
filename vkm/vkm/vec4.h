@@ -5,11 +5,7 @@ extern "C" {
 #endif
 
 #include "common.h"
-#include <xmmintrin.h>
-
-typedef struct VKM_ALIGN(16) vec4_t {
-  float x, y, z, w;
-} vec4_t;
+#include "types.h"
 
 inline vec4_t vec4_zero() { return {0.0f, 0.0f, 0.0f, 0.0f}; }
 

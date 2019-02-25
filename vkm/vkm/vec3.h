@@ -4,11 +4,8 @@
 extern "C" {
 #endif
 
+#include "types.h"
 #include <math.h>
-
-typedef struct vec3_t {
-  float x, y, z;
-} vec3_t;
 
 inline vec3_t vec3_zero() { return {0.0f, 0.0f, 0.0f}; }
 
