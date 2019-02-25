@@ -5,7 +5,7 @@
 
 typedef enum re_format_t {
   RE_FORMAT_RGBA8_UNORM,
-  RE_FORMAT_R16_SFLOAT,
+  RE_FORMAT_R32_SFLOAT,
 } re_format_t;
 
 typedef struct re_texture_t {

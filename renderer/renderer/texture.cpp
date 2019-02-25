@@ -9,8 +9,8 @@ static inline VkFormat convert_format(re_format_t format) {
   switch (format) {
   case RE_FORMAT_RGBA8_UNORM:
     return VK_FORMAT_R8G8B8A8_UNORM;
-  case RE_FORMAT_R16_SFLOAT:
-    return VK_FORMAT_R16_SFLOAT;
+  case RE_FORMAT_R32_SFLOAT:
+    return VK_FORMAT_R32_SFLOAT;
   default:
     return VK_FORMAT_UNDEFINED;
   }
