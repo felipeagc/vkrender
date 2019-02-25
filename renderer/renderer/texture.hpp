@@ -9,6 +9,8 @@ typedef struct re_texture_t {
   VkImageView image_view;
   VkSampler sampler;
 
+  VkDescriptorImageInfo descriptor;
+
   uint32_t width;
   uint32_t height;
 } re_texture_t;
@@ -21,7 +23,5 @@ void re_texture_init(
     const size_t data_size,
     const uint32_t width,
     const uint32_t height);
-
-VkDescriptorImageInfo re_texture_descriptor(const re_texture_t *texture);
 
 void re_texture_destroy(re_texture_t *texture);

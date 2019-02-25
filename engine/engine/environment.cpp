@@ -41,7 +41,7 @@ void eg_environment_init(
         re_cubemap_descriptor(&asset->irradiance_cubemap);
     auto radiance_descriptor_info =
         re_cubemap_descriptor(&asset->radiance_cubemap);
-    auto brdf_lut_descriptor_info = re_texture_descriptor(&asset->brdf_lut);
+    auto brdf_lut_descriptor_info = asset->brdf_lut.descriptor;
 
     VkWriteDescriptorSet descriptor_writes[] = {
         VkWriteDescriptorSet{

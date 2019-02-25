@@ -145,10 +145,8 @@ void re_texture_init(
   re_buffer_unmap_memory(&staging_buffer);
 
   re_buffer_destroy(&staging_buffer);
-}
 
-VkDescriptorImageInfo re_texture_descriptor(const re_texture_t *texture) {
-  return VkDescriptorImageInfo{
+  texture->descriptor = VkDescriptorImageInfo{
       texture->sampler,
       texture->image_view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

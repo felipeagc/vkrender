@@ -46,16 +46,11 @@ void eg_pbr_material_asset_init(
     material->resource_sets[i] =
         re_allocate_resource_set(&g_ctx.resource_manager.set_layouts.material);
 
-    VkDescriptorImageInfo albedo_descriptor =
-        re_texture_descriptor(albedo_texture);
-    VkDescriptorImageInfo normal_descriptor =
-        re_texture_descriptor(normal_texture);
-    VkDescriptorImageInfo metallic_roughness_descriptor =
-        re_texture_descriptor(metallic_roughness_texture);
-    VkDescriptorImageInfo occlusion_descriptor =
-        re_texture_descriptor(occlusion_texture);
-    VkDescriptorImageInfo emissive_descriptor =
-        re_texture_descriptor(emissive_texture);
+    VkDescriptorImageInfo albedo_descriptor = albedo_texture->descriptor;
+    VkDescriptorImageInfo normal_descriptor = normal_texture->descriptor;
+    VkDescriptorImageInfo metallic_roughness_descriptor = metallic_roughness_texture->descriptor;
+    VkDescriptorImageInfo occlusion_descriptor = occlusion_texture->descriptor;
+    VkDescriptorImageInfo emissive_descriptor = emissive_texture->descriptor;
 
     VkWriteDescriptorSet descriptor_writes[] = {
         VkWriteDescriptorSet{
