@@ -10,6 +10,7 @@ set(
 
   engine/components/component_types.cpp
   engine/components/mesh_component.cpp
+  engine/components/transform_component.cpp
 
   engine/systems/fps_camera_system.cpp
 

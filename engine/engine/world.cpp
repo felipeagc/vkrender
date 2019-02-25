@@ -1,4 +1,6 @@
 #include "world.hpp"
+#include "components/mesh_component.hpp"
+#include "components/transform_component.hpp"
 #include <string.h>
 #include <util/log.h>
 
@@ -13,9 +15,11 @@ void eg_world_init(
   eg_environment_init(&world->environment, environment_asset);
 
   // Register component types
+  EG_REGISTER_COMP(eg_transform_component_t);
   EG_REGISTER_COMP(eg_mesh_component_t);
 
   // Initialize component types
+  eg_init_comps(world, EG_TRANSFORM_COMPONENT_TYPE);
   eg_init_comps(world, EG_MESH_COMPONENT_TYPE);
 
   for (uint32_t i = 0; i < EG_COMPONENT_TYPE_COUNT; i++) {
