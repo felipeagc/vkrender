@@ -321,18 +321,18 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       environment_bindings,
       ARRAYSIZE(environment_bindings));
 
-  VkDescriptorSetLayoutBinding fullscreen_bindings[] = {{
+  VkDescriptorSetLayoutBinding single_texture_bindings[] = {{
       0,                                         // binding
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
       1,                                         // descriptorCount
-      VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-      NULL,                                      // pImmutableSamplers
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
+      NULL, // pImmutableSamplers
   }};
   re_resource_set_layout_init(
-      &manager->set_layouts.fullscreen,
+      &manager->set_layouts.single_texture,
       20,
-      fullscreen_bindings,
-      ARRAYSIZE(fullscreen_bindings));
+      single_texture_bindings,
+      ARRAYSIZE(single_texture_bindings));
 
   re_resource_set_layout_t *standard_set_layouts[] = {
       &manager->set_layouts.camera,
@@ -374,7 +374,7 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       ARRAYSIZE(skybox_set_layouts));
 
   re_resource_set_layout_t *fullscreen_set_layouts[] = {
-      &manager->set_layouts.fullscreen,
+      &manager->set_layouts.single_texture,
   };
   re_resource_set_provider_init(
       &manager->providers.fullscreen,
@@ -388,6 +388,18 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       &manager->providers.bake_cubemap,
       bake_cubemap_set_layouts,
       ARRAYSIZE(bake_cubemap_set_layouts));
+
+  re_resource_set_layout_t *heightmap_set_layouts[] = {
+      &manager->set_layouts.camera,
+      &manager->set_layouts.material,
+      &manager->set_layouts.model,
+      &manager->set_layouts.model,
+      &manager->set_layouts.environment,
+      &manager->set_layouts.single_texture};
+  re_resource_set_provider_init(
+      &manager->providers.heightmap,
+      heightmap_set_layouts,
+      ARRAYSIZE(heightmap_set_layouts));
 }
 
 void re_resource_manager_destroy(re_resource_manager_t *manager) {
@@ -397,10 +409,11 @@ void re_resource_manager_destroy(re_resource_manager_t *manager) {
   re_resource_set_provider_destroy(&manager->providers.skybox);
   re_resource_set_provider_destroy(&manager->providers.fullscreen);
   re_resource_set_provider_destroy(&manager->providers.bake_cubemap);
+  re_resource_set_provider_destroy(&manager->providers.heightmap);
 
   re_resource_set_layout_destroy(&manager->set_layouts.camera);
   re_resource_set_layout_destroy(&manager->set_layouts.model);
   re_resource_set_layout_destroy(&manager->set_layouts.material);
   re_resource_set_layout_destroy(&manager->set_layouts.environment);
-  re_resource_set_layout_destroy(&manager->set_layouts.fullscreen);
+  re_resource_set_layout_destroy(&manager->set_layouts.single_texture);
 }

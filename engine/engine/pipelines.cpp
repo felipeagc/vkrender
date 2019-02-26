@@ -114,3 +114,14 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
 
   return params;
 }
+
+re_pipeline_parameters_t eg_heightmap_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
+
+  params.layout = g_ctx.resource_manager.providers.heightmap.pipeline_layout;
+
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
+
+  return params;
+}

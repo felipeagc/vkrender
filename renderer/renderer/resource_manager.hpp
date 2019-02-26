@@ -52,7 +52,7 @@ typedef struct re_resource_manager_t {
     re_resource_set_layout_t model;
     re_resource_set_layout_t material;
     re_resource_set_layout_t environment;
-    re_resource_set_layout_t fullscreen;
+    re_resource_set_layout_t single_texture;
   } set_layouts;
 
   struct {
@@ -62,6 +62,7 @@ typedef struct re_resource_manager_t {
     re_resource_set_provider_t skybox;
     re_resource_set_provider_t fullscreen;
     re_resource_set_provider_t bake_cubemap;
+    re_resource_set_provider_t heightmap;
   } providers;
 } re_resource_manager_t;
 

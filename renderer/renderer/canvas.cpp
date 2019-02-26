@@ -206,8 +206,9 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
 
-    auto &set_layout = g_ctx.resource_manager.set_layouts.fullscreen;
-    resource.resource_set = re_allocate_resource_set(&set_layout);
+    re_resource_set_layout_t *set_layout =
+        &g_ctx.resource_manager.set_layouts.single_texture;
+    resource.resource_set = re_allocate_resource_set(set_layout);
 
     VkDescriptorImageInfo descriptor = {
         resource.color.sampler,
@@ -238,11 +239,12 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
 static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  auto &set_layout = g_ctx.resource_manager.set_layouts.fullscreen;
+  re_resource_set_layout_t *set_layout =
+      &g_ctx.resource_manager.set_layouts.single_texture;
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     auto &resource = canvas->resources[i];
-    re_free_resource_set(&set_layout, &resource.resource_set);
+    re_free_resource_set(set_layout, &resource.resource_set);
   }
 }
 
