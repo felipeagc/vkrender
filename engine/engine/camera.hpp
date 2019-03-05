@@ -3,7 +3,7 @@
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
 #include <renderer/resource_manager.hpp>
-#include <vkm/vkm.h>
+#include <gmath/gmath.h>
 
 typedef struct eg_camera_uniform_t {
   mat4_t view;

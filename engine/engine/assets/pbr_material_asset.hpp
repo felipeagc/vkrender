@@ -3,7 +3,7 @@
 #include "asset_types.hpp"
 #include <renderer/common.hpp>
 #include <renderer/resource_manager.hpp>
-#include <vkm/vkm.h>
+#include <gmath/gmath.h>
 
 typedef struct eg_pbr_material_uniform_t {
   vec4_t base_color_factor;

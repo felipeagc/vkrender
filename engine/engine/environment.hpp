@@ -3,7 +3,7 @@
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
 #include <renderer/resource_manager.hpp>
-#include <vkm/vkm.h>
+#include <gmath/gmath.h>
 
 #define EG_MAX_POINT_LIGHTS 20
 

@@ -8,7 +8,6 @@ wc -l \
 	./util/**/*.h \
 	./util/**/*.c \
 	./examples/*.cpp \
-	./vkm/**/*.h \
 	./shaders/*.vert \
 	./shaders/*.frag \
 	| sort -n -r -k1

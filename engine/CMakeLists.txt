@@ -33,7 +33,7 @@ target_link_libraries(
   PUBLIC
   util
   renderer
-  vkm
+  gmath
   cgltf
   )
 

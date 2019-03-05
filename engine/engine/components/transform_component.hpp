@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vkm/vkm.h>
+#include <gmath/gmath.h>
 
 typedef struct eg_transform_component_t {
   vec3_t position;

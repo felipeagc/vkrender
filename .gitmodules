@@ -16,3 +16,6 @@
 [submodule "thirdparty/glslang"]
 	path = thirdparty/glslang
 	url = https://github.com/KhronosGroup/glslang.git
+[submodule "thirdparty/gmath"]
+	path = thirdparty/gmath
+	url = https://github.com/felipeagc/gmath.git

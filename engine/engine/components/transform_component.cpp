@@ -9,7 +9,7 @@ void eg_transform_component_init(eg_transform_component_t *transform) {
 
 mat4_t eg_transform_component_to_mat4(eg_transform_component_t *transform) {
   mat4_t mat = mat4_scale(mat4_identity(), transform->scale);
-  mat = mat4_rotate(mat, quat_from_axis_angle(transform->axis, transform->angle));
+  mat = mat4_rotate(mat, transform->angle, transform->axis);
   mat = mat4_translate(mat, transform->position);
   return mat;
 }
