@@ -34,17 +34,17 @@ void re_free_resource_set(
 
 void re_resource_set_layout_destroy(re_resource_set_layout_t *layout);
 
-typedef struct re_resource_set_provider_t {
+typedef struct re_resource_set_group_t {
   VkPipelineLayout pipeline_layout;
   VkDescriptorPool descriptor_pool;
-} re_resource_set_provider_t;
+} re_resource_set_group_t;
 
-void re_resource_set_provider_init(
-    re_resource_set_provider_t *provider,
+void re_resource_set_group_init(
+    re_resource_set_group_t *group,
     re_resource_set_layout_t *set_layouts,
     uint32_t set_layout_count);
 
-void re_resource_set_provider_destroy(re_resource_set_provider_t *provider);
+void re_resource_set_group_destroy(re_resource_set_group_t *group);
 
 typedef struct re_resource_manager_t {
   struct {
@@ -56,14 +56,13 @@ typedef struct re_resource_manager_t {
   } set_layouts;
 
   struct {
-    re_resource_set_provider_t standard;
-    re_resource_set_provider_t billboard;
-    re_resource_set_provider_t wireframe;
-    re_resource_set_provider_t skybox;
-    re_resource_set_provider_t fullscreen;
-    re_resource_set_provider_t bake_cubemap;
-    re_resource_set_provider_t heightmap;
-  } providers;
+    re_resource_set_group_t pbr;
+    re_resource_set_group_t billboard;
+    re_resource_set_group_t wireframe;
+    re_resource_set_group_t skybox;
+    re_resource_set_group_t fullscreen;
+    re_resource_set_group_t bake_cubemap;
+  } groups;
 } re_resource_manager_t;
 
 void re_resource_manager_init(re_resource_manager_t *manager);

@@ -294,7 +294,7 @@ static void bake_cubemap(
   // Create pipeline
   re_pipeline_parameters_t pipeline_params = re_default_pipeline_parameters();
   pipeline_params.layout =
-      g_ctx.resource_manager.providers.bake_cubemap.pipeline_layout;
+      g_ctx.resource_manager.groups.bake_cubemap.pipeline_layout;
   pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       NULL,                                                      // pNext

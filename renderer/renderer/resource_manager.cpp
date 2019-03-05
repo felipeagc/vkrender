@@ -72,8 +72,8 @@ void re_free_resource_set(
   }
 }
 
-void re_resource_set_provider_init(
-    re_resource_set_provider_t *provider,
+void re_resource_set_group_init(
+    re_resource_set_group_t *group,
     re_resource_set_layout_t **set_layouts,
     uint32_t set_layout_count) {
 
@@ -130,7 +130,7 @@ void re_resource_set_provider_init(
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      g_ctx.device, &create_info, NULL, &provider->descriptor_pool));
+      g_ctx.device, &create_info, NULL, &group->descriptor_pool));
 
   free(pool_sizes);
 
@@ -162,7 +162,7 @@ void re_resource_set_provider_init(
       g_ctx.device,
       &pipeline_layout_create_info,
       NULL,
-      &provider->pipeline_layout));
+      &group->pipeline_layout));
 
   free(descriptor_set_layouts);
 
@@ -187,7 +187,7 @@ void re_resource_set_provider_init(
     VkDescriptorSetAllocateInfo allocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         NULL,
-        provider->descriptor_pool,
+        group->descriptor_pool,
         set_layout->max_sets,
         layouts,
     };
@@ -199,14 +199,14 @@ void re_resource_set_provider_init(
   }
 }
 
-void re_resource_set_provider_destroy(re_resource_set_provider_t *provider) {
+void re_resource_set_group_destroy(re_resource_set_group_t *group) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-  if (provider->pipeline_layout != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(g_ctx.device, provider->pipeline_layout, NULL);
+  if (group->pipeline_layout != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(g_ctx.device, group->pipeline_layout, NULL);
   }
 
-  if (provider->descriptor_pool != VK_NULL_HANDLE) {
-    vkDestroyDescriptorPool(g_ctx.device, provider->descriptor_pool, NULL);
+  if (group->descriptor_pool != VK_NULL_HANDLE) {
+    vkDestroyDescriptorPool(g_ctx.device, group->descriptor_pool, NULL);
   }
 }
 
@@ -334,24 +334,24 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       single_texture_bindings,
       ARRAYSIZE(single_texture_bindings));
 
-  re_resource_set_layout_t *standard_set_layouts[] = {
+  re_resource_set_layout_t *pbr_set_layouts[] = {
       &manager->set_layouts.camera,
       &manager->set_layouts.material,
       &manager->set_layouts.model,
       &manager->set_layouts.model,
       &manager->set_layouts.environment};
-  re_resource_set_provider_init(
-      &manager->providers.standard,
-      standard_set_layouts,
-      ARRAYSIZE(standard_set_layouts));
+  re_resource_set_group_init(
+      &manager->groups.pbr,
+      pbr_set_layouts,
+      ARRAYSIZE(pbr_set_layouts));
 
   re_resource_set_layout_t *billboard_set_layouts[] = {
       &manager->set_layouts.camera,
       &manager->set_layouts.material,
       &manager->set_layouts.model,
   };
-  re_resource_set_provider_init(
-      &manager->providers.billboard,
+  re_resource_set_group_init(
+      &manager->groups.billboard,
       billboard_set_layouts,
       ARRAYSIZE(billboard_set_layouts));
 
@@ -359,8 +359,8 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       &manager->set_layouts.camera,
       &manager->set_layouts.model,
   };
-  re_resource_set_provider_init(
-      &manager->providers.wireframe,
+  re_resource_set_group_init(
+      &manager->groups.wireframe,
       wireframe_set_layouts,
       ARRAYSIZE(wireframe_set_layouts));
 
@@ -368,48 +368,35 @@ void re_resource_manager_init(re_resource_manager_t *manager) {
       &manager->set_layouts.camera,
       &manager->set_layouts.environment,
   };
-  re_resource_set_provider_init(
-      &manager->providers.skybox,
+  re_resource_set_group_init(
+      &manager->groups.skybox,
       skybox_set_layouts,
       ARRAYSIZE(skybox_set_layouts));
 
   re_resource_set_layout_t *fullscreen_set_layouts[] = {
       &manager->set_layouts.single_texture,
   };
-  re_resource_set_provider_init(
-      &manager->providers.fullscreen,
+  re_resource_set_group_init(
+      &manager->groups.fullscreen,
       fullscreen_set_layouts,
       ARRAYSIZE(fullscreen_set_layouts));
 
   re_resource_set_layout_t *bake_cubemap_set_layouts[] = {
       &manager->set_layouts.material,
   };
-  re_resource_set_provider_init(
-      &manager->providers.bake_cubemap,
+  re_resource_set_group_init(
+      &manager->groups.bake_cubemap,
       bake_cubemap_set_layouts,
       ARRAYSIZE(bake_cubemap_set_layouts));
-
-  re_resource_set_layout_t *heightmap_set_layouts[] = {
-      &manager->set_layouts.camera,
-      &manager->set_layouts.material,
-      &manager->set_layouts.model,
-      &manager->set_layouts.model,
-      &manager->set_layouts.environment,
-      &manager->set_layouts.single_texture};
-  re_resource_set_provider_init(
-      &manager->providers.heightmap,
-      heightmap_set_layouts,
-      ARRAYSIZE(heightmap_set_layouts));
 }
 
 void re_resource_manager_destroy(re_resource_manager_t *manager) {
-  re_resource_set_provider_destroy(&manager->providers.standard);
-  re_resource_set_provider_destroy(&manager->providers.billboard);
-  re_resource_set_provider_destroy(&manager->providers.wireframe);
-  re_resource_set_provider_destroy(&manager->providers.skybox);
-  re_resource_set_provider_destroy(&manager->providers.fullscreen);
-  re_resource_set_provider_destroy(&manager->providers.bake_cubemap);
-  re_resource_set_provider_destroy(&manager->providers.heightmap);
+  re_resource_set_group_destroy(&manager->groups.pbr);
+  re_resource_set_group_destroy(&manager->groups.billboard);
+  re_resource_set_group_destroy(&manager->groups.wireframe);
+  re_resource_set_group_destroy(&manager->groups.skybox);
+  re_resource_set_group_destroy(&manager->groups.fullscreen);
+  re_resource_set_group_destroy(&manager->groups.bake_cubemap);
 
   re_resource_set_layout_destroy(&manager->set_layouts.camera);
   re_resource_set_layout_destroy(&manager->set_layouts.model);

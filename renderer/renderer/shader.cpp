@@ -29,6 +29,10 @@ bool re_shader_init_glsl(
     const char *vertex_glsl_code,
     const char *fragment_path,
     const char *fragment_glsl_code) {
+  shaderc_compile_options_t options = shaderc_compile_options_initialize();
+  shaderc_compile_options_set_optimization_level(
+      options, shaderc_optimization_level_performance);
+
   // On the same, other or multiple simultaneous threads.
   shaderc_compilation_result_t vertex_result = shaderc_compile_into_spv(
       g_compiler,
@@ -37,7 +41,7 @@ bool re_shader_init_glsl(
       shaderc_glsl_vertex_shader,
       vertex_path,
       "main",
-      NULL);
+      options);
 
   if (shaderc_result_get_compilation_status(vertex_result) !=
       shaderc_compilation_status_success) {
@@ -45,6 +49,7 @@ bool re_shader_init_glsl(
         "Failed to compile vertex shader:\n%s\n",
         shaderc_result_get_error_message(vertex_result));
     shaderc_result_release(vertex_result);
+    shaderc_compile_options_release(options);
     return false;
   }
 
@@ -55,7 +60,7 @@ bool re_shader_init_glsl(
       shaderc_glsl_fragment_shader,
       fragment_path,
       "main",
-      NULL);
+      options);
 
   if (shaderc_result_get_compilation_status(fragment_result) !=
       shaderc_compilation_status_success) {
@@ -64,6 +69,7 @@ bool re_shader_init_glsl(
         shaderc_result_get_error_message(fragment_result));
     shaderc_result_release(vertex_result);
     shaderc_result_release(fragment_result);
+    shaderc_compile_options_release(options);
     return false;
   }
 
@@ -76,6 +82,7 @@ bool re_shader_init_glsl(
 
   shaderc_result_release(vertex_result);
   shaderc_result_release(fragment_result);
+  shaderc_compile_options_release(options);
 
   return true;
 }
