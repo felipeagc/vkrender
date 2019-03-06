@@ -3,8 +3,7 @@
 #include <fstd/file.h>
 #include <renderer/pipeline.hpp>
 
-inline bool eg_init_shader_and_pipeline(
-    re_shader_t *shader,
+inline bool eg_init_pipeline_glsl(
     re_pipeline_t *pipeline,
     const re_render_target_t render_target,
     const char *vertex_path,
@@ -13,15 +12,19 @@ inline bool eg_init_shader_and_pipeline(
   char *vertex_code = fstd_load_string_from_file(vertex_path);
   char *fragment_code = fstd_load_string_from_file(fragment_path);
 
+  re_shader_t shader;
+
   if (!re_shader_init_glsl(
-          shader, vertex_path, vertex_code, fragment_path, fragment_code)) {
+          &shader, vertex_path, vertex_code, fragment_path, fragment_code)) {
     return false;
   }
 
-  re_pipeline_init_graphics(pipeline, render_target, shader, params);
+  re_pipeline_init_graphics(pipeline, render_target, &shader, params);
 
   free(vertex_code);
   free(fragment_code);
+
+  re_shader_destroy(&shader);
 
   return true;
 }

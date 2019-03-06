@@ -25,20 +25,16 @@ int main() {
 
   window.clear_color = {1.0, 1.0, 1.0, 1.0};
 
-  re_shader_t pbr_shader;
   re_pipeline_t pbr_pipeline;
-  eg_init_shader_and_pipeline(
-      &pbr_shader,
+  eg_init_pipeline_glsl(
       &pbr_pipeline,
       window.render_target,
       "../shaders/pbr.vert",
       "../shaders/pbr.frag",
       eg_pbr_pipeline_parameters());
 
-  re_shader_t skybox_shader;
   re_pipeline_t skybox_pipeline;
-  eg_init_shader_and_pipeline(
-      &skybox_shader,
+  eg_init_pipeline_glsl(
       &skybox_pipeline,
       window.render_target,
       "../shaders/skybox.vert",
@@ -178,10 +174,7 @@ int main() {
   eg_asset_manager_destroy(&asset_manager);
 
   re_pipeline_destroy(&pbr_pipeline);
-  re_shader_destroy(&pbr_shader);
-
   re_pipeline_destroy(&skybox_pipeline);
-  re_shader_destroy(&skybox_shader);
 
   eg_engine_destroy();
 
