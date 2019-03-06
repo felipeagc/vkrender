@@ -19,3 +19,6 @@
 [submodule "thirdparty/gmath"]
 	path = thirdparty/gmath
 	url = https://github.com/felipeagc/gmath.git
+[submodule "thirdparty/fstd"]
+	path = thirdparty/fstd
+	url = https://github.com/felipeagc/fstd.git

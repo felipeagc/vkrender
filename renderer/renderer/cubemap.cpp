@@ -7,9 +7,9 @@
 #include "util.hpp"
 #include <stb_image.h>
 #include <string.h>
-#include <util/array.h>
-#include <util/file.h>
-#include <util/task_scheduler.h>
+#include <fstd/array.h>
+#include <fstd/file.h>
+#include <fstd/task_scheduler.h>
 
 struct camera_uniform_t {
   mat4_t view;
@@ -311,8 +311,8 @@ static void bake_cubemap(
   const char *fragment_path = "../shaders/bake_cubemap.frag";
 
   re_shader_t shader;
-  char *vertex_code = ut_load_string_from_file(vertex_path);
-  char *fragment_code = ut_load_string_from_file(fragment_path);
+  char *vertex_code = fstd_load_string_from_file(vertex_path);
+  char *fragment_code = fstd_load_string_from_file(fragment_path);
 
   re_shader_init_glsl(
       &shader, vertex_path, vertex_code, fragment_path, fragment_code);
@@ -326,13 +326,13 @@ static void bake_cubemap(
   re_shader_destroy(&shader);
 
   // Allocate command buffer
-  assert(ut_worker_id < RE_THREAD_COUNT);
+  assert(fstd_worker_id < RE_THREAD_COUNT);
   VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   {
     VkCommandBufferAllocateInfo allocateInfo = {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = NULL;
-    allocateInfo.commandPool = g_ctx.thread_command_pools[ut_worker_id];
+    allocateInfo.commandPool = g_ctx.thread_command_pools[fstd_worker_id];
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandBufferCount = 1;
 
@@ -440,9 +440,9 @@ static void bake_cubemap(
       NULL,                          // pSignalSemaphores
   };
 
-  ut_mutex_lock(&g_ctx.queue_mutex);
+  fstd_mutex_lock(&g_ctx.queue_mutex);
   vkQueueSubmit(g_ctx.graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
-  ut_mutex_unlock(&g_ctx.queue_mutex);
+  fstd_mutex_unlock(&g_ctx.queue_mutex);
 
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
@@ -452,10 +452,10 @@ static void bake_cubemap(
   vkDestroySampler(g_ctx.device, hdrSampler, NULL);
   vmaDestroyImage(g_ctx.gpu_allocator, hdrImage, hdrAllocation);
 
-  assert(ut_worker_id < RE_THREAD_COUNT);
+  assert(fstd_worker_id < RE_THREAD_COUNT);
   vkFreeCommandBuffers(
       g_ctx.device,
-      g_ctx.thread_command_pools[ut_worker_id],
+      g_ctx.thread_command_pools[fstd_worker_id],
       1,
       &commandBuffer);
 

@@ -7,7 +7,7 @@
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_vulkan.h>
 #include <util/log.h>
-#include <util/array.h>
+#include <fstd/array.h>
 
 static inline void create_descriptor_pool(re_imgui_t *imgui) {
   VkDescriptorPoolSize imgui_pool_sizes[] = {
@@ -101,9 +101,9 @@ void re_imgui_init(re_imgui_t *imgui, re_window_t *window) {
 
     VK_CHECK(vkEndCommandBuffer(command_buffer));
 
-    ut_mutex_lock(&g_ctx.queue_mutex);
+    fstd_mutex_lock(&g_ctx.queue_mutex);
     VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &end_info, VK_NULL_HANDLE));
-    ut_mutex_unlock(&g_ctx.queue_mutex);
+    fstd_mutex_unlock(&g_ctx.queue_mutex);
 
     VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

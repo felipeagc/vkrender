@@ -4,7 +4,7 @@
 #include "util.hpp"
 #include <stdlib.h>
 #include <string.h>
-#include <util/array.h>
+#include <fstd/array.h>
 
 void re_resource_set_layout_init(
     re_resource_set_layout_t *layout,
@@ -22,7 +22,7 @@ void re_resource_set_layout_init(
       bindings,
       sizeof(VkDescriptorSetLayoutBinding) * binding_count);
 
-  ut_bitset_reset((uint8_t *)&layout->bitset, RE_GLOBAL_MAX_DESCRIPTOR_SETS);
+  fstd_bitset_reset((uint8_t *)&layout->bitset, RE_GLOBAL_MAX_DESCRIPTOR_SETS);
 
   VkDescriptorSetLayoutCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, // sType
@@ -51,8 +51,8 @@ void re_resource_set_layout_destroy(re_resource_set_layout_t *layout) {
 re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
   uint32_t found = -1;
   for (uint32_t i = 0; i < layout->max_sets; i++) {
-    if (!ut_bitset_at((uint8_t *)&layout->bitset, i)) {
-      ut_bitset_set((uint8_t *)&layout->bitset, i, true);
+    if (!fstd_bitset_at((uint8_t *)&layout->bitset, i)) {
+      fstd_bitset_set((uint8_t *)&layout->bitset, i, true);
       found = i;
       break;
     }
@@ -66,8 +66,8 @@ re_resource_set_t re_allocate_resource_set(re_resource_set_layout_t *layout) {
 
 void re_free_resource_set(
     re_resource_set_layout_t *layout, re_resource_set_t *resource_set) {
-  if (ut_bitset_at((uint8_t *)&layout->bitset, resource_set->allocation)) {
-    ut_bitset_set((uint8_t *)&layout->bitset, resource_set->allocation, false);
+  if (fstd_bitset_at((uint8_t *)&layout->bitset, resource_set->allocation)) {
+    fstd_bitset_set((uint8_t *)&layout->bitset, resource_set->allocation, false);
     resource_set->descriptor_set = VK_NULL_HANDLE;
   }
 }

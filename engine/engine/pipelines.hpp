@@ -1,7 +1,7 @@
 #pragma once
 
 #include <renderer/pipeline.hpp>
-#include <util/file.h>
+#include <fstd/file.h>
 
 inline bool eg_init_pipeline(
     re_pipeline_t *pipeline,
@@ -10,8 +10,8 @@ inline bool eg_init_pipeline(
     const char *fragment_path,
     const re_pipeline_parameters_t params) {
   re_shader_t shader;
-  char *vertex_code = ut_load_string_from_file(vertex_path);
-  char *fragment_code = ut_load_string_from_file(fragment_path);
+  char *vertex_code = fstd_load_string_from_file(vertex_path);
+  char *fragment_code = fstd_load_string_from_file(fragment_path);
 
   if (!re_shader_init_glsl(
           &shader, vertex_path, vertex_code, fragment_path, fragment_code)) {

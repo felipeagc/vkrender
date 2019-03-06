@@ -38,6 +38,7 @@ target_link_libraries(
   imgui
   ${SDL2_LIBRARY}
   ${Vulkan_LIBRARIES}
+  fstd
   util
   gmath
   vma

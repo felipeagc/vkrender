@@ -4,7 +4,7 @@
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>
-#include <util/array.h>
+#include <fstd/array.h>
 
 void eg_environment_init(
     eg_environment_t *environment, eg_environment_asset_t *asset) {

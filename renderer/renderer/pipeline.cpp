@@ -3,7 +3,7 @@
 #include "shader.hpp"
 #include "util.hpp"
 #include "window.hpp"
-#include <util/array.h>
+#include <fstd/array.h>
 
 static inline VkPipelineVertexInputStateCreateInfo
 default_vertex_input_state() {

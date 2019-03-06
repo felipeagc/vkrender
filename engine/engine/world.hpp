@@ -3,7 +3,7 @@
 #include "camera.hpp"
 #include "components/component_types.hpp"
 #include "environment.hpp"
-#include <util/bitset.h>
+#include <fstd/bitset.h>
 
 #define EG_MAX_ENTITIES 128
 
@@ -13,7 +13,7 @@
 
 typedef uint32_t eg_entity_t;
 
-typedef UT_BITSET(EG_MAX_ENTITIES) eg_entities_bitset_t;
+typedef FSTD_BITSET(EG_MAX_ENTITIES) eg_entities_bitset_t;
 
 typedef struct {
   uint8_t bytes[EG_MAX_ENTITIES / 8];

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <util/bitset.h>
+#include <fstd/bitset.h>
 #include <vulkan/vulkan.h>
 
 const size_t RE_GLOBAL_MAX_DESCRIPTOR_SETS = 1000;
@@ -18,7 +18,7 @@ typedef struct re_resource_set_layout_t {
   // Preallocated descriptor sets
   VkDescriptorSet *descriptor_sets;
   uint32_t max_sets;
-  UT_BITSET(RE_GLOBAL_MAX_DESCRIPTOR_SETS) bitset;
+  FSTD_BITSET(RE_GLOBAL_MAX_DESCRIPTOR_SETS) bitset;
 } re_resource_set_layout_t;
 
 void re_resource_set_layout_init(

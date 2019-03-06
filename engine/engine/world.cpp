@@ -23,7 +23,7 @@ void eg_world_init(
   eg_init_comps(world, EG_MESH_COMPONENT_TYPE);
 
   for (uint32_t i = 0; i < EG_COMPONENT_TYPE_COUNT; i++) {
-    ut_bitset_reset(world->component_bitsets[i].bytes, EG_MAX_ENTITIES);
+    fstd_bitset_reset(world->component_bitsets[i].bytes, EG_MAX_ENTITIES);
   }
 }
 
@@ -31,7 +31,7 @@ eg_entity_t eg_world_add_entity(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     bool empty = true;
     for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-      if (ut_bitset_at(world->component_bitsets[c].bytes, e)) {
+      if (fstd_bitset_at(world->component_bitsets[c].bytes, e)) {
         empty = false;
         break;
       }
@@ -50,14 +50,14 @@ void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity) {
     for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
       eg_component_destructors[c](
           &world->components[c][entity * eg_component_sizes[c]]);
-      ut_bitset_set(world->component_bitsets[c].bytes, entity, true);
+      fstd_bitset_set(world->component_bitsets[c].bytes, entity, true);
     }
   }
 }
 
 void *eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  ut_bitset_set(world->component_bitsets[comp].bytes, entity, true);
+  fstd_bitset_set(world->component_bitsets[comp].bytes, entity, true);
   memset(
       &world->components[comp][entity * eg_component_sizes[comp]],
       0,
@@ -68,7 +68,7 @@ void *eg_world_add_comp(
 
 bool eg_world_has_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  return ut_bitset_at(world->component_bitsets[comp].bytes, entity);
+  return fstd_bitset_at(world->component_bitsets[comp].bytes, entity);
 }
 
 bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity) {
@@ -99,7 +99,7 @@ void eg_world_remove_comp(
         &world->components[comp][entity * eg_component_sizes[comp]]);
   }
 
-  ut_bitset_set(world->component_bitsets[comp].bytes, entity, false);
+  fstd_bitset_set(world->component_bitsets[comp].bytes, entity, false);
 }
 
 void eg_world_destroy(eg_world_t *world) {

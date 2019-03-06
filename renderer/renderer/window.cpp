@@ -3,8 +3,8 @@
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
 #include <util/log.h>
-#include <util/time.h>
-#include <util/array.h>
+#include <fstd/time.h>
+#include <fstd/array.h>
 
 static inline uint32_t
 get_swapchain_num_images(VkSurfaceCapabilitiesKHR *surface_capabilities) {
@@ -688,7 +688,7 @@ bool re_window_poll_event(re_window_t *window, SDL_Event *event) {
 }
 
 void re_window_begin_frame(re_window_t *window) {
-  window->time_before_ns = ut_time_ns();
+  window->time_before_ns = fstd_time_ns();
 
   // Begin
   vkWaitForFences(
@@ -822,7 +822,7 @@ void re_window_end_frame(re_window_t *window) {
            .rendering_finished_semaphore, // pSignalSemaphores
   };
 
-  ut_mutex_lock(&g_ctx.queue_mutex);
+  fstd_mutex_lock(&g_ctx.queue_mutex);
   vkQueueSubmit(
       g_ctx.graphics_queue,
       1,
@@ -848,11 +848,11 @@ void re_window_end_frame(re_window_t *window) {
     assert(result == VK_SUCCESS);
   }
 
-  ut_mutex_unlock(&g_ctx.queue_mutex);
+  fstd_mutex_unlock(&g_ctx.queue_mutex);
 
   window->current_frame = (window->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 
-  uint64_t elapsed_time_ns = ut_time_ns() - window->time_before_ns;
+  uint64_t elapsed_time_ns = fstd_time_ns() - window->time_before_ns;
 
   window->delta_time = (double)elapsed_time_ns / 1.0e9;
 }

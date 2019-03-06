@@ -4,7 +4,7 @@
 #include <renderer/texture.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>
-#include <util/array.h>
+#include <fstd/array.h>
 
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,

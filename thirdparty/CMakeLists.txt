@@ -5,6 +5,7 @@ set(SKIP_SPIRV_TOOLS_INSTALL ON)
 set(GMATH_BUILD_TESTS OFF)
 
 add_subdirectory(gmath)
+add_subdirectory(fstd)
 add_subdirectory(vma)
 add_subdirectory(stb_image)
 add_subdirectory(SPIRV-Cross)

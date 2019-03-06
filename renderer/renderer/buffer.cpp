@@ -1,14 +1,14 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <util/task_scheduler.h>
+#include <fstd/task_scheduler.h>
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {
-  assert(ut_worker_id < RE_THREAD_COUNT);
+  assert(fstd_worker_id < RE_THREAD_COUNT);
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       NULL,
-      g_ctx.thread_command_pools[ut_worker_id], // commandPool
+      g_ctx.thread_command_pools[fstd_worker_id], // commandPool
       VK_COMMAND_BUFFER_LEVEL_PRIMARY,          // level
       1,                                        // commandBufferCount
   };
@@ -32,7 +32,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
 
 static inline void
 end_single_time_command_buffer(VkCommandBuffer command_buffer) {
-  assert(ut_worker_id < RE_THREAD_COUNT);
+  assert(fstd_worker_id < RE_THREAD_COUNT);
   VK_CHECK(vkEndCommandBuffer(command_buffer));
 
   VkSubmitInfo submitInfo{
@@ -47,15 +47,15 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
       NULL,            // pSignalSemaphores
   };
 
-  ut_mutex_lock(&g_ctx.queue_mutex);
+  fstd_mutex_lock(&g_ctx.queue_mutex);
   VK_CHECK(vkQueueSubmit(g_ctx.transfer_queue, 1, &submitInfo, VK_NULL_HANDLE));
 
   VK_CHECK(vkQueueWaitIdle(g_ctx.transfer_queue));
-  ut_mutex_unlock(&g_ctx.queue_mutex);
+  fstd_mutex_unlock(&g_ctx.queue_mutex);
 
   vkFreeCommandBuffers(
       g_ctx.device,
-      g_ctx.thread_command_pools[ut_worker_id],
+      g_ctx.thread_command_pools[fstd_worker_id],
       1,
       &command_buffer);
 }

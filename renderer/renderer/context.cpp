@@ -1,7 +1,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include "window.hpp"
-#include <util/array.h>
+#include <fstd/array.h>
 #include <util/log.h>
 
 re_context_t g_ctx;
@@ -499,7 +499,7 @@ void re_context_pre_init(
   ctx->graphics_command_pool = VK_NULL_HANDLE;
   ctx->transient_command_pool = VK_NULL_HANDLE;
 
-  ut_mutex_init(&ctx->queue_mutex);
+  fstd_mutex_init(&ctx->queue_mutex);
 
   for (uint32_t i = 0; i < ARRAYSIZE(ctx->thread_command_pools); i++) {
     ctx->thread_command_pools[i] = VK_NULL_HANDLE;
@@ -629,7 +629,7 @@ void re_context_destroy(re_context_t *ctx) {
 
   vkDestroyInstance(ctx->instance, NULL);
 
-  ut_mutex_destroy(&ctx->queue_mutex);
+  fstd_mutex_destroy(&ctx->queue_mutex);
 
   SDL_Quit();
 }
