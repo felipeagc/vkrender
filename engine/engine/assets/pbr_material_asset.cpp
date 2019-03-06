@@ -1,10 +1,11 @@
 #include "pbr_material_asset.hpp"
+#include "../engine.hpp"
+#include <fstd/array.h>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/texture.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>
-#include <fstd/array.h>
 
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,
@@ -42,13 +43,28 @@ void eg_pbr_material_asset_init(
     emissive_texture = &g_ctx.black_texture;
   }
 
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    material->resource_sets[i] =
-        re_allocate_resource_set(&g_ctx.resource_manager.set_layouts.material);
+  {
+    VkDescriptorSetLayout set_layouts[ARRAYSIZE(material->descriptor_sets)];
+    for (size_t i = 0; i < ARRAYSIZE(material->descriptor_sets); i++) {
+      set_layouts[i] = g_eng.set_layouts.material;
+    }
 
+    VkDescriptorSetAllocateInfo alloc_info = {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.pNext = NULL;
+    alloc_info.descriptorPool = g_ctx.descriptor_pool;
+    alloc_info.descriptorSetCount = ARRAYSIZE(material->descriptor_sets);
+    alloc_info.pSetLayouts = set_layouts;
+
+    VK_CHECK(vkAllocateDescriptorSets(
+        g_ctx.device, &alloc_info, material->descriptor_sets));
+  }
+
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     VkDescriptorImageInfo albedo_descriptor = albedo_texture->descriptor;
     VkDescriptorImageInfo normal_descriptor = normal_texture->descriptor;
-    VkDescriptorImageInfo metallic_roughness_descriptor = metallic_roughness_texture->descriptor;
+    VkDescriptorImageInfo metallic_roughness_descriptor =
+        metallic_roughness_texture->descriptor;
     VkDescriptorImageInfo occlusion_descriptor = occlusion_texture->descriptor;
     VkDescriptorImageInfo emissive_descriptor = emissive_texture->descriptor;
 
@@ -56,7 +72,7 @@ void eg_pbr_material_asset_init(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            material->resource_sets[i].descriptor_set, // dstSet
+            material->descriptor_sets[i],              // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -68,7 +84,7 @@ void eg_pbr_material_asset_init(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            material->resource_sets[i].descriptor_set, // dstSet
+            material->descriptor_sets[i],              // dstSet
             1,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -80,7 +96,7 @@ void eg_pbr_material_asset_init(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            material->resource_sets[i].descriptor_set, // dstSet
+            material->descriptor_sets[i],              // dstSet
             2,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -92,7 +108,7 @@ void eg_pbr_material_asset_init(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            material->resource_sets[i].descriptor_set, // dstSet
+            material->descriptor_sets[i],              // dstSet
             3,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -104,7 +120,7 @@ void eg_pbr_material_asset_init(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            material->resource_sets[i].descriptor_set, // dstSet
+            material->descriptor_sets[i],              // dstSet
             4,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -131,7 +147,7 @@ void eg_pbr_material_asset_bind(
   vkCmdPushConstants(
       command_buffer,
       pipeline->layout,
-      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+      VK_SHADER_STAGE_ALL_GRAPHICS,
       0,
       sizeof(material->uniform),
       &material->uniform);
@@ -142,17 +158,19 @@ void eg_pbr_material_asset_bind(
       pipeline->layout,
       set_index, // firstSet
       1,
-      &material->resource_sets[i].descriptor_set,
+      &material->descriptor_sets[i],
       0,
       NULL);
 }
 
 void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_free_resource_set(
-        &g_ctx.resource_manager.set_layouts.material,
-        &material->resource_sets[i]);
-  }
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  vkFreeDescriptorSets(
+      g_ctx.device,
+      g_ctx.descriptor_pool,
+      ARRAYSIZE(material->descriptor_sets),
+      material->descriptor_sets);
 
   eg_asset_destroy(&material->asset);
 }

@@ -16,7 +16,7 @@ void eg_mesh_component_draw(
     eg_mesh_component_t *mesh,
     struct re_window_t *window,
     struct re_pipeline_t *pipeline) {
-  eg_pbr_material_asset_bind(mesh->material, window, pipeline, 1);
+  eg_pbr_material_asset_bind(mesh->material, window, pipeline, 4);
   eg_pbr_model_update_uniform(&mesh->local_model, window);
   eg_pbr_model_update_uniform(&mesh->model, window);
   eg_pbr_model_bind(&mesh->local_model, window, pipeline, 2);

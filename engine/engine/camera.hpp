@@ -1,9 +1,8 @@
 #pragma once
 
+#include <gmath/gmath.h>
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
-#include <renderer/resource_manager.hpp>
-#include <gmath/gmath.h>
 
 typedef struct eg_camera_uniform_t {
   mat4_t view;
@@ -14,7 +13,7 @@ typedef struct eg_camera_uniform_t {
 typedef struct eg_camera_t {
   re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
   void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
-  re_resource_set_t resource_sets[RE_MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 
   float near;
   float far;

@@ -1,9 +1,8 @@
 #pragma once
 
+#include <gmath/gmath.h>
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
-#include <renderer/resource_manager.hpp>
-#include <gmath/gmath.h>
 
 typedef struct eg_pbr_model_uniform_t {
   mat4_t transform;
@@ -13,7 +12,7 @@ typedef struct eg_pbr_model_t {
   eg_pbr_model_uniform_t uniform;
   re_buffer_t buffers[RE_MAX_FRAMES_IN_FLIGHT];
   void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
-  re_resource_set_t resource_sets[RE_MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_pbr_model_t;
 
 void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform);

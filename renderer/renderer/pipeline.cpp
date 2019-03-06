@@ -181,6 +181,7 @@ re_pipeline_parameters_t re_default_pipeline_parameters() {
   params.depth_stencil_state = default_depth_stencil_state();
   params.color_blend_state = default_color_blend_state();
   params.dynamic_state = default_dynamic_state();
+  params.pipeline_layout = VK_NULL_HANDLE;
   return params;
 }
 
@@ -189,7 +190,7 @@ void re_pipeline_init_graphics(
     const re_render_target_t render_target,
     const re_shader_t *shader,
     const re_pipeline_parameters_t parameters) {
-  pipeline->layout = shader->pipeline_layout;
+  pipeline->layout = parameters.pipeline_layout;
 
   VkPipelineShaderStageCreateInfo pipeline_stages[2];
   re_shader_get_pipeline_stages(shader, pipeline_stages);

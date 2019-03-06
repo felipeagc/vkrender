@@ -3,6 +3,11 @@
 #define MAX_LIGHTS 20
 const float PI = 3.14159265359;
 
+struct Light {
+  vec4 pos;
+  vec4 color;
+};
+
 layout (location = 0) in vec2 tex_coords;
 layout (location = 1) in vec3 world_pos;
 layout (location = 2) in vec3 normal;
@@ -13,26 +18,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
   vec4 pos;
 } camera;
 
-layout (push_constant) uniform MaterialPushConstant {
-  vec4 base_color;
-  float metallic;
-  float roughness;
-  vec4 emissive;
-  float has_normal_texture;
-} material;
-
-layout (set = 1, binding = 0) uniform sampler2D albedo_texture;
-layout (set = 1, binding = 1) uniform sampler2D normal_texture;
-layout (set = 1, binding = 2) uniform sampler2D metallic_roughness_texture;
-layout (set = 1, binding = 3) uniform sampler2D occlusion_texture;
-layout (set = 1, binding = 4) uniform sampler2D emissive_texture;
-
-struct Light {
-  vec4 pos;
-  vec4 color;
-};
-
-layout (set = 4, binding = 0) uniform EnvironmentUniform {
+layout (set = 1, binding = 0) uniform EnvironmentUniform {
   vec3 sun_direction;
   float exposure;
   vec3 sun_color;
@@ -42,9 +28,23 @@ layout (set = 4, binding = 0) uniform EnvironmentUniform {
   layout(offset = 48) Light lights[MAX_LIGHTS];
 } environment;
 
-layout (set = 4, binding = 2) uniform samplerCube irradiance_map;
-layout (set = 4, binding = 3) uniform samplerCube radiance_map;
-layout (set = 4, binding = 4) uniform sampler2D brdf_lut;
+layout (set = 1, binding = 2) uniform samplerCube irradiance_map;
+layout (set = 1, binding = 3) uniform samplerCube radiance_map;
+layout (set = 1, binding = 4) uniform sampler2D brdf_lut;
+
+layout (set = 4, binding = 0) uniform sampler2D albedo_texture;
+layout (set = 4, binding = 1) uniform sampler2D normal_texture;
+layout (set = 4, binding = 2) uniform sampler2D metallic_roughness_texture;
+layout (set = 4, binding = 3) uniform sampler2D occlusion_texture;
+layout (set = 4, binding = 4) uniform sampler2D emissive_texture;
+
+layout (push_constant) uniform MaterialPushConstant {
+  vec4 base_color;
+  float metallic;
+  float roughness;
+  vec4 emissive;
+  float has_normal_texture;
+} material;
 
 layout (location = 0) out vec4 out_color;
 

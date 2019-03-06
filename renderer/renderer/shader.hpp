@@ -5,9 +5,6 @@
 typedef struct re_shader_t {
   VkShaderModule vertex_module;
   VkShaderModule fragment_module;
-  VkPipelineLayout pipeline_layout;
-  VkDescriptorSetLayout *descriptor_set_layouts;
-  uint32_t descriptor_set_layout_count;
 } re_shader_t;
 
 void re_shader_init_compiler();

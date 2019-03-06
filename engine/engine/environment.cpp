@@ -1,10 +1,11 @@
 #include "environment.hpp"
 #include "assets/environment_asset.hpp"
+#include "engine.hpp"
+#include <fstd/array.h>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/util.hpp>
 #include <renderer/window.hpp>
-#include <fstd/array.h>
 
 void eg_environment_init(
     eg_environment_t *environment, eg_environment_asset_t *asset) {
@@ -18,13 +19,25 @@ void eg_environment_init(
   environment->uniform.radiance_mip_levels =
       (float)asset->radiance_cubemap.mip_levels;
 
-  for (size_t i = 0; i < ARRAYSIZE(environment->resource_sets); i++) {
-    environment->resource_sets[i] = re_allocate_resource_set(
-        &g_ctx.resource_manager.set_layouts.environment);
+  {
+    VkDescriptorSetLayout set_layouts[ARRAYSIZE(environment->descriptor_sets)];
+    for (size_t i = 0; i < ARRAYSIZE(environment->descriptor_sets); i++) {
+      set_layouts[i] = g_eng.set_layouts.environment;
+    }
+
+    VkDescriptorSetAllocateInfo alloc_info = {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.pNext = NULL;
+    alloc_info.descriptorPool = g_ctx.descriptor_pool;
+    alloc_info.descriptorSetCount = ARRAYSIZE(environment->descriptor_sets);
+    alloc_info.pSetLayouts = set_layouts;
+
+    VK_CHECK(vkAllocateDescriptorSets(
+        g_ctx.device, &alloc_info, environment->descriptor_sets));
   }
 
   // Update descriptor sets
-  for (size_t i = 0; i < ARRAYSIZE(environment->resource_sets); i++) {
+  for (size_t i = 0; i < ARRAYSIZE(environment->descriptor_sets); i++) {
     re_buffer_init_uniform(
         &environment->uniform_buffers[i], sizeof(eg_environment_uniform_t));
     re_buffer_map_memory(
@@ -45,62 +58,62 @@ void eg_environment_init(
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            environment->resource_sets[i].descriptor_set, // dstSet
-            0,                                            // dstBinding
-            0,                                            // dstArrayElement
-            1,                                            // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,            // descriptorType
-            NULL,                                         // pImageInfo
-            &buffer_info,                                 // pBufferInfo
-            NULL,                                         // pTexelBufferView
+            environment->descriptor_sets[i],   // dstSet
+            0,                                 // dstBinding
+            0,                                 // dstArrayElement
+            1,                                 // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            NULL,                              // pImageInfo
+            &buffer_info,                      // pBufferInfo
+            NULL,                              // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            environment->resource_sets[i].descriptor_set, // dstSet
-            1,                                            // dstBinding
-            0,                                            // dstArrayElement
-            1,                                            // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,    // descriptorType
-            &skybox_descriptor_info,                      // pImageInfo
-            NULL,                                         // pBufferInfo
-            NULL,                                         // pTexelBufferView
+            environment->descriptor_sets[i],           // dstSet
+            1,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &skybox_descriptor_info,                   // pImageInfo
+            NULL,                                      // pBufferInfo
+            NULL,                                      // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            environment->resource_sets[i].descriptor_set, // dstSet
-            2,                                            // dstBinding
-            0,                                            // dstArrayElement
-            1,                                            // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,    // descriptorType
-            &irradiance_descriptor_info,                  // pImageInfo
-            NULL,                                         // pBufferInfo
-            NULL,                                         // pTexelBufferView
+            environment->descriptor_sets[i],           // dstSet
+            2,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &irradiance_descriptor_info,               // pImageInfo
+            NULL,                                      // pBufferInfo
+            NULL,                                      // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            environment->resource_sets[i].descriptor_set, // dstSet
-            3,                                            // dstBinding
-            0,                                            // dstArrayElement
-            1,                                            // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,    // descriptorType
-            &radiance_descriptor_info,                    // pImageInfo
-            NULL,                                         // pBufferInfo
-            NULL,                                         // pTexelBufferView
+            environment->descriptor_sets[i],           // dstSet
+            3,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &radiance_descriptor_info,                 // pImageInfo
+            NULL,                                      // pBufferInfo
+            NULL,                                      // pTexelBufferView
         },
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            environment->resource_sets[i].descriptor_set, // dstSet
-            4,                                            // dstBinding
-            0,                                            // dstArrayElement
-            1,                                            // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,    // descriptorType
-            &brdf_lut_descriptor_info,                    // pImageInfo
-            NULL,                                         // pBufferInfo
-            NULL,                                         // pTexelBufferView
+            environment->descriptor_sets[i],           // dstSet
+            4,                                         // dstBinding
+            0,                                         // dstArrayElement
+            1,                                         // descriptorCount
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+            &brdf_lut_descriptor_info,                 // pImageInfo
+            NULL,                                      // pBufferInfo
+            NULL,                                      // pTexelBufferView
         },
     };
 
@@ -135,7 +148,7 @@ void eg_environment_bind(
       pipeline->layout,
       set_index, // firstSet
       1,
-      &environment->resource_sets[i].descriptor_set,
+      &environment->descriptor_sets[i],
       0,
       NULL);
 }
@@ -157,7 +170,7 @@ void eg_environment_draw_skybox(
       pipeline->layout,
       1, // firstSet
       1,
-      &environment->resource_sets[i].descriptor_set,
+      &environment->descriptor_sets[i],
       0,
       nullptr);
 
@@ -191,9 +204,9 @@ void eg_environment_destroy(eg_environment_t *environment) {
     re_buffer_destroy(&environment->uniform_buffers[i]);
   }
 
-  for (uint32_t i = 0; i < ARRAYSIZE(environment->resource_sets); i++) {
-    re_free_resource_set(
-        &g_ctx.resource_manager.set_layouts.environment,
-        &environment->resource_sets[i]);
-  }
+  vkFreeDescriptorSets(
+      g_ctx.device,
+      g_ctx.descriptor_pool,
+      ARRAYSIZE(environment->descriptor_sets),
+      environment->descriptor_sets);
 }

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "asset_types.hpp"
-#include <renderer/common.hpp>
-#include <renderer/resource_manager.hpp>
 #include <gmath/gmath.h>
+#include <renderer/common.hpp>
+#include <vulkan/vulkan.h>
 
 typedef struct eg_pbr_material_uniform_t {
   vec4_t base_color_factor;
@@ -16,7 +16,7 @@ typedef struct eg_pbr_material_uniform_t {
 typedef struct eg_pbr_material_asset_t {
   eg_asset_t asset;
   eg_pbr_material_uniform_t uniform;
-  re_resource_set_t resource_sets[RE_MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_pbr_material_asset_t;
 
 void eg_pbr_material_asset_init(

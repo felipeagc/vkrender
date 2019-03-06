@@ -3,7 +3,6 @@
 #include "common.hpp"
 #include "pipeline.hpp"
 #include "render_target.hpp"
-#include "resource_manager.hpp"
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -36,7 +35,7 @@ typedef struct re_canvas_t {
     VkFramebuffer framebuffer;
 
     // For rendering this render target's image to another render target
-    re_resource_set_t resource_set;
+    VkDescriptorSet descriptor_set;
   } resources[1];
 } re_canvas_t;
 

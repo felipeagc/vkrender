@@ -1,5 +1,6 @@
 set(
   ENGINE_SOURCES
+  engine/engine.cpp
   engine/world.cpp
   engine/asset_manager.cpp
   engine/inspector.cpp

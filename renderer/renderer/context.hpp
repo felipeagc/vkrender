@@ -1,6 +1,5 @@
 #pragma once
 
-#include "resource_manager.hpp"
 #include "texture.hpp"
 #include <fstd/thread.h>
 #include <vulkan/vk_mem_alloc.h>
@@ -48,8 +47,8 @@ struct re_context_t {
   VkCommandPool thread_command_pools[RE_THREAD_COUNT];
 
   VkDescriptorPool descriptor_pool;
-
-  re_resource_manager_t resource_manager;
+  VkDescriptorSetLayout canvas_descriptor_set_layout;
+  VkDescriptorSetLayout bake_cubemap_descriptor_set_layout;
 
   re_texture_t white_texture;
   re_texture_t black_texture;

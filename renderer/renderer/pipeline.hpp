@@ -13,7 +13,7 @@ typedef struct re_pipeline_parameters_t {
   VkPipelineDepthStencilStateCreateInfo depth_stencil_state;
   VkPipelineColorBlendStateCreateInfo color_blend_state;
   VkPipelineDynamicStateCreateInfo dynamic_state;
-  VkPipelineLayout layout;
+  VkPipelineLayout pipeline_layout;
 } re_pipeline_parameters_t;
 
 // Does not have a default pipeline layout

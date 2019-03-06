@@ -204,15 +204,21 @@ static inline void destroy_depth_target(re_canvas_t *canvas) {
 
 static inline void create_descriptor_sets(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    {
+      VkDescriptorSetAllocateInfo alloc_info = {};
+      alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+      alloc_info.pNext = NULL;
+      alloc_info.descriptorPool = g_ctx.descriptor_pool;
+      alloc_info.descriptorSetCount = 1;
+      alloc_info.pSetLayouts = &g_ctx.canvas_descriptor_set_layout;
 
-    re_resource_set_layout_t *set_layout =
-        &g_ctx.resource_manager.set_layouts.single_texture;
-    resource.resource_set = re_allocate_resource_set(set_layout);
+      VK_CHECK(vkAllocateDescriptorSets(
+          g_ctx.device, &alloc_info, &canvas->resources[i].descriptor_set));
+    }
 
     VkDescriptorImageInfo descriptor = {
-        resource.color.sampler,
-        resource.color.image_view,
+        canvas->resources[i].color.sampler,
+        canvas->resources[i].color.image_view,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
 
@@ -220,7 +226,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
         VkWriteDescriptorSet{
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
-            resource.resource_set.descriptor_set,      // dstSet
+            canvas->resources[i].descriptor_set,       // dstSet
             0,                                         // dstBinding
             0,                                         // dstArrayElement
             1,                                         // descriptorCount
@@ -239,12 +245,12 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
 static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  re_resource_set_layout_t *set_layout =
-      &g_ctx.resource_manager.set_layouts.single_texture;
-
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
-    re_free_resource_set(set_layout, &resource.resource_set);
+    vkFreeDescriptorSets(
+        g_ctx.device,
+        g_ctx.descriptor_pool,
+        1,
+        &canvas->resources[i].descriptor_set);
   }
 }
 
@@ -463,7 +469,7 @@ void re_canvas_draw(
       pipeline->layout,
       0, // firstSet
       1,
-      &resource.resource_set.descriptor_set,
+      &resource.descriptor_set,
       0,
       NULL);
 

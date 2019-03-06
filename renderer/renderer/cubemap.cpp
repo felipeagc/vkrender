@@ -5,11 +5,11 @@
 #include "pipeline.hpp"
 #include "shader.hpp"
 #include "util.hpp"
-#include <stb_image.h>
-#include <string.h>
 #include <fstd/array.h>
 #include <fstd/file.h>
 #include <fstd/task_scheduler.h>
+#include <stb_image.h>
+#include <string.h>
 
 struct camera_uniform_t {
   mat4_t view;
@@ -258,8 +258,19 @@ static void bake_cubemap(
   }
 
   // Create hdrDescriptorSet
-  auto &set_layout = g_ctx.resource_manager.set_layouts.material;
-  re_resource_set_t hdr_resource_set = re_allocate_resource_set(&set_layout);
+  VkDescriptorSet hdr_descriptor_set;
+  {
+    VkDescriptorSetAllocateInfo alloc_info = {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.pNext = NULL;
+    alloc_info.descriptorPool = g_ctx.descriptor_pool;
+    alloc_info.descriptorSetCount = 1;
+    alloc_info.pSetLayouts = &g_ctx.bake_cubemap_descriptor_set_layout;
+
+    VK_CHECK(vkAllocateDescriptorSets(
+        g_ctx.device, &alloc_info, &hdr_descriptor_set));
+  }
+
   {
     VkDescriptorImageInfo hdrImageDescriptor = {
         hdrSampler,
@@ -270,7 +281,7 @@ static void bake_cubemap(
     VkWriteDescriptorSet hdrDescriptorWrite = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         NULL,
-        hdr_resource_set.descriptor_set,           // dstSet
+        hdr_descriptor_set,                        // dstSet
         1,                                         // dstBinding
         0,                                         // dstArrayElement
         1,                                         // descriptorCount
@@ -293,8 +304,6 @@ static void bake_cubemap(
 
   // Create pipeline
   re_pipeline_parameters_t pipeline_params = re_default_pipeline_parameters();
-  pipeline_params.layout =
-      g_ctx.resource_manager.groups.bake_cubemap.pipeline_layout;
   pipeline_params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       NULL,                                                      // pNext
@@ -304,6 +313,27 @@ static void bake_cubemap(
       0,    // vertexAttributeDescriptionCount
       NULL, // pVertexAttributeDescriptions
   };
+
+  VkDescriptorSetLayout set_layouts[] = {
+      g_ctx.bake_cubemap_descriptor_set_layout,
+  };
+
+  VkPushConstantRange push_constant_range = {};
+  push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  push_constant_range.offset = 0;
+  push_constant_range.size = 128;
+
+  VkPipelineLayoutCreateInfo create_info;
+  create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  create_info.pNext = NULL;
+  create_info.flags = 0;
+  create_info.setLayoutCount = ARRAYSIZE(set_layouts);
+  create_info.pSetLayouts = set_layouts;
+  create_info.pushConstantRangeCount = 1;
+  create_info.pPushConstantRanges = &push_constant_range;
+
+  VK_CHECK(vkCreatePipelineLayout(
+      g_ctx.device, &create_info, NULL, &pipeline_params.pipeline_layout));
 
   re_pipeline_t pipeline;
 
@@ -322,7 +352,6 @@ static void bake_cubemap(
 
   free(vertex_code);
   free(fragment_code);
-
 
   // Allocate command buffer
   assert(fstd_worker_id < RE_THREAD_COUNT);
@@ -402,7 +431,7 @@ static void bake_cubemap(
           pipeline.layout,
           0, // firstSet
           1,
-          &hdr_resource_set.descriptor_set,
+          &hdr_descriptor_set,
           0,
           NULL);
 
@@ -445,8 +474,6 @@ static void bake_cubemap(
 
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  re_free_resource_set(&set_layout, &hdr_resource_set);
-
   vkDestroyImageView(g_ctx.device, hdrImageView, NULL);
   vkDestroySampler(g_ctx.device, hdrSampler, NULL);
   vmaDestroyImage(g_ctx.gpu_allocator, hdrImage, hdrAllocation);
@@ -458,12 +485,16 @@ static void bake_cubemap(
       1,
       &commandBuffer);
 
+  vkFreeDescriptorSets(
+      g_ctx.device, g_ctx.descriptor_pool, 1, &hdr_descriptor_set);
+
   stbi_image_free(hdrData);
 
   re_canvas_destroy(&canvas);
 
   re_shader_destroy(&shader);
   re_pipeline_destroy(&pipeline);
+  vkDestroyPipelineLayout(g_ctx.device, pipeline_params.pipeline_layout, NULL);
 }
 
 static void create_cubemap_image(

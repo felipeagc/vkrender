@@ -4,6 +4,7 @@
 #include <engine/camera.hpp>
 #include <engine/components/mesh_component.hpp>
 #include <engine/components/transform_component.hpp>
+#include <engine/engine.hpp>
 #include <engine/inspector.hpp>
 #include <engine/pbr.hpp>
 #include <engine/pipelines.hpp>
@@ -18,21 +19,26 @@ int main() {
   re_window_t window;
   re_window_init(&window, "Re-write", 1600, 900);
   re_shader_init_compiler();
-
   re_imgui_init(&window);
+
+  eg_engine_init();
 
   window.clear_color = {1.0, 1.0, 1.0, 1.0};
 
+  re_shader_t pbr_shader;
   re_pipeline_t pbr_pipeline;
-  eg_init_pipeline(
+  eg_init_shader_and_pipeline(
+      &pbr_shader,
       &pbr_pipeline,
       window.render_target,
       "../shaders/pbr.vert",
       "../shaders/pbr.frag",
       eg_pbr_pipeline_parameters());
 
+  re_shader_t skybox_shader;
   re_pipeline_t skybox_pipeline;
-  eg_init_pipeline(
+  eg_init_shader_and_pipeline(
+      &skybox_shader,
       &skybox_pipeline,
       window.render_target,
       "../shaders/skybox.vert",
@@ -144,7 +150,7 @@ int main() {
 
     re_pipeline_bind_graphics(&pbr_pipeline, &window);
     eg_camera_bind(&world.camera, &window, &pbr_pipeline, 0);
-    eg_environment_bind(&world.environment, &window, &pbr_pipeline, 4);
+    eg_environment_bind(&world.environment, &window, &pbr_pipeline, 1);
 
     // Draw all meshes
     for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
@@ -172,7 +178,12 @@ int main() {
   eg_asset_manager_destroy(&asset_manager);
 
   re_pipeline_destroy(&pbr_pipeline);
+  re_shader_destroy(&pbr_shader);
+
   re_pipeline_destroy(&skybox_pipeline);
+  re_shader_destroy(&skybox_shader);
+
+  eg_engine_destroy();
 
   re_shader_destroy_compiler();
   re_imgui_destroy();

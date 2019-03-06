@@ -1,17 +1,34 @@
 #include "pbr.hpp"
+#include "engine.hpp"
+#include <fstd/array.h>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/texture.hpp>
+#include <renderer/util.hpp>
 #include <renderer/window.hpp>
 
 void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
   model->uniform.transform = transform;
 
+  {
+    VkDescriptorSetLayout set_layouts[ARRAYSIZE(model->descriptor_sets)];
+    for (size_t i = 0; i < ARRAYSIZE(model->descriptor_sets); i++) {
+      set_layouts[i] = g_eng.set_layouts.model;
+    }
+
+    VkDescriptorSetAllocateInfo alloc_info = {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.pNext = NULL;
+    alloc_info.descriptorPool = g_ctx.descriptor_pool;
+    alloc_info.descriptorSetCount = ARRAYSIZE(model->descriptor_sets);
+    alloc_info.pSetLayouts = set_layouts;
+
+    VK_CHECK(vkAllocateDescriptorSets(
+        g_ctx.device, &alloc_info, model->descriptor_sets));
+  }
+
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_init_uniform(&model->buffers[i], sizeof(model->uniform));
-
-    model->resource_sets[i] =
-        re_allocate_resource_set(&g_ctx.resource_manager.set_layouts.model);
 
     VkDescriptorBufferInfo buffer_info = {
         model->buffers[i].buffer, 0, sizeof(model->uniform)};
@@ -19,14 +36,14 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
     VkWriteDescriptorSet descriptor_write = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        model->resource_sets[i].descriptor_set, // dstSet
-        0,                                      // dstBinding
-        0,                                      // dstArrayElement
-        1,                                      // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,      // descriptorType
-        nullptr,                                // pImageInfo
-        &buffer_info,                           // pBufferInfo
-        nullptr,                                // pTexelBufferView
+        model->descriptor_sets[i],         // dstSet
+        0,                                 // dstBinding
+        0,                                 // dstArrayElement
+        1,                                 // descriptorCount
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+        nullptr,                           // pImageInfo
+        &buffer_info,                      // pBufferInfo
+        nullptr,                           // pTexelBufferView
     };
 
     vkUpdateDescriptorSets(g_ctx.device, 1, &descriptor_write, 0, NULL);
@@ -57,18 +74,22 @@ void eg_pbr_model_bind(
       pipeline->layout,
       set_index, // firstSet
       1,
-      &model->resource_sets[i].descriptor_set,
+      &model->descriptor_sets[i],
       0,
       NULL);
 }
 
 void eg_pbr_model_destroy(eg_pbr_model_t *model) {
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  vkFreeDescriptorSets(
+      g_ctx.device,
+      g_ctx.descriptor_pool,
+      ARRAYSIZE(model->descriptor_sets),
+      model->descriptor_sets);
+
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_free_resource_set(
-        &g_ctx.resource_manager.set_layouts.model, &model->resource_sets[i]);
-
     re_buffer_unmap_memory(&model->buffers[i]);
-
     re_buffer_destroy(&model->buffers[i]);
   }
 }

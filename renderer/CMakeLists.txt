@@ -10,7 +10,6 @@ set(
   renderer/buffer.cpp
   renderer/texture.cpp
   renderer/cubemap.cpp
-  renderer/resource_manager.cpp
   renderer/shader.cpp
   renderer/pipeline.cpp
   renderer/canvas.cpp

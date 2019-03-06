@@ -1,9 +1,8 @@
 #pragma once
 
+#include <gmath/gmath.h>
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
-#include <renderer/resource_manager.hpp>
-#include <gmath/gmath.h>
 
 #define EG_MAX_POINT_LIGHTS 20
 
@@ -27,11 +26,12 @@ typedef struct eg_environment_t {
 
   re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
   void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
-  re_resource_set_t resource_sets[RE_MAX_FRAMES_IN_FLIGHT];
+  VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_environment_t;
 
 void eg_environment_init(
-    eg_environment_t *environment, struct eg_environment_asset_t *asset);
+    eg_environment_t *environment,
+    struct eg_environment_asset_t *asset);
 
 void eg_environment_update(
     eg_environment_t *environment, struct re_window_t *window);
