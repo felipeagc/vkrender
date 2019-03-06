@@ -45,5 +45,4 @@ target_link_libraries(
   PRIVATE
   stb_image
   shaderc
-  spirv-reflect
   )
