@@ -607,7 +607,7 @@ bool re_window_init(
   create_vulkan_surface(window);
 
   // Lazily create vulkan context stuff
-  re_context_late_inint(&g_ctx, window->surface);
+  re_context_late_init(&g_ctx, window->surface);
 
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(

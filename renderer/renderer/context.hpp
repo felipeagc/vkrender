@@ -61,7 +61,7 @@ void re_context_pre_init(
     const char *const *required_window_vulkan_extensions,
     uint32_t window_extension_count);
 
-void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR surface);
+void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface);
 
 VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx);
 

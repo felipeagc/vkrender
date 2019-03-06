@@ -211,7 +211,7 @@ static void copy_side_image_to_cubemap(
 
 static void bake_cubemap(
     const char *hdrFile,
-    VkImage &cubemapImage,
+    VkImage *cubemapImage,
     VkFormat cubemapImageFormat,
     uint32_t cubemapImageWidth,
     uint32_t cubemapImageHeight,
@@ -395,7 +395,7 @@ static void bake_cubemap(
 
     re_set_image_layout(
         commandBuffer,
-        cubemapImage,
+        *cubemapImage,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         cubeFaceSubresourceRange);
@@ -452,7 +452,7 @@ static void bake_cubemap(
     copy_side_image_to_cubemap(
         commandBuffer,
         canvas.resources[0].color.image,
-        cubemapImage,
+        *cubemapImage,
         cubemapImageWidth,
         cubemapImageHeight,
         i,
@@ -615,7 +615,7 @@ void re_cubemap_init_from_hdr_equirec(
       height);
 
   bake_cubemap(
-      path, cubemap->image, VK_FORMAT_R32G32B32A32_SFLOAT, width, height);
+      path, &cubemap->image, VK_FORMAT_R32G32B32A32_SFLOAT, width, height);
 
   cubemap->descriptor = VkDescriptorImageInfo{
       cubemap->sampler,
@@ -648,7 +648,7 @@ void re_cubemap_init_from_hdr_equirec_mipmaps(
   for (size_t i = 0; i < path_count; i++) {
     bake_cubemap(
         paths[i],
-        cubemap->image,
+        &cubemap->image,
         VK_FORMAT_R32G32B32A32_SFLOAT,
         width / pow(2, i),
         height / pow(2, i),

@@ -1,5 +1,5 @@
-set(GMATH_BUILD_TESTS OFF)
-set(FSTD_BUILD_TESTS OFF)
+set(GMATH_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(FSTD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(gmath)
 add_subdirectory(fstd)

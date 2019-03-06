@@ -516,7 +516,7 @@ void re_context_pre_init(
 #endif
 }
 
-void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR surface) {
+void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface) {
   if (ctx->device != VK_NULL_HANDLE) {
     return;
   }
