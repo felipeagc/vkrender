@@ -7,18 +7,7 @@ typedef struct re_shader_t {
   VkShaderModule fragment_module;
 } re_shader_t;
 
-void re_shader_init_compiler();
-
-void re_shader_destroy_compiler();
-
-bool re_shader_init_glsl(
-    re_shader_t *shader,
-    const char *vertex_path,
-    const char *vertex_glsl_code,
-    const char *fragment_path,
-    const char *fragment_glsl_code);
-
-void re_shader_init_spirv(
+void re_shader_init_spv(
     re_shader_t *shader,
     const uint32_t *vertex_code,
     size_t vertex_code_size,

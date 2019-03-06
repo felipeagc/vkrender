@@ -319,7 +319,8 @@ static void bake_cubemap(
   };
 
   VkPushConstantRange push_constant_range = {};
-  push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  push_constant_range.stageFlags =
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   push_constant_range.offset = 0;
   push_constant_range.size = 128;
 
@@ -337,15 +338,23 @@ static void bake_cubemap(
 
   re_pipeline_t pipeline;
 
-  const char *vertex_path = "../shaders/bake_cubemap.vert";
-  const char *fragment_path = "../shaders/bake_cubemap.frag";
+  const char *vertex_path = "../shaders/out/bake_cubemap.vert.spv";
+  const char *fragment_path = "../shaders/out/bake_cubemap.frag.spv";
 
   re_shader_t shader;
-  char *vertex_code = fstd_load_string_from_file(vertex_path);
-  char *fragment_code = fstd_load_string_from_file(fragment_path);
+  size_t vertex_size;
+  unsigned char *vertex_code =
+      fstd_load_bytes_from_file(vertex_path, &vertex_size);
+  size_t fragment_size;
+  unsigned char *fragment_code =
+      fstd_load_bytes_from_file(fragment_path, &fragment_size);
 
-  re_shader_init_glsl(
-      &shader, vertex_path, vertex_code, fragment_path, fragment_code);
+  re_shader_init_spv(
+      &shader,
+      (uint32_t *)vertex_code,
+      vertex_size,
+      (uint32_t *)fragment_code,
+      fragment_size);
 
   re_pipeline_init_graphics(
       &pipeline, canvas.render_target, &shader, pipeline_params);

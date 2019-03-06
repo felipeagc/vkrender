@@ -18,7 +18,6 @@
 int main() {
   re_window_t window;
   re_window_init(&window, "Re-write", 1600, 900);
-  re_shader_init_compiler();
   re_imgui_init(&window);
 
   eg_engine_init();
@@ -26,19 +25,19 @@ int main() {
   window.clear_color = {1.0, 1.0, 1.0, 1.0};
 
   re_pipeline_t pbr_pipeline;
-  eg_init_pipeline_glsl(
+  eg_init_pipeline_spv(
       &pbr_pipeline,
       window.render_target,
-      "../shaders/pbr.vert",
-      "../shaders/pbr.frag",
+      "../shaders/out/pbr.vert.spv",
+      "../shaders/out/pbr.frag.spv",
       eg_pbr_pipeline_parameters());
 
   re_pipeline_t skybox_pipeline;
-  eg_init_pipeline_glsl(
+  eg_init_pipeline_spv(
       &skybox_pipeline,
       window.render_target,
-      "../shaders/skybox.vert",
-      "../shaders/skybox.frag",
+      "../shaders/out/skybox.vert.spv",
+      "../shaders/out/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
 
   eg_asset_manager_t asset_manager;
@@ -178,7 +177,6 @@ int main() {
 
   eg_engine_destroy();
 
-  re_shader_destroy_compiler();
   re_imgui_destroy();
   re_window_destroy(&window);
   re_context_destroy(&g_ctx);
