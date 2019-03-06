@@ -33,7 +33,7 @@ typedef struct re_pipeline_t {
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
     const re_render_target_t render_target,
-    const re_shader_t shader,
+    const re_shader_t *shader,
     const re_pipeline_parameters_t parameters);
 
 void re_pipeline_bind_graphics(

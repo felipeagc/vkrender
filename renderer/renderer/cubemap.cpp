@@ -318,12 +318,11 @@ static void bake_cubemap(
       &shader, vertex_path, vertex_code, fragment_path, fragment_code);
 
   re_pipeline_init_graphics(
-      &pipeline, canvas.render_target, shader, pipeline_params);
+      &pipeline, canvas.render_target, &shader, pipeline_params);
 
   free(vertex_code);
   free(fragment_code);
 
-  re_shader_destroy(&shader);
 
   // Allocate command buffer
   assert(fstd_worker_id < RE_THREAD_COUNT);
@@ -463,6 +462,7 @@ static void bake_cubemap(
 
   re_canvas_destroy(&canvas);
 
+  re_shader_destroy(&shader);
   re_pipeline_destroy(&pipeline);
 }
 

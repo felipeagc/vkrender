@@ -187,12 +187,12 @@ re_pipeline_parameters_t re_default_pipeline_parameters() {
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
     const re_render_target_t render_target,
-    const re_shader_t shader,
+    const re_shader_t *shader,
     const re_pipeline_parameters_t parameters) {
-  pipeline->layout = parameters.layout;
+  pipeline->layout = shader->pipeline_layout;
 
   VkPipelineShaderStageCreateInfo pipeline_stages[2];
-  re_shader_get_pipeline_stages(&shader, pipeline_stages);
+  re_shader_get_pipeline_stages(shader, pipeline_stages);
 
   auto multisample_state =
       default_multisample_state(render_target.sample_count);
