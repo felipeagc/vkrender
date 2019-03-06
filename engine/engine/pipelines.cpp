@@ -20,11 +20,11 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
 
   params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      NULL,                                                   // pNext
+      NULL,                                                      // pNext
       0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
+      0,    // vertexBindingDescriptionCount
       NULL, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
+      0,    // vertexAttributeDescriptionCount
       NULL, // pVertexAttributeDescriptions
   };
 
@@ -54,11 +54,11 @@ re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
 
   params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      NULL,                                                   // pNext
+      NULL,                                                      // pNext
       0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
+      0,    // vertexBindingDescriptionCount
       NULL, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
+      0,    // vertexAttributeDescriptionCount
       NULL, // pVertexAttributeDescriptions
   };
 
@@ -76,11 +76,11 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
 
   params.vertex_input_state = VkPipelineVertexInputStateCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
-      NULL,                                                   // pNext
+      NULL,                                                      // pNext
       0,                                                         // flags
-      0,       // vertexBindingDescriptionCount
+      0,    // vertexBindingDescriptionCount
       NULL, // pVertexBindingDescriptions
-      0,       // vertexAttributeDescriptionCount
+      0,    // vertexAttributeDescriptionCount
       NULL, // pVertexAttributeDescriptions
   };
 

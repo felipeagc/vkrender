@@ -47,6 +47,8 @@ struct re_context_t {
 
   VkCommandPool thread_command_pools[RE_THREAD_COUNT];
 
+  VkDescriptorPool descriptor_pool;
+
   re_resource_manager_t resource_manager;
 
   re_texture_t white_texture;

@@ -499,6 +499,8 @@ void re_context_pre_init(
   ctx->graphics_command_pool = VK_NULL_HANDLE;
   ctx->transient_command_pool = VK_NULL_HANDLE;
 
+  ctx->descriptor_pool = VK_NULL_HANDLE;
+
   fstd_mutex_init(&ctx->queue_mutex);
 
   for (uint32_t i = 0; i < ARRAYSIZE(ctx->thread_command_pools); i++) {
@@ -528,6 +530,32 @@ void re_context_late_inint(re_context_t *ctx, VkSurfaceKHR surface) {
   create_graphics_command_pool(ctx);
   create_transient_command_pool(ctx);
   create_thread_command_pools(ctx);
+
+  VkDescriptorPoolSize pool_sizes[] = {
+      {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+      {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+      {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000},
+  };
+
+  VkDescriptorPoolCreateInfo create_info = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,     // sType
+      NULL,                                              // pNext
+      VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, // flags
+      1000 * (uint32_t)ARRAYSIZE(pool_sizes),            // maxSets
+      (uint32_t)ARRAYSIZE(pool_sizes),                   // poolSizeCount
+      pool_sizes,                                        // pPoolSizes
+  };
+
+  VK_CHECK(vkCreateDescriptorPool(
+      g_ctx.device, &create_info, NULL, &ctx->descriptor_pool));
 
   re_resource_manager_init(&ctx->resource_manager);
 
@@ -612,6 +640,8 @@ void re_context_destroy(re_context_t *ctx) {
   re_texture_destroy(&ctx->black_texture);
 
   re_resource_manager_destroy(&ctx->resource_manager);
+
+  vkDestroyDescriptorPool(ctx->device, ctx->descriptor_pool, NULL);
 
   vkDestroyCommandPool(ctx->device, ctx->transient_command_pool, NULL);
 

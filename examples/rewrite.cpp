@@ -19,8 +19,7 @@ int main() {
   re_window_init(&window, "Re-write", 1600, 900);
   re_shader_init_compiler();
 
-  re_imgui_t imgui;
-  re_imgui_init(&imgui, &window);
+  re_imgui_init(&window);
 
   window.clear_color = {1.0, 1.0, 1.0, 1.0};
 
@@ -115,7 +114,7 @@ int main() {
   while (!window.should_close) {
     SDL_Event event;
     while (re_window_poll_event(&window, &event)) {
-      re_imgui_process_event(&imgui, &event);
+      re_imgui_process_event(&event);
       eg_fps_camera_system_process_event(&fps_system, &window, &event);
 
       switch (event.type) {
@@ -128,11 +127,11 @@ int main() {
     // Per-frame updates
     eg_environment_update(&world.environment, &window);
 
-    re_imgui_begin(&imgui);
+    re_imgui_begin(&window);
 
     eg_draw_inspector(&world, &asset_manager);
 
-    re_imgui_end(&imgui);
+    re_imgui_end();
 
     re_window_begin_frame(&window);
 
@@ -162,7 +161,7 @@ int main() {
       }
     }
 
-    re_imgui_draw(&imgui);
+    re_imgui_draw(&window);
 
     re_window_end_render_pass(&window);
 
@@ -176,7 +175,7 @@ int main() {
   re_pipeline_destroy(&skybox_pipeline);
 
   re_shader_destroy_compiler();
-  re_imgui_destroy(&imgui);
+  re_imgui_destroy();
   re_window_destroy(&window);
   re_context_destroy(&g_ctx);
 
