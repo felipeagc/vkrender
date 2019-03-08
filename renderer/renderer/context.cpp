@@ -56,27 +56,28 @@ void DestroyDebugReportCallbackEXT(
 static inline bool check_validation_layer_support() {
   uint32_t count;
   vkEnumerateInstanceLayerProperties(&count, NULL);
-  VkLayerProperties *availableLayers =
+  VkLayerProperties *available_layers =
       (VkLayerProperties *)malloc(sizeof(VkLayerProperties) * count);
-  vkEnumerateInstanceLayerProperties(&count, availableLayers);
+  vkEnumerateInstanceLayerProperties(&count, available_layers);
 
-  for (const char *layerName : RE_REQUIRED_VALIDATION_LAYERS) {
-    bool layerFound = false;
+  for (uint32_t l = 0; l < ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS); l++) {
+    const char *layer_name = RE_REQUIRED_VALIDATION_LAYERS[l];
+    bool layer_found = false;
 
     for (uint32_t i = 0; i < count; i++) {
-      if (strcmp(availableLayers[i].layerName, layerName) == 0) {
-        layerFound = true;
+      if (strcmp(available_layers[i].layerName, layer_name) == 0) {
+        layer_found = true;
         break;
       }
     }
 
-    if (!layerFound) {
-      free(availableLayers);
+    if (!layer_found) {
+      free(available_layers);
       return false;
     }
   }
 
-  free(availableLayers);
+  free(available_layers);
   return true;
 }
 
