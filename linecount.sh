@@ -6,7 +6,6 @@ wc -l \
 	./renderer/**/*.cpp \
 	./renderer/**/*.hpp \
 	./util/**/*.h \
-	./util/**/*.c \
 	./examples/*.cpp \
 	./shaders/*.vert \
 	./shaders/*.frag \

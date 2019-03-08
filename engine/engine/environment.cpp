@@ -49,10 +49,13 @@ void eg_environment_init(
         sizeof(eg_environment_uniform_t),
     };
 
-    auto skybox_descriptor_info = asset->skybox_cubemap.descriptor;
-    auto irradiance_descriptor_info = asset->irradiance_cubemap.descriptor;
-    auto radiance_descriptor_info = asset->radiance_cubemap.descriptor;
-    auto brdf_lut_descriptor_info = asset->brdf_lut.descriptor;
+    VkDescriptorImageInfo skybox_descriptor_info =
+        asset->skybox_cubemap.descriptor;
+    VkDescriptorImageInfo irradiance_descriptor_info =
+        asset->irradiance_cubemap.descriptor;
+    VkDescriptorImageInfo radiance_descriptor_info =
+        asset->radiance_cubemap.descriptor;
+    VkDescriptorImageInfo brdf_lut_descriptor_info = asset->brdf_lut.descriptor;
 
     VkWriteDescriptorSet descriptor_writes[] = {
         VkWriteDescriptorSet{
