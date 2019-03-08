@@ -14,6 +14,7 @@ set(
   renderer/pipeline.cpp
   renderer/canvas.cpp
   renderer/imgui.cpp
+  renderer/task_scheduler.cpp
   )
 
 add_library(

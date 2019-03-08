@@ -1,14 +1,14 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <fstd/task_scheduler.h>
+#include "task_scheduler.hpp"
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {
-  assert(fstd_worker_id < RE_THREAD_COUNT);
+  assert(re_worker_id < RE_THREAD_COUNT);
   VkCommandBufferAllocateInfo allocateInfo{
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       NULL,
-      g_ctx.thread_command_pools[fstd_worker_id], // commandPool
+      g_ctx.thread_command_pools[re_worker_id], // commandPool
       VK_COMMAND_BUFFER_LEVEL_PRIMARY,            // level
       1,                                          // commandBufferCount
   };
@@ -32,7 +32,7 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
 
 static inline void
 end_single_time_command_buffer(VkCommandBuffer command_buffer) {
-  assert(fstd_worker_id < RE_THREAD_COUNT);
+  assert(re_worker_id < RE_THREAD_COUNT);
   VK_CHECK(vkEndCommandBuffer(command_buffer));
 
   VkSubmitInfo submitInfo{
@@ -55,7 +55,7 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
 
   vkFreeCommandBuffers(
       g_ctx.device,
-      g_ctx.thread_command_pools[fstd_worker_id],
+      g_ctx.thread_command_pools[re_worker_id],
       1,
       &command_buffer);
 }

@@ -1,13 +1,10 @@
 #include "cubemap.hpp"
 #include "buffer.hpp"
-#include "canvas.hpp"
 #include "context.hpp"
-#include "pipeline.hpp"
-#include "shader.hpp"
 #include "util.hpp"
 #include <fstd/array.h>
 #include <fstd/file.h>
-#include <fstd/task_scheduler.h>
+#include <math.h>
 #include <stb_image.h>
 #include <string.h>
 
