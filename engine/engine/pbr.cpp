@@ -1,6 +1,6 @@
 #include "pbr.hpp"
 #include "engine.hpp"
-#include <fstd/array.h>
+#include <fstd_util.h>
 #include <renderer/context.hpp>
 #include <renderer/pipeline.hpp>
 #include <renderer/texture.hpp>

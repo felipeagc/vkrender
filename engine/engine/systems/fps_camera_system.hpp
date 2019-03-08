@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gmath/gmath.h>
+#include <gmath.h>
 
 typedef struct eg_fps_camera_system_t {
   vec3_t cam_target;

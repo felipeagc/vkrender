@@ -2,8 +2,8 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
-#include <fstd/array.h>
-#include <fstd/time.h>
+#include <fstd_util.h>
+#include <fstd_time.h>
 #include <util/log.h>
 
 static inline uint32_t
@@ -827,7 +827,7 @@ void re_window_end_frame(re_window_t *window) {
            .rendering_finished_semaphore, // pSignalSemaphores
   };
 
-  fstd_mutex_lock(&g_ctx.queue_mutex);
+  mtx_lock(&g_ctx.queue_mutex);
   vkQueueSubmit(
       g_ctx.graphics_queue,
       1,
@@ -853,7 +853,7 @@ void re_window_end_frame(re_window_t *window) {
     assert(result == VK_SUCCESS);
   }
 
-  fstd_mutex_unlock(&g_ctx.queue_mutex);
+  mtx_unlock(&g_ctx.queue_mutex);
 
   window->current_frame = (window->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 

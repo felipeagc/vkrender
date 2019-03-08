@@ -3,7 +3,7 @@
 #include "camera.hpp"
 #include "components/component_types.hpp"
 #include "environment.hpp"
-#include <fstd/bitset.h>
+#include <fstd_bitset.h>
 
 #define EG_MAX_ENTITIES 128
 

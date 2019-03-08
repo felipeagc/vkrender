@@ -3,7 +3,7 @@
 #include "context.hpp"
 #include "util.hpp"
 #include "window.hpp"
-#include <fstd/array.h>
+#include <fstd_util.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_vulkan.h>
@@ -63,9 +63,9 @@ void re_imgui_init(re_window_t *window) {
 
     VK_CHECK(vkEndCommandBuffer(command_buffer));
 
-    fstd_mutex_lock(&g_ctx.queue_mutex);
+    mtx_lock(&g_ctx.queue_mutex);
     VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &end_info, VK_NULL_HANDLE));
-    fstd_mutex_unlock(&g_ctx.queue_mutex);
+    mtx_unlock(&g_ctx.queue_mutex);
 
     VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

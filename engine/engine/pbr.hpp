@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gmath/gmath.h>
+#include <gmath.h>
 #include <renderer/buffer.hpp>
 #include <renderer/common.hpp>
 

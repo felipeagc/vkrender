@@ -28,7 +28,7 @@ endif()
 
 add_subdirectory(thirdparty)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -pedantic -Werror-pointer-arith -Wextra -std=c++11 -Wno-c99-extensions")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -pedantic -Werror-pointer-arith -Wextra -std=c++11 -Wno-c99-extensions -Wno-missing-braces -Wno-gnu-anonymous-struct")
 
 add_subdirectory(util)
 add_subdirectory(renderer)

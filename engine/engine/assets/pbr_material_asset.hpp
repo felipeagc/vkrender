@@ -1,7 +1,7 @@
 #pragma once
 
 #include "asset_types.hpp"
-#include <gmath/gmath.h>
+#include <gmath.h>
 #include <renderer/common.hpp>
 #include <vulkan/vulkan.h>
 

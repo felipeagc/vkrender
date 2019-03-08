@@ -8,7 +8,7 @@
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
   // Allocator with 16k blocks
-  fstd_general_allocator_init(&asset_manager->allocator, 2 << 13);
+  fstd_allocator_init(&asset_manager->allocator, 2 << 13);
 
   eg_register_asset(
       EG_ENVIRONMENT_ASSET_TYPE,
@@ -28,8 +28,7 @@ eg_asset_t *
 eg_asset_manager_alloc(eg_asset_manager_t *asset_manager, size_t size) {
   assert(asset_manager->asset_count < EG_MAX_ASSETS);
 
-  eg_asset_t *asset = (eg_asset_t *)fstd_general_allocator_alloc(
-      &asset_manager->allocator, size);
+  eg_asset_t *asset = (eg_asset_t *)fstd_alloc(&asset_manager->allocator, size);
 
   asset_manager->assets[asset_manager->asset_count++] = asset;
 
@@ -48,5 +47,5 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
 
   free(asset_manager->assets);
 
-  fstd_general_allocator_destroy(&asset_manager->allocator);
+  fstd_allocator_destroy(&asset_manager->allocator);
 }

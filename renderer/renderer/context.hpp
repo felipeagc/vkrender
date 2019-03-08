@@ -1,9 +1,9 @@
 #pragma once
 
 #include "texture.hpp"
-#include <fstd/thread.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
+#include <tinycthread.h>
 
 #ifndef NDEBUG
 #define RE_ENABLE_VALIDATION
@@ -34,7 +34,7 @@ struct re_context_t {
   uint32_t present_queue_family_index;
   uint32_t transfer_queue_family_index;
 
-  fstd_mutex_t queue_mutex;
+  mtx_t queue_mutex;
   VkQueue graphics_queue;
   VkQueue present_queue;
   VkQueue transfer_queue;

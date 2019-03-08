@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fstd/general_allocator.h>
+#include <fstd_alloc.h>
 
 #define EG_MAX_ASSETS 1000
 
@@ -8,7 +8,7 @@
   ((type *)eg_asset_manager_alloc(asset_manager, sizeof(type)))
 
 typedef struct eg_asset_manager_t {
-  fstd_general_allocator_t allocator;
+  fstd_allocator_t allocator;
   struct eg_asset_t **assets;
   uint32_t asset_count;
 } eg_asset_manager_t;

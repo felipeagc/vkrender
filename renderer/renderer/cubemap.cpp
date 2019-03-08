@@ -2,8 +2,7 @@
 #include "buffer.hpp"
 #include "context.hpp"
 #include "util.hpp"
-#include <fstd/array.h>
-#include <fstd/file.h>
+#include <fstd_util.h>
 #include <math.h>
 #include <stb_image.h>
 #include <string.h>
