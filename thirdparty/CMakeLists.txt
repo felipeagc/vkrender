@@ -3,6 +3,7 @@ set(FSTD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(gmath)
 add_subdirectory(fstd)
+add_subdirectory(tinycthread)
 add_subdirectory(vma)
 add_subdirectory(stb_image)
 add_subdirectory(imgui)

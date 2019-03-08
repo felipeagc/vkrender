@@ -41,6 +41,7 @@ target_link_libraries(
   util
   gmath
   vma
+  tinycthread
 
   PRIVATE
   stb_image
