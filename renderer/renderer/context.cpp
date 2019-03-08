@@ -396,35 +396,35 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
     };
   }
 
-  VkDeviceCreateInfo deviceCreateInfo = {};
-  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  deviceCreateInfo.flags = 0;
-  deviceCreateInfo.queueCreateInfoCount = queue_create_info_count;
-  deviceCreateInfo.pQueueCreateInfos = queue_create_infos;
+  VkDeviceCreateInfo device_create_info = {};
+  device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  device_create_info.flags = 0;
+  device_create_info.queueCreateInfoCount = queue_create_info_count;
+  device_create_info.pQueueCreateInfos = queue_create_infos;
 
-  deviceCreateInfo.enabledLayerCount = 0;
-  deviceCreateInfo.ppEnabledLayerNames = NULL;
+  device_create_info.enabledLayerCount = 0;
+  device_create_info.ppEnabledLayerNames = NULL;
 
   // Validation layer stuff
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
-    deviceCreateInfo.enabledLayerCount =
+    device_create_info.enabledLayerCount =
         (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
-    deviceCreateInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
+    device_create_info.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
   }
 #endif
 
-  deviceCreateInfo.enabledExtensionCount =
+  device_create_info.enabledExtensionCount =
       (uint32_t)ARRAYSIZE(RE_REQUIRED_DEVICE_EXTENSIONS);
-  deviceCreateInfo.ppEnabledExtensionNames = RE_REQUIRED_DEVICE_EXTENSIONS;
+  device_create_info.ppEnabledExtensionNames = RE_REQUIRED_DEVICE_EXTENSIONS;
 
   // Enable all features
   VkPhysicalDeviceFeatures features;
   vkGetPhysicalDeviceFeatures(ctx->physical_device, &features);
-  deviceCreateInfo.pEnabledFeatures = &features;
+  device_create_info.pEnabledFeatures = &features;
 
   VK_CHECK(vkCreateDevice(
-      ctx->physical_device, &deviceCreateInfo, NULL, &ctx->device));
+      ctx->physical_device, &device_create_info, NULL, &ctx->device));
 }
 
 static inline void get_device_queues(re_context_t *ctx) {
@@ -437,45 +437,45 @@ static inline void get_device_queues(re_context_t *ctx) {
 }
 
 static inline void setup_memory_allocator(re_context_t *ctx) {
-  VmaAllocatorCreateInfo allocatorInfo = {};
-  allocatorInfo.physicalDevice = ctx->physical_device;
-  allocatorInfo.device = ctx->device;
+  VmaAllocatorCreateInfo allocator_info = {};
+  allocator_info.physicalDevice = ctx->physical_device;
+  allocator_info.device = ctx->device;
 
-  VK_CHECK(vmaCreateAllocator(&allocatorInfo, &ctx->gpu_allocator));
+  VK_CHECK(vmaCreateAllocator(&allocator_info, &ctx->gpu_allocator));
 }
 
 static inline void create_graphics_command_pool(re_context_t *ctx) {
-  VkCommandPoolCreateInfo createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  createInfo.pNext = 0;
-  createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  createInfo.queueFamilyIndex = ctx->graphics_queue_family_index;
+  VkCommandPoolCreateInfo create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  create_info.pNext = 0;
+  create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  create_info.queueFamilyIndex = ctx->graphics_queue_family_index;
 
   VK_CHECK(vkCreateCommandPool(
-      ctx->device, &createInfo, NULL, &ctx->graphics_command_pool));
+      ctx->device, &create_info, NULL, &ctx->graphics_command_pool));
 }
 
 static inline void create_transient_command_pool(re_context_t *ctx) {
-  VkCommandPoolCreateInfo createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  createInfo.pNext = 0;
-  createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  createInfo.queueFamilyIndex = ctx->graphics_queue_family_index;
+  VkCommandPoolCreateInfo create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  create_info.pNext = 0;
+  create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  create_info.queueFamilyIndex = ctx->graphics_queue_family_index;
 
   VK_CHECK(vkCreateCommandPool(
-      ctx->device, &createInfo, NULL, &ctx->transient_command_pool));
+      ctx->device, &create_info, NULL, &ctx->transient_command_pool));
 }
 
 static inline void create_thread_command_pools(re_context_t *ctx) {
   for (uint32_t i = 0; i < RE_THREAD_COUNT; i++) {
-    VkCommandPoolCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    createInfo.pNext = 0;
-    createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    createInfo.queueFamilyIndex = ctx->graphics_queue_family_index;
+    VkCommandPoolCreateInfo create_info = {};
+    create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    create_info.pNext = 0;
+    create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    create_info.queueFamilyIndex = ctx->graphics_queue_family_index;
 
     VK_CHECK(vkCreateCommandPool(
-        ctx->device, &createInfo, NULL, &ctx->thread_command_pools[i]));
+        ctx->device, &create_info, NULL, &ctx->thread_command_pools[i]));
   }
 }
 

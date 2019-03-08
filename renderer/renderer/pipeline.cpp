@@ -195,7 +195,7 @@ void re_pipeline_init_graphics(
   VkPipelineShaderStageCreateInfo pipeline_stages[2];
   re_shader_get_pipeline_stages(shader, pipeline_stages);
 
-  auto multisample_state =
+  VkPipelineMultisampleStateCreateInfo multisample_state =
       default_multisample_state(render_target.sample_count);
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{

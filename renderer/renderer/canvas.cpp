@@ -6,7 +6,7 @@
 
 static inline void create_color_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageCreateInfo imageCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -39,15 +39,15 @@ static inline void create_color_target(re_canvas_t *canvas) {
         g_ctx.gpu_allocator,
         &imageCreateInfo,
         &imageAllocCreateInfo,
-        &resource.color.image,
-        &resource.color.allocation,
+        &resource->color.image,
+        &resource->color.allocation,
         NULL));
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         NULL,
         0,                     // flags
-        resource.color.image,  // image
+        resource->color.image,  // image
         VK_IMAGE_VIEW_TYPE_2D, // viewType
         canvas->color_format,  // format
         {
@@ -66,7 +66,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device, &imageViewCreateInfo, NULL, &resource.color.image_view));
+        g_ctx.device, &imageViewCreateInfo, NULL, &resource->color.image_view));
 
     VkSamplerCreateInfo samplerCreateInfo = {
         VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -90,38 +90,38 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateSampler(
-        g_ctx.device, &samplerCreateInfo, NULL, &resource.color.sampler));
+        g_ctx.device, &samplerCreateInfo, NULL, &resource->color.sampler));
   }
 }
 
 static inline void destroy_color_target(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    re_canvas_resource_t *resource = &canvas->resources[i];
 
-    if (resource.color.image != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource.color.image_view, NULL);
+    if (resource->color.image != VK_NULL_HANDLE) {
+      vkDestroyImageView(g_ctx.device, resource->color.image_view, NULL);
     }
 
-    if (resource.color.sampler != VK_NULL_HANDLE) {
-      vkDestroySampler(g_ctx.device, resource.color.sampler, NULL);
+    if (resource->color.sampler != VK_NULL_HANDLE) {
+      vkDestroySampler(g_ctx.device, resource->color.sampler, NULL);
     }
 
-    if (resource.color.image != VK_NULL_HANDLE) {
+    if (resource->color.image != VK_NULL_HANDLE) {
       vmaDestroyImage(
-          g_ctx.gpu_allocator, resource.color.image, resource.color.allocation);
+          g_ctx.gpu_allocator, resource->color.image, resource->color.allocation);
     }
 
-    resource.color.image = VK_NULL_HANDLE;
-    resource.color.allocation = VK_NULL_HANDLE;
-    resource.color.image_view = VK_NULL_HANDLE;
-    resource.color.sampler = VK_NULL_HANDLE;
+    resource->color.image = VK_NULL_HANDLE;
+    resource->color.allocation = VK_NULL_HANDLE;
+    resource->color.image_view = VK_NULL_HANDLE;
+    resource->color.sampler = VK_NULL_HANDLE;
   }
 }
 
 static inline void create_depth_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageCreateInfo imageCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
@@ -153,15 +153,15 @@ static inline void create_depth_target(re_canvas_t *canvas) {
         g_ctx.gpu_allocator,
         &imageCreateInfo,
         &allocInfo,
-        &resource.depth.image,
-        &resource.depth.allocation,
+        &resource->depth.image,
+        &resource->depth.allocation,
         NULL));
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
         NULL,                                     // pNext
         0,                                        // flags
-        resource.depth.image,                     // image
+        resource->depth.image,                     // image
         VK_IMAGE_VIEW_TYPE_2D,                    // viewType
         canvas->depth_format,                     // format
         {
@@ -181,7 +181,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device, &imageViewCreateInfo, NULL, &resource.depth.image_view));
+        g_ctx.device, &imageViewCreateInfo, NULL, &resource->depth.image_view));
   }
 }
 
@@ -189,15 +189,15 @@ static inline void destroy_depth_target(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    re_canvas_resource_t *resource = &canvas->resources[i];
 
-    if (resource.depth.image != VK_NULL_HANDLE) {
+    if (resource->depth.image != VK_NULL_HANDLE) {
       vmaDestroyImage(
-          g_ctx.gpu_allocator, resource.depth.image, resource.depth.allocation);
+          g_ctx.gpu_allocator, resource->depth.image, resource->depth.allocation);
     }
 
-    if (resource.depth.image_view != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource.depth.image_view, NULL);
+    if (resource->depth.image_view != VK_NULL_HANDLE) {
+      vkDestroyImageView(g_ctx.device, resource->depth.image_view, NULL);
     }
   }
 }
@@ -256,11 +256,11 @@ static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
 
 static inline void create_framebuffers(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageView attachments[]{
-        resource.color.image_view,
-        resource.depth.image_view,
+        resource->color.image_view,
+        resource->depth.image_view,
     };
 
     VkFramebufferCreateInfo createInfo = {
@@ -276,7 +276,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateFramebuffer(
-        g_ctx.device, &createInfo, NULL, &resource.framebuffer));
+        g_ctx.device, &createInfo, NULL, &resource->framebuffer));
   }
 }
 
@@ -284,10 +284,10 @@ static inline void destroy_framebuffers(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    auto &resource = canvas->resources[i];
+    re_canvas_resource_t *resource = &canvas->resources[i];
 
-    if (resource.framebuffer != VK_NULL_HANDLE) {
-      vkDestroyFramebuffer(g_ctx.device, resource.framebuffer, NULL);
+    if (resource->framebuffer != VK_NULL_HANDLE) {
+      vkDestroyFramebuffer(g_ctx.device, resource->framebuffer, NULL);
     }
   }
 }
@@ -414,7 +414,7 @@ void re_canvas_init(
 
 void re_canvas_begin(
     re_canvas_t *canvas, const VkCommandBuffer command_buffer) {
-  auto &resource = canvas->resources[0];
+  struct re_canvas_resource_t *resource = &canvas->resources[0];
 
   // @TODO: make this customizable
   VkClearValue clearValues[2] = {};
@@ -425,7 +425,7 @@ void re_canvas_begin(
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,  // sType
       NULL,                                      // pNext
       canvas->render_target.render_pass,         // renderPass
-      resource.framebuffer,                      // framebuffer
+      resource->framebuffer,                      // framebuffer
       {{0, 0}, {canvas->width, canvas->height}}, // renderArea
       ARRAYSIZE(clearValues),                    // clearValueCount
       clearValues,                               // pClearValues
@@ -458,7 +458,7 @@ void re_canvas_draw(
     re_canvas_t *canvas,
     const VkCommandBuffer command_buffer,
     re_pipeline_t *pipeline) {
-  auto resource = canvas->resources[0];
+  struct re_canvas_resource_t *resource = &canvas->resources[0];
 
   vkCmdBindPipeline(
       command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
@@ -469,7 +469,7 @@ void re_canvas_draw(
       pipeline->layout,
       0, // firstSet
       1,
-      &resource.descriptor_set,
+      &resource->descriptor_set,
       0,
       NULL);
 

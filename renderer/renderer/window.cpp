@@ -2,9 +2,9 @@
 #include "context.hpp"
 #include "util.hpp"
 #include <SDL2/SDL_vulkan.h>
-#include <util/log.h>
-#include <fstd/time.h>
 #include <fstd/array.h>
+#include <fstd/time.h>
+#include <util/log.h>
 
 static inline uint32_t
 get_swapchain_num_images(VkSurfaceCapabilitiesKHR *surface_capabilities) {
@@ -317,7 +317,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
   vkAllocateCommandBuffers(g_ctx.device, &allocate_info, command_buffers);
 
-  for (size_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
     window->frame_resources[i].command_buffer = command_buffers[i];
   }
 
@@ -515,12 +515,12 @@ static inline void regen_framebuffer(
 static inline void destroy_resizables(re_window_t *window) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (auto &resources : window->frame_resources) {
+  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
     vkFreeCommandBuffers(
         g_ctx.device,
         g_ctx.graphics_command_pool,
         1,
-        &resources.command_buffer);
+        &window->frame_resources[i].command_buffer);
   }
 
   if (window->depth_stencil.image) {
@@ -566,12 +566,12 @@ bool re_window_init(
   // Index of the current swapchain image
   window->current_image_index = 0;
 
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
     window->frame_resources[i].framebuffer = VK_NULL_HANDLE;
     window->frame_resources[i].command_buffer = VK_NULL_HANDLE;
   }
 
-  auto subsystems = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER;
+  uint32_t subsystems = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER;
   if (subsystems == SDL_WasInit(0)) {
     SDL_Init(subsystems);
   }
@@ -654,13 +654,18 @@ void re_window_destroy(re_window_t *window) {
 
   vkDestroySwapchainKHR(g_ctx.device, window->swapchain, NULL);
 
-  for (auto &frameResource : window->frame_resources) {
-    vkDestroyFramebuffer(g_ctx.device, frameResource.framebuffer, NULL);
+  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
+    vkDestroyFramebuffer(
+        g_ctx.device, window->frame_resources[i].framebuffer, NULL);
     vkDestroySemaphore(
-        g_ctx.device, frameResource.image_available_semaphore, NULL);
+        g_ctx.device,
+        window->frame_resources[i].image_available_semaphore,
+        NULL);
     vkDestroySemaphore(
-        g_ctx.device, frameResource.rendering_finished_semaphore, NULL);
-    vkDestroyFence(g_ctx.device, frameResource.fence, NULL);
+        g_ctx.device,
+        window->frame_resources[i].rendering_finished_semaphore,
+        NULL);
+    vkDestroyFence(g_ctx.device, window->frame_resources[i].fence, NULL);
   }
 
   vkDestroySurfaceKHR(g_ctx.instance, window->surface, NULL);
@@ -764,7 +769,7 @@ void re_window_begin_frame(re_window_t *window) {
 }
 
 void re_window_end_frame(re_window_t *window) {
-  auto &command_buffer =
+  VkCommandBuffer command_buffer =
       window->frame_resources[window->current_frame].command_buffer;
 
   VkImageSubresourceRange image_subresource_range{
@@ -928,12 +933,12 @@ void re_window_warp_mouse(re_window_t *window, int x, int y) {
 }
 
 bool re_window_is_mouse_left_pressed(const re_window_t *) {
-  auto state = SDL_GetMouseState(NULL, NULL);
+  Uint32 state = SDL_GetMouseState(NULL, NULL);
   return (state & SDL_BUTTON(SDL_BUTTON_LEFT));
 }
 
 bool re_window_is_mouse_right_pressed(const re_window_t *) {
-  auto state = SDL_GetMouseState(NULL, NULL);
+  Uint32 state = SDL_GetMouseState(NULL, NULL);
   return (state & SDL_BUTTON(SDL_BUTTON_RIGHT));
 }
 
