@@ -48,7 +48,6 @@ struct re_context_t {
 
   VkDescriptorPool descriptor_pool;
   VkDescriptorSetLayout canvas_descriptor_set_layout;
-  VkDescriptorSetLayout bake_cubemap_descriptor_set_layout;
 
   re_texture_t white_texture;
   re_texture_t black_texture;

@@ -577,58 +577,6 @@ void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface) {
         g_ctx.device, &create_info, NULL, &g_ctx.canvas_descriptor_set_layout);
   }
 
-  {
-    VkDescriptorSetLayoutBinding material_bindings[] = {
-        {
-            0,                                         // binding
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            1,                                         // descriptorCount
-            VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-            NULL,                                      // pImmutableSamplers
-        },
-        {
-            1,                                         // binding
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            1,                                         // descriptorCount
-            VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-            NULL,                                      // pImmutableSamplers
-        },
-        {
-            2,                                         // binding
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            1,                                         // descriptorCount
-            VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-            NULL,                                      // pImmutableSamplers
-        },
-        {
-            3,                                         // binding
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            1,                                         // descriptorCount
-            VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-            NULL,                                      // pImmutableSamplers
-        },
-        {
-            4,                                         // binding
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            1,                                         // descriptorCount
-            VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
-            NULL,                                      // pImmutableSamplers
-        }};
-
-    VkDescriptorSetLayoutCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    create_info.pNext = NULL;
-    create_info.flags = 0;
-    create_info.bindingCount = ARRAYSIZE(material_bindings);
-    create_info.pBindings = material_bindings;
-
-    vkCreateDescriptorSetLayout(
-        g_ctx.device,
-        &create_info,
-        NULL,
-        &g_ctx.bake_cubemap_descriptor_set_layout);
-  }
-
   uint8_t white[] = {255, 255, 255, 255};
   uint8_t black[] = {0, 0, 0, 255};
   re_texture_init(
@@ -713,9 +661,6 @@ void re_context_destroy(re_context_t *ctx) {
 
   vkDestroyDescriptorSetLayout(
       g_ctx.device, g_ctx.canvas_descriptor_set_layout, NULL);
-
-  vkDestroyDescriptorSetLayout(
-      g_ctx.device, g_ctx.bake_cubemap_descriptor_set_layout, NULL);
 
   vkDestroyCommandPool(ctx->device, ctx->transient_command_pool, NULL);
 

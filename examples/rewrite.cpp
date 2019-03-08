@@ -43,29 +43,10 @@ int main() {
   eg_asset_manager_t asset_manager;
   eg_asset_manager_init(&asset_manager);
 
-  const char *radiance_paths[] = {
-      "../assets/ice_lake/radiance_0_1600x800.hdr",
-      "../assets/ice_lake/radiance_1_800x400.hdr",
-      "../assets/ice_lake/radiance_2_400x200.hdr",
-      "../assets/ice_lake/radiance_3_200x100.hdr",
-      "../assets/ice_lake/radiance_4_100x50.hdr",
-      "../assets/ice_lake/radiance_5_50x25.hdr",
-      "../assets/ice_lake/radiance_6_25x12.hdr",
-      "../assets/ice_lake/radiance_7_12x6.hdr",
-      "../assets/ice_lake/radiance_8_6x3.hdr",
-  };
-
   eg_environment_asset_t *environment_asset =
       eg_asset_alloc(&asset_manager, eg_environment_asset_t);
   eg_environment_asset_init(
-      environment_asset,
-      1024,
-      1024,
-      "../assets/ice_lake/skybox.hdr",
-      "../assets/ice_lake/irradiance.hdr",
-      ARRAYSIZE(radiance_paths),
-      radiance_paths,
-      "../assets/brdf_lut.png");
+      environment_asset, "../assets/ice_lake/", 9, "../assets/brdf_lut.png");
 
   eg_world_t world;
   eg_world_init(&world, environment_asset);

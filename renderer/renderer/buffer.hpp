@@ -24,6 +24,11 @@ void re_buffer_transfer_to_buffer(
     re_buffer_t *buffer, re_buffer_t *dest, size_t size);
 
 void re_buffer_transfer_to_image(
-    re_buffer_t *buffer, VkImage dest, uint32_t width, uint32_t height);
+    re_buffer_t *buffer,
+    VkImage dest,
+    uint32_t width,
+    uint32_t height,
+    uint32_t layer,
+    uint32_t level);
 
 void re_buffer_destroy(re_buffer_t *buffer);

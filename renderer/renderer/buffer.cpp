@@ -9,8 +9,8 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       NULL,
       g_ctx.thread_command_pools[fstd_worker_id], // commandPool
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY,          // level
-      1,                                        // commandBufferCount
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY,            // level
+      1,                                          // commandBufferCount
   };
 
   VkCommandBuffer command_buffer;
@@ -157,15 +157,29 @@ void re_buffer_transfer_to_buffer(
 }
 
 void re_buffer_transfer_to_image(
-    re_buffer_t *buffer, VkImage dest, uint32_t width, uint32_t height) {
-  VkCommandBuffer commandBuffer = begin_single_time_command_buffer();
+    re_buffer_t *buffer,
+    VkImage dest,
+    uint32_t width,
+    uint32_t height,
+    uint32_t layer,
+    uint32_t level) {
+  VkCommandBuffer command_buffer = begin_single_time_command_buffer();
+
+  VkImageSubresourceRange subresource_range = {};
+  subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresource_range.baseMipLevel = level;
+  subresource_range.levelCount = 1;
+  subresource_range.baseArrayLayer = layer;
+  subresource_range.layerCount = 1;
 
   re_set_image_layout(
-      commandBuffer,
+      command_buffer,
       dest,
-      VK_IMAGE_ASPECT_COLOR_BIT,
       VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      subresource_range,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
   VkBufferImageCopy region{
       0, // bufferOffset
@@ -173,8 +187,8 @@ void re_buffer_transfer_to_image(
       0, // bufferImageHeight
       {
           VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
-          0,                         // mipLevel
-          0,                         // baseArrayLayer
+          level,                     // mipLevel
+          layer,                     // baseArrayLayer
           1,                         // layerCount
       },                             // imageSubresource
       {0, 0, 0},                     // imageOffset
@@ -182,7 +196,7 @@ void re_buffer_transfer_to_image(
   };
 
   vkCmdCopyBufferToImage(
-      commandBuffer,
+      command_buffer,
       buffer->buffer,
       dest,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -190,13 +204,15 @@ void re_buffer_transfer_to_image(
       &region);
 
   re_set_image_layout(
-      commandBuffer,
+      command_buffer,
       dest,
-      VK_IMAGE_ASPECT_COLOR_BIT,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      subresource_range,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
-  end_single_time_command_buffer(commandBuffer);
+  end_single_time_command_buffer(command_buffer);
 }
 
 void re_buffer_destroy(re_buffer_t *buffer) {

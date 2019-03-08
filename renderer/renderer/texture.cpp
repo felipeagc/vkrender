@@ -165,7 +165,7 @@ void re_texture_init(
   memcpy(staging_pointer, data, data_size);
 
   re_buffer_transfer_to_image(
-      &staging_buffer, texture->image, texture->width, texture->height);
+      &staging_buffer, texture->image, texture->width, texture->height, 0, 0);
 
   re_buffer_unmap_memory(&staging_buffer);
 
