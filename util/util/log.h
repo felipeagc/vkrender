@@ -9,7 +9,7 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 
-inline void ut_log_info(const char *format, ...) {
+static inline void ut_log_info(const char *format, ...) {
   va_list args;
   va_start(args, format);
   printf("[INFO] ");
@@ -18,7 +18,7 @@ inline void ut_log_info(const char *format, ...) {
   va_end(args);
 }
 
-inline void ut_log_fatal(const char *format, ...) {
+static inline void ut_log_fatal(const char *format, ...) {
   va_list args;
   va_start(args, format);
   printf("[FATAL] ");
@@ -27,7 +27,7 @@ inline void ut_log_fatal(const char *format, ...) {
   va_end(args);
 }
 
-inline void ut_log_error(const char *format, ...) {
+static inline void ut_log_error(const char *format, ...) {
   va_list args;
   va_start(args, format);
   printf("[ERROR] ");
@@ -36,7 +36,7 @@ inline void ut_log_error(const char *format, ...) {
   va_end(args);
 }
 
-inline void ut_log_warn(const char *format, ...) {
+static inline void ut_log_warn(const char *format, ...) {
   va_list args;
   va_start(args, format);
   printf("[WARN] ");
@@ -45,7 +45,7 @@ inline void ut_log_warn(const char *format, ...) {
   va_end(args);
 }
 
-inline void ut_log_debug(const char *format, ...) {
+static inline void ut_log_debug(const char *format, ...) {
 #ifndef NDEBUG
   va_list args;
   va_start(args, format);

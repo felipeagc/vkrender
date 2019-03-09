@@ -1,1 +1,1 @@
-executable('rewrite', ['rewrite.cpp'], dependencies: engine_dep)
+executable('rewrite', ['rewrite.c'], dependencies: engine_dep)

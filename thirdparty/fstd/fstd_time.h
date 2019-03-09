@@ -23,7 +23,7 @@ extern "C" {
 #include <windows.h>
 #endif
 
-uint64_t fstd_time_ns() {
+static inline uint64_t fstd_time_ns() {
   static uint64_t is_init = 0;
 #if defined(__APPLE__)
   static mach_timebase_info_data_t info;

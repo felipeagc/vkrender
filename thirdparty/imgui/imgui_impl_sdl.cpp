@@ -79,7 +79,7 @@ static void ImGui_ImplSDL2_SetClipboardText(void*, const char* text)
 // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
 // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 // If you have multiple SDL events and some of them are not meant to be used by dear imgui, you may need to filter events based on their windowID field.
-EXTERN bool ImGui_ImplSDL2_ProcessEvent(const SDL_Event* event)
+CIMGUI_API bool ImGui_ImplSDL2_ProcessEvent(const SDL_Event* event)
 {
     ImGuiIO& io = ImGui::GetIO();
     switch (event->type)
@@ -178,13 +178,13 @@ static bool ImGui_ImplSDL2_Init(SDL_Window* window)
     return true;
 }
 
-EXTERN bool ImGui_ImplSDL2_InitForOpenGL(SDL_Window* window, void* sdl_gl_context)
+CIMGUI_API bool ImGui_ImplSDL2_InitForOpenGL(SDL_Window* window, void* sdl_gl_context)
 {
     (void)sdl_gl_context; // Viewport branch will need this.
     return ImGui_ImplSDL2_Init(window);
 }
 
-EXTERN bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window)
+CIMGUI_API bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window)
 {
 #if !SDL_HAS_VULKAN
     IM_ASSERT(0 && "Unsupported");
@@ -192,7 +192,7 @@ EXTERN bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window)
     return ImGui_ImplSDL2_Init(window);
 }
 
-EXTERN void ImGui_ImplSDL2_Shutdown()
+CIMGUI_API void ImGui_ImplSDL2_Shutdown()
 {
     g_Window = NULL;
 
@@ -268,7 +268,7 @@ static void ImGui_ImplSDL2_UpdateMouseCursor()
     }
 }
 
-EXTERN void ImGui_ImplSDL2_NewFrame(SDL_Window* window)
+CIMGUI_API void ImGui_ImplSDL2_NewFrame(SDL_Window* window)
 {
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");

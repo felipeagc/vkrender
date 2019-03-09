@@ -1,15 +1,15 @@
 renderer_sources = [
-  'renderer/context.cpp',
-  'renderer/window.cpp',
-  'renderer/util.cpp',
-  'renderer/buffer.cpp',
-  'renderer/texture.cpp',
-  'renderer/cubemap.cpp',
-  'renderer/shader.cpp',
-  'renderer/pipeline.cpp',
-  'renderer/canvas.cpp',
-  'renderer/imgui.cpp',
-  'renderer/task_scheduler.cpp'
+  'renderer/context.c',
+  'renderer/window.c',
+  'renderer/util.c',
+  'renderer/buffer.c',
+  'renderer/texture.c',
+  'renderer/cubemap.c',
+  'renderer/shader.c',
+  'renderer/pipeline.c',
+  'renderer/canvas.c',
+  'renderer/imgui.c',
+  'renderer/task_scheduler.c'
 ]
 
 renderer_inc = include_directories('.')

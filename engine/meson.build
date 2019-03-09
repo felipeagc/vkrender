@@ -1,24 +1,24 @@
 engine_sources = [
-  'engine/engine.cpp',
-  'engine/world.cpp',
-  'engine/asset_manager.cpp',
-  'engine/inspector.cpp',
-  'engine/pipelines.cpp',
-  'engine/pbr.cpp',
+  'engine/engine.c',
+  'engine/world.c',
+  'engine/asset_manager.c',
+  'engine/inspector.c',
+  'engine/pipelines.c',
+  'engine/pbr.c',
 
-  'engine/camera.cpp',
-  'engine/environment.cpp',
+  'engine/camera.c',
+  'engine/environment.c',
 
-  'engine/components/component_types.cpp',
-  'engine/components/mesh_component.cpp',
-  'engine/components/transform_component.cpp',
+  'engine/components/component_types.c',
+  'engine/components/mesh_component.c',
+  'engine/components/transform_component.c',
 
-  'engine/systems/fps_camera_system.cpp',
+  'engine/systems/fps_camera_system.c',
 
-  'engine/assets/asset_types.cpp',
-  'engine/assets/environment_asset.cpp',
-  'engine/assets/mesh_asset.cpp',
-  'engine/assets/pbr_material_asset.cpp'
+  'engine/assets/asset_types.c',
+  'engine/assets/environment_asset.c',
+  'engine/assets/mesh_asset.c',
+  'engine/assets/pbr_material_asset.c'
 ]
 
 engine_inc = include_directories('.')

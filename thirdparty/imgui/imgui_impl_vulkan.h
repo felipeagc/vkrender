@@ -15,11 +15,27 @@
 
 #include <vulkan/vulkan.h>
 
+#if defined _WIN32 || defined __CYGWIN__
+    #ifdef CIMGUI_NO_EXPORT
+        #define API
+    #else
+        #define API __declspec(dllexport)
+    #endif
+    #ifndef __GNUC__
+    #define snprintf sprintf_s
+    #endif
+#else
+    #define API
+#endif
+
 #if defined __cplusplus
     #define EXTERN extern "C"
 #else
+    #include <stdbool.h>
     #define EXTERN extern
 #endif
+
+#define CIMGUI_API EXTERN API
 
 #define IMGUI_VK_QUEUED_FRAMES      2
 
@@ -38,74 +54,13 @@ typedef struct ImGui_ImplVulkan_InitInfo
 } ImGui_ImplVulkan_InitInfo;
 
 // Called by user code
-EXTERN IMGUI_IMPL_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
-EXTERN IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
-EXTERN IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame();
-EXTERN IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
-EXTERN IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
-EXTERN IMGUI_IMPL_API void     ImGui_ImplVulkan_InvalidateFontUploadObjects();
+CIMGUI_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
+CIMGUI_API void     ImGui_ImplVulkan_Shutdown();
+CIMGUI_API void     ImGui_ImplVulkan_NewFrame();
+CIMGUI_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
+CIMGUI_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
+CIMGUI_API void     ImGui_ImplVulkan_InvalidateFontUploadObjects();
 
 // Called by ImGui_ImplVulkan_Init() might be useful elsewhere.
-EXTERN IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateDeviceObjects();
-EXTERN IMGUI_IMPL_API void     ImGui_ImplVulkan_InvalidateDeviceObjects();
-
-
-//-------------------------------------------------------------------------
-// Internal / Miscellaneous Vulkan Helpers
-//-------------------------------------------------------------------------
-// You probably do NOT need to use or care about those functions.
-// Those functions only exist because:
-//   1) they facilitate the readability and maintenance of the multiple main.cpp examples files.
-//   2) the upcoming multi-viewport feature will need them internally.
-// Generally we avoid exposing any kind of superfluous high-level helpers in the bindings,
-// but it is too much code to duplicate everywhere so we exceptionally expose them.
-// Your application/engine will likely already have code to setup all that stuff (swap chain, render pass, frame buffers, etc.).
-// You may read this code to learn about Vulkan, but it is recommended you use you own custom tailored code to do equivalent work.
-// (those functions do not interact with any of the state used by the regular ImGui_ImplVulkan_XXX functions)
-//-------------------------------------------------------------------------
-
-struct ImGui_ImplVulkanH_FrameData;
-struct ImGui_ImplVulkanH_WindowData;
-
-EXTERN IMGUI_IMPL_API void                 ImGui_ImplVulkanH_CreateWindowDataCommandBuffers(VkPhysicalDevice physical_device, VkDevice device, uint32_t queue_family, ImGui_ImplVulkanH_WindowData* wd, const VkAllocationCallbacks* allocator);
-EXTERN IMGUI_IMPL_API void                 ImGui_ImplVulkanH_CreateWindowDataSwapChainAndFramebuffer(VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_WindowData* wd, const VkAllocationCallbacks* allocator, int w, int h);
-EXTERN IMGUI_IMPL_API void                 ImGui_ImplVulkanH_DestroyWindowData(VkInstance instance, VkDevice device, ImGui_ImplVulkanH_WindowData* wd, const VkAllocationCallbacks* allocator);
-EXTERN IMGUI_IMPL_API VkSurfaceFormatKHR   ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
-EXTERN IMGUI_IMPL_API VkPresentModeKHR     ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkPresentModeKHR* request_modes, int request_modes_count);
-EXTERN IMGUI_IMPL_API int                  ImGui_ImplVulkanH_GetMinImageCountFromPresentMode(VkPresentModeKHR present_mode);
-
-// Helper structure to hold the data needed by one rendering frame
-typedef struct ImGui_ImplVulkanH_FrameData
-{
-    uint32_t            BackbufferIndex;        // Keep track of recently rendered swapchain frame indices
-    VkCommandPool       CommandPool;
-    VkCommandBuffer     CommandBuffer;
-    VkFence             Fence;
-    VkSemaphore         ImageAcquiredSemaphore;
-    VkSemaphore         RenderCompleteSemaphore;
-
-    IMGUI_IMPL_API ImGui_ImplVulkanH_FrameData();
-} ImGui_ImplVulkanH_FrameData;
-
-// Helper structure to hold the data needed by one rendering context into one OS window
-typedef struct ImGui_ImplVulkanH_WindowData
-{
-    int                 Width;
-    int                 Height;
-    VkSwapchainKHR      Swapchain;
-    VkSurfaceKHR        Surface;
-    VkSurfaceFormatKHR  SurfaceFormat;
-    VkPresentModeKHR    PresentMode;
-    VkRenderPass        RenderPass;
-    bool                ClearEnable;
-    VkClearValue        ClearValue;
-    uint32_t            BackBufferCount;
-    VkImage             BackBuffer[16];
-    VkImageView         BackBufferView[16];
-    VkFramebuffer       Framebuffer[16];
-    uint32_t            FrameIndex;
-    ImGui_ImplVulkanH_FrameData Frames[IMGUI_VK_QUEUED_FRAMES];
-
-    IMGUI_IMPL_API ImGui_ImplVulkanH_WindowData();
-} ImGui_ImplVulkanH_WindowData;
-
+CIMGUI_API bool     ImGui_ImplVulkan_CreateDeviceObjects();
+CIMGUI_API void     ImGui_ImplVulkan_InvalidateDeviceObjects();
