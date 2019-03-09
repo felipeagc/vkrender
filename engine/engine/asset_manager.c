@@ -6,6 +6,8 @@
 #include <stdlib.h>
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
+  mtx_init(&asset_manager->allocator_mutex, mtx_plain);
+
   // Allocator with 16k blocks
   fstd_allocator_init(&asset_manager->allocator, 2 << 13);
 
@@ -25,11 +27,14 @@ void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
 
 eg_asset_t *
 eg_asset_manager_alloc(eg_asset_manager_t *asset_manager, size_t size) {
+  mtx_lock(&asset_manager->allocator_mutex);
+
   assert(asset_manager->asset_count < EG_MAX_ASSETS);
 
   eg_asset_t *asset = (eg_asset_t *)fstd_alloc(&asset_manager->allocator, size);
-
   asset_manager->assets[asset_manager->asset_count++] = asset;
+
+  mtx_unlock(&asset_manager->allocator_mutex);
 
   return asset;
 }
@@ -47,4 +52,6 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
   free(asset_manager->assets);
 
   fstd_allocator_destroy(&asset_manager->allocator);
+
+  mtx_destroy(&asset_manager->allocator_mutex);
 }
