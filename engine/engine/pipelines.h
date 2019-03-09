@@ -6,7 +6,7 @@
 
 static inline bool eg_init_pipeline_spv(
     re_pipeline_t *pipeline,
-    const re_render_target_t render_target,
+    const re_render_target_t *render_target,
     const char *vertex_path,
     const char *fragment_path,
     const re_pipeline_parameters_t params) {

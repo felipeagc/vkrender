@@ -32,7 +32,7 @@ int main() {
   re_pipeline_t pbr_pipeline;
   eg_init_pipeline_spv(
       &pbr_pipeline,
-      window.render_target,
+      &window.render_target,
       "../shaders/out/pbr.vert.spv",
       "../shaders/out/pbr.frag.spv",
       eg_pbr_pipeline_parameters());
@@ -40,7 +40,7 @@ int main() {
   re_pipeline_t skybox_pipeline;
   eg_init_pipeline_spv(
       &skybox_pipeline,
-      window.render_target,
+      &window.render_target,
       "../shaders/out/skybox.vert.spv",
       "../shaders/out/skybox.frag.spv",
       eg_skybox_pipeline_parameters());

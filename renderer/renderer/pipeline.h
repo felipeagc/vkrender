@@ -8,6 +8,7 @@
 typedef struct re_window_t re_window_t;
 
 typedef struct re_pipeline_parameters_t {
+  VkPipelineLayout pipeline_layout;
   VkPipelineVertexInputStateCreateInfo vertex_input_state;
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
   VkPipelineViewportStateCreateInfo viewport_state;
@@ -15,7 +16,6 @@ typedef struct re_pipeline_parameters_t {
   VkPipelineDepthStencilStateCreateInfo depth_stencil_state;
   VkPipelineColorBlendStateCreateInfo color_blend_state;
   VkPipelineDynamicStateCreateInfo dynamic_state;
-  VkPipelineLayout pipeline_layout;
 } re_pipeline_parameters_t;
 
 // Does not have a default pipeline layout
@@ -34,7 +34,7 @@ typedef struct re_pipeline_t {
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
-    const re_render_target_t render_target,
+    const re_render_target_t *render_target,
     const re_shader_t *shader,
     const re_pipeline_parameters_t parameters);
 

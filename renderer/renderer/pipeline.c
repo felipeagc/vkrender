@@ -188,7 +188,7 @@ re_pipeline_parameters_t re_default_pipeline_parameters() {
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
-    const re_render_target_t render_target,
+    const re_render_target_t *render_target,
     const re_shader_t *shader,
     const re_pipeline_parameters_t parameters) {
   pipeline->layout = parameters.pipeline_layout;
@@ -197,7 +197,7 @@ void re_pipeline_init_graphics(
   re_shader_get_pipeline_stages(shader, pipeline_stages);
 
   VkPipelineMultisampleStateCreateInfo multisample_state =
-      default_multisample_state(render_target.sample_count);
+      default_multisample_state(render_target->sample_count);
 
   VkGraphicsPipelineCreateInfo pipeline_create_info = {
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -215,7 +215,7 @@ void re_pipeline_init_graphics(
       &parameters.color_blend_state,    // pColorBlendState
       &parameters.dynamic_state,        // pDynamicState
       pipeline->layout,                 // pipelineLayout
-      render_target.render_pass,        // renderPass
+      render_target->render_pass,       // renderPass
       0,                                // subpass
       0,                                // basePipelineHandle
       -1                                // basePipelineIndex
