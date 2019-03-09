@@ -7,7 +7,7 @@
 
 static inline VkPipelineVertexInputStateCreateInfo
 default_vertex_input_state() {
-  static VkVertexInputBindingDescription vertexBindingDescriptions[] = {
+  static VkVertexInputBindingDescription vertex_binding_descriptions[] = {
       {
           0,                           // binding
           sizeof(re_vertex_t),         // stride,
@@ -15,28 +15,29 @@ default_vertex_input_state() {
       },
   };
 
-  static VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
+  static VkVertexInputAttributeDescription vertex_attribute_descriptions[] = {
       {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(re_vertex_t, pos)},
       {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(re_vertex_t, normal)},
       {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(re_vertex_t, uv)},
   };
 
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
+  VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       NULL,                                                      // pNext
       0,                                                         // flags
-      ARRAYSIZE(vertexBindingDescriptions),   // vertexBindingDescriptionCount
-      vertexBindingDescriptions,              // pVertexBindingDescriptions
-      ARRAYSIZE(vertexAttributeDescriptions), // vertexAttributeDescriptionCount
-      vertexAttributeDescriptions,            // pVertexAttributeDescriptions
+      ARRAYSIZE(vertex_binding_descriptions), // vertexBindingDescriptionCount
+      vertex_binding_descriptions,            // pVertexBindingDescriptions
+      ARRAYSIZE(
+          vertex_attribute_descriptions), // vertexAttributeDescriptionCount
+      vertex_attribute_descriptions,      // pVertexAttributeDescriptions
   };
 
-  return vertexInputStateCreateInfo;
+  return vertex_input_state_create_info;
 }
 
 static inline VkPipelineInputAssemblyStateCreateInfo
 default_input_assembly_state() {
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
+  VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
       NULL,
       0,                                   // flags
@@ -44,13 +45,13 @@ default_input_assembly_state() {
       VK_FALSE                             // primitiveRestartEnable
   };
 
-  return inputAssemblyStateCreateInfo;
+  return input_assembly_state_create_info;
 }
 
 static inline VkPipelineViewportStateCreateInfo default_viewport_state() {
   // pViewports and pScissors are null because we're defining them through a
   // dynamic state
-  VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
+  VkPipelineViewportStateCreateInfo viewport_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
       NULL,
       0,    // flags
@@ -60,12 +61,12 @@ static inline VkPipelineViewportStateCreateInfo default_viewport_state() {
       NULL  // pScissors
   };
 
-  return viewportStateCreateInfo;
+  return viewport_state_create_info;
 }
 
 static inline VkPipelineRasterizationStateCreateInfo
 default_rasterization_state() {
-  VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
+  VkPipelineRasterizationStateCreateInfo rasterization_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
       NULL,
       0,                       // flags
@@ -81,55 +82,55 @@ default_rasterization_state() {
       1.0f,                    // lineWidth
   };
 
-  return rasterizationStateCreateInfo;
+  return rasterization_state_create_info;
 }
 
 static inline VkPipelineMultisampleStateCreateInfo
-default_multisample_state(VkSampleCountFlagBits sampleCount) {
-  VkPhysicalDeviceFeatures deviceFeatures;
-  vkGetPhysicalDeviceFeatures(g_ctx.physical_device, &deviceFeatures);
-  VkBool32 hasSampleShading = deviceFeatures.sampleRateShading;
+default_multisample_state(VkSampleCountFlagBits sample_count) {
+  VkPhysicalDeviceFeatures device_features;
+  vkGetPhysicalDeviceFeatures(g_ctx.physical_device, &device_features);
+  VkBool32 has_sample_shading = device_features.sampleRateShading;
 
-  VkBool32 sampleShadingEnable =
-      (sampleCount == VK_SAMPLE_COUNT_1_BIT ? VK_FALSE : VK_TRUE);
+  VkBool32 sample_shading_enable =
+      (VkBool32)(sample_count == VK_SAMPLE_COUNT_1_BIT);
 
-  VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
+  VkPipelineMultisampleStateCreateInfo multisample_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
       NULL,
-      0,           // flags
-      sampleCount, // rasterizationSamples
-      VK_FALSE,    // sampleShadingEnable
-      0.25f,       // minSampleShading
-      NULL,        // pSampleMask
-      VK_FALSE,    // alphaToCoverageEnable
-      VK_FALSE     // alphaToOneEnable
+      0,            // flags
+      sample_count, // rasterizationSamples
+      VK_FALSE,     // sampleShadingEnable
+      0.25f,        // minSampleShading
+      NULL,         // pSampleMask
+      VK_FALSE,     // alphaToCoverageEnable
+      VK_FALSE      // alphaToOneEnable
   };
 
-  if (hasSampleShading) {
-    multisampleStateCreateInfo.sampleShadingEnable = sampleShadingEnable;
+  if (has_sample_shading) {
+    multisample_state_create_info.sampleShadingEnable = sample_shading_enable;
   }
 
-  return multisampleStateCreateInfo;
+  return multisample_state_create_info;
 }
 
 static inline VkPipelineDepthStencilStateCreateInfo
 default_depth_stencil_state() {
-  VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
-  depthStencilStateCreateInfo.sType =
+  VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info = {};
+  depth_stencil_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencilStateCreateInfo.pNext = NULL;
-  depthStencilStateCreateInfo.flags = 0;
-  depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-  depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-  depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-  depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
-  depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+  depth_stencil_state_create_info.pNext = NULL;
+  depth_stencil_state_create_info.flags = 0;
+  depth_stencil_state_create_info.depthTestEnable = VK_TRUE;
+  depth_stencil_state_create_info.depthWriteEnable = VK_TRUE;
+  depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+  depth_stencil_state_create_info.depthBoundsTestEnable = VK_FALSE;
+  depth_stencil_state_create_info.stencilTestEnable = VK_FALSE;
 
-  return depthStencilStateCreateInfo;
+  return depth_stencil_state_create_info;
 }
 
 static inline VkPipelineColorBlendStateCreateInfo default_color_blend_state() {
-  static VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
+  static VkPipelineColorBlendAttachmentState color_blend_attachment_state = {
       VK_TRUE,                             // blendEnable
       VK_BLEND_FACTOR_SRC_ALPHA,           // srcColorBlendFactor
       VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // dstColorBlendFactor
@@ -141,35 +142,35 @@ static inline VkPipelineColorBlendStateCreateInfo default_color_blend_state() {
           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, // colorWriteMask
   };
 
-  VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
+  VkPipelineColorBlendStateCreateInfo color_blend_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
       NULL,
-      0,                          // flags
-      VK_FALSE,                   // logicOpEnable
-      VK_LOGIC_OP_COPY,           // logicOp
-      1,                          // attachmentCount
-      &colorBlendAttachmentState, // pAttachments
-      {0.0f, 0.0f, 0.0f, 0.0f},   // blendConstants
+      0,                             // flags
+      VK_FALSE,                      // logicOpEnable
+      VK_LOGIC_OP_COPY,              // logicOp
+      1,                             // attachmentCount
+      &color_blend_attachment_state, // pAttachments
+      {0.0f, 0.0f, 0.0f, 0.0f},      // blendConstants
   };
 
-  return colorBlendStateCreateInfo;
+  return color_blend_state_create_info;
 }
 
 static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
-  static VkDynamicState dynamicStates[] = {
+  static VkDynamicState dynamic_states[] = {
       VK_DYNAMIC_STATE_VIEWPORT,
       VK_DYNAMIC_STATE_SCISSOR,
   };
 
-  VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {
+  VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
       NULL,
-      0,                                  // flags
-      (uint32_t)ARRAYSIZE(dynamicStates), // dynamicStateCount
-      dynamicStates,                      // pDyanmicStates
+      0,                                   // flags
+      (uint32_t)ARRAYSIZE(dynamic_states), // dynamicStateCount
+      dynamic_states,                      // pDyanmicStates
   };
 
-  return dynamicStateCreateInfo;
+  return dynamic_state_create_info;
 }
 
 re_pipeline_parameters_t re_default_pipeline_parameters() {
@@ -198,7 +199,7 @@ void re_pipeline_init_graphics(
   VkPipelineMultisampleStateCreateInfo multisample_state =
       default_multisample_state(render_target.sample_count);
 
-  VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
+  VkGraphicsPipelineCreateInfo pipeline_create_info = {
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       NULL,
       0,                                // flags
@@ -224,7 +225,7 @@ void re_pipeline_init_graphics(
       g_ctx.device,
       VK_NULL_HANDLE,
       1,
-      &pipelineCreateInfo,
+      &pipeline_create_info,
       NULL,
       &pipeline->pipeline));
 }

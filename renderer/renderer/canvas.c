@@ -8,7 +8,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     re_canvas_resource_t *resource = &canvas->resources[i];
 
-    VkImageCreateInfo imageCreateInfo = {
+    VkImageCreateInfo image_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         NULL,
         0,                    // flags
@@ -32,18 +32,18 @@ static inline void create_color_target(re_canvas_t *canvas) {
         VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
     };
 
-    VmaAllocationCreateInfo imageAllocCreateInfo = {};
-    imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    VmaAllocationCreateInfo image_alloc_create_info = {};
+    image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
         g_ctx.gpu_allocator,
-        &imageCreateInfo,
-        &imageAllocCreateInfo,
+        &image_create_info,
+        &image_alloc_create_info,
         &resource->color.image,
         &resource->color.allocation,
         NULL));
 
-    VkImageViewCreateInfo imageViewCreateInfo = {
+    VkImageViewCreateInfo image_view_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         NULL,
         0,                     // flags
@@ -66,9 +66,12 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device, &imageViewCreateInfo, NULL, &resource->color.image_view));
+        g_ctx.device,
+        &image_view_create_info,
+        NULL,
+        &resource->color.image_view));
 
-    VkSamplerCreateInfo samplerCreateInfo = {
+    VkSamplerCreateInfo sampler_create_info = {
         VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         NULL,
         0,                                       // flags
@@ -90,7 +93,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateSampler(
-        g_ctx.device, &samplerCreateInfo, NULL, &resource->color.sampler));
+        g_ctx.device, &sampler_create_info, NULL, &resource->color.sampler));
   }
 }
 
@@ -125,7 +128,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     re_canvas_resource_t *resource = &canvas->resources[i];
 
-    VkImageCreateInfo imageCreateInfo = {
+    VkImageCreateInfo image_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
         NULL,                                // pNext
         0,                                   // flags
@@ -148,18 +151,18 @@ static inline void create_depth_target(re_canvas_t *canvas) {
         VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
     };
 
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    VmaAllocationCreateInfo alloc_info = {};
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
         g_ctx.gpu_allocator,
-        &imageCreateInfo,
-        &allocInfo,
+        &image_create_info,
+        &alloc_info,
         &resource->depth.image,
         &resource->depth.allocation,
         NULL));
 
-    VkImageViewCreateInfo imageViewCreateInfo = {
+    VkImageViewCreateInfo image_view_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
         NULL,                                     // pNext
         0,                                        // flags
@@ -183,7 +186,10 @@ static inline void create_depth_target(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateImageView(
-        g_ctx.device, &imageViewCreateInfo, NULL, &resource->depth.image_view));
+        g_ctx.device,
+        &image_view_create_info,
+        NULL,
+        &resource->depth.image_view));
   }
 }
 
@@ -226,7 +232,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
 
-    VkWriteDescriptorSet descriptorWrites[] = {
+    VkWriteDescriptorSet descriptor_writes[] = {
         (VkWriteDescriptorSet){
             VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             NULL,
@@ -242,7 +248,7 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAYSIZE(descriptorWrites), descriptorWrites, 0, NULL);
+        g_ctx.device, ARRAYSIZE(descriptor_writes), descriptor_writes, 0, NULL);
   }
 }
 
@@ -267,7 +273,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
         resource->depth.image_view,
     };
 
-    VkFramebufferCreateInfo createInfo = {
+    VkFramebufferCreateInfo create_info = {
         VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
         NULL,                                      // pNext
         0,                                         // flags
@@ -280,7 +286,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
     };
 
     VK_CHECK(vkCreateFramebuffer(
-        g_ctx.device, &createInfo, NULL, &resource->framebuffer));
+        g_ctx.device, &create_info, NULL, &resource->framebuffer));
   }
 }
 
@@ -297,7 +303,7 @@ static inline void destroy_framebuffers(re_canvas_t *canvas) {
 }
 
 static inline void create_render_pass(re_canvas_t *canvas) {
-  VkAttachmentDescription attachmentDescriptions[] = {
+  VkAttachmentDescription attachment_descriptions[] = {
       // Resolved color attachment
       (VkAttachmentDescription){
           0,                                        // flags
@@ -325,25 +331,25 @@ static inline void create_render_pass(re_canvas_t *canvas) {
       },
   };
 
-  VkAttachmentReference colorAttachmentReference = {
+  VkAttachmentReference color_attachment_reference = {
       0,                                        // attachment
       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
   };
 
-  VkAttachmentReference depthAttachmentReference = {
+  VkAttachmentReference depth_attachment_reference = {
       1,                                                // attachment
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // layout
   };
 
-  VkSubpassDescription subpassDescription = {
+  VkSubpassDescription subpass_description = {
       0,                               // flags
       VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
       0,                               // inputAttachmentCount
       NULL,                            // pInputAttachments
       1,                               // colorAttachmentCount
-      &colorAttachmentReference,       // pColorAttachments
+      &color_attachment_reference,     // pColorAttachments
       NULL,                            // pResolveAttachments
-      &depthAttachmentReference,       // pDepthStencilAttachment
+      &depth_attachment_reference,     // pDepthStencilAttachment
       0,                               // preserveAttachmentCount
       NULL,                            // pPreserveAttachments
   };
@@ -371,21 +377,21 @@ static inline void create_render_pass(re_canvas_t *canvas) {
       },
   };
 
-  VkRenderPassCreateInfo renderPassCreateInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,   // sType
-      NULL,                                        // pNext
-      0,                                           // flags
-      (uint32_t)ARRAYSIZE(attachmentDescriptions), // attachmentCount
-      attachmentDescriptions,                      // pAttachments
-      1,                                           // subpassCount
-      &subpassDescription,                         // pSubpasses
-      (uint32_t)ARRAYSIZE(dependencies),           // dependencyCount
-      dependencies,                                // pDependencies
+  VkRenderPassCreateInfo render_pass_create_info = {
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,    // sType
+      NULL,                                         // pNext
+      0,                                            // flags
+      (uint32_t)ARRAYSIZE(attachment_descriptions), // attachmentCount
+      attachment_descriptions,                      // pAttachments
+      1,                                            // subpassCount
+      &subpass_description,                         // pSubpasses
+      (uint32_t)ARRAYSIZE(dependencies),            // dependencyCount
+      dependencies,                                 // pDependencies
   };
 
   VK_CHECK(vkCreateRenderPass(
       g_ctx.device,
-      &renderPassCreateInfo,
+      &render_pass_create_info,
       NULL,
       &canvas->render_target.render_pass));
 }
@@ -421,22 +427,23 @@ void re_canvas_begin(
   struct re_canvas_resource_t *resource = &canvas->resources[0];
 
   // @TODO: make this customizable
-  VkClearValue clearValues[2] = {};
-  clearValues[0].color = (VkClearColorValue){{0.0f, 0.0f, 0.0f, 1.0f}};
-  clearValues[1].depthStencil = (VkClearDepthStencilValue){1.0f, 0};
+  VkClearValue clear_values[2] = {
+      {.color = {{0.0f, 0.0f, 0.0f, 1.0f}}},
+      {.depthStencil = {1.0f, 0}},
+  };
 
-  VkRenderPassBeginInfo renderPassBeginInfo = {
+  VkRenderPassBeginInfo render_pass_begin_info = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,  // sType
       NULL,                                      // pNext
       canvas->render_target.render_pass,         // renderPass
       resource->framebuffer,                     // framebuffer
       {{0, 0}, {canvas->width, canvas->height}}, // renderArea
-      ARRAYSIZE(clearValues),                    // clearValueCount
-      clearValues,                               // pClearValues
+      ARRAYSIZE(clear_values),                   // clearValueCount
+      clear_values,                              // pClearValues
   };
 
   vkCmdBeginRenderPass(
-      command_buffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+      command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport = {
       0.0f,                  // x

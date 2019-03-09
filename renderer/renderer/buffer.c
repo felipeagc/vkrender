@@ -5,7 +5,7 @@
 
 static inline VkCommandBuffer begin_single_time_command_buffer() {
   assert(re_worker_id < RE_THREAD_COUNT);
-  VkCommandBufferAllocateInfo allocateInfo = {
+  VkCommandBufferAllocateInfo allocate_info = {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       NULL,
       g_ctx.thread_command_pools[re_worker_id], // commandPool
@@ -16,16 +16,16 @@ static inline VkCommandBuffer begin_single_time_command_buffer() {
   VkCommandBuffer command_buffer;
 
   VK_CHECK(
-      vkAllocateCommandBuffers(g_ctx.device, &allocateInfo, &command_buffer));
+      vkAllocateCommandBuffers(g_ctx.device, &allocate_info, &command_buffer));
 
-  VkCommandBufferBeginInfo commandBufferBeginInfo = {
+  VkCommandBufferBeginInfo command_buffer_begin_info = {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
       NULL,
       VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
       NULL,                                        // pInheritanceInfo
   };
 
-  VK_CHECK(vkBeginCommandBuffer(command_buffer, &commandBufferBeginInfo));
+  VK_CHECK(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
 
   return command_buffer;
 }
@@ -35,7 +35,7 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
   assert(re_worker_id < RE_THREAD_COUNT);
   VK_CHECK(vkEndCommandBuffer(command_buffer));
 
-  VkSubmitInfo submitInfo = {
+  VkSubmitInfo submit_info = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO,
       NULL,
       0,               // waitSemaphoreCount
@@ -48,7 +48,8 @@ end_single_time_command_buffer(VkCommandBuffer command_buffer) {
   };
 
   mtx_lock(&g_ctx.queue_mutex);
-  VK_CHECK(vkQueueSubmit(g_ctx.transfer_queue, 1, &submitInfo, VK_NULL_HANDLE));
+  VK_CHECK(
+      vkQueueSubmit(g_ctx.transfer_queue, 1, &submit_info, VK_NULL_HANDLE));
 
   VK_CHECK(vkQueueWaitIdle(g_ctx.transfer_queue));
   mtx_unlock(&g_ctx.queue_mutex);
@@ -67,7 +68,7 @@ static inline void create_buffer(
     VkBufferUsageFlags buffer_usage,
     VmaMemoryUsage memory_usage,
     VkMemoryPropertyFlags memory_property) {
-  VkBufferCreateInfo bufferCreateInfo = {
+  VkBufferCreateInfo buffer_create_info = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
       NULL,
       0,                         // flags
@@ -78,14 +79,14 @@ static inline void create_buffer(
       NULL                       // pQueueFamilyIndices
   };
 
-  VmaAllocationCreateInfo allocInfo = {};
-  allocInfo.usage = memory_usage;
-  allocInfo.requiredFlags = memory_property;
+  VmaAllocationCreateInfo alloc_info = {};
+  alloc_info.usage = memory_usage;
+  alloc_info.requiredFlags = memory_property;
 
   VK_CHECK(vmaCreateBuffer(
       g_ctx.gpu_allocator,
-      &bufferCreateInfo,
-      &allocInfo,
+      &buffer_create_info,
+      &alloc_info,
       buffer,
       allocation,
       NULL));
@@ -142,18 +143,18 @@ void re_buffer_unmap_memory(re_buffer_t *buffer) {
 
 void re_buffer_transfer_to_buffer(
     re_buffer_t *buffer, re_buffer_t *dest, size_t size) {
-  VkCommandBuffer commandBuffer = begin_single_time_command_buffer();
+  VkCommandBuffer command_buffer = begin_single_time_command_buffer();
 
-  VkBufferCopy bufferCopyInfo = {
+  VkBufferCopy buffer_copy_info = {
       0,    // srcOffset
       0,    // dstOffset
       size, // size
   };
 
   vkCmdCopyBuffer(
-      commandBuffer, buffer->buffer, dest->buffer, 1, &bufferCopyInfo);
+      command_buffer, buffer->buffer, dest->buffer, 1, &buffer_copy_info);
 
-  end_single_time_command_buffer(commandBuffer);
+  end_single_time_command_buffer(command_buffer);
 }
 
 void re_buffer_transfer_to_image(

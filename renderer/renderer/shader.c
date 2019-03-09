@@ -9,10 +9,10 @@ static inline VkShaderModule
 create_shader_module(const uint32_t *code, size_t code_size) {
   VkShaderModule module;
 
-  VkShaderModuleCreateInfo createInfo = {
+  VkShaderModuleCreateInfo create_info = {
       VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, NULL, 0, code_size, code};
 
-  VK_CHECK(vkCreateShaderModule(g_ctx.device, &createInfo, NULL, &module));
+  VK_CHECK(vkCreateShaderModule(g_ctx.device, &create_info, NULL, &module));
   return module;
 }
 

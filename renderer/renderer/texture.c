@@ -19,12 +19,12 @@ static inline VkFormat convert_format(re_format_t format) {
 static inline void create_image(
     VkImage *image,
     VmaAllocation *allocation,
-    VkImageView *imageView,
+    VkImageView *image_view,
     VkSampler *sampler,
     VkFormat format,
     uint32_t width,
     uint32_t height) {
-  VkImageCreateInfo imageCreateInfo = {
+  VkImageCreateInfo image_create_info = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       NULL,
       0,                // flags
@@ -46,18 +46,18 @@ static inline void create_image(
       VK_IMAGE_LAYOUT_UNDEFINED, // initialLayout
   };
 
-  VmaAllocationCreateInfo imageAllocCreateInfo = {};
-  imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  VmaAllocationCreateInfo image_alloc_create_info = {};
+  image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
       g_ctx.gpu_allocator,
-      &imageCreateInfo,
-      &imageAllocCreateInfo,
+      &image_create_info,
+      &image_alloc_create_info,
       image,
       allocation,
       NULL));
 
-  VkImageViewCreateInfo imageViewCreateInfo = {
+  VkImageViewCreateInfo image_view_create_info = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
       NULL,
       0,                     // flags
@@ -79,10 +79,10 @@ static inline void create_image(
       },                             // subresourceRange
   };
 
-  VK_CHECK(
-      vkCreateImageView(g_ctx.device, &imageViewCreateInfo, NULL, imageView));
+  VK_CHECK(vkCreateImageView(
+      g_ctx.device, &image_view_create_info, NULL, image_view));
 
-  VkSamplerCreateInfo samplerCreateInfo = {
+  VkSamplerCreateInfo sampler_create_info = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
       NULL,
       0,                                       // flags
@@ -103,7 +103,7 @@ static inline void create_image(
       VK_FALSE,                                // unnormalizedCoordinates
   };
 
-  VK_CHECK(vkCreateSampler(g_ctx.device, &samplerCreateInfo, NULL, sampler));
+  VK_CHECK(vkCreateSampler(g_ctx.device, &sampler_create_info, NULL, sampler));
 }
 
 bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
@@ -111,7 +111,7 @@ bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
   stbi_uc *pixels =
       stbi_load(path, &iwidth, &iheight, &channels, STBI_rgb_alpha);
 
-  size_t imageSize = (size_t)(iwidth * iheight * channels);
+  size_t image_size = (size_t)(iwidth * iheight * channels);
 
   uint32_t width = (uint32_t)iwidth;
   uint32_t height = (uint32_t)iheight;
@@ -131,7 +131,7 @@ bool re_texture_init_from_path(re_texture_t *texture, const char *path) {
     return false;
   }
 
-  re_texture_init(texture, pixels, imageSize, width, height, format);
+  re_texture_init(texture, pixels, image_size, width, height, format);
 
   stbi_image_free(pixels);
 
