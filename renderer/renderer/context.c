@@ -481,57 +481,53 @@ static inline void create_thread_command_pools(re_context_t *ctx) {
   }
 }
 
-void re_context_pre_init(
-    re_context_t *ctx,
-    const char *const *required_window_vulkan_extensions,
-    uint32_t window_extension_count) {
-  ctx->instance = VK_NULL_HANDLE;
-  ctx->device = VK_NULL_HANDLE;
-  ctx->physical_device = VK_NULL_HANDLE;
-  ctx->debug_callback = VK_NULL_HANDLE;
+void re_context_init(re_window_t *window) {
+  g_ctx.instance = VK_NULL_HANDLE;
+  g_ctx.device = VK_NULL_HANDLE;
+  g_ctx.physical_device = VK_NULL_HANDLE;
+  g_ctx.debug_callback = VK_NULL_HANDLE;
 
-  ctx->graphics_queue_family_index = -1;
-  ctx->present_queue_family_index = -1;
-  ctx->transfer_queue_family_index = -1;
-  ctx->graphics_queue = VK_NULL_HANDLE;
-  ctx->present_queue = VK_NULL_HANDLE;
-  ctx->transfer_queue = VK_NULL_HANDLE;
+  g_ctx.graphics_queue_family_index = -1;
+  g_ctx.present_queue_family_index = -1;
+  g_ctx.transfer_queue_family_index = -1;
+  g_ctx.graphics_queue = VK_NULL_HANDLE;
+  g_ctx.present_queue = VK_NULL_HANDLE;
+  g_ctx.transfer_queue = VK_NULL_HANDLE;
 
-  ctx->gpu_allocator = VK_NULL_HANDLE;
-  ctx->graphics_command_pool = VK_NULL_HANDLE;
-  ctx->transient_command_pool = VK_NULL_HANDLE;
+  g_ctx.gpu_allocator = VK_NULL_HANDLE;
+  g_ctx.graphics_command_pool = VK_NULL_HANDLE;
+  g_ctx.transient_command_pool = VK_NULL_HANDLE;
 
-  ctx->descriptor_pool = VK_NULL_HANDLE;
+  g_ctx.descriptor_pool = VK_NULL_HANDLE;
 
-  mtx_init(&ctx->queue_mutex, mtx_plain);
+  mtx_init(&g_ctx.queue_mutex, mtx_plain);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(ctx->thread_command_pools); i++) {
-    ctx->thread_command_pools[i] = VK_NULL_HANDLE;
+  for (uint32_t i = 0; i < ARRAYSIZE(g_ctx.thread_command_pools); i++) {
+    g_ctx.thread_command_pools[i] = VK_NULL_HANDLE;
   }
 
-  create_instance(
-      ctx, required_window_vulkan_extensions, window_extension_count);
+  create_instance(&g_ctx, window->sdl_extensions, window->sdl_extension_count);
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
-    setup_debug_callback(ctx);
+    setup_debug_callback(&g_ctx);
   }
 #endif
 }
 
-void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface) {
-  if (ctx->device != VK_NULL_HANDLE) {
+void re_context_init_graphics(re_window_t *window) {
+  if (g_ctx.device != VK_NULL_HANDLE) {
     return;
   }
 
-  create_device(ctx, surface);
+  create_device(&g_ctx, window->surface);
 
-  get_device_queues(ctx);
+  get_device_queues(&g_ctx);
 
-  setup_memory_allocator(ctx);
+  setup_memory_allocator(&g_ctx);
 
-  create_graphics_command_pool(ctx);
-  create_transient_command_pool(ctx);
-  create_thread_command_pools(ctx);
+  create_graphics_command_pool(&g_ctx);
+  create_transient_command_pool(&g_ctx);
+  create_thread_command_pools(&g_ctx);
 
   VkDescriptorPoolSize pool_sizes[] = {
       {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
@@ -557,7 +553,7 @@ void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface) {
   };
 
   VK_CHECK(vkCreateDescriptorPool(
-      g_ctx.device, &create_info, NULL, &ctx->descriptor_pool));
+      g_ctx.device, &create_info, NULL, &g_ctx.descriptor_pool));
 
   {
     VkDescriptorSetLayoutBinding single_texture_bindings[] = {{
@@ -582,14 +578,14 @@ void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface) {
   uint8_t white[] = {255, 255, 255, 255};
   uint8_t black[] = {0, 0, 0, 255};
   re_texture_init(
-      &ctx->white_texture, white, sizeof(white), 1, 1, RE_FORMAT_RGBA8_UNORM);
+      &g_ctx.white_texture, white, sizeof(white), 1, 1, RE_FORMAT_RGBA8_UNORM);
   re_texture_init(
-      &ctx->black_texture, black, sizeof(black), 1, 1, RE_FORMAT_RGBA8_UNORM);
+      &g_ctx.black_texture, black, sizeof(black), 1, 1, RE_FORMAT_RGBA8_UNORM);
 }
 
-VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx) {
+VkSampleCountFlagBits re_context_get_max_sample_count() {
   VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(ctx->physical_device, &properties);
+  vkGetPhysicalDeviceProperties(g_ctx.physical_device, &properties);
 
   VkSampleCountFlags color_samples =
       properties.limits.framebufferColorSampleCounts;
@@ -629,21 +625,20 @@ VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx) {
   return VK_SAMPLE_COUNT_1_BIT;
 }
 
-bool re_context_get_supported_depth_format(
-    re_context_t *ctx, VkFormat *depthFormat) {
+bool re_context_get_supported_depth_format(VkFormat *depth_format) {
   VkFormat depth_formats[] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
                               VK_FORMAT_D32_SFLOAT,
                               VK_FORMAT_D24_UNORM_S8_UINT,
                               VK_FORMAT_D16_UNORM_S8_UINT,
                               VK_FORMAT_D16_UNORM};
   for (uint32_t i = 0; i < ARRAYSIZE(depth_formats); i++) {
-    VkFormatProperties formatProps;
+    VkFormatProperties format_props;
     vkGetPhysicalDeviceFormatProperties(
-        ctx->physical_device, depth_formats[i], &formatProps);
+        g_ctx.physical_device, depth_formats[i], &format_props);
 
-    if (formatProps.optimalTilingFeatures &
+    if (format_props.optimalTilingFeatures &
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-      *depthFormat = depth_formats[i];
+      *depth_format = depth_formats[i];
       return depth_formats[i];
       return true;
     }
@@ -651,36 +646,36 @@ bool re_context_get_supported_depth_format(
   return false;
 }
 
-void re_context_destroy(re_context_t *ctx) {
+void re_context_destroy() {
   ut_log_debug("Vulkan context shutting down...");
 
-  VK_CHECK(vkDeviceWaitIdle(ctx->device));
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  re_texture_destroy(&ctx->white_texture);
-  re_texture_destroy(&ctx->black_texture);
+  re_texture_destroy(&g_ctx.white_texture);
+  re_texture_destroy(&g_ctx.black_texture);
 
-  vkDestroyDescriptorPool(ctx->device, ctx->descriptor_pool, NULL);
+  vkDestroyDescriptorPool(g_ctx.device, g_ctx.descriptor_pool, NULL);
 
   vkDestroyDescriptorSetLayout(
       g_ctx.device, g_ctx.canvas_descriptor_set_layout, NULL);
 
-  vkDestroyCommandPool(ctx->device, ctx->transient_command_pool, NULL);
+  vkDestroyCommandPool(g_ctx.device, g_ctx.transient_command_pool, NULL);
 
-  vkDestroyCommandPool(ctx->device, ctx->graphics_command_pool, NULL);
+  vkDestroyCommandPool(g_ctx.device, g_ctx.graphics_command_pool, NULL);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(ctx->thread_command_pools); i++) {
-    vkDestroyCommandPool(ctx->device, ctx->thread_command_pools[i], NULL);
+  for (uint32_t i = 0; i < ARRAYSIZE(g_ctx.thread_command_pools); i++) {
+    vkDestroyCommandPool(g_ctx.device, g_ctx.thread_command_pools[i], NULL);
   }
 
-  vmaDestroyAllocator(ctx->gpu_allocator);
+  vmaDestroyAllocator(g_ctx.gpu_allocator);
 
-  vkDestroyDevice(ctx->device, NULL);
+  vkDestroyDevice(g_ctx.device, NULL);
 
-  DestroyDebugReportCallbackEXT(ctx->instance, ctx->debug_callback, NULL);
+  DestroyDebugReportCallbackEXT(g_ctx.instance, g_ctx.debug_callback, NULL);
 
-  vkDestroyInstance(ctx->instance, NULL);
+  vkDestroyInstance(g_ctx.instance, NULL);
 
-  mtx_destroy(&ctx->queue_mutex);
+  mtx_destroy(&g_ctx.queue_mutex);
 
   SDL_Quit();
 }

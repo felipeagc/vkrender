@@ -24,6 +24,9 @@ typedef struct re_window_t {
   re_render_target_t render_target;
   SDL_Window *sdl_window;
 
+  const char **sdl_extensions;
+  uint32_t sdl_extension_count;
+
   bool should_close;
 
   double delta_time;
@@ -60,6 +63,10 @@ typedef struct re_window_t {
 
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height);
+
+void re_window_init_surface(re_window_t *window);
+
+bool re_window_init_graphics(re_window_t *window);
 
 void re_window_get_size(
     const re_window_t *window, uint32_t *width, uint32_t *height);

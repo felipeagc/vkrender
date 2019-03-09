@@ -1,9 +1,11 @@
 #pragma once
 
 #include "texture.h"
+#include <tinycthread.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
-#include <tinycthread.h>
+
+typedef struct re_window_t re_window_t;
 
 #ifndef NDEBUG
 #define RE_ENABLE_VALIDATION
@@ -55,16 +57,12 @@ typedef struct re_context_t {
 
 extern re_context_t g_ctx;
 
-void re_context_pre_init(
-    re_context_t *ctx,
-    const char *const *required_window_vulkan_extensions,
-    uint32_t window_extension_count);
+void re_context_init(re_window_t *window);
 
-void re_context_late_init(re_context_t *ctx, VkSurfaceKHR surface);
+void re_context_init_graphics(re_window_t *window);
 
-VkSampleCountFlagBits re_context_get_max_sample_count(re_context_t *ctx);
+VkSampleCountFlagBits re_context_get_max_sample_count();
 
-bool re_context_get_supported_depth_format(
-    re_context_t *ctx, VkFormat *depthFormat);
+bool re_context_get_supported_depth_format(VkFormat *depth_format);
 
-void re_context_destroy(re_context_t *ctx);
+void re_context_destroy();

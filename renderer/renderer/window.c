@@ -328,7 +328,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
 // Populates the depthStencil member struct
 static inline void create_depth_stencil_resources(re_window_t *window) {
-  assert(re_context_get_supported_depth_format(&g_ctx, &window->depth_format));
+  assert(re_context_get_supported_depth_format(&window->depth_format));
 
   VkImageCreateInfo image_create_info = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
@@ -592,25 +592,21 @@ bool re_window_init(
 
   SDL_SetWindowResizable(window->sdl_window, SDL_TRUE);
 
-  uint32_t sdl_extension_count = 0;
   SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &sdl_extension_count, NULL);
-  const char **sdl_extensions =
-      (const char **)malloc(sizeof(const char *) * sdl_extension_count);
+      window->sdl_window, &window->sdl_extension_count, NULL);
+  window->sdl_extensions =
+      malloc(sizeof(const char *) * window->sdl_extension_count);
   SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &sdl_extension_count, sdl_extensions);
+      window->sdl_window, &window->sdl_extension_count, window->sdl_extensions);
 
-  // These context initialization functions only run if the context is
-  // uninitialized
-  re_context_pre_init(&g_ctx, sdl_extensions, sdl_extension_count);
+  return true;
+}
 
-  free(sdl_extensions);
-
+void re_window_init_surface(re_window_t *window) {
   create_vulkan_surface(window);
+}
 
-  // Lazily create vulkan context stuff
-  re_context_late_init(&g_ctx, window->surface);
-
+bool re_window_init_graphics(re_window_t *window) {
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(
       g_ctx.physical_device,
@@ -621,11 +617,14 @@ bool re_window_init(
     return false;
   }
 
-  window->max_samples = re_context_get_max_sample_count(&g_ctx);
+  window->max_samples = re_context_get_max_sample_count();
 
   create_sync_objects(window);
 
-  create_swapchain(window, width, height);
+  int width, height;
+  SDL_GetWindowSize(window->sdl_window, &width, &height);
+
+  create_swapchain(window, (uint32_t)width, (uint32_t)height);
   create_swapchain_image_views(window);
 
   allocate_graphics_command_buffers(window);
@@ -676,6 +675,8 @@ void re_window_destroy(re_window_t *window) {
 
   free(window->swapchain_images);
   free(window->swapchain_image_views);
+
+  free(window->sdl_extensions);
 }
 
 bool re_window_poll_event(re_window_t *window, SDL_Event *event) {

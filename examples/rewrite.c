@@ -16,7 +16,13 @@
 
 int main() {
   re_window_t window;
+
   re_window_init(&window, "Re-write", 1600, 900);
+  re_context_init(&window);
+  re_window_init_surface(&window);
+  re_context_init_graphics(&window);
+  re_window_init_graphics(&window);
+
   re_imgui_init(&window);
 
   eg_engine_init();
@@ -159,7 +165,7 @@ int main() {
 
   re_imgui_destroy();
   re_window_destroy(&window);
-  re_context_destroy(&g_ctx);
+  re_context_destroy();
 
   return 0;
 }
