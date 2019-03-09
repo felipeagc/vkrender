@@ -4,9 +4,9 @@
 #include "util.hpp"
 #include "window.hpp"
 #include <fstd_util.h>
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_sdl.h>
-#include <imgui/imgui_impl_vulkan.h>
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_vulkan.h>
 #include <util/log.h>
 
 void re_imgui_init(re_window_t *window) {

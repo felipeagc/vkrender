@@ -11,7 +11,7 @@
 #include <engine/systems/fps_camera_system.hpp>
 #include <engine/world.hpp>
 #include <fstd_util.h>
-#include <imgui/imgui.h>
+#include <imgui.h>
 #include <renderer/renderer.hpp>
 #include <util/log.h>
 

@@ -1,0 +1,7 @@
+subdir('gmath')
+subdir('fstd')
+subdir('imgui')
+subdir('stb_image')
+subdir('vma')
+subdir('cgltf')
+subdir('tinycthread')

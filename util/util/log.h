@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
 inline void ut_log_info(const char *format, ...) {

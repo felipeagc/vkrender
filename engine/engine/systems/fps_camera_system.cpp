@@ -1,7 +1,7 @@
 #include "fps_camera_system.hpp"
 #include "../camera.hpp"
 #include <SDL2/SDL.h>
-#include <imgui/imgui.h>
+#include <imgui.h>
 #include <renderer/window.hpp>
 #include <util/log.h>
 

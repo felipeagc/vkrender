@@ -6,7 +6,7 @@
 #include "components/mesh_component.hpp"
 #include "components/transform_component.hpp"
 #include "world.hpp"
-#include <imgui/imgui.h>
+#include <imgui.h>
 #include <stdio.h>
 
 void eg_draw_inspector(eg_world_t *world, eg_asset_manager_t *asset_manager) {
