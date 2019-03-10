@@ -1,7 +1,6 @@
-project('vkrender', 'c', 'cpp', default_options : ['c_std=c99', 'cpp_std=c++11'])
+project('vkrender', 'c', 'cpp', default_options : ['c_std=gnu99', 'cpp_std=c++11'])
 
-add_global_arguments('-Wno-missing-braces', language : 'c')
-add_global_arguments('-Wno-missing-braces', language : 'cpp')
+add_global_arguments(['-Wall', '-Wno-missing-braces'], language : 'c')
 
 subdir('thirdparty')
 subdir('util')

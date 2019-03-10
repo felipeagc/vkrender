@@ -17,12 +17,16 @@ typedef struct re_cubemap_t {
   uint32_t mip_levels;
 } re_cubemap_t;
 
-void re_cubemap_init_from_hdr_sides(
-    re_cubemap_t *cubemap, char *paths[6]);
-
-void re_cubemap_init_from_hdr_sides_with_mip_maps(
+/*
+ * layers: float* layers[level_count][layer_count]
+ * or float* layers[level_count * layer_count]
+ */
+void re_cubemap_init_from_data(
     re_cubemap_t *cubemap,
-    char **paths[6],
-    const uint32_t mip_map_levels);
+    float **layers,
+    uint32_t layer_count,
+    uint32_t mip_levels,
+    uint32_t width,
+    uint32_t height);
 
 void re_cubemap_destroy(re_cubemap_t *cubemap);

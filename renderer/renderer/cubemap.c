@@ -121,16 +121,16 @@ static inline void upload_image_to_cubemap(
   re_buffer_destroy(&staging_buffer);
 }
 
-void re_cubemap_init_from_hdr_sides(re_cubemap_t *cubemap, char *paths[6]) {
-  int width, height, nr_comps;
-  float *image_datas[6];
-  for (uint32_t i = 0; i < 6; i++) {
-    image_datas[i] = stbi_loadf(paths[i], &width, &height, &nr_comps, 4);
-  }
-
+void re_cubemap_init_from_data(
+    re_cubemap_t *cubemap,
+    float **layers,
+    uint32_t layer_count,
+    uint32_t mip_levels,
+    uint32_t width,
+    uint32_t height) {
   cubemap->width = (uint32_t)width;
   cubemap->height = (uint32_t)height;
-  cubemap->mip_levels = 1;
+  cubemap->mip_levels = mip_levels;
 
   create_cubemap_image(
       &cubemap->image,
@@ -138,77 +138,20 @@ void re_cubemap_init_from_hdr_sides(re_cubemap_t *cubemap, char *paths[6]) {
       &cubemap->image_view,
       &cubemap->sampler,
       VK_FORMAT_R32G32B32A32_SFLOAT,
-      (uint32_t)width,
-      (uint32_t)height,
-      1);
+      width,
+      height,
+      mip_levels);
 
-  for (uint32_t i = 0; i < 6; i++) {
-    upload_image_to_cubemap(
-        cubemap, image_datas[i], cubemap->width, cubemap->height, i, 0);
-  }
-
-  for (uint32_t i = 0; i < 6; i++) {
-    free(image_datas[i]);
-  }
-
-  cubemap->descriptor = (VkDescriptorImageInfo){
-      cubemap->sampler,
-      cubemap->image_view,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-  };
-}
-
-void re_cubemap_init_from_hdr_sides_with_mip_maps(
-    re_cubemap_t *cubemap, char **paths[6], const uint32_t mip_map_levels) {
-  uint32_t largest_width = 0, largest_height = 0;
-  int width, height, nr_comps;
-  float **image_datas[6];
-  for (uint32_t i = 0; i < 6; i++) {
-    image_datas[i] = (float **)malloc(sizeof(float **) * mip_map_levels);
-    for (uint32_t level = 0; level < mip_map_levels; level++) {
-      image_datas[i][level] =
-          stbi_loadf(paths[i][level], &width, &height, &nr_comps, 4);
-      if ((uint32_t)width > largest_width) {
-        largest_width = (uint32_t)width;
-      }
-      if ((uint32_t)height > largest_height) {
-        largest_height = (uint32_t)height;
-      }
-    }
-  }
-
-  cubemap->width = largest_width;
-  cubemap->height = largest_height;
-
-  cubemap->mip_levels = mip_map_levels;
-
-  create_cubemap_image(
-      &cubemap->image,
-      &cubemap->allocation,
-      &cubemap->image_view,
-      &cubemap->sampler,
-      VK_FORMAT_R32G32B32A32_SFLOAT,
-      cubemap->width,
-      cubemap->height,
-      cubemap->mip_levels);
-
-  for (uint32_t i = 0; i < 6; i++) {
-    for (uint32_t level = 0; level < cubemap->mip_levels; level++) {
+  for (uint32_t layer = 0; layer < layer_count; layer++) {
+    for (uint32_t level = 0; level < mip_levels; level++) {
       upload_image_to_cubemap(
           cubemap,
-          image_datas[i][level],
+          layers[(level * layer_count) + layer],
           cubemap->width / pow(2, level),
           cubemap->height / pow(2, level),
-          i,
+          layer,
           level);
     }
-  }
-
-  for (uint32_t i = 0; i < 6; i++) {
-    for (uint32_t level = 0; level < mip_map_levels; level++) {
-      free(image_datas[i][level]);
-    }
-    free(image_datas[i]);
   }
 
   cubemap->descriptor = (VkDescriptorImageInfo){

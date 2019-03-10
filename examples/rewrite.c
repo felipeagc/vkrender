@@ -51,7 +51,7 @@ int main() {
   eg_environment_asset_t *environment_asset =
       eg_asset_alloc(&asset_manager, eg_environment_asset_t);
   eg_environment_asset_init(
-      environment_asset, "../assets/ice_lake/", 9, "../assets/brdf_lut.png");
+      environment_asset, "../assets/ice_lake.env", "../assets/brdf_lut.png");
 
   eg_world_t world;
   eg_world_init(&world, environment_asset);
