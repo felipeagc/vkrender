@@ -13,14 +13,27 @@ void eg_mesh_asset_init(
 
   size_t vertex_buffer_size = sizeof(re_vertex_t) * vertex_count;
   size_t index_buffer_size = sizeof(uint32_t) * index_count;
-  re_buffer_init_vertex(&mesh->vertex_buffer, vertex_buffer_size);
-  re_buffer_init_index(&mesh->index_buffer, index_buffer_size);
+  re_buffer_init(
+      &mesh->vertex_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_VERTEX,
+          .size = vertex_buffer_size,
+      });
+  re_buffer_init(
+      &mesh->index_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_INDEX,
+          .size = index_buffer_size,
+      });
 
   re_buffer_t staging_buffer;
-  re_buffer_init_staging(
+  re_buffer_init(
       &staging_buffer,
-      vertex_buffer_size > index_buffer_size ? vertex_buffer_size
-                                             : index_buffer_size);
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_TRANSFER,
+          .size = vertex_buffer_size > index_buffer_size ? vertex_buffer_size
+                                                         : index_buffer_size,
+      });
 
   void *memory;
   re_buffer_map_memory(&staging_buffer, &memory);

@@ -27,7 +27,12 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
   }
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_buffer_init_uniform(&model->buffers[i], sizeof(model->uniform));
+    re_buffer_init(
+        &model->buffers[i],
+        &(re_buffer_options_t){
+            .type = RE_BUFFER_TYPE_UNIFORM,
+            .size = sizeof(model->uniform),
+        });
 
     VkDescriptorBufferInfo buffer_info = {
         model->buffers[i].buffer, 0, sizeof(model->uniform)};
@@ -40,9 +45,9 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
         0,                                 // dstArrayElement
         1,                                 // descriptorCount
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        NULL,                           // pImageInfo
+        NULL,                              // pImageInfo
         &buffer_info,                      // pBufferInfo
-        NULL,                           // pTexelBufferView
+        NULL,                              // pTexelBufferView
     };
 
     vkUpdateDescriptorSets(g_ctx.device, 1, &descriptor_write, 0, NULL);

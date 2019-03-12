@@ -1,21 +1,29 @@
 #pragma once
 
+#include <stdbool.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
-#include <stdbool.h>
+
+typedef enum re_buffer_type_t {
+  RE_BUFFER_TYPE_VERTEX,
+  RE_BUFFER_TYPE_INDEX,
+  RE_BUFFER_TYPE_UNIFORM,
+  RE_BUFFER_TYPE_TRANSFER,
+
+  RE_BUFFER_TYPE_MAX,
+} re_buffer_type_t;
+
+typedef struct re_buffer_options_t {
+  re_buffer_type_t type;
+  size_t size;
+} re_buffer_options_t;
 
 typedef struct re_buffer_t {
   VkBuffer buffer;
   VmaAllocation allocation;
 } re_buffer_t;
 
-void re_buffer_init_vertex(re_buffer_t *buffer, size_t size);
-
-void re_buffer_init_index(re_buffer_t *buffer, size_t size);
-
-void re_buffer_init_uniform(re_buffer_t *buffer, size_t size);
-
-void re_buffer_init_staging(re_buffer_t *buffer, size_t size);
+void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options);
 
 bool re_buffer_map_memory(re_buffer_t *buffer, void **dest);
 

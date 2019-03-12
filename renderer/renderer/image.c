@@ -142,7 +142,12 @@ static inline void upload_data_to_image(
   size_t img_size = width * height * get_format_pixel_size(image->format);
 
   re_buffer_t staging_buffer;
-  re_buffer_init_staging(&staging_buffer, img_size);
+  re_buffer_init(
+      &staging_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_TRANSFER,
+          .size = img_size,
+      });
 
   void *staging_memory_pointer;
   re_buffer_map_memory(&staging_buffer, &staging_memory_pointer);

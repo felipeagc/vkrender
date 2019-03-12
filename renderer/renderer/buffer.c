@@ -92,44 +92,49 @@ static inline void create_buffer(
       NULL));
 }
 
-void re_buffer_init_vertex(re_buffer_t *buffer, size_t size) {
-  create_buffer(
-      &buffer->buffer,
-      &buffer->allocation,
-      size,
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-}
+void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
+  assert(options->size > 0);
+  assert(options->type < RE_BUFFER_TYPE_MAX);
 
-void re_buffer_init_index(re_buffer_t *buffer, size_t size) {
-  create_buffer(
-      &buffer->buffer,
-      &buffer->allocation,
-      size,
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-}
+  VkBufferUsageFlags buffer_usage;
+  VmaMemoryUsage memory_usage;
+  VkMemoryPropertyFlags memory_property;
 
-void re_buffer_init_uniform(re_buffer_t *buffer, size_t size) {
-  create_buffer(
-      &buffer->buffer,
-      &buffer->allocation,
-      size,
-      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-      VMA_MEMORY_USAGE_CPU_TO_GPU,
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-}
+  switch (options->type) {
+  case RE_BUFFER_TYPE_VERTEX:
+    buffer_usage =
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    break;
+  case RE_BUFFER_TYPE_INDEX:
+    buffer_usage =
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    break;
+  case RE_BUFFER_TYPE_UNIFORM:
+    buffer_usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    break;
+  case RE_BUFFER_TYPE_TRANSFER:
+    buffer_usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    break;
+  default:
+    assert(0);
+    break;
+  }
 
-void re_buffer_init_staging(re_buffer_t *buffer, size_t size) {
   create_buffer(
       &buffer->buffer,
       &buffer->allocation,
-      size,
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VMA_MEMORY_USAGE_CPU_ONLY,
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+      options->size,
+      buffer_usage,
+      memory_usage,
+      memory_property);
 }
 
 bool re_buffer_map_memory(re_buffer_t *buffer, void **dest) {

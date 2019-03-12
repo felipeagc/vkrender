@@ -33,8 +33,12 @@ void eg_camera_init(eg_camera_t *camera) {
   }
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_buffer_init_uniform(
-        &camera->uniform_buffers[i], sizeof(eg_camera_uniform_t));
+    re_buffer_init(
+        &camera->uniform_buffers[i],
+        &(re_buffer_options_t){
+            .type = RE_BUFFER_TYPE_UNIFORM,
+            .size = sizeof(eg_camera_uniform_t),
+        });
     re_buffer_map_memory(&camera->uniform_buffers[i], &camera->mappings[i]);
 
     VkDescriptorBufferInfo buffer_info = {

@@ -38,8 +38,12 @@ void eg_environment_init(
 
   // Update descriptor sets
   for (size_t i = 0; i < ARRAYSIZE(environment->descriptor_sets); i++) {
-    re_buffer_init_uniform(
-        &environment->uniform_buffers[i], sizeof(eg_environment_uniform_t));
+    re_buffer_init(
+        &environment->uniform_buffers[i],
+        &(re_buffer_options_t){
+            .type = RE_BUFFER_TYPE_UNIFORM,
+            .size = sizeof(eg_environment_uniform_t),
+        });
     re_buffer_map_memory(
         &environment->uniform_buffers[i], &environment->mappings[i]);
 
