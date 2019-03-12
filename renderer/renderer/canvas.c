@@ -6,7 +6,7 @@
 
 static inline void create_color_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    re_canvas_resource_t *resource = &canvas->resources[i];
+    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageCreateInfo image_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -100,7 +100,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
 static inline void destroy_color_target(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    re_canvas_resource_t *resource = &canvas->resources[i];
+    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     if (resource->color.image != VK_NULL_HANDLE) {
       vkDestroyImageView(g_ctx.device, resource->color.image_view, NULL);
@@ -126,7 +126,7 @@ static inline void destroy_color_target(re_canvas_t *canvas) {
 
 static inline void create_depth_target(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    re_canvas_resource_t *resource = &canvas->resources[i];
+    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageCreateInfo image_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
@@ -197,7 +197,7 @@ static inline void destroy_depth_target(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    re_canvas_resource_t *resource = &canvas->resources[i];
+    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     if (resource->depth.image != VK_NULL_HANDLE) {
       vmaDestroyImage(
@@ -266,7 +266,7 @@ static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
 
 static inline void create_framebuffers(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    re_canvas_resource_t *resource = &canvas->resources[i];
+    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageView attachments[] = {
         resource->color.image_view,
@@ -294,7 +294,7 @@ static inline void destroy_framebuffers(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
-    re_canvas_resource_t *resource = &canvas->resources[i];
+    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     if (resource->framebuffer != VK_NULL_HANDLE) {
       vkDestroyFramebuffer(g_ctx.device, resource->framebuffer, NULL);
