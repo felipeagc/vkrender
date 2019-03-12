@@ -1,6 +1,7 @@
 #pragma once
 
-#include "texture.h"
+#include "image.h"
+#include <stdbool.h>
 #include <tinycthread.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -51,8 +52,8 @@ typedef struct re_context_t {
   VkDescriptorPool descriptor_pool;
   VkDescriptorSetLayout canvas_descriptor_set_layout;
 
-  re_texture_t white_texture;
-  re_texture_t black_texture;
+  re_image_t white_texture;
+  re_image_t black_texture;
 } re_context_t;
 
 extern re_context_t g_ctx;

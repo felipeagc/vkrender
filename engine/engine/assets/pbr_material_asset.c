@@ -3,17 +3,17 @@
 #include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/pipeline.h>
-#include <renderer/texture.h>
+#include <renderer/image.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
 
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,
-    re_texture_t *albedo_texture,
-    re_texture_t *normal_texture,
-    re_texture_t *metallic_roughness_texture,
-    re_texture_t *occlusion_texture,
-    re_texture_t *emissive_texture) {
+    re_image_t *albedo_texture,
+    re_image_t *normal_texture,
+    re_image_t *metallic_roughness_texture,
+    re_image_t *occlusion_texture,
+    re_image_t *emissive_texture) {
   eg_asset_init(&material->asset, EG_PBR_MATERIAL_ASSET_TYPE);
 
   material->uniform.base_color_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};

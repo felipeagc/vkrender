@@ -18,24 +18,21 @@ typedef struct env_file_header_t {
   uint32_t radiance_mip_count;
 } env_file_header_t;
 
-typedef struct env_file_read_options_t {
-  uint32_t skybox_dim;
-  float *skybox_layers[6];
-  uint32_t irradiance_dim;
-  float *irradiance_layers[6];
-  uint32_t base_radiance_dim;
-  float *radiance_layers[ENV_MAX_RADIANCE_MIPMAPS][6];
-  uint32_t radiance_mip_count;
-  const char *path;
-} env_file_read_options_t;
-
-static inline void env_file_read(env_file_read_options_t *options) {
-  FILE *file = fopen(options->path, "r");
+static inline void env_file_read(
+    const char *path,
+    uint8_t **skybox_data,
+    uint32_t *skybox_dim,
+    uint8_t **irradiance_data,
+    uint32_t *irradiance_dim,
+    uint8_t **radiance_data,
+    uint32_t *radiance_dim,
+    uint32_t *radiance_mip_count) {
+  FILE *file = fopen(path, "r");
   fseek(file, 0, SEEK_END);
   size_t data_size = ftell(file);
   fseek(file, 0, SEEK_SET);
 
-  unsigned char *data = calloc(1, data_size);
+  uint8_t *data = calloc(1, data_size);
 
   fread(data, data_size, 1, file);
 
@@ -44,7 +41,7 @@ static inline void env_file_read(env_file_read_options_t *options) {
   env_file_header_t header;
   memcpy(&header, data, sizeof(header));
 
-  options->radiance_mip_count = header.radiance_mip_count;
+  *radiance_mip_count = header.radiance_mip_count;
 
   size_t current_pos = sizeof(header);
 
@@ -52,9 +49,18 @@ static inline void env_file_read(env_file_read_options_t *options) {
     size_t layer_size = header.skybox_layer_sizes[layer];
 
     int width, height, nr_comps;
-    options->skybox_layers[layer] = stbi_loadf_from_memory(
+    float *layer_data = stbi_loadf_from_memory(
         &data[current_pos], layer_size, &width, &height, &nr_comps, 4);
-    options->skybox_dim = (uint32_t)width;
+    *skybox_dim = (uint32_t)width;
+
+    size_t out_layer_size = width * height * 4 * sizeof(float);
+    if (layer == 0) {
+      *skybox_data = malloc(out_layer_size * 6);
+    }
+    memcpy(
+        &((*skybox_data)[out_layer_size * layer]), layer_data, out_layer_size);
+
+    free(layer_data);
 
     current_pos += layer_size;
   }
@@ -63,23 +69,49 @@ static inline void env_file_read(env_file_read_options_t *options) {
     size_t layer_size = header.irradiance_layer_sizes[layer];
 
     int width, height, nr_comps;
-    options->irradiance_layers[layer] = stbi_loadf_from_memory(
+    float *layer_data = stbi_loadf_from_memory(
         &data[current_pos], layer_size, &width, &height, &nr_comps, 4);
-    options->irradiance_dim = (uint32_t)width;
+    *irradiance_dim = (uint32_t)width;
+
+    size_t out_layer_size = width * height * 4 * sizeof(float);
+    if (layer == 0) {
+      *irradiance_data = malloc(out_layer_size * 6);
+    }
+    memcpy(
+        &((*irradiance_data)[out_layer_size * layer]),
+        layer_data,
+        out_layer_size);
+
+    free(layer_data);
 
     current_pos += layer_size;
   }
+
+  *radiance_data = NULL;
+  size_t radiance_size = 0;
+  size_t radiance_pos = 0;
 
   for (uint32_t level = 0; level < header.radiance_mip_count; level++) {
     for (uint32_t layer = 0; layer < 6; layer++) {
       size_t layer_size = header.radiance_layer_sizes[level][layer];
 
       int width, height, nr_comps;
-      options->radiance_layers[level][layer] = stbi_loadf_from_memory(
+      float *layer_data = stbi_loadf_from_memory(
           &data[current_pos], layer_size, &width, &height, &nr_comps, 4);
 
+      size_t out_layer_size = width * height * 4 * sizeof(float);
+      radiance_size += out_layer_size * 6;
+      if (layer == 0) {
+        *radiance_data = realloc(*radiance_data, radiance_size);
+      }
+      memcpy(&((*radiance_data)[radiance_pos]), layer_data, out_layer_size);
+
+      radiance_pos += out_layer_size;
+
+      free(layer_data);
+
       if (level == 0) {
-        options->base_radiance_dim = (uint32_t)width;
+        *radiance_dim = (uint32_t)width;
       }
 
       current_pos += layer_size;

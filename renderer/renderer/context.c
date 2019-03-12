@@ -2,7 +2,6 @@
 #include "util.h"
 #include "window.h"
 #include <fstd_util.h>
-#include <stdbool.h>
 #include <util/log.h>
 
 re_context_t g_ctx;
@@ -577,10 +576,23 @@ void re_context_init_graphics(re_window_t *window) {
 
   uint8_t white[] = {255, 255, 255, 255};
   uint8_t black[] = {0, 0, 0, 255};
-  re_texture_init(
-      &g_ctx.white_texture, white, sizeof(white), 1, 1, RE_FORMAT_RGBA8_UNORM);
-  re_texture_init(
-      &g_ctx.black_texture, black, sizeof(black), 1, 1, RE_FORMAT_RGBA8_UNORM);
+  re_image_init(
+      &g_ctx.white_texture,
+      &(re_image_options_t){
+          .data = white,
+          .width = 1,
+          .height = 1,
+          .format = RE_FORMAT_R8G8B8A8_UNORM,
+      });
+
+  re_image_init(
+      &g_ctx.black_texture,
+      &(re_image_options_t){
+          .data = black,
+          .width = 1,
+          .height = 1,
+          .format = RE_FORMAT_R8G8B8A8_UNORM,
+      });
 }
 
 VkSampleCountFlagBits re_context_get_max_sample_count() {
@@ -651,8 +663,8 @@ void re_context_destroy() {
 
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  re_texture_destroy(&g_ctx.white_texture);
-  re_texture_destroy(&g_ctx.black_texture);
+  re_image_destroy(&g_ctx.white_texture);
+  re_image_destroy(&g_ctx.black_texture);
 
   vkDestroyDescriptorPool(g_ctx.device, g_ctx.descriptor_pool, NULL);
 

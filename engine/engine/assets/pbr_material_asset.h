@@ -5,7 +5,7 @@
 #include <renderer/common.h>
 #include <vulkan/vulkan.h>
 
-typedef struct re_texture_t re_texture_t;
+typedef struct re_image_t re_image_t;
 typedef struct re_window_t re_window_t;
 typedef struct re_pipeline_t re_pipeline_t;
 
@@ -25,11 +25,11 @@ typedef struct eg_pbr_material_asset_t {
 
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,
-    struct re_texture_t *albedo_texture,
-    struct re_texture_t *normal_texture,
-    struct re_texture_t *metallic_roughness_texture,
-    struct re_texture_t *occlusion_texture,
-    struct re_texture_t *emissive_texture);
+    re_image_t *albedo_texture,
+    re_image_t *normal_texture,
+    re_image_t *metallic_roughness_texture,
+    re_image_t *occlusion_texture,
+    re_image_t *emissive_texture);
 
 void eg_pbr_material_asset_bind(
     eg_pbr_material_asset_t *material,

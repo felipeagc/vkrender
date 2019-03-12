@@ -3,7 +3,6 @@
 #include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/pipeline.h>
-#include <renderer/texture.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
 

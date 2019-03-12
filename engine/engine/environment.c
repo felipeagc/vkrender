@@ -17,7 +17,7 @@ void eg_environment_init(
   environment->uniform.point_light_count = 0;
 
   environment->uniform.radiance_mip_levels =
-      (float)asset->radiance_cubemap.mip_levels;
+      (float)asset->radiance_cubemap.mip_level_count;
 
   {
     VkDescriptorSetLayout set_layouts[ARRAYSIZE(environment->descriptor_sets)];

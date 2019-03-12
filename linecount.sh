@@ -1,12 +1,12 @@
 #!/bin/zsh
 
 wc -l \
-	./engine/**/*.hpp \
-	./engine/**/*.cpp \
-	./renderer/**/*.cpp \
-	./renderer/**/*.hpp \
+	./engine/**/*.h \
+	./engine/**/*.c \
+	./renderer/**/*.c \
+	./renderer/**/*.h \
 	./util/**/*.h \
-	./examples/*.cpp \
+	./examples/*.c \
 	./shaders/*.vert \
 	./shaders/*.frag \
 	| sort -n -r -k1

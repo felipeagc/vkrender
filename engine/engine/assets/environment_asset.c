@@ -10,56 +10,87 @@ void eg_environment_asset_init(
     const char *brdf_lut_path) {
   eg_asset_init_named(&environment->asset, EG_ENVIRONMENT_ASSET_TYPE, path);
 
-  env_file_read_options_t options = {
-      .path = path,
-  };
+  uint8_t *skybox_data;
+  uint32_t skybox_dim;
 
-  env_file_read(&options);
+  uint8_t *irradiance_data;
+  uint32_t irradiance_dim;
+
+  uint8_t *radiance_data;
+  uint32_t radiance_dim;
+  uint32_t radiance_mip_levels;
+
+  env_file_read(
+      path,
+      &skybox_data,
+      &skybox_dim,
+      &irradiance_data,
+      &irradiance_dim,
+      &radiance_data,
+      &radiance_dim,
+      &radiance_mip_levels);
 
   // Skybox
-  re_cubemap_init_from_data(
+  re_image_init(
       &environment->skybox_cubemap,
-      options.skybox_layers,
-      6,
-      1,
-      options.skybox_dim,
-      options.skybox_dim);
+      &(re_image_options_t){
+          .data = skybox_data,
+          .width = skybox_dim,
+          .height = skybox_dim,
+          .layer_count = 6,
+          .mip_level_count = 1,
+          .format = RE_FORMAT_R32G32B32A32_SFLOAT,
+      });
 
   // Irradiance
-  re_cubemap_init_from_data(
+  re_image_init(
       &environment->irradiance_cubemap,
-      options.irradiance_layers,
-      6,
-      1,
-      options.irradiance_dim,
-      options.irradiance_dim);
+      &(re_image_options_t){
+          .data = irradiance_data,
+          .width = irradiance_dim,
+          .height = irradiance_dim,
+          .layer_count = 6,
+          .mip_level_count = 1,
+          .format = RE_FORMAT_R32G32B32A32_SFLOAT,
+      });
 
   // Radiance
-  re_cubemap_init_from_data(
+  re_image_init(
       &environment->radiance_cubemap,
-      options.radiance_layers[0],
-      6,
-      options.radiance_mip_count,
-      options.base_radiance_dim,
-      options.base_radiance_dim);
+      &(re_image_options_t){
+          .data = radiance_data,
+          .width = radiance_dim,
+          .height = radiance_dim,
+          .layer_count = 6,
+          .mip_level_count = radiance_mip_levels,
+          .format = RE_FORMAT_R32G32B32A32_SFLOAT,
+      });
 
-  re_texture_init_from_path(&environment->brdf_lut, brdf_lut_path);
+  {
+    int width, height, channels;
+    uint8_t *brdf_lut_data =
+        stbi_load(brdf_lut_path, &width, &height, &channels, 4);
 
-  for (uint32_t layer = 0; layer < 6; layer++) {
-    free(options.skybox_layers[layer]);
-    free(options.irradiance_layers[layer]);
-    for (uint32_t level = 0; level < options.radiance_mip_count; level++) {
-      free(options.radiance_layers[level][layer]);
-    }
+    re_image_init(
+        &environment->brdf_lut,
+        &(re_image_options_t){
+            .data = brdf_lut_data,
+            .width = (uint32_t)width,
+            .height = (uint32_t)height,
+        });
   }
+
+  free(skybox_data);
+  free(irradiance_data);
+  free(radiance_data);
 }
 
 void eg_environment_asset_destroy(eg_environment_asset_t *environment) {
   eg_asset_destroy(&environment->asset);
 
-  re_cubemap_destroy(&environment->skybox_cubemap);
-  re_cubemap_destroy(&environment->irradiance_cubemap);
-  re_cubemap_destroy(&environment->radiance_cubemap);
+  re_image_destroy(&environment->skybox_cubemap);
+  re_image_destroy(&environment->irradiance_cubemap);
+  re_image_destroy(&environment->radiance_cubemap);
 
-  re_texture_destroy(&environment->brdf_lut);
+  re_image_destroy(&environment->brdf_lut);
 }
