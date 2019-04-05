@@ -78,6 +78,8 @@ void eg_environment_asset_init(
             .width = (uint32_t)width,
             .height = (uint32_t)height,
         });
+
+    free(brdf_lut_data);
   }
 
   free(skybox_data);

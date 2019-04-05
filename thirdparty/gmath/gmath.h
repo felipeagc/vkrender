@@ -102,6 +102,10 @@ GMATH_INLINE vec3_t vec3_zero() { return (vec3_t){0.0f, 0.0f, 0.0f}; }
 
 GMATH_INLINE vec3_t vec3_one() { return (vec3_t){1.0f, 1.0f, 1.0f}; }
 
+GMATH_INLINE float vec3_mag(vec3_t vec) {
+  return sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
+}
+
 // @TESTED
 GMATH_INLINE vec3_t vec3_add(vec3_t left, vec3_t right) {
   vec3_t result;
@@ -172,6 +176,10 @@ GMATH_INLINE vec3_t vec3_divs(vec3_t left, float right) {
   result.y = left.y / right;
   result.z = left.z / right;
   return result;
+}
+
+GMATH_INLINE float vec3_distance(vec3_t left, vec3_t right) {
+  return vec3_mag(vec3_sub(left, right));
 }
 
 // @TESTED
@@ -411,6 +419,27 @@ GMATH_INLINE mat4_t mat4_mul(mat4_t left, mat4_t right) {
     }
   }
 #endif
+  return result;
+}
+
+GMATH_INLINE vec4_t mat4_mulv(mat4_t left, vec4_t right) {
+  vec4_t result;
+
+  // TODO: SIMD version
+
+  result.v[0] =
+      left.columns[0][0] * right.v[0] + left.columns[1][0] * right.v[1] +
+      left.columns[2][0] * right.v[2] + left.columns[3][0] * right.v[3];
+  result.v[1] =
+      left.columns[0][1] * right.v[0] + left.columns[1][1] * right.v[1] +
+      left.columns[2][1] * right.v[2] + left.columns[3][1] * right.v[3];
+  result.v[2] =
+      left.columns[0][2] * right.v[0] + left.columns[1][2] * right.v[1] +
+      left.columns[2][2] * right.v[2] + left.columns[3][2] * right.v[3];
+  result.v[3] =
+      left.columns[0][3] * right.v[0] + left.columns[1][3] * right.v[1] +
+      left.columns[2][3] * right.v[2] + left.columns[3][3] * right.v[3];
+
   return result;
 }
 

@@ -18,6 +18,7 @@ engine_sources = [
   'engine/assets/asset_types.c',
   'engine/assets/environment_asset.c',
   'engine/assets/mesh_asset.c',
+  'engine/assets/gltf_model_asset.c',
   'engine/assets/pbr_material_asset.c'
 ]
 

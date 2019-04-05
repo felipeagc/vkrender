@@ -1,6 +1,7 @@
 #include <engine/asset_manager.h>
 #include <engine/assets/environment_asset.h>
 #include <engine/assets/mesh_asset.h>
+#include <engine/assets/gltf_model_asset.h>
 #include <engine/camera.h>
 #include <engine/components/mesh_component.h>
 #include <engine/components/transform_component.h>
@@ -53,6 +54,11 @@ int main() {
   eg_environment_asset_init(
       environment_asset, "../assets/ice_lake.env", "../assets/brdf_lut.png");
 
+  eg_gltf_model_asset_t model;
+  eg_gltf_model_asset_init(&model, "../assets/DamagedHelmet.glb");
+
+  eg_gltf_model_asset_destroy(&model);
+
   eg_world_t world;
   eg_world_init(&world, environment_asset);
 
@@ -75,17 +81,6 @@ int main() {
   eg_pbr_material_asset_t *material =
       eg_asset_alloc(&asset_manager, eg_pbr_material_asset_t);
   eg_pbr_material_asset_init(material, NULL, NULL, NULL, NULL, NULL);
-
-  {
-    eg_entity_t ent = eg_world_add_entity(&world);
-    eg_transform_component_t *transform_comp =
-        (eg_transform_component_t *)eg_world_add_comp(
-            &world, ent, EG_TRANSFORM_COMPONENT_TYPE);
-    eg_transform_component_init(transform_comp);
-    eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
-        &world, ent, EG_MESH_COMPONENT_TYPE);
-    eg_mesh_component_init(mesh_comp, mesh_asset, material);
-  }
 
   {
     eg_entity_t ent = eg_world_add_entity(&world);
