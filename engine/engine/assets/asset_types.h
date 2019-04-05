@@ -5,9 +5,8 @@
 /*
   To add a new asset type:
   1. Add it to the eg_asset_type_t enum
-  2. Add the EG_ASSET macros for it
-  3. Register it in asset_manager.hpp
-  4. Make sure to have the first member in the specific asset struct be an
+  2. Register it in asset_manager.c
+  3. Make sure to have the first member in the specific asset struct be an
      eg_asset_t and to initialize/destroy it in the specific asset's
      initialization/destruction functions
  */
@@ -18,6 +17,7 @@ typedef enum eg_asset_type_t {
   EG_ENVIRONMENT_ASSET_TYPE,
   EG_MESH_ASSET_TYPE,
   EG_PBR_MATERIAL_ASSET_TYPE,
+  EG_GLTF_MODEL_ASSET_TYPE,
   EG_ASSET_TYPE_COUNT,
 } eg_asset_type_t;
 

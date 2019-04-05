@@ -8,7 +8,7 @@
 
 typedef struct re_window_t re_window_t;
 
-typedef struct eg_gltf_model_asset_dimensions {
+typedef struct eg_gltf_model_asset_dimensions_t {
   vec3_t min;
   vec3_t max;
   vec3_t size;
@@ -16,12 +16,12 @@ typedef struct eg_gltf_model_asset_dimensions {
   float radius;
 } eg_gltf_model_asset_dimensions_t;
 
-typedef struct eg_gltf_model_asset_material {
+typedef struct eg_gltf_model_asset_material_t {
   eg_pbr_material_uniform_t uniform;
   VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_gltf_model_asset_material_t;
 
-typedef struct eg_gltf_model_asset_primitive {
+typedef struct eg_gltf_model_asset_primitive_t {
   uint32_t first_index;
   uint32_t index_count;
   eg_gltf_model_asset_material_t *material;
@@ -29,7 +29,7 @@ typedef struct eg_gltf_model_asset_primitive {
   eg_gltf_model_asset_dimensions_t dimensions;
 } eg_gltf_model_asset_primitive_t;
 
-typedef struct eg_gltf_model_asset_mesh {
+typedef struct eg_gltf_model_asset_mesh_t {
   eg_gltf_model_asset_primitive_t *primitives;
   uint32_t primitive_count;
 
@@ -42,9 +42,9 @@ typedef struct eg_gltf_model_asset_mesh {
   VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_gltf_model_asset_mesh_t;
 
-typedef struct eg_gltf_model_asset_node {
-  struct eg_gltf_model_asset_node *parent;
-  struct eg_gltf_model_asset_node **children;
+typedef struct eg_gltf_model_asset_node_t {
+  struct eg_gltf_model_asset_node_t *parent;
+  struct eg_gltf_model_asset_node_t **children;
   uint32_t children_count;
 
   mat4_t matrix;
@@ -56,7 +56,7 @@ typedef struct eg_gltf_model_asset_node {
   quat_t rotation;
 } eg_gltf_model_asset_node_t;
 
-typedef struct eg_gltf_model_asset {
+typedef struct eg_gltf_model_asset_t {
   eg_asset_t asset;
 
   re_buffer_t vertex_buffer;
@@ -79,8 +79,5 @@ typedef struct eg_gltf_model_asset {
 } eg_gltf_model_asset_t;
 
 void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path);
-
-void eg_gltf_model_asset_draw(
-    eg_gltf_model_asset_t *model, struct re_window_t *window);
 
 void eg_gltf_model_asset_destroy(eg_gltf_model_asset_t *model);

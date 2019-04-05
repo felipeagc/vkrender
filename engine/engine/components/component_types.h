@@ -6,8 +6,8 @@
   To add a new component type:
   1. Add it to the eg_component_type_t enum
   2. Add the EG_COMP macros for it
-  3. Register it in world.cpp
-  4. Initialize the components in world.cpp
+  3. Register it in world.c
+  4. Initialize the components in world.c
  */
 
 typedef void (*eg_component_destructor_t)(void *);
@@ -15,6 +15,7 @@ typedef void (*eg_component_destructor_t)(void *);
 typedef enum eg_component_type_t {
   EG_TRANSFORM_COMPONENT_TYPE,
   EG_MESH_COMPONENT_TYPE,
+  EG_GLTF_MODEL_COMPONENT_TYPE,
   EG_COMPONENT_TYPE_COUNT,
 } eg_component_type_t;
 
@@ -30,6 +31,10 @@ extern size_t eg_component_sizes[EG_COMPONENT_TYPE_COUNT];
 
 #define EG_COMP_TYPE_eg_mesh_component_t EG_MESH_COMPONENT_TYPE
 #define EG_COMP_DESTROY_eg_mesh_component_t eg_mesh_component_destroy
+
+#define EG_COMP_TYPE_eg_gltf_model_component_t EG_GLTF_MODEL_COMPONENT_TYPE
+#define EG_COMP_DESTROY_eg_gltf_model_component_t                              \
+  eg_gltf_model_component_destroy
 
 #define EG_REGISTER_COMP(comp)                                                 \
   {                                                                            \

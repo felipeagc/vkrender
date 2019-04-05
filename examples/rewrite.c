@@ -1,8 +1,9 @@
 #include <engine/asset_manager.h>
 #include <engine/assets/environment_asset.h>
-#include <engine/assets/mesh_asset.h>
 #include <engine/assets/gltf_model_asset.h>
+#include <engine/assets/mesh_asset.h>
 #include <engine/camera.h>
+#include <engine/components/gltf_model_component.h>
 #include <engine/components/mesh_component.h>
 #include <engine/components/transform_component.h>
 #include <engine/engine.h>
@@ -54,10 +55,9 @@ int main() {
   eg_environment_asset_init(
       environment_asset, "../assets/ice_lake.env", "../assets/brdf_lut.png");
 
-  eg_gltf_model_asset_t model;
-  eg_gltf_model_asset_init(&model, "../assets/DamagedHelmet.glb");
-
-  eg_gltf_model_asset_destroy(&model);
+  eg_gltf_model_asset_t *model_asset =
+      eg_asset_alloc(&asset_manager, eg_gltf_model_asset_t);
+  eg_gltf_model_asset_init(model_asset, "../assets/DamagedHelmet.glb");
 
   eg_world_t world;
   eg_world_init(&world, environment_asset);
@@ -84,13 +84,18 @@ int main() {
 
   {
     eg_entity_t ent = eg_world_add_entity(&world);
+
     eg_transform_component_t *transform_comp =
-        (eg_transform_component_t *)eg_world_add_comp(
-            &world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+        eg_world_add_comp(&world, ent, EG_TRANSFORM_COMPONENT_TYPE);
     eg_transform_component_init(transform_comp);
-    eg_mesh_component_t *mesh_comp = (eg_mesh_component_t *)eg_world_add_comp(
-        &world, ent, EG_MESH_COMPONENT_TYPE);
-    eg_mesh_component_init(mesh_comp, mesh_asset, material);
+
+    /* eg_mesh_component_t *mesh_comp = */
+    /*     eg_world_add_comp(&world, ent, EG_MESH_COMPONENT_TYPE); */
+    /* eg_mesh_component_init(mesh_comp, mesh_asset, material); */
+
+    eg_gltf_model_component_t *model_comp =
+        eg_world_add_comp(&world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
+    eg_gltf_model_component_init(model_comp, model_asset);
   }
 
   while (!window.should_close) {
@@ -140,6 +145,20 @@ int main() {
         mesh->model.uniform.transform =
             eg_transform_component_to_mat4(transform);
         eg_mesh_component_draw(mesh, &window, &pbr_pipeline);
+      }
+
+      if (eg_world_has_comp(&world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
+          eg_world_has_comp(&world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+        eg_gltf_model_component_t *model =
+            EG_GET_COMP(&world, entity, eg_gltf_model_component_t);
+        eg_transform_component_t *transform =
+            EG_GET_COMP(&world, entity, eg_transform_component_t);
+
+        eg_gltf_model_component_draw(
+            model,
+            &window,
+            &pbr_pipeline,
+            eg_transform_component_to_mat4(transform));
       }
     }
 

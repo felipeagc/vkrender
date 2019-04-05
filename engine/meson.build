@@ -12,6 +12,7 @@ engine_sources = [
   'engine/components/component_types.c',
   'engine/components/mesh_component.c',
   'engine/components/transform_component.c',
+  'engine/components/gltf_model_component.c',
 
   'engine/systems/fps_camera_system.c',
 

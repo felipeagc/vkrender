@@ -186,6 +186,21 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
 
   mesh->ubo.matrix = mat4_identity();
 
+  VkDescriptorSetLayout set_layouts[ARRAYSIZE(mesh->descriptor_sets)];
+  for (size_t i = 0; i < ARRAYSIZE(mesh->descriptor_sets); i++) {
+    set_layouts[i] = g_eng.set_layouts.model;
+  }
+
+  VkDescriptorSetAllocateInfo alloc_info = {};
+  alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  alloc_info.pNext = NULL;
+  alloc_info.descriptorPool = g_ctx.descriptor_pool;
+  alloc_info.descriptorSetCount = ARRAYSIZE(mesh->descriptor_sets);
+  alloc_info.pSetLayouts = set_layouts;
+
+  VK_CHECK(vkAllocateDescriptorSets(
+      g_ctx.device, &alloc_info, mesh->descriptor_sets));
+
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_init(
         &mesh->uniform_buffers[i],
@@ -195,21 +210,6 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
         });
 
     re_buffer_map_memory(&mesh->uniform_buffers[i], &mesh->mappings[i]);
-
-    VkDescriptorSetLayout set_layouts[ARRAYSIZE(mesh->descriptor_sets)];
-    for (size_t i = 0; i < ARRAYSIZE(mesh->descriptor_sets); i++) {
-      set_layouts[i] = g_eng.set_layouts.model;
-    }
-
-    VkDescriptorSetAllocateInfo alloc_info = {};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.pNext = NULL;
-    alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAYSIZE(mesh->descriptor_sets);
-    alloc_info.pSetLayouts = set_layouts;
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device, &alloc_info, mesh->descriptor_sets));
 
     VkDescriptorBufferInfo buffer_info = {
         mesh->uniform_buffers[i].buffer, 0, sizeof(mesh->ubo)};
@@ -320,7 +320,9 @@ static void load_node(
     bool flip_uvs) {
   eg_gltf_model_asset_node_t *new_node = &model->nodes[node - data->nodes];
   node_init(new_node);
-  new_node->parent = &model->nodes[data->nodes - parent];
+  if (parent != NULL) {
+    new_node->parent = &model->nodes[parent - data->nodes];
+  }
   new_node->name = strdup(node->name);
   new_node->matrix = mat4_identity();
 
@@ -528,6 +530,10 @@ static void load_node(
         primitive_set_dimensions(&new_primitive, pos_min, pos_max);
         new_mesh->primitives[i] = new_primitive;
       }
+
+      if (node->mesh != NULL) {
+        new_node->mesh = &model->meshes[node->mesh - data->meshes];
+      }
     }
   }
 }
@@ -586,6 +592,8 @@ static void get_scene_dimensions(eg_gltf_model_asset_t *model) {
 }
 
 void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
+  eg_asset_init_named(&model->asset, EG_GLTF_MODEL_ASSET_TYPE, path);
+
   model->vertex_buffer = (re_buffer_t){0};
   model->index_buffer = (re_buffer_t){0};
 
@@ -657,36 +665,37 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
     re_image_t *emissive_image = NULL;
 
     if (material->pbr_metallic_roughness.base_color_texture.texture != NULL) {
-      uint32_t image_index =
-          material->pbr_metallic_roughness.base_color_texture.texture->image -
-          data->images;
-      albedo_image = &model->images[image_index];
+      albedo_image = &model->images
+                          [material->pbr_metallic_roughness.base_color_texture
+                               .texture->image -
+                           data->images];
     }
 
     if (material->normal_texture.texture != NULL) {
-      uint32_t image_index =
-          material->normal_texture.texture->image - data->images;
-      normal_image = &model->images[image_index];
+      normal_image =
+          &model
+               ->images[material->normal_texture.texture->image - data->images];
     }
 
     if (material->pbr_metallic_roughness.metallic_roughness_texture.texture !=
         NULL) {
-      uint32_t image_index = material->pbr_metallic_roughness
-                                 .metallic_roughness_texture.texture->image -
-                             data->images;
-      metallic_roughness_image = &model->images[image_index];
+      metallic_roughness_image =
+          &model->images
+               [material->pbr_metallic_roughness.metallic_roughness_texture
+                    .texture->image -
+                data->images];
     }
 
     if (material->occlusion_texture.texture != NULL) {
-      uint32_t image_index =
-          material->occlusion_texture.texture->image - data->images;
-      occlusion_image = &model->images[image_index];
+      occlusion_image =
+          &model->images
+               [material->occlusion_texture.texture->image - data->images];
     }
 
     if (material->emissive_texture.texture != NULL) {
-      uint32_t image_index =
-          material->emissive_texture.texture->image - data->images;
-      emissive_image = &model->images[image_index];
+      emissive_image =
+          &model->images
+               [material->emissive_texture.texture->image - data->images];
     }
 
     for (uint32_t j = 0; j < ARRAYSIZE(model->materials[i].descriptor_sets);
@@ -715,7 +724,7 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
   uint32_t *indices = NULL;
   uint32_t index_count = 0;
 
-  bool flip_uvs = false;
+  bool flip_uvs = true;
 
   for (size_t i = 0; i < data->scene->nodes_count; i++) {
     load_node(

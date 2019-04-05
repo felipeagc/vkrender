@@ -1,6 +1,7 @@
 #include "world.h"
 #include "components/mesh_component.h"
 #include "components/transform_component.h"
+#include "components/gltf_model_component.h"
 #include <string.h>
 #include <util/log.h>
 
@@ -17,10 +18,12 @@ void eg_world_init(
   // Register component types
   EG_REGISTER_COMP(eg_transform_component_t);
   EG_REGISTER_COMP(eg_mesh_component_t);
+  EG_REGISTER_COMP(eg_gltf_model_component_t);
 
   // Initialize component types
   eg_init_comps(world, EG_TRANSFORM_COMPONENT_TYPE);
   eg_init_comps(world, EG_MESH_COMPONENT_TYPE);
+  eg_init_comps(world, EG_GLTF_MODEL_COMPONENT_TYPE);
 
   for (uint32_t i = 0; i < EG_COMPONENT_TYPE_COUNT; i++) {
     fstd_bitset_reset(world->component_bitsets[i].bytes, EG_MAX_ENTITIES);

@@ -1,5 +1,6 @@
 #include "asset_manager.h"
 #include "assets/environment_asset.h"
+#include "assets/gltf_model_asset.h"
 #include "assets/mesh_asset.h"
 #include "assets/pbr_material_asset.h"
 #include <assert.h>
@@ -19,6 +20,9 @@ void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
   eg_register_asset(
       EG_PBR_MATERIAL_ASSET_TYPE,
       (eg_asset_destructor_t)eg_pbr_material_asset_destroy);
+  eg_register_asset(
+      EG_GLTF_MODEL_ASSET_TYPE,
+      (eg_asset_destructor_t)eg_gltf_model_asset_destroy);
 
   asset_manager->asset_count = 0;
   asset_manager->assets =

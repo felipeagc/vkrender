@@ -30,8 +30,7 @@ void eg_draw_inspector(eg_world_t *world, eg_asset_manager_t *asset_manager) {
             "%.3f",
             1.0f);
 
-        igColorEdit3(
-            "Sun color", &world->environment.uniform.sun_color.x, 0);
+        igColorEdit3("Sun color", &world->environment.uniform.sun_color.x, 0);
 
         igDragFloat(
             "Sun intensity",
@@ -152,6 +151,10 @@ void eg_draw_inspector(eg_world_t *world, eg_asset_manager_t *asset_manager) {
           }
 
           if (asset->type == EG_MESH_ASSET_TYPE) {
+          }
+
+          if (asset->type == EG_GLTF_MODEL_ASSET_TYPE) {
+            igText("GLTF model: %s", asset->name);
           }
 
           igPopID();

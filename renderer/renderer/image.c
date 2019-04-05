@@ -196,8 +196,8 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
 
   size_t current_pos = 0;
 
-  for (uint32_t layer = 0; layer < image->layer_count; layer++) {
-    for (uint32_t level = 0; level < image->mip_level_count; level++) {
+  for (uint32_t level = 0; level < image->mip_level_count; level++) {
+    for (uint32_t layer = 0; layer < image->layer_count; layer++) {
       upload_data_to_image(
           image,
           &options->data[current_pos],
