@@ -1,0 +1,26 @@
+add_library(
+	renderer
+	renderer/buffer.c
+	renderer/canvas.c
+	renderer/context.c
+	renderer/image.c
+	renderer/imgui.c
+	renderer/pipeline.c
+	renderer/shader.c
+	renderer/task_scheduler.c
+	renderer/util.c
+	renderer/window.c)
+
+target_link_libraries(
+	renderer
+	PUBLIC
+	${Vulkan_LIBRARIES}
+	${SDL2_LIBRARY}
+	imgui
+	fstd
+	util
+	gmath
+	stb_image
+	tinycthread
+	vma)
+target_include_directories(renderer PUBLIC .)

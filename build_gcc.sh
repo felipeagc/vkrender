@@ -1,2 +1,4 @@
 #!/bin/sh
-CC=gcc CXX=g++ meson.build
+mkdir build && cd build
+CC=gcc CXX=g++ cmake -G Ninja ..
+cd ..

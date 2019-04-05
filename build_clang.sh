@@ -1,2 +1,4 @@
 #!/bin/sh
-CC=clang CXX=clang++ meson build
+mkdir build && cd build
+CC=clang CXX=clang++ cmake -G Ninja ..
+cd ..

@@ -1,0 +1,7 @@
+add_subdirectory(gmath)
+add_subdirectory(fstd)
+add_subdirectory(imgui)
+add_subdirectory(stb_image)
+add_subdirectory(vma)
+add_subdirectory(cgltf)
+add_subdirectory(tinycthread)
