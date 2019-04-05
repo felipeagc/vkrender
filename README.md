@@ -1,5 +1,7 @@
 # VKRender
 
+![](https://user-images.githubusercontent.com/17355488/55602406-c74e5f80-573b-11e9-83c4-772f1abc79d6.png)
+
 ## TODO
 
 ### Rewrite
@@ -7,7 +9,7 @@
 - [x] Decide on how to handle entities
 - [x] Basic shape rendering
 - [ ] Light billboard rendering
-- [ ] Gltf models with cgltf
+- [x] Gltf models with cgltf
 
 ### Shader compilation
 - [x] Compile GLSL shaders using glslang
@@ -18,7 +20,7 @@
 - [ ] Configurable assets path
 
 ### GLTF models
-- [ ] Load glTF models
+- [x] Load glTF models
 - [ ] Figure out UV flipping of GltfModels
 - [ ] Animation
 - [ ] Alpha blending
@@ -53,7 +55,7 @@
 
 ### Misc
 - [x] Make standalone skybox baker
-- [x] Object picking (use OBB testing with bouding box provided by gltf)
+- [  ] Object picking (use OBB testing with bouding box provided by gltf)
 - [ ] Object picking with a color buffer
 - [ ] Transformation gizmos
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
