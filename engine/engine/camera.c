@@ -5,6 +5,7 @@
 #include <renderer/pipeline.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
+#include <string.h>
 
 void eg_camera_init(eg_camera_t *camera) {
   camera->near_clip = 0.001f;
@@ -71,15 +72,30 @@ void eg_camera_update(eg_camera_t *camera, struct re_window_t *window) {
   re_window_get_size(window, &width, &height);
 
   camera->uniform.proj = mat4_perspective(
-      camera->fov, (float)width / (float)height, camera->near_clip, camera->far_clip);
+      camera->fov,
+      (float)width / (float)height,
+      camera->near_clip,
+      camera->far_clip);
 
   // @note: See:
   // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
   mat4_t correction = {{
-      1.0, 0.0, 0.0, 0.0,
-      0.0, -1.0, 0.0, 0.0,
-      0.0, 0.0, 0.5, 0.0,
-      0.0, 0.0, 0.5, 1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.5,
+      0.0,
+      0.0,
+      0.0,
+      0.5,
+      1.0,
   }};
 
   camera->uniform.proj = mat4_mul(camera->uniform.proj, correction);

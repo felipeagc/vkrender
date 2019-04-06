@@ -54,17 +54,29 @@ typedef union vec3_t {
 
 typedef union GMATH_ALIGN(16) vec4_t {
   struct {
-    float x, y, z, w;
+    union {
+      vec3_t xyz;
+      struct {
+        float x, y, z;
+      };
+    };
+    float w;
   };
+
+  struct {
+    union {
+      vec3_t rgb;
+      struct {
+        float r, g, b;
+      };
+    };
+    float a;
+  };
+
   struct {
     vec2_t xy;
   };
-  struct {
-    vec3_t xyz;
-  };
-  struct {
-    float r, g, b, a;
-  };
+
   float v[4];
 } vec4_t;
 

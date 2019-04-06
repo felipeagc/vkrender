@@ -5,6 +5,7 @@
 #include <renderer/pipeline.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
+#include <string.h>
 
 void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
   model->uniform.transform = transform;

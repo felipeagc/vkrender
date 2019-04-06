@@ -6,6 +6,7 @@
 #include <renderer/pipeline.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
+#include <string.h>
 
 void eg_environment_init(
     eg_environment_t *environment, eg_environment_asset_t *asset) {
@@ -125,7 +126,11 @@ void eg_environment_init(
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device,
+        ARRAY_SIZE(descriptor_writes),
+        descriptor_writes,
+        0,
+        NULL);
   }
 }
 

@@ -24,7 +24,7 @@ typedef struct re_window_t {
   re_render_target_t render_target;
   SDL_Window *sdl_window;
 
-  char **sdl_extensions;
+  const char **sdl_extensions;
   uint32_t sdl_extension_count;
 
   bool should_close;

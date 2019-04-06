@@ -76,7 +76,7 @@ int main() {
 
   eg_mesh_asset_t *mesh_asset = eg_asset_alloc(&asset_manager, eg_mesh_asset_t);
   eg_mesh_asset_init(
-      mesh_asset, vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
+      mesh_asset, vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
 
   eg_pbr_material_asset_t *material =
       eg_asset_alloc(&asset_manager, eg_pbr_material_asset_t);

@@ -308,7 +308,7 @@ static inline void create_instance(
       window_extension_count,
       NULL,
       &extension_count);
-  char **extensions = malloc(sizeof(*extensions) * extension_count);
+  const char **extensions = malloc(sizeof(*extensions) * extension_count);
   get_required_extensions(
       required_window_vulkan_extensions,
       window_extension_count,
