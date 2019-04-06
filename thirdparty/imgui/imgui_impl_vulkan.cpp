@@ -29,6 +29,7 @@
 //  2016-08-27: Vulkan: Fix Vulkan example for use when a depth buffer is active.
 
 #include "imgui.h"
+#include "cimgui.h"
 #include "imgui_impl_vulkan.h"
 #include <stdio.h>
 
@@ -201,7 +202,7 @@ static void CreateOrResizeBuffer(VkBuffer& buffer, VkDeviceMemory& buffer_memory
 
 // Render function
 // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
-CIMGUI_API void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
 {
     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
     int fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
@@ -336,7 +337,7 @@ CIMGUI_API void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommand
     }
 }
 
-IMGUI_IMPL_API bool ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer)
+bool ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer)
 {
     ImGuiIO& io = ImGui::GetIO();
 
@@ -487,7 +488,7 @@ IMGUI_IMPL_API bool ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_
     return true;
 }
 
-CIMGUI_API bool ImGui_ImplVulkan_CreateDeviceObjects()
+bool ImGui_ImplVulkan_CreateDeviceObjects()
 {
     VkResult err;
     VkShaderModule vert_module;
@@ -674,7 +675,7 @@ CIMGUI_API bool ImGui_ImplVulkan_CreateDeviceObjects()
     return true;
 }
 
-CIMGUI_API void    ImGui_ImplVulkan_InvalidateFontUploadObjects()
+void    ImGui_ImplVulkan_InvalidateFontUploadObjects()
 {
     if (g_UploadBuffer)
     {
@@ -688,7 +689,7 @@ CIMGUI_API void    ImGui_ImplVulkan_InvalidateFontUploadObjects()
     }
 }
 
-CIMGUI_API void    ImGui_ImplVulkan_InvalidateDeviceObjects()
+void    ImGui_ImplVulkan_InvalidateDeviceObjects()
 {
     ImGui_ImplVulkan_InvalidateFontUploadObjects();
 
@@ -710,7 +711,7 @@ CIMGUI_API void    ImGui_ImplVulkan_InvalidateDeviceObjects()
     if (g_Pipeline)             { vkDestroyPipeline(g_Device, g_Pipeline, g_Allocator); g_Pipeline = VK_NULL_HANDLE; }
 }
 
-CIMGUI_API bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass)
+bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_vulkan";
@@ -738,11 +739,13 @@ CIMGUI_API bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRend
     return true;
 }
 
-CIMGUI_API void ImGui_ImplVulkan_Shutdown()
+void ImGui_ImplVulkan_Shutdown()
 {
     ImGui_ImplVulkan_InvalidateDeviceObjects();
 }
 
-CIMGUI_API void ImGui_ImplVulkan_NewFrame()
+void ImGui_ImplVulkan_NewFrame()
 {
 }
+
+

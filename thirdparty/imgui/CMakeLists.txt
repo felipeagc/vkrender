@@ -19,3 +19,5 @@ target_include_directories(
 	PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${Vulkan_INCLUDE_DIRS})
+
+target_compile_options(imgui PRIVATE -Wno-return-type-c-linkage)

@@ -17,6 +17,7 @@
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
+//  2019-03-12: Misc: Preserve DisplayFramebufferScale when main window is minimized.
 //  2018-12-21: Inputs: Workaround for Android/iOS which don't seem to handle focus related calls.
 //  2018-11-30: Misc: Setting up io.BackendPlatformName so it can be displayed in the About Window.
 //  2018-11-14: Changed the signature of ImGui_ImplSDL2_ProcessEvent() to take a 'const SDL_Event*'.
@@ -38,12 +39,13 @@
 //  2016-10-15: Misc: Added a void* user_data parameter to Clipboard function handlers.
 
 #include "imgui.h"
+#include "cimgui.h"
 #include "imgui_impl_sdl.h"
 
 // SDL
 // (the multi-viewports feature requires SDL features supported from SDL 2.0.5+)
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
+#include <SDL.h>
+#include <SDL_syswm.h>
 #if defined(__APPLE__)
 #include "TargetConditionals.h"
 #endif
@@ -79,7 +81,7 @@ static void ImGui_ImplSDL2_SetClipboardText(void*, const char* text)
 // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
 // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 // If you have multiple SDL events and some of them are not meant to be used by dear imgui, you may need to filter events based on their windowID field.
-CIMGUI_API bool ImGui_ImplSDL2_ProcessEvent(const SDL_Event* event)
+bool ImGui_ImplSDL2_ProcessEvent(const SDL_Event* event)
 {
     ImGuiIO& io = ImGui::GetIO();
     switch (event->type)
@@ -178,13 +180,13 @@ static bool ImGui_ImplSDL2_Init(SDL_Window* window)
     return true;
 }
 
-CIMGUI_API bool ImGui_ImplSDL2_InitForOpenGL(SDL_Window* window, void* sdl_gl_context)
+bool ImGui_ImplSDL2_InitForOpenGL(SDL_Window* window, void* sdl_gl_context)
 {
     (void)sdl_gl_context; // Viewport branch will need this.
     return ImGui_ImplSDL2_Init(window);
 }
 
-CIMGUI_API bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window)
+bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window)
 {
 #if !SDL_HAS_VULKAN
     IM_ASSERT(0 && "Unsupported");
@@ -192,7 +194,7 @@ CIMGUI_API bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window)
     return ImGui_ImplSDL2_Init(window);
 }
 
-CIMGUI_API void ImGui_ImplSDL2_Shutdown()
+void ImGui_ImplSDL2_Shutdown()
 {
     g_Window = NULL;
 
@@ -268,7 +270,7 @@ static void ImGui_ImplSDL2_UpdateMouseCursor()
     }
 }
 
-CIMGUI_API void ImGui_ImplSDL2_NewFrame(SDL_Window* window)
+void ImGui_ImplSDL2_NewFrame(SDL_Window* window)
 {
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
@@ -279,7 +281,8 @@ CIMGUI_API void ImGui_ImplSDL2_NewFrame(SDL_Window* window)
     SDL_GetWindowSize(window, &w, &h);
     SDL_GL_GetDrawableSize(window, &display_w, &display_h);
     io.DisplaySize = ImVec2((float)w, (float)h);
-    io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
+    if (w > 0 && h > 0)
+        io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 
     // Setup time step (we don't use SDL_GetTicks() because it is using millisecond resolution)
     static Uint64 frequency = SDL_GetPerformanceFrequency();
