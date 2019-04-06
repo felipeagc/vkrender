@@ -115,7 +115,7 @@ default_multisample_state(VkSampleCountFlagBits sample_count) {
 
 static inline VkPipelineDepthStencilStateCreateInfo
 default_depth_stencil_state() {
-  VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info = {};
+  VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info = {0};
   depth_stencil_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   depth_stencil_state_create_info.pNext = NULL;

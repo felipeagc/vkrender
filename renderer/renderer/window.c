@@ -157,7 +157,7 @@ static inline void create_sync_objects(re_window_t *window) {
   for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
     re_frame_resources_t *resources = &window->frame_resources[i];
 
-    VkSemaphoreCreateInfo semaphore_create_info = {};
+    VkSemaphoreCreateInfo semaphore_create_info = {0};
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     semaphore_create_info.pNext = NULL;
     semaphore_create_info.flags = 0;
@@ -174,7 +174,7 @@ static inline void create_sync_objects(re_window_t *window) {
         NULL,
         &resources->rendering_finished_semaphore));
 
-    VkFenceCreateInfo fence_create_info = {};
+    VkFenceCreateInfo fence_create_info = {0};
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_create_info.pNext = NULL;
     fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -307,7 +307,7 @@ static inline void create_swapchain_image_views(re_window_t *window) {
 }
 
 static inline void allocate_graphics_command_buffers(re_window_t *window) {
-  VkCommandBufferAllocateInfo allocate_info = {};
+  VkCommandBufferAllocateInfo allocate_info = {0};
   allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocate_info.pNext = NULL;
   allocate_info.commandPool = g_ctx.graphics_command_pool;
@@ -733,7 +733,7 @@ void re_window_begin_frame(re_window_t *window) {
       &window->frame_resources[window->current_frame].framebuffer,
       &window->swapchain_image_views[window->current_image_index]);
 
-  VkCommandBufferBeginInfo begin_info = {};
+  VkCommandBufferBeginInfo begin_info = {0};
   begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
   begin_info.pInheritanceInfo = NULL;
@@ -869,7 +869,7 @@ void re_window_begin_render_pass(re_window_t *window) {
   VkCommandBuffer command_buffer =
       window->frame_resources[window->current_frame].command_buffer;
 
-  VkClearValue clear_values[2] = {};
+  VkClearValue clear_values[2] = {0};
   clear_values[0].color = (VkClearColorValue){{
       window->clear_color.x,
       window->clear_color.y,

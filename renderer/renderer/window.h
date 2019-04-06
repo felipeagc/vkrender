@@ -2,7 +2,7 @@
 
 #include "common.h"
 #include "render_target.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <gmath.h>
 #include <stdbool.h>
 #include <vulkan/vk_mem_alloc.h>

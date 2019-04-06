@@ -18,8 +18,8 @@ typedef struct eg_camera_t {
   void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 
-  float near;
-  float far;
+  float near_clip;
+  float far_clip;
 
   float fov;
   eg_camera_uniform_t uniform;

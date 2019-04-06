@@ -79,7 +79,7 @@ static inline void create_buffer(
       NULL                       // pQueueFamilyIndices
   };
 
-  VmaAllocationCreateInfo alloc_info = {};
+  VmaAllocationCreateInfo alloc_info = {0};
   alloc_info.usage = memory_usage;
   alloc_info.requiredFlags = memory_property;
 
@@ -171,7 +171,7 @@ void re_buffer_transfer_to_image(
     uint32_t level) {
   VkCommandBuffer command_buffer = begin_single_time_command_buffer();
 
-  VkImageSubresourceRange subresource_range = {};
+  VkImageSubresourceRange subresource_range = {0};
   subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   subresource_range.baseMipLevel = level;
   subresource_range.levelCount = 1;

@@ -22,7 +22,7 @@ void re_imgui_init(re_window_t *window) {
   ImGui_ImplSDL2_InitForVulkan(window->sdl_window);
 
   // Setup Vulkan binding
-  ImGui_ImplVulkan_InitInfo init_info = {};
+  ImGui_ImplVulkan_InitInfo init_info = {0};
   init_info.Instance = g_ctx.instance;
   init_info.PhysicalDevice = g_ctx.physical_device;
   init_info.Device = g_ctx.device;
@@ -56,7 +56,7 @@ void re_imgui_init(re_window_t *window) {
 
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
 
-    VkSubmitInfo end_info = {};
+    VkSubmitInfo end_info = {0};
     end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     end_info.commandBufferCount = 1;
     end_info.pCommandBuffers = &command_buffer;

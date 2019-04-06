@@ -32,7 +32,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
         VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
     };
 
-    VmaAllocationCreateInfo image_alloc_create_info = {};
+    VmaAllocationCreateInfo image_alloc_create_info = {0};
     image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
@@ -151,7 +151,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
         VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
     };
 
-    VmaAllocationCreateInfo alloc_info = {};
+    VmaAllocationCreateInfo alloc_info = {0};
     alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
@@ -215,7 +215,7 @@ static inline void destroy_depth_target(re_canvas_t *canvas) {
 static inline void create_descriptor_sets(re_canvas_t *canvas) {
   for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
     {
-      VkDescriptorSetAllocateInfo alloc_info = {};
+      VkDescriptorSetAllocateInfo alloc_info = {0};
       alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
       alloc_info.pNext = NULL;
       alloc_info.descriptorPool = g_ctx.descriptor_pool;

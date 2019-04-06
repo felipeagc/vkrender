@@ -67,7 +67,7 @@ static inline void create_image(
     image_create_info.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
   }
 
-  VmaAllocationCreateInfo image_alloc_create_info = {};
+  VmaAllocationCreateInfo image_alloc_create_info = {0};
   image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(

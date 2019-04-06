@@ -23,7 +23,7 @@
 
 #define GMATH_INLINE static inline
 
-#define GMATH_PI 3.14159265358979323846
+#define GMATH_PI 3.14159265358979323846f
 
 /*
  * gmath types
@@ -201,7 +201,7 @@ GMATH_INLINE vec3_t vec3_cross(vec3_t left, vec3_t right) {
 // @TODO: test with zero norm vector
 GMATH_INLINE vec3_t vec3_normalize(vec3_t vec) {
   vec3_t result = vec;
-  float norm = sqrt(vec3_dot(vec, vec));
+  float norm = sqrtf(vec3_dot(vec, vec));
   if (norm != 0.0f) {
     result = vec3_muls(vec, 1.0f / norm);
   }
@@ -448,13 +448,13 @@ GMATH_INLINE mat4_t
 mat4_perspective(float fovy, float aspect_ratio, float znear, float zfar) {
   mat4_t result = mat4_zero();
 
-  float tan_half_fovy = tan(fovy / 2.0f);
+  float tan_half_fovy = tanf(fovy / 2.0f);
 
   result.columns[0][0] = 1.0f / (aspect_ratio * tan_half_fovy);
   result.columns[1][1] = 1.0f / tan_half_fovy;
   result.columns[2][2] = -(zfar + znear) / (zfar - znear);
   result.columns[2][3] = -1.0f;
-  result.columns[3][2] = -(2.0 * zfar * znear) / (zfar - znear);
+  result.columns[3][2] = -(2.0f * zfar * znear) / (zfar - znear);
 
   return result;
 }
@@ -491,7 +491,7 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
   quat_t result;
   float trace = mat.columns[0][0] + mat.columns[1][1] + mat.columns[2][2];
   if (trace > 0.0f) {
-    float s = sqrt(1.0f + trace) * 2.0f;
+    float s = sqrtf(1.0f + trace) * 2.0f;
     result.w = 0.25f * s;
     result.x = (mat.columns[1][2] - mat.columns[2][1]) / s;
     result.y = (mat.columns[2][0] - mat.columns[0][2]) / s;
@@ -500,7 +500,7 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
       mat.columns[0][0] > mat.columns[1][1] &&
       mat.columns[0][0] > mat.columns[2][2]) {
     float s =
-        sqrt(1.0f + mat.columns[0][0] - mat.columns[1][1] - mat.columns[2][2]) *
+        sqrtf(1.0f + mat.columns[0][0] - mat.columns[1][1] - mat.columns[2][2]) *
         2.0f;
     result.w = (mat.columns[1][2] - mat.columns[2][1]) / s;
     result.x = 0.25f * s;
@@ -508,7 +508,7 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
     result.z = (mat.columns[2][0] + mat.columns[0][2]) / s;
   } else if (mat.columns[1][1] > mat.columns[2][2]) {
     float s =
-        sqrt(1.0f + mat.columns[1][1] - mat.columns[0][0] - mat.columns[2][2]) *
+        sqrtf(1.0f + mat.columns[1][1] - mat.columns[0][0] - mat.columns[2][2]) *
         2.0f;
     result.w = (mat.columns[2][0] - mat.columns[0][2]) / s;
     result.x = (mat.columns[1][0] + mat.columns[0][1]) / s;
@@ -516,7 +516,7 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
     result.z = (mat.columns[2][1] + mat.columns[1][2]) / s;
   } else {
     float s =
-        sqrt(1.0f + mat.columns[2][2] - mat.columns[0][0] - mat.columns[1][1]) *
+        sqrtf(1.0f + mat.columns[2][2] - mat.columns[0][0] - mat.columns[1][1]) *
         2.0f;
     result.w = (mat.columns[0][1] - mat.columns[1][0]) / s;
     result.x = (mat.columns[2][0] + mat.columns[0][2]) / s;
@@ -546,8 +546,8 @@ GMATH_INLINE mat4_t mat4_scale(mat4_t mat, vec3_t scale) {
 
 // @TESTED: compatible with glm
 GMATH_INLINE mat4_t mat4_rotate(mat4_t mat, float angle, vec3_t axis) {
-  float c = cos(angle);
-  float s = sin(angle);
+  float c = cosf(angle);
+  float s = sinf(angle);
 
   axis = vec3_normalize(axis);
   vec3_t temp = vec3_muls(axis, (1.0f - c));
@@ -610,20 +610,20 @@ GMATH_INLINE quat_t quat_normalize(quat_t left) {
 
 // @TESTED: compatible with glm
 GMATH_INLINE quat_t quat_from_axis_angle(vec3_t axis, float angle) {
-  float s = sin(angle / 2.0f);
+  float s = sinf(angle / 2.0f);
   quat_t result;
   result.x = axis.x * s;
   result.y = axis.y * s;
   result.z = axis.z * s;
-  result.w = cos(angle / 2.0f);
+  result.w = cosf(angle / 2.0f);
   return result;
 }
 
 // @TESTED: compatible with glm
 GMATH_INLINE void quat_to_axis_angle(quat_t quat, vec3_t *axis, float *angle) {
   quat = quat_normalize(quat);
-  *angle = 2.0f * acos(quat.w);
-  float s = sqrt(1.0f - quat.w * quat.w);
+  *angle = 2.0f * acosf(quat.w);
+  float s = sqrtf(1.0f - quat.w * quat.w);
   if (s < 0.001) {
     axis->x = quat.x;
     axis->y = quat.y;
@@ -717,7 +717,7 @@ GMATH_INLINE quat_t quat_look_at(vec3_t direction, vec3_t up) {
     biggest_index = 3;
   }
 
-  float biggest_val = sqrt(biggest + 1.0f) * 0.5f;
+  float biggest_val = sqrtf(biggest + 1.0f) * 0.5f;
   float mult = 0.25f / biggest_val;
 
   switch (biggest_index) {
@@ -772,7 +772,7 @@ remap(float n, float start1, float stop1, float start2, float stop2) {
 }
 
 GMATH_INLINE float clamp(float value, float min_val, float max_val) {
-  return fmin(fmax(value, min_val), max_val);
+  return fminf(fmaxf(value, min_val), max_val);
 }
 
 GMATH_INLINE float to_radians(float degrees) {

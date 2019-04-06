@@ -7,8 +7,8 @@
 #include <renderer/window.h>
 
 void eg_camera_init(eg_camera_t *camera) {
-  camera->near = 0.001f;
-  camera->far = 300.0f;
+  camera->near_clip = 0.001f;
+  camera->far_clip = 300.0f;
 
   camera->fov = to_radians(70.0f);
 
@@ -21,7 +21,7 @@ void eg_camera_init(eg_camera_t *camera) {
       set_layouts[i] = g_eng.set_layouts.camera;
     }
 
-    VkDescriptorSetAllocateInfo alloc_info = {};
+    VkDescriptorSetAllocateInfo alloc_info = {0};
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
@@ -71,15 +71,15 @@ void eg_camera_update(eg_camera_t *camera, struct re_window_t *window) {
   re_window_get_size(window, &width, &height);
 
   camera->uniform.proj = mat4_perspective(
-      camera->fov, (float)width / (float)height, camera->near, camera->far);
+      camera->fov, (float)width / (float)height, camera->near_clip, camera->far_clip);
 
   // @note: See:
   // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
   mat4_t correction = {{
-      {1.0, 0.0, 0.0, 0.0},
-      {0.0, -1.0, 0.0, 0.0},
-      {0.0, 0.0, 0.5, 0.0},
-      {0.0, 0.0, 0.5, 1.0},
+      1.0, 0.0, 0.0, 0.0,
+      0.0, -1.0, 0.0, 0.0,
+      0.0, 0.0, 0.5, 0.0,
+      0.0, 0.0, 0.5, 1.0,
   }};
 
   camera->uniform.proj = mat4_mul(camera->uniform.proj, correction);

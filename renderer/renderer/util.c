@@ -9,7 +9,7 @@ void re_set_image_layout(
     VkPipelineStageFlags src_stage_mask,
     VkPipelineStageFlags dst_stage_mask) {
   // Create an image barrier object
-  VkImageMemoryBarrier image_memory_barrier = {};
+  VkImageMemoryBarrier image_memory_barrier = {0};
   image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   image_memory_barrier.pNext = NULL;
   image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;

@@ -9,7 +9,7 @@ static inline void create_descriptor_set_layout(
     VkDescriptorSetLayoutBinding *bindings,
     uint32_t binding_count,
     VkDescriptorSetLayout *descriptor_set_layout) {
-  VkDescriptorSetLayoutCreateInfo create_info = {};
+  VkDescriptorSetLayoutCreateInfo create_info = {0};
   create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   create_info.pNext = NULL;
   create_info.flags = 0;
@@ -24,7 +24,7 @@ static inline void create_pipeline_layout(
     VkDescriptorSetLayout *set_layouts,
     uint32_t set_layout_count,
     VkPipelineLayout *pipeline_layout) {
-  VkPushConstantRange push_constant_range = {};
+  VkPushConstantRange push_constant_range = {0};
   push_constant_range.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
   push_constant_range.offset = 0;
   push_constant_range.size = 128;

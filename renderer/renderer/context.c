@@ -161,7 +161,7 @@ static inline bool check_physical_device_properties(
   }
 
   // Check for required device features
-  VkPhysicalDeviceFeatures features = {};
+  VkPhysicalDeviceFeatures features = {0};
   vkGetPhysicalDeviceFeatures(physical_device, &features);
   if (!features.wideLines) {
     ut_log_warn(
@@ -272,7 +272,7 @@ static inline void create_instance(
   ut_log_debug("Not using validation layers");
 #endif
 
-  VkApplicationInfo appInfo = {};
+  VkApplicationInfo appInfo = {0};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   appInfo.pNext = NULL;
   appInfo.pApplicationName = "App";
@@ -281,7 +281,7 @@ static inline void create_instance(
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.apiVersion = VK_API_VERSION_1_0;
 
-  VkInstanceCreateInfo createInfo = {};
+  VkInstanceCreateInfo createInfo = {0};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   createInfo.flags = 0;
   createInfo.pApplicationInfo = &appInfo;
@@ -320,7 +320,7 @@ static inline void create_instance(
 }
 
 static inline void setup_debug_callback(re_context_t *ctx) {
-  VkDebugReportCallbackCreateInfoEXT createInfo = {};
+  VkDebugReportCallbackCreateInfoEXT createInfo = {0};
   createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
   createInfo.flags =
       VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
@@ -363,7 +363,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
   ut_log_debug("Using physical device: %s", properties.deviceName);
 
   uint32_t queue_create_info_count = 0;
-  VkDeviceQueueCreateInfo queue_create_infos[3] = {};
+  VkDeviceQueueCreateInfo queue_create_infos[3] = {0};
   float queue_priorities[] = {1.0f};
 
   queue_create_infos[queue_create_info_count++] = (VkDeviceQueueCreateInfo){
@@ -397,7 +397,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
     };
   }
 
-  VkDeviceCreateInfo device_create_info = {};
+  VkDeviceCreateInfo device_create_info = {0};
   device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   device_create_info.flags = 0;
   device_create_info.queueCreateInfoCount = queue_create_info_count;
@@ -438,7 +438,7 @@ static inline void get_device_queues(re_context_t *ctx) {
 }
 
 static inline void setup_memory_allocator(re_context_t *ctx) {
-  VmaAllocatorCreateInfo allocator_info = {};
+  VmaAllocatorCreateInfo allocator_info = {0};
   allocator_info.physicalDevice = ctx->physical_device;
   allocator_info.device = ctx->device;
 
@@ -446,7 +446,7 @@ static inline void setup_memory_allocator(re_context_t *ctx) {
 }
 
 static inline void create_graphics_command_pool(re_context_t *ctx) {
-  VkCommandPoolCreateInfo create_info = {};
+  VkCommandPoolCreateInfo create_info = {0};
   create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   create_info.pNext = 0;
   create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -457,7 +457,7 @@ static inline void create_graphics_command_pool(re_context_t *ctx) {
 }
 
 static inline void create_transient_command_pool(re_context_t *ctx) {
-  VkCommandPoolCreateInfo create_info = {};
+  VkCommandPoolCreateInfo create_info = {0};
   create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   create_info.pNext = 0;
   create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
@@ -469,7 +469,7 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
 
 static inline void create_thread_command_pools(re_context_t *ctx) {
   for (uint32_t i = 0; i < RE_THREAD_COUNT; i++) {
-    VkCommandPoolCreateInfo create_info = {};
+    VkCommandPoolCreateInfo create_info = {0};
     create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     create_info.pNext = 0;
     create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
@@ -563,7 +563,7 @@ void re_context_init_graphics(re_window_t *window) {
         NULL, // pImmutableSamplers
     }};
 
-    VkDescriptorSetLayoutCreateInfo create_info = {};
+    VkDescriptorSetLayoutCreateInfo create_info = {0};
     create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     create_info.pNext = NULL;
     create_info.flags = 0;

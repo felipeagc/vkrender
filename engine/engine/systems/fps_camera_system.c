@@ -16,11 +16,11 @@ float out_expo(float t, float b, float c, float d) {
 }
 
 void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
-  system->cam_target = (vec3_t){};
+  system->cam_target = (vec3_t){0};
 
-  system->cam_up = (vec3_t){};
+  system->cam_up = (vec3_t){0};
   system->cam_front = (vec3_t){0.0, 0.0, 1.0};
-  system->cam_right = (vec3_t){};
+  system->cam_right = (vec3_t){0};
 
   system->cam_yaw = to_radians(90.0f);
   system->cam_pitch = 0.0f;
@@ -74,7 +74,7 @@ void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
     eg_camera_t *camera) {
-  system->time += window->delta_time;
+  system->time += (float) window->delta_time;
 
   if (system->first_frame) {
     system->first_frame = false;
@@ -82,9 +82,9 @@ void eg_fps_camera_system_update(
     camera->fov = INITIAL_FOV;
   }
 
-  system->cam_front.x = cos(system->cam_yaw) * cos(system->cam_pitch);
-  system->cam_front.y = sin(system->cam_pitch);
-  system->cam_front.z = sin(system->cam_yaw) * cos(system->cam_pitch);
+  system->cam_front.x = cosf(system->cam_yaw) * cosf(system->cam_pitch);
+  system->cam_front.y = sinf(system->cam_pitch);
+  system->cam_front.z = sinf(system->cam_yaw) * cosf(system->cam_pitch);
   system->cam_front = vec3_normalize(system->cam_front);
 
   system->cam_right =
@@ -92,7 +92,7 @@ void eg_fps_camera_system_update(
   system->cam_up =
       vec3_normalize(vec3_cross(system->cam_right, system->cam_front));
 
-  float speed = 10.0f * window->delta_time;
+  float speed = 10.0f * (float)window->delta_time;
   vec3_t movement = vec3_zero();
 
   if (re_window_is_scancode_pressed(window, SDL_SCANCODE_W)) {
@@ -113,7 +113,7 @@ void eg_fps_camera_system_update(
   system->cam_target = vec3_add(system->cam_target, movement);
 
   camera->position = vec3_lerp(
-      camera->position, system->cam_target, window->delta_time * 10.0f);
+      camera->position, system->cam_target, (float)window->delta_time * 10.0f);
 
   camera->rotation =
       quat_conjugate(quat_look_at(system->cam_front, system->cam_up));

@@ -15,7 +15,7 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
       set_layouts[i] = g_eng.set_layouts.model;
     }
 
-    VkDescriptorSetAllocateInfo alloc_info = {};
+    VkDescriptorSetAllocateInfo alloc_info = {0};
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
