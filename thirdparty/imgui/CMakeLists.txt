@@ -9,4 +9,10 @@ add_library(
 	imgui_widgets.cpp)
 
 target_link_libraries(imgui PUBLIC ${Vulkan_LIBRARIES} ${SDL2_LIBRARY})
-target_include_directories(imgui PUBLIC .)
+
+target_include_directories(
+	imgui
+	PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${SDL2_INCLUDE_DIR}
+	${Vulkan_INCLUDE_DIRS})

@@ -23,4 +23,10 @@ target_link_libraries(
 	stb_image
 	tinycthread
 	vma)
-target_include_directories(renderer PUBLIC .)
+
+target_include_directories(
+	renderer
+	PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${SDL2_INCLUDE_DIR}
+	${Vulkan_INCLUDE_DIRS})

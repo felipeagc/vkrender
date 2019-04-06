@@ -29,4 +29,4 @@ target_link_libraries(
 	renderer
 	cgltf)
 
-target_include_directories(engine PUBLIC .)
+target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
