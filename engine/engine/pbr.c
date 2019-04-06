@@ -10,8 +10,8 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
   model->uniform.transform = transform;
 
   {
-    VkDescriptorSetLayout set_layouts[ARRAYSIZE(model->descriptor_sets)];
-    for (size_t i = 0; i < ARRAYSIZE(model->descriptor_sets); i++) {
+    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(model->descriptor_sets)];
+    for (size_t i = 0; i < ARRAY_SIZE(model->descriptor_sets); i++) {
       set_layouts[i] = g_eng.set_layouts.model;
     }
 
@@ -19,7 +19,7 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAYSIZE(model->descriptor_sets);
+    alloc_info.descriptorSetCount = ARRAY_SIZE(model->descriptor_sets);
     alloc_info.pSetLayouts = set_layouts;
 
     VK_CHECK(vkAllocateDescriptorSets(
@@ -89,7 +89,7 @@ void eg_pbr_model_destroy(eg_pbr_model_t *model) {
   vkFreeDescriptorSets(
       g_ctx.device,
       g_ctx.descriptor_pool,
-      ARRAYSIZE(model->descriptor_sets),
+      ARRAY_SIZE(model->descriptor_sets),
       model->descriptor_sets);
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {

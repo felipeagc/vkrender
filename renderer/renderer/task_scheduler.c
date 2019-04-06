@@ -13,7 +13,7 @@ task_init(re_task_t *task, thrd_start_t routine, void *args) {
 static inline void
 task_append(re_task_t *task, thrd_start_t routine, void *args) {
   if (task->next != NULL) {
-    return task_append(task->next, routine, args);
+    task_append(task->next, routine, args);
   } else {
     task->next = (re_task_t *)malloc(sizeof(re_task_t));
     task_init(task->next, routine, args);

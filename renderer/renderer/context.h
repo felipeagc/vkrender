@@ -19,7 +19,9 @@ static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
     "VK_LAYER_LUNARG_standard_validation",
 };
 #else
-static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {};
+static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
+    "VK_LAYER_LUNARG_standard_validation",
+};
 #endif
 
 static const char *const RE_REQUIRED_DEVICE_EXTENSIONS[] = {

@@ -500,7 +500,8 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
       mat.columns[0][0] > mat.columns[1][1] &&
       mat.columns[0][0] > mat.columns[2][2]) {
     float s =
-        sqrtf(1.0f + mat.columns[0][0] - mat.columns[1][1] - mat.columns[2][2]) *
+        sqrtf(
+            1.0f + mat.columns[0][0] - mat.columns[1][1] - mat.columns[2][2]) *
         2.0f;
     result.w = (mat.columns[1][2] - mat.columns[2][1]) / s;
     result.x = 0.25f * s;
@@ -508,7 +509,8 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
     result.z = (mat.columns[2][0] + mat.columns[0][2]) / s;
   } else if (mat.columns[1][1] > mat.columns[2][2]) {
     float s =
-        sqrtf(1.0f + mat.columns[1][1] - mat.columns[0][0] - mat.columns[2][2]) *
+        sqrtf(
+            1.0f + mat.columns[1][1] - mat.columns[0][0] - mat.columns[2][2]) *
         2.0f;
     result.w = (mat.columns[2][0] - mat.columns[0][2]) / s;
     result.x = (mat.columns[1][0] + mat.columns[0][1]) / s;
@@ -516,7 +518,8 @@ GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
     result.z = (mat.columns[2][1] + mat.columns[1][2]) / s;
   } else {
     float s =
-        sqrtf(1.0f + mat.columns[2][2] - mat.columns[0][0] - mat.columns[1][1]) *
+        sqrtf(
+            1.0f + mat.columns[2][2] - mat.columns[0][0] - mat.columns[1][1]) *
         2.0f;
     result.w = (mat.columns[0][1] - mat.columns[1][0]) / s;
     result.x = (mat.columns[2][0] + mat.columns[0][2]) / s;
@@ -750,7 +753,8 @@ GMATH_INLINE quat_t quat_look_at(vec3_t direction, vec3_t up) {
         (m[0][1] - m[1][0]) * mult,
     };
   default:
-    assert(0 != 0);
+    assert(0);
+    return (quat_t){0};
   }
 }
 

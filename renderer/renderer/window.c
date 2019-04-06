@@ -1,7 +1,7 @@
 #include "window.h"
 #include "context.h"
 #include "util.h"
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_vulkan.h>
 #include <fstd_time.h>
 #include <fstd_util.h>
 #include <gmath.h>
@@ -154,7 +154,7 @@ static inline bool create_vulkan_surface(re_window_t *window) {
 }
 
 static inline void create_sync_objects(re_window_t *window) {
-  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     re_frame_resources_t *resources = &window->frame_resources[i];
 
     VkSemaphoreCreateInfo semaphore_create_info = {0};
@@ -319,7 +319,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
   vkAllocateCommandBuffers(g_ctx.device, &allocate_info, command_buffers);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     window->frame_resources[i].command_buffer = command_buffers[i];
   }
 
@@ -473,11 +473,11 @@ static inline void create_render_pass(re_window_t *window) {
       VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,    // sType
       NULL,                                         // pNext
       0,                                            // flags
-      (uint32_t)ARRAYSIZE(attachment_descriptions), // attachmentCount
+      (uint32_t)ARRAY_SIZE(attachment_descriptions), // attachmentCount
       attachment_descriptions,                      // pAttachments
       1,                                            // subpassCount
       &subpass_description,                         // pSubpasses
-      (uint32_t)ARRAYSIZE(dependencies),            // dependencyCount
+      (uint32_t)ARRAY_SIZE(dependencies),            // dependencyCount
       dependencies,                                 // pDependencies
   };
 
@@ -504,7 +504,7 @@ static inline void regen_framebuffer(
       NULL,                                      // pNext
       0,                                         // flags
       window->render_target.render_pass,         // renderPass
-      (uint32_t)ARRAYSIZE(attachments),          // attachmentCount
+      (uint32_t)ARRAY_SIZE(attachments),          // attachmentCount
       attachments,                               // pAttachments
       window->swapchain_extent.width,            // width
       window->swapchain_extent.height,           // height
@@ -517,7 +517,7 @@ static inline void regen_framebuffer(
 static inline void destroy_resizables(re_window_t *window) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     vkFreeCommandBuffers(
         g_ctx.device,
         g_ctx.graphics_command_pool,
@@ -568,7 +568,7 @@ bool re_window_init(
   // Index of the current swapchain image
   window->current_image_index = 0;
 
-  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     window->frame_resources[i].framebuffer = VK_NULL_HANDLE;
     window->frame_resources[i].command_buffer = VK_NULL_HANDLE;
   }
@@ -595,7 +595,7 @@ bool re_window_init(
   SDL_Vulkan_GetInstanceExtensions(
       window->sdl_window, &window->sdl_extension_count, NULL);
   window->sdl_extensions =
-      malloc(sizeof(const char *) * window->sdl_extension_count);
+      malloc(sizeof(*window->sdl_extensions) * window->sdl_extension_count);
   SDL_Vulkan_GetInstanceExtensions(
       window->sdl_window, &window->sdl_extension_count, window->sdl_extensions);
 
@@ -655,7 +655,7 @@ void re_window_destroy(re_window_t *window) {
 
   vkDestroySwapchainKHR(g_ctx.device, window->swapchain, NULL);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(window->frame_resources); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     vkDestroyFramebuffer(
         g_ctx.device, window->frame_resources[i].framebuffer, NULL);
     vkDestroySemaphore(
@@ -884,7 +884,7 @@ void re_window_begin_render_pass(re_window_t *window) {
       window->render_target.render_pass,                          // renderPass
       window->frame_resources[window->current_frame].framebuffer, // framebuffer
       {{0, 0}, window->swapchain_extent},                         // renderArea
-      ARRAYSIZE(clear_values), // clearValueCount
+      ARRAY_SIZE(clear_values), // clearValueCount
       clear_values,            // pClearValues
   };
 

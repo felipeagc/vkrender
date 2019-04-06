@@ -3,6 +3,10 @@ project(vkrender
 	VERSION 0.1
 	LANGUAGES C CXX)
 
+if(MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 find_package(Vulkan REQUIRED)
 
 include(FetchContent)
@@ -18,7 +22,7 @@ if(NOT sdl2_POPULATED)
     add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR})
 endif()
 
-set(SDL2_LIBRARY SDL2-static)
+set(SDL2_LIBRARIES SDL2-static SDL2main)
 
 add_subdirectory(thirdparty)
 add_subdirectory(util)

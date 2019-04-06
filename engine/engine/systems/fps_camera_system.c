@@ -1,7 +1,7 @@
 #include "fps_camera_system.h"
 #include "../camera.h"
-#include <SDL2/SDL.h>
-#include <renderer/imgui.h>
+#include <SDL.h>
+//#include <renderer/imgui.h>
 #include <renderer/window.h>
 #include <util/log.h>
 
@@ -12,7 +12,7 @@
 float out_expo(float t, float b, float c, float d) {
   if (t == d)
     return b + c;
-  return c * 1.001f * (-pow(2, -10 * t / d) + 1) + b;
+  return c * 1.001f * (-powf(2, -10 * t / d) + 1) + b;
 }
 
 void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
@@ -42,14 +42,14 @@ void eg_fps_camera_system_process_event(
     SDL_Event *event) {
   switch (event->type) {
   case SDL_MOUSEBUTTONDOWN:
-    if (event->button.button == SDL_BUTTON_RIGHT && !igIsAnyItemActive()) {
+    if (event->button.button == SDL_BUTTON_RIGHT) {
       re_window_get_mouse_state(
           window, &system->prev_mouse_x, &system->prev_mouse_y);
       re_window_set_relative_mouse(window, true);
     }
     break;
   case SDL_MOUSEBUTTONUP:
-    if (event->button.button == SDL_BUTTON_RIGHT && !igIsAnyItemActive()) {
+    if (event->button.button == SDL_BUTTON_RIGHT) {
       re_window_set_relative_mouse(window, false);
       re_window_warp_mouse(window, system->prev_mouse_x, system->prev_mouse_y);
     }

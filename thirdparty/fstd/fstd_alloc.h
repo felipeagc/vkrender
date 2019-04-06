@@ -60,7 +60,7 @@ static inline void alloc_header_init(
   header->addr = ((uint8_t *)header) + sizeof(fstd_alloc_header_t);
   header->prev = prev;
   header->next = next;
-  header->size = size;
+  header->size = (uint32_t)size;
   header->used = false;
 }
 

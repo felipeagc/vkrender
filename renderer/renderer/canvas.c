@@ -5,7 +5,7 @@
 #include <fstd_util.h>
 
 static inline void create_color_target(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageCreateInfo image_create_info = {
@@ -99,7 +99,7 @@ static inline void create_color_target(re_canvas_t *canvas) {
 
 static inline void destroy_color_target(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     if (resource->color.image != VK_NULL_HANDLE) {
@@ -125,7 +125,7 @@ static inline void destroy_color_target(re_canvas_t *canvas) {
 }
 
 static inline void create_depth_target(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageCreateInfo image_create_info = {
@@ -196,7 +196,7 @@ static inline void create_depth_target(re_canvas_t *canvas) {
 static inline void destroy_depth_target(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     if (resource->depth.image != VK_NULL_HANDLE) {
@@ -213,7 +213,7 @@ static inline void destroy_depth_target(re_canvas_t *canvas) {
 }
 
 static inline void create_descriptor_sets(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     {
       VkDescriptorSetAllocateInfo alloc_info = {0};
       alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -248,14 +248,14 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAYSIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
   }
 }
 
 static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     vkFreeDescriptorSets(
         g_ctx.device,
         g_ctx.descriptor_pool,
@@ -265,7 +265,7 @@ static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
 }
 
 static inline void create_framebuffers(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     VkImageView attachments[] = {
@@ -278,7 +278,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
         NULL,                                      // pNext
         0,                                         // flags
         canvas->render_target.render_pass,         // renderPass
-        (uint32_t)ARRAYSIZE(attachments),          // attachmentCount
+        (uint32_t)ARRAY_SIZE(attachments),          // attachmentCount
         attachments,                               // pAttachments
         canvas->width,                             // width
         canvas->height,                            // height
@@ -293,7 +293,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
 static inline void destroy_framebuffers(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (size_t i = 0; i < ARRAYSIZE(canvas->resources); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
     struct re_canvas_resource_t *resource = &canvas->resources[i];
 
     if (resource->framebuffer != VK_NULL_HANDLE) {
@@ -381,11 +381,11 @@ static inline void create_render_pass(re_canvas_t *canvas) {
       VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,    // sType
       NULL,                                         // pNext
       0,                                            // flags
-      (uint32_t)ARRAYSIZE(attachment_descriptions), // attachmentCount
+      (uint32_t)ARRAY_SIZE(attachment_descriptions), // attachmentCount
       attachment_descriptions,                      // pAttachments
       1,                                            // subpassCount
       &subpass_description,                         // pSubpasses
-      (uint32_t)ARRAYSIZE(dependencies),            // dependencyCount
+      (uint32_t)ARRAY_SIZE(dependencies),            // dependencyCount
       dependencies,                                 // pDependencies
   };
 
@@ -438,7 +438,7 @@ void re_canvas_begin(
       canvas->render_target.render_pass,         // renderPass
       resource->framebuffer,                     // framebuffer
       {{0, 0}, {canvas->width, canvas->height}}, // renderArea
-      ARRAYSIZE(clear_values),                   // clearValueCount
+      ARRAY_SIZE(clear_values),                   // clearValueCount
       clear_values,                              // pClearValues
   };
 

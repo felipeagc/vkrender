@@ -35,7 +35,7 @@ eg_asset_manager_alloc(eg_asset_manager_t *asset_manager, size_t size) {
 
   assert(asset_manager->asset_count < EG_MAX_ASSETS);
 
-  eg_asset_t *asset = (eg_asset_t *)fstd_alloc(&asset_manager->allocator, size);
+  eg_asset_t *asset = fstd_alloc(&asset_manager->allocator, (uint32_t)size);
   asset_manager->assets[asset_manager->asset_count++] = asset;
 
   mtx_unlock(&asset_manager->allocator_mutex);

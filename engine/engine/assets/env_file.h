@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stb_image.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -27,14 +28,17 @@ static inline void env_file_read(
     uint8_t **radiance_data,
     uint32_t *radiance_dim,
     uint32_t *radiance_mip_count) {
-  FILE *file = fopen(path, "r");
+  FILE *file = fopen(path, "rb");
+  assert(file != NULL);
   fseek(file, 0, SEEK_END);
   size_t data_size = ftell(file);
   fseek(file, 0, SEEK_SET);
 
+  assert(data_size > 0);
+
   uint8_t *data = calloc(1, data_size);
 
-  fread(data, data_size, 1, file);
+  assert(fread(data, data_size, 1, file) != 0);
 
   fclose(file);
 
@@ -50,7 +54,7 @@ static inline void env_file_read(
 
     int width, height, nr_comps;
     float *layer_data = stbi_loadf_from_memory(
-        &data[current_pos], layer_size, &width, &height, &nr_comps, 4);
+        &data[current_pos], (int)layer_size, &width, &height, &nr_comps, 4);
     *skybox_dim = (uint32_t)width;
 
     size_t out_layer_size = width * height * 4 * sizeof(float);
@@ -70,7 +74,7 @@ static inline void env_file_read(
 
     int width, height, nr_comps;
     float *layer_data = stbi_loadf_from_memory(
-        &data[current_pos], layer_size, &width, &height, &nr_comps, 4);
+        &data[current_pos], (int)layer_size, &width, &height, &nr_comps, 4);
     *irradiance_dim = (uint32_t)width;
 
     size_t out_layer_size = width * height * 4 * sizeof(float);
@@ -97,7 +101,7 @@ static inline void env_file_read(
 
       int width, height, nr_comps;
       float *layer_data = stbi_loadf_from_memory(
-          &data[current_pos], layer_size, &width, &height, &nr_comps, 4);
+          &data[current_pos], (int)layer_size, &width, &height, &nr_comps, 4);
 
       size_t out_layer_size = width * height * 4 * sizeof(float);
       radiance_size += out_layer_size * 6;

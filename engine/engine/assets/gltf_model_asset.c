@@ -54,8 +54,8 @@ static void material_init(
   }
 
   {
-    VkDescriptorSetLayout set_layouts[ARRAYSIZE(material->descriptor_sets)];
-    for (size_t i = 0; i < ARRAYSIZE(material->descriptor_sets); i++) {
+    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(material->descriptor_sets)];
+    for (size_t i = 0; i < ARRAY_SIZE(material->descriptor_sets); i++) {
       set_layouts[i] = g_eng.set_layouts.material;
     }
 
@@ -63,7 +63,7 @@ static void material_init(
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAYSIZE(material->descriptor_sets);
+    alloc_info.descriptorSetCount = ARRAY_SIZE(material->descriptor_sets);
     alloc_info.pSetLayouts = set_layouts;
 
     VK_CHECK(vkAllocateDescriptorSets(
@@ -142,14 +142,14 @@ static void material_init(
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAYSIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
   }
 }
 
 static void material_destroy(eg_gltf_model_asset_material_t *material) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (uint32_t j = 0; j < ARRAYSIZE(material->descriptor_sets); j++) {
+  for (uint32_t j = 0; j < ARRAY_SIZE(material->descriptor_sets); j++) {
     if (material->descriptor_sets[j] != VK_NULL_HANDLE) {
       vkFreeDescriptorSets(
           g_ctx.device,
@@ -186,8 +186,8 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
 
   mesh->ubo.matrix = mat4_identity();
 
-  VkDescriptorSetLayout set_layouts[ARRAYSIZE(mesh->descriptor_sets)];
-  for (size_t i = 0; i < ARRAYSIZE(mesh->descriptor_sets); i++) {
+  VkDescriptorSetLayout set_layouts[ARRAY_SIZE(mesh->descriptor_sets)];
+  for (size_t i = 0; i < ARRAY_SIZE(mesh->descriptor_sets); i++) {
     set_layouts[i] = g_eng.set_layouts.model;
   }
 
@@ -195,7 +195,7 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
   alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   alloc_info.pNext = NULL;
   alloc_info.descriptorPool = g_ctx.descriptor_pool;
-  alloc_info.descriptorSetCount = ARRAYSIZE(mesh->descriptor_sets);
+  alloc_info.descriptorSetCount = ARRAY_SIZE(mesh->descriptor_sets);
   alloc_info.pSetLayouts = set_layouts;
 
   VK_CHECK(vkAllocateDescriptorSets(
@@ -323,7 +323,8 @@ static void load_node(
   if (parent != NULL) {
     new_node->parent = &model->nodes[parent - data->nodes];
   }
-  new_node->name = strdup(node->name);
+  new_node->name = malloc(strlen(node->name)+1);
+  strcpy(new_node->name, node->name);
   new_node->matrix = mat4_identity();
 
   if (node->has_translation) {
@@ -364,7 +365,7 @@ static void load_node(
         &model->meshes[node->mesh - data->meshes];
     mesh_init(new_mesh, new_node->matrix);
 
-    new_mesh->primitive_count = mesh->primitives_count;
+    new_mesh->primitive_count = (uint32_t)mesh->primitives_count;
     new_mesh->primitives =
         calloc(new_mesh->primitive_count, sizeof(*new_mesh->primitives));
 
@@ -440,7 +441,7 @@ static void load_node(
                    ->data)[texcoord_accessor->offset + texcoord_view->offset]);
         }
 
-        *vertex_count += pos_accessor->count;
+        *vertex_count += (uint32_t)pos_accessor->count;
         *vertices = realloc(*vertices, (*vertex_count) * sizeof(re_vertex_t));
 
         for (uint32_t v = 0; v < pos_accessor->count; v++) {
@@ -468,7 +469,7 @@ static void load_node(
         cgltf_buffer_view *buffer_view = accessor->buffer_view;
         cgltf_buffer *buffer = buffer_view->buffer;
 
-        prim_index_count = accessor->count;
+        prim_index_count = (uint32_t)accessor->count;
 
         *index_count += prim_index_count;
         *indices = realloc(*indices, (*index_count) * sizeof(**indices));
@@ -622,7 +623,7 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
   assert(data->file_type == cgltf_file_type_glb);
 
   // Load images
-  model->image_count = data->images_count;
+  model->image_count = (uint32_t)data->images_count;
   model->images = calloc(model->image_count, sizeof(*model->images));
   for (uint32_t i = 0; i < model->image_count; i++) {
     cgltf_image *image = &data->images[i];
@@ -633,7 +634,7 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
 
     int width, height, n_channels;
     unsigned char *image_data = stbi_load_from_memory(
-        buffer_data, buffer_size, &width, &height, &n_channels, 4);
+        buffer_data, (int)buffer_size, &width, &height, &n_channels, 4);
 
     assert(image_data != NULL);
 
@@ -652,7 +653,7 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
   }
 
   // Load materials
-  model->material_count = data->materials_count;
+  model->material_count = (uint32_t)data->materials_count;
   model->materials = calloc(model->material_count, sizeof(*model->materials));
   for (uint32_t i = 0; i < data->materials_count; i++) {
     cgltf_material *material = &data->materials[i];
@@ -698,7 +699,7 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
                [material->emissive_texture.texture->image - data->images];
     }
 
-    for (uint32_t j = 0; j < ARRAYSIZE(model->materials[i].descriptor_sets);
+    for (uint32_t j = 0; j < ARRAY_SIZE(model->materials[i].descriptor_sets);
          j++) {
       model->materials[i].descriptor_sets[j] = VK_NULL_HANDLE;
     }
@@ -713,10 +714,10 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
   }
 
   // Nodes and meshes
-  model->node_count = data->nodes_count;
+  model->node_count = (uint32_t)data->nodes_count;
   model->nodes = calloc(model->node_count, sizeof(*model->nodes));
 
-  model->mesh_count = data->meshes_count;
+  model->mesh_count = (uint32_t)data->meshes_count;
   model->meshes = calloc(model->mesh_count, sizeof(*model->meshes));
 
   re_vertex_t *vertices = NULL;

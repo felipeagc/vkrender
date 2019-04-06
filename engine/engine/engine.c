@@ -54,7 +54,7 @@ static inline void init_set_layouts() {
     }};
 
     create_descriptor_set_layout(
-        bindings, ARRAYSIZE(bindings), &g_eng.set_layouts.camera);
+        bindings, ARRAY_SIZE(bindings), &g_eng.set_layouts.camera);
   }
 
   // Model
@@ -68,7 +68,7 @@ static inline void init_set_layouts() {
     }};
 
     create_descriptor_set_layout(
-        bindings, ARRAYSIZE(bindings), &g_eng.set_layouts.model);
+        bindings, ARRAY_SIZE(bindings), &g_eng.set_layouts.model);
   }
 
   // Environment
@@ -111,7 +111,7 @@ static inline void init_set_layouts() {
         }};
 
     create_descriptor_set_layout(
-        bindings, ARRAYSIZE(bindings), &g_eng.set_layouts.environment);
+        bindings, ARRAY_SIZE(bindings), &g_eng.set_layouts.environment);
   }
 
   // Material
@@ -154,7 +154,7 @@ static inline void init_set_layouts() {
         }};
 
     create_descriptor_set_layout(
-        bindings, ARRAYSIZE(bindings), &g_eng.set_layouts.material);
+        bindings, ARRAY_SIZE(bindings), &g_eng.set_layouts.material);
   }
 }
 
@@ -178,7 +178,7 @@ static inline void init_pipeline_layouts() {
     };
 
     create_pipeline_layout(
-        set_layouts, ARRAYSIZE(set_layouts), &g_eng.pipeline_layouts.pbr);
+        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.pbr);
   }
 
   // Billboard
@@ -189,7 +189,7 @@ static inline void init_pipeline_layouts() {
     };
 
     create_pipeline_layout(
-        set_layouts, ARRAYSIZE(set_layouts), &g_eng.pipeline_layouts.billboard);
+        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.billboard);
   }
 
   // Wireframe
@@ -200,7 +200,7 @@ static inline void init_pipeline_layouts() {
     };
 
     create_pipeline_layout(
-        set_layouts, ARRAYSIZE(set_layouts), &g_eng.pipeline_layouts.wireframe);
+        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.wireframe);
   }
 
   // Skybox
@@ -211,7 +211,7 @@ static inline void init_pipeline_layouts() {
     };
 
     create_pipeline_layout(
-        set_layouts, ARRAYSIZE(set_layouts), &g_eng.pipeline_layouts.skybox);
+        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.skybox);
   }
 
   // Fullscreen
@@ -222,7 +222,7 @@ static inline void init_pipeline_layouts() {
 
     create_pipeline_layout(
         set_layouts,
-        ARRAYSIZE(set_layouts),
+        ARRAY_SIZE(set_layouts),
         &g_eng.pipeline_layouts.fullscreen);
   }
 }

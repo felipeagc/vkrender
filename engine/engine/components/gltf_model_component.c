@@ -73,8 +73,8 @@ void eg_gltf_model_component_init(
 
   model->ubo.matrix = mat4_identity();
 
-  VkDescriptorSetLayout set_layouts[ARRAYSIZE(model->descriptor_sets)];
-  for (size_t i = 0; i < ARRAYSIZE(model->descriptor_sets); i++) {
+  VkDescriptorSetLayout set_layouts[ARRAY_SIZE(model->descriptor_sets)];
+  for (size_t i = 0; i < ARRAY_SIZE(model->descriptor_sets); i++) {
     set_layouts[i] = g_eng.set_layouts.model;
   }
 
@@ -82,7 +82,7 @@ void eg_gltf_model_component_init(
   alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   alloc_info.pNext = NULL;
   alloc_info.descriptorPool = g_ctx.descriptor_pool;
-  alloc_info.descriptorSetCount = ARRAYSIZE(model->descriptor_sets);
+  alloc_info.descriptorSetCount = ARRAY_SIZE(model->descriptor_sets);
   alloc_info.pSetLayouts = set_layouts;
 
   VK_CHECK(vkAllocateDescriptorSets(
@@ -170,7 +170,7 @@ void eg_gltf_model_component_destroy(eg_gltf_model_component_t *model) {
     vkFreeDescriptorSets(
         g_ctx.device,
         g_ctx.descriptor_pool,
-        ARRAYSIZE(model->descriptor_sets),
+        ARRAY_SIZE(model->descriptor_sets),
         model->descriptor_sets);
   }
 }

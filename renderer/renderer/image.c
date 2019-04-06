@@ -139,7 +139,7 @@ static inline void upload_data_to_image(
     uint32_t layer,
     uint32_t level) {
   // Upload data to image
-  size_t img_size = width * height * get_format_pixel_size(image->format);
+  size_t img_size = (size_t)width * (size_t)height * get_format_pixel_size(image->format);
 
   re_buffer_t staging_buffer;
   re_buffer_init(
@@ -156,6 +156,7 @@ static inline void upload_data_to_image(
   re_buffer_transfer_to_image(
       &staging_buffer, image->image, width, height, layer, level);
 
+  re_buffer_unmap_memory(&staging_buffer);
   re_buffer_destroy(&staging_buffer);
 }
 
@@ -201,12 +202,12 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
       upload_data_to_image(
           image,
           &options->data[current_pos],
-          image->width / pow(2, level),
-          image->height / pow(2, level),
+          image->width / (uint32_t)pow(2, level),
+          image->height / (uint32_t)pow(2, level),
           layer,
           level);
-      current_pos += (image->width / pow(2, level)) *
-                     (image->width / pow(2, level)) *
+      current_pos += (image->width / (uint32_t)pow(2, level)) *
+                     (image->width / (uint32_t)pow(2, level)) *
                      get_format_pixel_size(image->format);
     }
   }

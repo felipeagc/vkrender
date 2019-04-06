@@ -1,18 +1,27 @@
 add_library(
 	imgui
 	imgui.cpp
+	imgui.h
+	imgui_internal.h
+	imconfig.h
 	cimgui.cpp
+	cimgui.h
 	imgui_demo.cpp
 	imgui_draw.cpp
 	imgui_impl_sdl.cpp
+	imgui_impl_sdl.h
 	imgui_impl_vulkan.cpp
-	imgui_widgets.cpp)
+	imgui_impl_vulkan.h
+	imgui_widgets.cpp
+	imstb_rectpack.h
+	imstb_textedit.h
+	imstb_truetype.h)
 
 target_link_libraries(
 	imgui
 	PUBLIC
 	${Vulkan_LIBRARIES} 
-	${SDL2_LIBRARY})
+	${SDL2_LIBRARIES})
 
 target_include_directories(
 	imgui
@@ -20,4 +29,14 @@ target_include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${Vulkan_INCLUDE_DIRS})
 
-target_compile_options(imgui PRIVATE -Wno-return-type-c-linkage)
+if(MSVC)
+	target_compile_options(
+		imgui
+		PRIVATE
+		/wd4190)
+else()
+	target_compile_options(
+		imgui
+		PRIVATE
+		-Wno-return-type-c-linkage)
+endif()

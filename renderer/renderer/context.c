@@ -9,8 +9,10 @@ re_context_t g_ctx;
 // Debug callback
 
 // Ignore warnings for this function
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     VkDebugReportFlagsEXT flags,
     VkDebugReportObjectTypeEXT objType,
@@ -24,7 +26,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 
   return VK_FALSE;
 }
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
 #pragma GCC diagnostic pop
+#endif
 
 VkResult CreateDebugReportCallbackEXT(
     VkInstance instance,
@@ -60,7 +64,7 @@ static inline bool check_validation_layer_support() {
       (VkLayerProperties *)malloc(sizeof(VkLayerProperties) * count);
   vkEnumerateInstanceLayerProperties(&count, available_layers);
 
-  for (uint32_t l = 0; l < ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS); l++) {
+  for (uint32_t l = 0; l < ARRAY_SIZE(RE_REQUIRED_VALIDATION_LAYERS); l++) {
     const char *layer_name = RE_REQUIRED_VALIDATION_LAYERS[l];
     bool layer_found = false;
 
@@ -126,7 +130,7 @@ static inline bool check_physical_device_properties(
   VkPhysicalDeviceProperties device_properties;
   vkGetPhysicalDeviceProperties(physical_device, &device_properties);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(RE_REQUIRED_DEVICE_EXTENSIONS); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(RE_REQUIRED_DEVICE_EXTENSIONS); i++) {
     const char *required_extension = RE_REQUIRED_DEVICE_EXTENSIONS[i];
     bool found = false;
     for (uint32_t i = 0; i < extension_count; i++) {
@@ -292,7 +296,7 @@ static inline void create_instance(
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
     createInfo.enabledLayerCount =
-        (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
+        (uint32_t)ARRAY_SIZE(RE_REQUIRED_VALIDATION_LAYERS);
     createInfo.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
   }
 #endif
@@ -304,8 +308,7 @@ static inline void create_instance(
       window_extension_count,
       NULL,
       &extension_count);
-  const char **extensions =
-      (const char **)malloc(sizeof(const char *) * extension_count);
+  char **extensions = malloc(sizeof(*extensions) * extension_count);
   get_required_extensions(
       required_window_vulkan_extensions,
       window_extension_count,
@@ -371,7 +374,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
       NULL,
       0,
       ctx->graphics_queue_family_index,
-      (uint32_t)ARRAYSIZE(queue_priorities),
+      (uint32_t)ARRAY_SIZE(queue_priorities),
       queue_priorities,
   };
 
@@ -381,7 +384,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
         NULL,
         0,
         ctx->present_queue_family_index,
-        (uint32_t)ARRAYSIZE(queue_priorities),
+        (uint32_t)ARRAY_SIZE(queue_priorities),
         queue_priorities,
     };
   }
@@ -392,7 +395,7 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
         NULL,
         0,
         ctx->transfer_queue_family_index,
-        (uint32_t)ARRAYSIZE(queue_priorities),
+        (uint32_t)ARRAY_SIZE(queue_priorities),
         queue_priorities,
     };
   }
@@ -410,13 +413,13 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
     device_create_info.enabledLayerCount =
-        (uint32_t)ARRAYSIZE(RE_REQUIRED_VALIDATION_LAYERS);
+        (uint32_t)ARRAY_SIZE(RE_REQUIRED_VALIDATION_LAYERS);
     device_create_info.ppEnabledLayerNames = RE_REQUIRED_VALIDATION_LAYERS;
   }
 #endif
 
   device_create_info.enabledExtensionCount =
-      (uint32_t)ARRAYSIZE(RE_REQUIRED_DEVICE_EXTENSIONS);
+      (uint32_t)ARRAY_SIZE(RE_REQUIRED_DEVICE_EXTENSIONS);
   device_create_info.ppEnabledExtensionNames = RE_REQUIRED_DEVICE_EXTENSIONS;
 
   // Enable all features
@@ -501,7 +504,7 @@ void re_context_init(re_window_t *window) {
 
   mtx_init(&g_ctx.queue_mutex, mtx_plain);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(g_ctx.thread_command_pools); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(g_ctx.thread_command_pools); i++) {
     g_ctx.thread_command_pools[i] = VK_NULL_HANDLE;
   }
 
@@ -546,8 +549,8 @@ void re_context_init_graphics(re_window_t *window) {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,     // sType
       NULL,                                              // pNext
       VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, // flags
-      1000 * (uint32_t)ARRAYSIZE(pool_sizes),            // maxSets
-      (uint32_t)ARRAYSIZE(pool_sizes),                   // poolSizeCount
+      1000 * (uint32_t)ARRAY_SIZE(pool_sizes),            // maxSets
+      (uint32_t)ARRAY_SIZE(pool_sizes),                   // poolSizeCount
       pool_sizes,                                        // pPoolSizes
   };
 
@@ -567,7 +570,7 @@ void re_context_init_graphics(re_window_t *window) {
     create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     create_info.pNext = NULL;
     create_info.flags = 0;
-    create_info.bindingCount = ARRAYSIZE(single_texture_bindings);
+    create_info.bindingCount = ARRAY_SIZE(single_texture_bindings);
     create_info.pBindings = single_texture_bindings;
 
     vkCreateDescriptorSetLayout(
@@ -643,7 +646,7 @@ bool re_context_get_supported_depth_format(VkFormat *depth_format) {
                               VK_FORMAT_D24_UNORM_S8_UINT,
                               VK_FORMAT_D16_UNORM_S8_UINT,
                               VK_FORMAT_D16_UNORM};
-  for (uint32_t i = 0; i < ARRAYSIZE(depth_formats); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(depth_formats); i++) {
     VkFormatProperties format_props;
     vkGetPhysicalDeviceFormatProperties(
         g_ctx.physical_device, depth_formats[i], &format_props);
@@ -675,7 +678,7 @@ void re_context_destroy() {
 
   vkDestroyCommandPool(g_ctx.device, g_ctx.graphics_command_pool, NULL);
 
-  for (uint32_t i = 0; i < ARRAYSIZE(g_ctx.thread_command_pools); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(g_ctx.thread_command_pools); i++) {
     vkDestroyCommandPool(g_ctx.device, g_ctx.thread_command_pools[i], NULL);
   }
 

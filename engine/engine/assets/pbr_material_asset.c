@@ -44,8 +44,8 @@ void eg_pbr_material_asset_init(
   }
 
   {
-    VkDescriptorSetLayout set_layouts[ARRAYSIZE(material->descriptor_sets)];
-    for (size_t i = 0; i < ARRAYSIZE(material->descriptor_sets); i++) {
+    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(material->descriptor_sets)];
+    for (size_t i = 0; i < ARRAY_SIZE(material->descriptor_sets); i++) {
       set_layouts[i] = g_eng.set_layouts.material;
     }
 
@@ -53,7 +53,7 @@ void eg_pbr_material_asset_init(
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAYSIZE(material->descriptor_sets);
+    alloc_info.descriptorSetCount = ARRAY_SIZE(material->descriptor_sets);
     alloc_info.pSetLayouts = set_layouts;
 
     VK_CHECK(vkAllocateDescriptorSets(
@@ -132,7 +132,7 @@ void eg_pbr_material_asset_init(
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAYSIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
   }
 }
 
@@ -169,7 +169,7 @@ void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {
   vkFreeDescriptorSets(
       g_ctx.device,
       g_ctx.descriptor_pool,
-      ARRAYSIZE(material->descriptor_sets),
+      ARRAY_SIZE(material->descriptor_sets),
       material->descriptor_sets);
 
   eg_asset_destroy(&material->asset);

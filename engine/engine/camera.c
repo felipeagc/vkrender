@@ -16,8 +16,8 @@ void eg_camera_init(eg_camera_t *camera) {
   camera->rotation = (quat_t){0};
 
   {
-    VkDescriptorSetLayout set_layouts[ARRAYSIZE(camera->descriptor_sets)];
-    for (size_t i = 0; i < ARRAYSIZE(camera->descriptor_sets); i++) {
+    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(camera->descriptor_sets)];
+    for (size_t i = 0; i < ARRAY_SIZE(camera->descriptor_sets); i++) {
       set_layouts[i] = g_eng.set_layouts.camera;
     }
 
@@ -25,7 +25,7 @@ void eg_camera_init(eg_camera_t *camera) {
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAYSIZE(camera->descriptor_sets);
+    alloc_info.descriptorSetCount = ARRAY_SIZE(camera->descriptor_sets);
     alloc_info.pSetLayouts = set_layouts;
 
     VK_CHECK(vkAllocateDescriptorSets(
@@ -115,10 +115,10 @@ void eg_camera_destroy(eg_camera_t *camera) {
   vkFreeDescriptorSets(
       g_ctx.device,
       g_ctx.descriptor_pool,
-      ARRAYSIZE(camera->descriptor_sets),
+      ARRAY_SIZE(camera->descriptor_sets),
       camera->descriptor_sets);
 
-  for (size_t i = 0; i < ARRAYSIZE(camera->uniform_buffers); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(camera->uniform_buffers); i++) {
     re_buffer_unmap_memory(&camera->uniform_buffers[i]);
     re_buffer_destroy(&camera->uniform_buffers[i]);
   }

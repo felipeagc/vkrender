@@ -9,10 +9,10 @@
 #include <util/log.h>
 
 static void check_vk_result_fn(VkResult result) {
-    if (result != VK_SUCCESS) {
-      ut_log_fatal("Failed to initialize IMGUI!");
-      abort();
-    }
+  if (result != VK_SUCCESS) {
+    ut_log_fatal("Failed to initialize IMGUI!");
+    abort();
+  }
 }
 
 void re_imgui_init(re_window_t *window) {

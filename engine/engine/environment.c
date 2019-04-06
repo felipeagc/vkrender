@@ -20,8 +20,8 @@ void eg_environment_init(
       (float)asset->radiance_cubemap.mip_level_count;
 
   {
-    VkDescriptorSetLayout set_layouts[ARRAYSIZE(environment->descriptor_sets)];
-    for (size_t i = 0; i < ARRAYSIZE(environment->descriptor_sets); i++) {
+    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(environment->descriptor_sets)];
+    for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
       set_layouts[i] = g_eng.set_layouts.environment;
     }
 
@@ -29,7 +29,7 @@ void eg_environment_init(
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext = NULL;
     alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAYSIZE(environment->descriptor_sets);
+    alloc_info.descriptorSetCount = ARRAY_SIZE(environment->descriptor_sets);
     alloc_info.pSetLayouts = set_layouts;
 
     VK_CHECK(vkAllocateDescriptorSets(
@@ -37,7 +37,7 @@ void eg_environment_init(
   }
 
   // Update descriptor sets
-  for (size_t i = 0; i < ARRAYSIZE(environment->descriptor_sets); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
     re_buffer_init(
         &environment->uniform_buffers[i],
         &(re_buffer_options_t){
@@ -125,7 +125,7 @@ void eg_environment_init(
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAYSIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
   }
 }
 
@@ -206,7 +206,7 @@ void eg_environment_reset_point_lights(eg_environment_t *environment) {
 void eg_environment_destroy(eg_environment_t *environment) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (size_t i = 0; i < ARRAYSIZE(environment->uniform_buffers); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(environment->uniform_buffers); i++) {
     re_buffer_unmap_memory(&environment->uniform_buffers[i]);
     re_buffer_destroy(&environment->uniform_buffers[i]);
   }
@@ -214,6 +214,6 @@ void eg_environment_destroy(eg_environment_t *environment) {
   vkFreeDescriptorSets(
       g_ctx.device,
       g_ctx.descriptor_pool,
-      ARRAYSIZE(environment->descriptor_sets),
+      ARRAY_SIZE(environment->descriptor_sets),
       environment->descriptor_sets);
 }

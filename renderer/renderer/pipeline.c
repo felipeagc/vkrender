@@ -25,9 +25,9 @@ default_vertex_input_state() {
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       NULL,                                                      // pNext
       0,                                                         // flags
-      ARRAYSIZE(vertex_binding_descriptions), // vertexBindingDescriptionCount
+      ARRAY_SIZE(vertex_binding_descriptions), // vertexBindingDescriptionCount
       vertex_binding_descriptions,            // pVertexBindingDescriptions
-      ARRAYSIZE(
+      ARRAY_SIZE(
           vertex_attribute_descriptions), // vertexAttributeDescriptionCount
       vertex_attribute_descriptions,      // pVertexAttributeDescriptions
   };
@@ -166,7 +166,7 @@ static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
       NULL,
       0,                                   // flags
-      (uint32_t)ARRAYSIZE(dynamic_states), // dynamicStateCount
+      (uint32_t)ARRAY_SIZE(dynamic_states), // dynamicStateCount
       dynamic_states,                      // pDyanmicStates
   };
 
@@ -203,7 +203,7 @@ void re_pipeline_init_graphics(
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       NULL,
       0,                                // flags
-      ARRAYSIZE(pipeline_stages),       // stageCount
+      ARRAY_SIZE(pipeline_stages),       // stageCount
       pipeline_stages,                  // pStages
       &parameters.vertex_input_state,   // pVertexInputState
       &parameters.input_assembly_state, // pInputAssemblyState
