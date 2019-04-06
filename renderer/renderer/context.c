@@ -319,7 +319,7 @@ static inline void create_instance(
 
   VK_CHECK(vkCreateInstance(&createInfo, NULL, &ctx->instance));
 
-  free(extensions);
+  free((void*)extensions);
 }
 
 static inline void setup_debug_callback(re_context_t *ctx) {

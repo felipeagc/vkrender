@@ -676,7 +676,7 @@ void re_window_destroy(re_window_t *window) {
   free(window->swapchain_images);
   free(window->swapchain_image_views);
 
-  free(window->sdl_extensions);
+  free((void*)window->sdl_extensions);
 }
 
 bool re_window_poll_event(re_window_t *window, SDL_Event *event) {
