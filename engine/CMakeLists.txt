@@ -7,6 +7,8 @@ add_library(
 	engine/world.h
 	engine/asset_manager.c
 	engine/asset_manager.h
+	engine/filesystem.c
+	engine/filesystem.h
 
 	engine/inspector.c
 	engine/inspector.h
@@ -49,7 +51,8 @@ target_link_libraries(
 	engine
 	PUBLIC
 	renderer
-	cgltf)
+	cgltf
+	physfs-static)
 
 target_include_directories(
 	engine

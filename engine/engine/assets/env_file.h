@@ -20,7 +20,8 @@ typedef struct env_file_header_t {
 } env_file_header_t;
 
 static inline void env_file_read(
-    const char *path,
+    unsigned char *data,
+    size_t data_size,
     uint8_t **skybox_data,
     uint32_t *skybox_dim,
     uint8_t **irradiance_data,
@@ -28,20 +29,6 @@ static inline void env_file_read(
     uint8_t **radiance_data,
     uint32_t *radiance_dim,
     uint32_t *radiance_mip_count) {
-  FILE *file = fopen(path, "rb");
-  assert(file != NULL);
-  fseek(file, 0, SEEK_END);
-  size_t data_size = ftell(file);
-  fseek(file, 0, SEEK_SET);
-
-  assert(data_size > 0);
-
-  uint8_t *data = calloc(1, data_size);
-
-  assert(fread(data, data_size, 1, file) != 0);
-
-  fclose(file);
-
   env_file_header_t header;
   memcpy(&header, data, sizeof(header));
 
@@ -121,6 +108,4 @@ static inline void env_file_read(
       current_pos += layer_size;
     }
   }
-
-  free(data);
 }

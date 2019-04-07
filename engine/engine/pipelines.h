@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fstd_util.h>
+#include "filesystem.h"
 #include <renderer/pipeline.h>
 #include <stdbool.h>
 
@@ -10,12 +10,19 @@ static inline bool eg_init_pipeline_spv(
     const char *vertex_path,
     const char *fragment_path,
     const re_pipeline_parameters_t params) {
-  size_t vertex_size;
-  unsigned char *vertex_code =
-      fstd_load_bytes_from_file(vertex_path, &vertex_size);
-  size_t fragment_size;
-  unsigned char *fragment_code =
-      fstd_load_bytes_from_file(fragment_path, &fragment_size);
+  eg_file_t *vertex_file = eg_file_open_read(vertex_path);
+  assert(vertex_file);
+  size_t vertex_size = eg_file_size(vertex_file);
+  unsigned char *vertex_code = calloc(1, vertex_size);
+  eg_file_read_bytes(vertex_file, vertex_code, vertex_size);
+  eg_file_close(vertex_file);
+
+  eg_file_t *fragment_file = eg_file_open_read(fragment_path);
+  assert(fragment_file);
+  size_t fragment_size = eg_file_size(fragment_file);
+  unsigned char *fragment_code = calloc(1, fragment_size);
+  eg_file_read_bytes(fragment_file, fragment_code, fragment_size);
+  eg_file_close(fragment_file);
 
   re_shader_t shader;
   re_shader_init_spv(

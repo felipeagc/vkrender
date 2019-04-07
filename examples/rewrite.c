@@ -46,13 +46,15 @@ void game_char_callback(re_window_t *window, unsigned int c) {
   re_imgui_char_callback(window, c);
 }
 
-int main() {
+int main(int argc, const char *argv[]) {
   game_t game;
 
   re_context_init();
   re_window_init(&game.window, "Re-write", 1600, 900);
   re_imgui_init(&game.window);
-  eg_engine_init();
+  eg_engine_init(argv[0]);
+  assert(eg_mount("./assets", "/assets"));
+  assert(eg_mount("./shaders/out", "/shaders"));
 
   game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
   game.window.user_ptr = &game;
@@ -64,15 +66,15 @@ int main() {
   eg_init_pipeline_spv(
       &game.pbr_pipeline,
       &game.window.render_target,
-      "../shaders/out/pbr.vert.spv",
-      "../shaders/out/pbr.frag.spv",
+      "/shaders/pbr.vert.spv",
+      "/shaders/pbr.frag.spv",
       eg_pbr_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &game.skybox_pipeline,
       &game.window.render_target,
-      "../shaders/out/skybox.vert.spv",
-      "../shaders/out/skybox.frag.spv",
+      "/shaders/skybox.vert.spv",
+      "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
 
   eg_asset_manager_init(&game.asset_manager);
@@ -80,11 +82,11 @@ int main() {
   eg_environment_asset_t *environment_asset =
       eg_asset_alloc(&game.asset_manager, eg_environment_asset_t);
   eg_environment_asset_init(
-      environment_asset, "../assets/ice_lake.env", "../assets/brdf_lut.png");
+      environment_asset, "/assets/ice_lake.env", "/assets/brdf_lut.png");
 
   eg_gltf_model_asset_t *model_asset =
       eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
-  eg_gltf_model_asset_init(model_asset, "../assets/DamagedHelmet.glb");
+  eg_gltf_model_asset_init(model_asset, "/assets/DamagedHelmet.glb");
 
   eg_world_init(&game.world, environment_asset);
 

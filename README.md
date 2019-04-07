@@ -16,8 +16,7 @@
 - [x] Shader live refresh
 
 ### Filesystem
-- [ ] File system utility functions
-- [ ] Configurable assets path
+- [x] Use PhysicsFS
 
 ### GLTF models
 - [x] Load glTF models
@@ -49,7 +48,6 @@
 - [ ] Multi-threaded asset loading
 
 ### Portability
-- [ ] Windows file watcher
 - [ ] `#define`s for dllexport (windows)
 
 ### Misc

@@ -1,7 +1,10 @@
-thirdparty/glslang
-thirdparty/SPIRV-Cross
-thirdparty/SPIRV-Tools
-thirdparty/SPIRV-Headers
-thirdparty/shaderc
-thirdparty/googletest
-tags
+/thirdparty/glslang
+/thirdparty/SPIRV-Cross
+/thirdparty/SPIRV-Tools
+/thirdparty/SPIRV-Headers
+/thirdparty/shaderc
+/thirdparty/googletest
+/thirdparty/glfw
+/thirdparty/physicsfs
+/assets
+/tags

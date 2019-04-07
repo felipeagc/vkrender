@@ -1,5 +1,6 @@
 #include "gltf_model_asset.h"
 #include "../engine.h"
+#include "../filesystem.h"
 #include <assert.h>
 #include <cgltf.h>
 #include <float.h>
@@ -142,7 +143,11 @@ static void material_init(
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device,
+        ARRAY_SIZE(descriptor_writes),
+        descriptor_writes,
+        0,
+        NULL);
   }
 }
 
@@ -323,7 +328,7 @@ static void load_node(
   if (parent != NULL) {
     new_node->parent = &model->nodes[parent - data->nodes];
   }
-  new_node->name = malloc(strlen(node->name)+1);
+  new_node->name = malloc(strlen(node->name) + 1);
   strcpy(new_node->name, node->name);
   new_node->matrix = mat4_identity();
 
@@ -612,9 +617,18 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
 
   dimensions_init(&model->dimensions);
 
+  eg_file_t *gltf_file = eg_file_open_read(path);
+  assert(gltf_file);
+  size_t gltf_size = eg_file_size(gltf_file);
+  assert(gltf_size > 0);
+  unsigned char *gltf_data = calloc(1, gltf_size);
+  assert(gltf_data);
+  eg_file_read_bytes(gltf_file, gltf_data, gltf_size);
+  eg_file_close(gltf_file);
+
   cgltf_options options = {0};
   cgltf_data *data = NULL;
-  cgltf_result result = cgltf_parse_file(&options, path, &data);
+  cgltf_result result = cgltf_parse(&options, gltf_data, gltf_size, &data);
   assert(result == cgltf_result_success);
 
   result = cgltf_load_buffers(&options, data, path);
@@ -793,6 +807,7 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
   get_scene_dimensions(model);
 
   cgltf_free(data);
+  free(gltf_data);
 
   if (vertices != NULL) {
     free(vertices);

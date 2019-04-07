@@ -1,7 +1,9 @@
 #include "engine.h"
 #include <fstd_util.h>
+#include <physfs.h>
 #include <renderer/context.h>
 #include <renderer/util.h>
+#include <string.h>
 
 eg_engine_t g_eng;
 
@@ -189,7 +191,9 @@ static inline void init_pipeline_layouts() {
     };
 
     create_pipeline_layout(
-        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.billboard);
+        set_layouts,
+        ARRAY_SIZE(set_layouts),
+        &g_eng.pipeline_layouts.billboard);
   }
 
   // Wireframe
@@ -200,7 +204,9 @@ static inline void init_pipeline_layouts() {
     };
 
     create_pipeline_layout(
-        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.wireframe);
+        set_layouts,
+        ARRAY_SIZE(set_layouts),
+        &g_eng.pipeline_layouts.wireframe);
   }
 
   // Skybox
@@ -236,7 +242,9 @@ static inline void destroy_pipeline_layouts() {
       g_ctx.device, g_eng.pipeline_layouts.fullscreen, NULL);
 }
 
-void eg_engine_init() {
+void eg_engine_init(const char *argv0) {
+  PHYSFS_init(argv0);
+
   init_set_layouts();
   init_pipeline_layouts();
 }
@@ -244,4 +252,7 @@ void eg_engine_init() {
 void eg_engine_destroy() {
   destroy_pipeline_layouts();
   destroy_set_layouts();
+
+  PHYSFS_deinit();
 }
+
