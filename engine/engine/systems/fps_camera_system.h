@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 typedef struct re_window_t re_window_t;
-typedef union SDL_Event SDL_Event;
 typedef struct eg_camera_t eg_camera_t;
 
 typedef struct eg_fps_camera_system_t {
@@ -16,25 +15,22 @@ typedef struct eg_fps_camera_system_t {
   float cam_yaw;
   float cam_pitch;
 
-  int prev_mouse_x;
-  int prev_mouse_y;
+  double prev_normal_cursor_x;
+  double prev_normal_cursor_y;
 
-  float sensitivity;
+  double prev_disabled_cursor_x;
+  double prev_disabled_cursor_y;
 
   bool first_frame;
   bool transitioning_fov;
+  bool prev_right_pressed;
+
+  float sensitivity;
 
   float time;
 } eg_fps_camera_system_t;
 
 void eg_fps_camera_system_init(eg_fps_camera_system_t *system);
 
-void eg_fps_camera_system_process_event(
-    eg_fps_camera_system_t *system,
-    re_window_t *window,
-    SDL_Event *event);
-
 void eg_fps_camera_system_update(
-    eg_fps_camera_system_t *system,
-    re_window_t *window,
-    eg_camera_t *camera);
+    eg_fps_camera_system_t *system, re_window_t *window, eg_camera_t *camera);

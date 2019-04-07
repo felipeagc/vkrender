@@ -5,7 +5,6 @@
 #include <cimgui.h>
 
 typedef struct re_window_t re_window_t;
-typedef union SDL_Event SDL_Event;
 
 void re_imgui_init(re_window_t *window);
 
@@ -15,6 +14,15 @@ void re_imgui_end();
 
 void re_imgui_draw(re_window_t *window);
 
-void re_imgui_process_event(SDL_Event *event);
+void re_imgui_mouse_button_callback(
+    re_window_t *window, int button, int action, int mods);
+
+void re_imgui_scroll_callback(
+    re_window_t *window, double xoffset, double yoffset);
+
+void re_imgui_key_callback(
+    re_window_t *window, int key, int scancode, int action, int mods);
+
+void re_imgui_char_callback(re_window_t *window, unsigned int c);
 
 void re_imgui_destroy();

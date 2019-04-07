@@ -4,7 +4,7 @@
 #include "util.h"
 #include "window.h"
 #include <fstd_util.h>
-#include <imgui_impl_sdl.h>
+#include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include <util/log.h>
 
@@ -19,7 +19,7 @@ void re_imgui_init(re_window_t *window) {
   igCreateContext(NULL);
   igGetIO();
 
-  ImGui_ImplSDL2_InitForVulkan(window->sdl_window);
+  ImGui_ImplGlfw_InitForVulkan(window->glfw_window, false);
 
   // Setup Vulkan binding
   ImGui_ImplVulkan_InitInfo init_info = {0};
@@ -75,7 +75,7 @@ void re_imgui_init(re_window_t *window) {
 
 void re_imgui_begin(re_window_t *window) {
   ImGui_ImplVulkan_NewFrame();
-  ImGui_ImplSDL2_NewFrame(window->sdl_window);
+  ImGui_ImplGlfw_NewFrame();
   igNewFrame();
 }
 
@@ -87,14 +87,29 @@ void re_imgui_draw(re_window_t *window) {
   ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), command_buffer);
 }
 
-void re_imgui_process_event(SDL_Event *event) {
-  ImGui_ImplSDL2_ProcessEvent(event);
+void re_imgui_mouse_button_callback(
+    re_window_t *window, int button, int action, int mods) {
+  ImGui_ImplGlfw_MouseButtonCallback(window->glfw_window, button, action, mods);
+}
+
+void re_imgui_scroll_callback(
+    re_window_t *window, double xoffset, double yoffset) {
+  ImGui_ImplGlfw_ScrollCallback(window->glfw_window, xoffset, yoffset);
+}
+
+void re_imgui_key_callback(
+    re_window_t *window, int key, int scancode, int action, int mods) {
+  ImGui_ImplGlfw_KeyCallback(window->glfw_window, key, scancode, action, mods);
+}
+
+void re_imgui_char_callback(re_window_t *window, unsigned int c) {
+  ImGui_ImplGlfw_CharCallback(window->glfw_window, c);
 }
 
 void re_imgui_destroy() {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   ImGui_ImplVulkan_Shutdown();
-  ImGui_ImplSDL2_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
   igDestroyContext(NULL);
 }

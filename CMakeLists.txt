@@ -11,18 +11,22 @@ find_package(Vulkan REQUIRED)
 
 include(FetchContent)
 
-FetchContent_Declare(
-	SDL2
-	URL      https://libsdl.org/release/SDL2-2.0.9.tar.gz
-	URL_HASH MD5=f2ecfba915c54f7200f504d8b48a5dfe)
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
 
-FetchContent_GetProperties(SDL2)
-if(NOT sdl2_POPULATED)
-    FetchContent_Populate(SDL2)
-    add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR})
+FetchContent_Declare(
+	glfw
+	URL      https://github.com/glfw/glfw/releases/download/3.2.1/glfw-3.2.1.zip
+	URL_HASH MD5=824c99eea073bdd6d2fec76b538f79af)
+
+FetchContent_GetProperties(glfw)
+if(NOT glfw_POPULATED)
+    FetchContent_Populate(glfw)
+    add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
 endif()
 
-set(SDL2_LIBRARIES SDL2-static SDL2main)
+set(GLFW_LIBRARIES glfw)
 
 add_subdirectory(thirdparty)
 add_subdirectory(util)

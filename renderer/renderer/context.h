@@ -60,9 +60,7 @@ typedef struct re_context_t {
 
 extern re_context_t g_ctx;
 
-void re_context_init(re_window_t *window);
-
-void re_context_init_graphics(re_window_t *window);
+void re_context_init();
 
 VkSampleCountFlagBits re_context_get_max_sample_count();
 

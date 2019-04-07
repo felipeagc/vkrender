@@ -1,7 +1,6 @@
 #include "fps_camera_system.h"
 #include "../camera.h"
-#include <SDL.h>
-//#include <renderer/imgui.h>
+#include <renderer/imgui.h>
 #include <renderer/window.h>
 #include <util/log.h>
 
@@ -25,8 +24,13 @@ void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
   system->cam_yaw = to_radians(90.0f);
   system->cam_pitch = 0.0f;
 
-  system->prev_mouse_x = 0;
-  system->prev_mouse_y = 0;
+  system->prev_normal_cursor_x = 0;
+  system->prev_normal_cursor_y = 0;
+
+  system->prev_disabled_cursor_x = 0;
+  system->prev_disabled_cursor_y = 0;
+
+  system->prev_right_pressed = false;
 
   system->first_frame = true;
 
@@ -36,45 +40,52 @@ void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
   system->transitioning_fov = true;
 }
 
-void eg_fps_camera_system_process_event(
-    eg_fps_camera_system_t *system,
-    re_window_t *window,
-    SDL_Event *event) {
-  switch (event->type) {
-  case SDL_MOUSEBUTTONDOWN:
-    if (event->button.button == SDL_BUTTON_RIGHT) {
-      re_window_get_mouse_state(
-          window, &system->prev_mouse_x, &system->prev_mouse_y);
-      re_window_set_relative_mouse(window, true);
+void eg_fps_camera_system_update(
+    eg_fps_camera_system_t *system, re_window_t *window, eg_camera_t *camera) {
+  // Camera control toggle
+  {
+    if (system->prev_right_pressed !=
+        re_window_is_mouse_right_pressed(window)) {
+      if (re_window_get_input_mode(window, GLFW_CURSOR) ==
+          GLFW_CURSOR_DISABLED) {
+        re_window_set_input_mode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        re_window_set_cursor_pos(
+            window, system->prev_normal_cursor_x, system->prev_normal_cursor_y);
+      } else {
+        re_window_get_cursor_pos(
+            window,
+            &system->prev_normal_cursor_x,
+            &system->prev_normal_cursor_y);
+        re_window_set_input_mode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      }
     }
-    break;
-  case SDL_MOUSEBUTTONUP:
-    if (event->button.button == SDL_BUTTON_RIGHT) {
-      re_window_set_relative_mouse(window, false);
-      re_window_warp_mouse(window, system->prev_mouse_x, system->prev_mouse_y);
-    }
-    break;
-  case SDL_MOUSEMOTION:
-    if (event->motion.state & SDL_BUTTON_RMASK) {
-      int dx = event->motion.xrel;
-      int dy = event->motion.yrel;
 
-      if (re_window_get_relative_mouse(window)) {
+    system->prev_right_pressed = re_window_is_mouse_right_pressed(window);
+  }
+
+  // Camera mouse controls
+  {
+    double x, y;
+    re_window_get_cursor_pos(window, &x, &y);
+
+    double dx = x - system->prev_disabled_cursor_x;
+    double dy = y - system->prev_disabled_cursor_y;
+
+    system->prev_disabled_cursor_x = x;
+    system->prev_disabled_cursor_y = y;
+
+    if (re_window_is_mouse_right_pressed(window) && !igIsAnyItemActive()) {
+      if (re_window_get_input_mode(window, GLFW_CURSOR) ==
+          GLFW_CURSOR_DISABLED) {
         system->cam_yaw += to_radians((float)dx) * system->sensitivity;
         system->cam_pitch -= to_radians((float)dy) * system->sensitivity;
         system->cam_pitch =
             clamp(system->cam_pitch, to_radians(-89.0f), to_radians(89.0f));
       }
     }
-    break;
   }
-}
 
-void eg_fps_camera_system_update(
-    eg_fps_camera_system_t *system,
-    re_window_t *window,
-    eg_camera_t *camera) {
-  system->time += (float) window->delta_time;
+  system->time += (float)window->delta_time;
 
   if (system->first_frame) {
     system->first_frame = false;
@@ -95,16 +106,16 @@ void eg_fps_camera_system_update(
   float speed = 10.0f * (float)window->delta_time;
   vec3_t movement = vec3_zero();
 
-  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_W)) {
+  if (re_window_is_key_pressed(window, GLFW_KEY_W)) {
     movement = vec3_add(movement, system->cam_front);
   }
-  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_S)) {
+  if (re_window_is_key_pressed(window, GLFW_KEY_S)) {
     movement = vec3_sub(movement, system->cam_front);
   }
-  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_A)) {
+  if (re_window_is_key_pressed(window, GLFW_KEY_A)) {
     movement = vec3_sub(movement, system->cam_right);
   }
-  if (re_window_is_scancode_pressed(window, SDL_SCANCODE_D)) {
+  if (re_window_is_key_pressed(window, GLFW_KEY_D)) {
     movement = vec3_add(movement, system->cam_right);
   }
 

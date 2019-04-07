@@ -1,8 +1,6 @@
 #include "window.h"
 #include "context.h"
 #include "util.h"
-#include <SDL_vulkan.h>
-#include <fstd_time.h>
 #include <fstd_util.h>
 #include <gmath.h>
 #include <util/log.h>
@@ -148,9 +146,9 @@ static inline VkPresentModeKHR get_swapchain_present_mode(
   return (VkPresentModeKHR)-1;
 }
 
-static inline bool create_vulkan_surface(re_window_t *window) {
-  return SDL_Vulkan_CreateSurface(
-      window->sdl_window, g_ctx.instance, &window->surface);
+static inline VkResult create_vulkan_surface(re_window_t *window) {
+  return glfwCreateWindowSurface(
+      g_ctx.instance, window->glfw_window, NULL, &window->surface);
 }
 
 static inline void create_sync_objects(re_window_t *window) {
@@ -470,15 +468,15 @@ static inline void create_render_pass(re_window_t *window) {
   };
 
   VkRenderPassCreateInfo render_pass_create_info = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,    // sType
-      NULL,                                         // pNext
-      0,                                            // flags
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,     // sType
+      NULL,                                          // pNext
+      0,                                             // flags
       (uint32_t)ARRAY_SIZE(attachment_descriptions), // attachmentCount
-      attachment_descriptions,                      // pAttachments
-      1,                                            // subpassCount
-      &subpass_description,                         // pSubpasses
+      attachment_descriptions,                       // pAttachments
+      1,                                             // subpassCount
+      &subpass_description,                          // pSubpasses
       (uint32_t)ARRAY_SIZE(dependencies),            // dependencyCount
-      dependencies,                                 // pDependencies
+      dependencies,                                  // pDependencies
   };
 
   VK_CHECK(vkCreateRenderPass(
@@ -504,7 +502,7 @@ static inline void regen_framebuffer(
       NULL,                                      // pNext
       0,                                         // flags
       window->render_target.render_pass,         // renderPass
-      (uint32_t)ARRAY_SIZE(attachments),          // attachmentCount
+      (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
       attachments,                               // pAttachments
       window->swapchain_extent.width,            // width
       window->swapchain_extent.height,           // height
@@ -551,12 +549,62 @@ static inline void update_size(re_window_t *window) {
   allocate_graphics_command_buffers(window);
 }
 
+void framebuffer_resize_callback(
+    GLFWwindow *glfw_window, int width, int height) {
+  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+
+  update_size(window);
+
+  if (window->framebuffer_resize_callback != NULL) {
+    window->framebuffer_resize_callback(window, width, height);
+  }
+}
+
+void mouse_button_callback(
+    GLFWwindow *glfw_window, int button, int action, int mods) {
+  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+
+  if (window->mouse_button_callback != NULL) {
+    window->mouse_button_callback(window, button, action, mods);
+  }
+}
+
+void scroll_callback(GLFWwindow *glfw_window, double xoffset, double yoffset) {
+  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+
+  if (window->scroll_callback != NULL) {
+    window->scroll_callback(window, xoffset, yoffset);
+  }
+}
+
+void key_callback(
+    GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
+  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+
+  if (window->key_callback != NULL) {
+    window->key_callback(window, key, scancode, action, mods);
+  }
+}
+
+void char_callback(GLFWwindow *glfw_window, unsigned int c) {
+  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+
+  if (window->char_callback != NULL) {
+    window->char_callback(window, c);
+  }
+}
+
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height) {
-  window->should_close = false;
   window->clear_color = (vec4_t){0.0, 0.0, 0.0, 1.0};
   window->delta_time = 0.0f;
-  window->time_before_ns = 0;
+  window->time_before = 0.0f;
+  window->user_ptr = NULL;
+  window->framebuffer_resize_callback = NULL;
+  window->mouse_button_callback = NULL;
+  window->scroll_callback = NULL;
+  window->key_callback = NULL;
+  window->char_callback = NULL;
 
   window->swapchain = VK_NULL_HANDLE;
   window->surface = VK_NULL_HANDLE;
@@ -573,40 +621,23 @@ bool re_window_init(
     window->frame_resources[i].command_buffer = VK_NULL_HANDLE;
   }
 
-  uint32_t subsystems = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER;
-  if (subsystems == SDL_WasInit(0)) {
-    SDL_Init(subsystems);
-  }
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  window->glfw_window = glfwCreateWindow(width, height, title, NULL, NULL);
 
-  window->sdl_window = SDL_CreateWindow(
-      title,
-      SDL_WINDOWPOS_CENTERED,
-      SDL_WINDOWPOS_CENTERED,
-      width,
-      height,
-      SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
+  glfwSetWindowUserPointer(window->glfw_window, window);
 
-  if (window->sdl_window == NULL) {
-    return false;
-  }
+  // Set callbacks
+  glfwSetFramebufferSizeCallback(
+      window->glfw_window, framebuffer_resize_callback);
+  glfwSetMouseButtonCallback(window->glfw_window, mouse_button_callback);
+  glfwSetScrollCallback(window->glfw_window, scroll_callback);
+  glfwSetKeyCallback(window->glfw_window, key_callback);
+  glfwSetCharCallback(window->glfw_window, char_callback);
 
-  SDL_SetWindowResizable(window->sdl_window, SDL_TRUE);
+  assert(window->glfw_window != NULL);
 
-  SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &window->sdl_extension_count, NULL);
-  window->sdl_extensions =
-      malloc(sizeof(*window->sdl_extensions) * window->sdl_extension_count);
-  SDL_Vulkan_GetInstanceExtensions(
-      window->sdl_window, &window->sdl_extension_count, window->sdl_extensions);
+  VK_CHECK(create_vulkan_surface(window));
 
-  return true;
-}
-
-void re_window_init_surface(re_window_t *window) {
-  create_vulkan_surface(window);
-}
-
-bool re_window_init_graphics(re_window_t *window) {
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(
       g_ctx.physical_device,
@@ -621,10 +652,7 @@ bool re_window_init_graphics(re_window_t *window) {
 
   create_sync_objects(window);
 
-  int width, height;
-  SDL_GetWindowSize(window->sdl_window, &width, &height);
-
-  create_swapchain(window, (uint32_t)width, (uint32_t)height);
+  create_swapchain(window, width, height);
   create_swapchain_image_views(window);
 
   allocate_graphics_command_buffers(window);
@@ -639,7 +667,7 @@ bool re_window_init_graphics(re_window_t *window) {
 void re_window_get_size(
     const re_window_t *window, uint32_t *width, uint32_t *height) {
   int iwidth, iheight;
-  SDL_GetWindowSize(window->sdl_window, &iwidth, &iheight);
+  glfwGetWindowSize(window->glfw_window, &iwidth, &iheight);
   *width = (uint32_t)iwidth;
   *height = (uint32_t)iheight;
 }
@@ -671,32 +699,20 @@ void re_window_destroy(re_window_t *window) {
 
   vkDestroySurfaceKHR(g_ctx.instance, window->surface, NULL);
 
-  SDL_DestroyWindow(window->sdl_window);
+  glfwDestroyWindow(window->glfw_window);
 
   free(window->swapchain_images);
   free(window->swapchain_image_views);
-
-  free((void*)window->sdl_extensions);
 }
 
-bool re_window_poll_event(re_window_t *window, SDL_Event *event) {
-  bool result = SDL_PollEvent(event);
+void re_window_poll_events(re_window_t *window) { glfwPollEvents(); }
 
-  switch (event->type) {
-  case SDL_WINDOWEVENT:
-    switch (event->window.event) {
-    case SDL_WINDOWEVENT_RESIZED:
-      update_size(window);
-      break;
-    }
-    break;
-  }
-
-  return result;
+bool re_window_should_close(re_window_t *window) {
+  return glfwWindowShouldClose(window->glfw_window);
 }
 
 void re_window_begin_frame(re_window_t *window) {
-  window->time_before_ns = fstd_time_ns();
+  window->time_before = glfwGetTime();
 
   // Begin
   vkWaitForFences(
@@ -860,9 +876,7 @@ void re_window_end_frame(re_window_t *window) {
 
   window->current_frame = (window->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 
-  uint64_t elapsed_time_ns = fstd_time_ns() - window->time_before_ns;
-
-  window->delta_time = (double)elapsed_time_ns / 1.0e9;
+  window->delta_time = glfwGetTime() - window->time_before;
 }
 
 void re_window_begin_render_pass(re_window_t *window) {
@@ -885,7 +899,7 @@ void re_window_begin_render_pass(re_window_t *window) {
       window->frame_resources[window->current_frame].framebuffer, // framebuffer
       {{0, 0}, window->swapchain_extent},                         // renderArea
       ARRAY_SIZE(clear_values), // clearValueCount
-      clear_values,            // pClearValues
+      clear_values,             // pClearValues
   };
 
   vkCmdBeginRenderPass(
@@ -915,41 +929,34 @@ void re_window_end_render_pass(re_window_t *window) {
   vkCmdEndRenderPass(command_buffer);
 }
 
-bool re_window_get_relative_mouse(const re_window_t *window) {
-  return SDL_GetRelativeMouseMode();
+void re_window_set_input_mode(const re_window_t *window, int mode, int value) {
+  glfwSetInputMode(window->glfw_window, mode, value);
 }
 
-void re_window_set_relative_mouse(re_window_t *window, bool relative) {
-  SDL_SetRelativeMouseMode((SDL_bool)relative);
+int re_window_get_input_mode(const re_window_t *window, int mode) {
+  return glfwGetInputMode(window->glfw_window, mode);
 }
 
-void re_window_get_mouse_state(const re_window_t *window, int *x, int *y) {
-  SDL_GetMouseState(x, y);
+void re_window_get_cursor_pos(const re_window_t *window, double *x, double *y) {
+  glfwGetCursorPos(window->glfw_window, x, y);
 }
 
-void re_window_get_relative_mouse_state(
-    const re_window_t *window, int *x, int *y) {
-  SDL_GetRelativeMouseState(x, y);
-}
-
-void re_window_warp_mouse(re_window_t *window, int x, int y) {
-  SDL_WarpMouseInWindow(window->sdl_window, x, y);
+void re_window_set_cursor_pos(re_window_t *window, double x, double y) {
+  glfwSetCursorPos(window->glfw_window, x, y);
 }
 
 bool re_window_is_mouse_left_pressed(const re_window_t *window) {
-  Uint32 state = SDL_GetMouseState(NULL, NULL);
-  return (state & SDL_BUTTON(SDL_BUTTON_LEFT));
+  return glfwGetMouseButton(window->glfw_window, GLFW_MOUSE_BUTTON_LEFT) ==
+         GLFW_PRESS;
 }
 
 bool re_window_is_mouse_right_pressed(const re_window_t *window) {
-  Uint32 state = SDL_GetMouseState(NULL, NULL);
-  return (state & SDL_BUTTON(SDL_BUTTON_RIGHT));
+  return glfwGetMouseButton(window->glfw_window, GLFW_MOUSE_BUTTON_RIGHT) ==
+         GLFW_PRESS;
 }
 
-bool re_window_is_scancode_pressed(
-    const re_window_t *window, SDL_Scancode scancode) {
-  const Uint8 *state = SDL_GetKeyboardState(NULL);
-  return (bool)state[scancode];
+bool re_window_is_key_pressed(const re_window_t *window, int key) {
+  return glfwGetKey(window->glfw_window, key) == GLFW_PRESS;
 }
 
 VkCommandBuffer

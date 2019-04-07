@@ -86,11 +86,11 @@ static inline bool check_validation_layer_support() {
 }
 
 static inline void get_required_extensions(
-    const char *const *required_window_vulkan_extensions,
-    uint32_t extension_count,
-    const char **out_extensions,
-    uint32_t *out_extension_count) {
-  *out_extension_count = extension_count;
+    const char **out_extensions, uint32_t *out_extension_count) {
+  uint32_t glfw_extension_count;
+  const char **glfw_extensions =
+      glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+  *out_extension_count = glfw_extension_count;
 
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
@@ -102,20 +102,20 @@ static inline void get_required_extensions(
     return;
   }
 
-  for (uint32_t i = 0; i < extension_count; i++) {
-    out_extensions[i] = required_window_vulkan_extensions[i];
+  for (uint32_t i = 0; i < glfw_extension_count; i++) {
+    out_extensions[i] = glfw_extensions[i];
   }
 
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
-    out_extensions[extension_count] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+    out_extensions[glfw_extension_count] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
   }
 #endif
 }
 
 static inline bool check_physical_device_properties(
+    VkInstance instance,
     VkPhysicalDevice physical_device,
-    VkSurfaceKHR surface,
     uint32_t *graphics_queue_family,
     uint32_t *present_queue_family,
     uint32_t *transfer_queue_family) {
@@ -183,10 +183,10 @@ static inline bool check_physical_device_properties(
   vkGetPhysicalDeviceQueueFamilyProperties(
       physical_device, &queue_family_prop_count, queue_family_properties);
 
-  VkBool32 *queue_present_support =
-      (VkBool32 *)malloc(sizeof(VkBool32) * queue_family_prop_count);
   VkBool32 *queue_transfer_support =
-      (VkBool32 *)malloc(sizeof(VkBool32) * queue_family_prop_count);
+      malloc(sizeof(*queue_transfer_support) * queue_family_prop_count);
+  int *queue_present_support =
+      malloc(sizeof(*queue_present_support) * queue_family_prop_count);
 
   uint32_t graphics_queue_family_index = UINT32_MAX;
   uint32_t present_queue_family_index = UINT32_MAX;
@@ -195,8 +195,11 @@ static inline bool check_physical_device_properties(
   // @TODO: figure out better logic to single out a transfer queue
 
   for (uint32_t i = 0; i < queue_family_prop_count; i++) {
-    VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
-        physical_device, i, surface, &queue_present_support[i]));
+    /* VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR( */
+    /*     physical_device, i, surface, &queue_present_support[i])); */
+
+    queue_present_support[i] =
+        glfwGetPhysicalDevicePresentationSupport(instance, physical_device, i);
 
     if (queue_family_properties[i].queueCount > 0 &&
         queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT &&
@@ -261,10 +264,7 @@ static inline bool check_physical_device_properties(
   return true;
 }
 
-static inline void create_instance(
-    re_context_t *ctx,
-    const char *const *required_window_vulkan_extensions,
-    uint32_t window_extension_count) {
+static inline void create_instance(re_context_t *ctx) {
   ut_log_debug("Creating vulkan instance");
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
@@ -303,23 +303,15 @@ static inline void create_instance(
 
   // Set required instance extensions
   uint32_t extension_count = 0;
-  get_required_extensions(
-      required_window_vulkan_extensions,
-      window_extension_count,
-      NULL,
-      &extension_count);
+  get_required_extensions(NULL, &extension_count);
   const char **extensions = malloc(sizeof(*extensions) * extension_count);
-  get_required_extensions(
-      required_window_vulkan_extensions,
-      window_extension_count,
-      extensions,
-      &extension_count);
+  get_required_extensions(extensions, &extension_count);
   createInfo.enabledExtensionCount = extension_count;
   createInfo.ppEnabledExtensionNames = extensions;
 
   VK_CHECK(vkCreateInstance(&createInfo, NULL, &ctx->instance));
 
-  free((void*)extensions);
+  free((void *)extensions);
 }
 
 static inline void setup_debug_callback(re_context_t *ctx) {
@@ -333,7 +325,7 @@ static inline void setup_debug_callback(re_context_t *ctx) {
       ctx->instance, &createInfo, NULL, &ctx->debug_callback));
 }
 
-static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
+static inline void create_device(re_context_t *ctx) {
   uint32_t physical_device_count;
   vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, NULL);
   VkPhysicalDevice *physical_devices = (VkPhysicalDevice *)malloc(
@@ -343,8 +335,8 @@ static inline void create_device(re_context_t *ctx, VkSurfaceKHR surface) {
 
   for (uint32_t i = 0; i < physical_device_count; i++) {
     if (check_physical_device_properties(
+            ctx->instance,
             physical_devices[i],
-            surface,
             &ctx->graphics_queue_family_index,
             &ctx->present_queue_family_index,
             &ctx->transfer_queue_family_index)) {
@@ -483,7 +475,9 @@ static inline void create_thread_command_pools(re_context_t *ctx) {
   }
 }
 
-void re_context_init(re_window_t *window) {
+void re_context_init() {
+  assert(glfwInit());
+
   g_ctx.instance = VK_NULL_HANDLE;
   g_ctx.device = VK_NULL_HANDLE;
   g_ctx.physical_device = VK_NULL_HANDLE;
@@ -508,20 +502,18 @@ void re_context_init(re_window_t *window) {
     g_ctx.thread_command_pools[i] = VK_NULL_HANDLE;
   }
 
-  create_instance(&g_ctx, window->sdl_extensions, window->sdl_extension_count);
+  create_instance(&g_ctx);
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
     setup_debug_callback(&g_ctx);
   }
 #endif
-}
 
-void re_context_init_graphics(re_window_t *window) {
   if (g_ctx.device != VK_NULL_HANDLE) {
     return;
   }
 
-  create_device(&g_ctx, window->surface);
+  create_device(&g_ctx);
 
   get_device_queues(&g_ctx);
 
@@ -549,8 +541,8 @@ void re_context_init_graphics(re_window_t *window) {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,     // sType
       NULL,                                              // pNext
       VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, // flags
-      1000 * (uint32_t)ARRAY_SIZE(pool_sizes),            // maxSets
-      (uint32_t)ARRAY_SIZE(pool_sizes),                   // poolSizeCount
+      1000 * (uint32_t)ARRAY_SIZE(pool_sizes),           // maxSets
+      (uint32_t)ARRAY_SIZE(pool_sizes),                  // poolSizeCount
       pool_sizes,                                        // pPoolSizes
   };
 
@@ -692,5 +684,5 @@ void re_context_destroy() {
 
   mtx_destroy(&g_ctx.queue_mutex);
 
-  SDL_Quit();
+  glfwTerminate();
 }

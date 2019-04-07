@@ -2,11 +2,20 @@
 
 #include "common.h"
 #include "render_target.h"
-#include <SDL.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #include <gmath.h>
 #include <stdbool.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
+
+typedef struct re_window_t re_window_t;
+
+typedef void (*re_framebuffer_resize_callback_t)(re_window_t *, int, int);
+typedef void (*re_mouse_button_callback_t)(re_window_t *, int, int, int);
+typedef void (*re_scroll_callback_t)(re_window_t *, double, double);
+typedef void (*re_key_callback_t)(re_window_t *, int, int, int, int);
+typedef void (*re_char_callback_t)(re_window_t *, unsigned int);
 
 typedef struct re_frame_resources_t {
   VkSemaphore image_available_semaphore;
@@ -22,15 +31,10 @@ typedef struct re_window_t {
   vec4_t clear_color;
 
   re_render_target_t render_target;
-  SDL_Window *sdl_window;
-
-  const char **sdl_extensions;
-  uint32_t sdl_extension_count;
-
-  bool should_close;
+  GLFWwindow *glfw_window;
 
   double delta_time;
-  uint64_t time_before_ns;
+  double time_before;
 
   VkSurfaceKHR surface;
 
@@ -59,19 +63,24 @@ typedef struct re_window_t {
   uint32_t swapchain_image_count;
   VkImage *swapchain_images;
   VkImageView *swapchain_image_views;
+
+  void *user_ptr;
+  re_framebuffer_resize_callback_t framebuffer_resize_callback;
+  re_mouse_button_callback_t mouse_button_callback;
+  re_scroll_callback_t scroll_callback;
+  re_key_callback_t key_callback;
+  re_char_callback_t char_callback;
 } re_window_t;
 
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height);
 
-void re_window_init_surface(re_window_t *window);
-
-bool re_window_init_graphics(re_window_t *window);
-
 void re_window_get_size(
     const re_window_t *window, uint32_t *width, uint32_t *height);
 
-bool re_window_poll_event(re_window_t *window, SDL_Event *event);
+void re_window_poll_events(re_window_t *window);
+
+bool re_window_should_close(re_window_t *window);
 
 void re_window_begin_frame(re_window_t *window);
 void re_window_end_frame(re_window_t *window);
@@ -79,20 +88,16 @@ void re_window_end_frame(re_window_t *window);
 void re_window_begin_render_pass(re_window_t *window);
 void re_window_end_render_pass(re_window_t *window);
 
-bool re_window_get_relative_mouse(const re_window_t *window);
-void re_window_set_relative_mouse(re_window_t *window, bool relative);
+void re_window_set_input_mode(const re_window_t *window, int mode, int value);
+int re_window_get_input_mode(const re_window_t *window, int mode);
 
-void re_window_get_mouse_state(const re_window_t *window, int *x, int *y);
-void re_window_get_relative_mouse_state(
-    const re_window_t *window, int *x, int *y);
-
-void re_window_warp_mouse(re_window_t *window, int x, int y);
+void re_window_get_cursor_pos(const re_window_t *window, double *x, double *y);
+void re_window_set_cursor_pos(re_window_t *window, double x, double y);
 
 bool re_window_is_mouse_left_pressed(const re_window_t *window);
 bool re_window_is_mouse_right_pressed(const re_window_t *window);
 
-bool re_window_is_scancode_pressed(
-    const re_window_t *window, SDL_Scancode scancode);
+bool re_window_is_key_pressed(const re_window_t *window, int key);
 
 VkCommandBuffer re_window_get_current_command_buffer(const re_window_t *window);
 

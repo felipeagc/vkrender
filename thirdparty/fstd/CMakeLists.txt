@@ -3,7 +3,6 @@ add_library(
 	fstd.c
 	fstd_alloc.h
 	fstd_bitset.h
-	fstd_time.h
 	fstd_util.h)
 
 target_include_directories(
