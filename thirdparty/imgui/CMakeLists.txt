@@ -21,7 +21,7 @@ target_link_libraries(
 	imgui
 	PUBLIC
 	${Vulkan_LIBRARIES} 
-	${GLFW_LIBRARIES})
+	glfw)
 
 target_include_directories(
 	imgui

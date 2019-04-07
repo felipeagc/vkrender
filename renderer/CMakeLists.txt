@@ -42,7 +42,7 @@ target_link_libraries(
 	renderer
 	PUBLIC
 	${Vulkan_LIBRARIES}
-	${GLFW_LIBRARIES}
+	glfw
 	imgui
 	fstd
 	util
