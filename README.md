@@ -1,5 +1,7 @@
 # VKRender
 
+[![Build status](https://ci.appveyor.com/api/projects/status/iu63edk658bwjxms?svg=true)](https://ci.appveyor.com/project/felipeagc/vkrender)
+
 ![](https://user-images.githubusercontent.com/17355488/55602406-c74e5f80-573b-11e9-83c4-772f1abc79d6.png)
 
 ## TODO
