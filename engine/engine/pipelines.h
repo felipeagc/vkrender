@@ -3,6 +3,7 @@
 #include "filesystem.h"
 #include <renderer/pipeline.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 static inline bool eg_init_pipeline_spv(
     re_pipeline_t *pipeline,

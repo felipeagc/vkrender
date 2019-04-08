@@ -92,7 +92,7 @@ void eg_environment_asset_init(
     int width, height, channels;
     unsigned char *brdf_lut_data = stbi_load_from_memory(
         brdf_lut_raw_data,
-        brdf_lut_raw_data_size,
+        (int)brdf_lut_raw_data_size,
         &width,
         &height,
         &channels,

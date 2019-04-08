@@ -19,8 +19,6 @@ if(WIN32 AND NOT WINDOWS)
     set(WINDOWS TRUE)
 endif()
 
-include_directories(./src)
-
 if(APPLE)
     set(OTHER_LDFLAGS ${OTHER_LDFLAGS} "-framework IOKit -framework Foundation")
     set(PHYSFS_M_SRCS src/physfs_platform_apple.m)
@@ -139,6 +137,7 @@ endif()
 option(PHYSFS_BUILD_STATIC "Build static library" TRUE)
 if(PHYSFS_BUILD_STATIC)
     add_library(physfs-static STATIC ${PHYSFS_SRCS})
+    target_include_directories(physfs-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
     # Don't rename this on Windows, since DLLs will also produce an import
     #  library named "physfs.lib" which would conflict; Unix tend to like the
     #  same library name with a different extension for static libs, but
@@ -159,6 +158,7 @@ endif()
 option(PHYSFS_BUILD_SHARED "Build shared library" TRUE)
 if(PHYSFS_BUILD_SHARED)
     add_library(physfs SHARED ${PHYSFS_SRCS})
+    target_include_directories(physfs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
     set_target_properties(physfs PROPERTIES MACOSX_RPATH 1)
     set_target_properties(physfs PROPERTIES VERSION ${PHYSFS_VERSION})
     set_target_properties(physfs PROPERTIES SOVERSION ${PHYSFS_SOVERSION})

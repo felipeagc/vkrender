@@ -16,6 +16,10 @@
 #include <renderer/renderer.h>
 #include <util/log.h>
 
+#ifdef _MSC_VER
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#endif
+
 typedef struct game_t {
   re_window_t window;
 
