@@ -529,7 +529,7 @@ static inline void destroy_resizables(re_window_t *window) {
         g_ctx.gpu_allocator,
         window->depth_stencil.image,
         window->depth_stencil.allocation);
-    window->depth_stencil.image = NULL;
+    window->depth_stencil.image = VK_NULL_HANDLE;
     window->depth_stencil.allocation = VK_NULL_HANDLE;
   }
 

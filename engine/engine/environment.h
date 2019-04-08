@@ -3,21 +3,13 @@
 #include <gmath.h>
 #include <renderer/buffer.h>
 #include <renderer/common.h>
+#include <fstd_util.h>
 
 #define EG_MAX_POINT_LIGHTS 20
 
 typedef struct re_window_t re_window_t;
 typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_environment_asset_t eg_environment_asset_t;
-
-// TODO: maybe we can get away with alignas on windows
-#if defined(_MSC_VER)
-#define ALIGNAS(x) __declspec(align(x))
-#elif defined(__clang__)
-#define ALIGNAS(x) __attribute__((aligned(x)))
-#elif defined(__GNUC__)
-#define ALIGNAS(x) __attribute__((aligned(x)))
-#endif
 
 typedef struct eg_point_light_t {
   vec4_t pos;
