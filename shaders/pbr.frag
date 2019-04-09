@@ -166,7 +166,6 @@ void main() {
 
   vec3 color = (ambient + Lo) * occlusion.r;
 
-
   // HDR tonemapping
   color = vec3(1.0) - exp(-color * environment.exposure);
 

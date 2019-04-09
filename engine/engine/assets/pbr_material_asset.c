@@ -19,7 +19,7 @@ void eg_pbr_material_asset_init(
   material->uniform.base_color_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.metallic = 1.0;
   material->uniform.roughness = 1.0;
-  material->uniform.emissive_factor = (vec4_t){0.0, 0.0, 0.0, 0.0};
+  material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
 
   if (albedo_texture == NULL) {

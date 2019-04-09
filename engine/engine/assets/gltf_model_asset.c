@@ -30,7 +30,7 @@ static void material_init(
   material->uniform.base_color_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.metallic = 1.0;
   material->uniform.roughness = 1.0;
-  material->uniform.emissive_factor = (vec4_t){0.0, 0.0, 0.0, 0.0};
+  material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
 
   if (albedo_texture == NULL) {
@@ -328,8 +328,10 @@ static void load_node(
   if (parent != NULL) {
     new_node->parent = &model->nodes[parent - data->nodes];
   }
-  new_node->name = malloc(strlen(node->name) + 1);
-  strcpy(new_node->name, node->name);
+  if (node->name) {
+    new_node->name = malloc(strlen(node->name) + 1);
+    strcpy(new_node->name, node->name);
+  }
   new_node->matrix = mat4_identity();
 
   if (node->has_translation) {
@@ -597,7 +599,7 @@ static void get_scene_dimensions(eg_gltf_model_asset_t *model) {
       vec3_distance(model->dimensions.min, model->dimensions.max) / 2.0f;
 }
 
-void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
+void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path, bool flip_uvs) {
   eg_asset_init_named(&model->asset, EG_GLTF_MODEL_ASSET_TYPE, path);
 
   model->vertex_buffer = (re_buffer_t){0};
@@ -738,8 +740,6 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path) {
   uint32_t vertex_count = 0;
   uint32_t *indices = NULL;
   uint32_t index_count = 0;
-
-  bool flip_uvs = true;
 
   for (size_t i = 0; i < data->scene->nodes_count; i++) {
     load_node(

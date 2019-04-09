@@ -78,6 +78,7 @@ typedef struct eg_gltf_model_asset_t {
   eg_gltf_model_asset_dimensions_t dimensions;
 } eg_gltf_model_asset_t;
 
-void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path);
+void eg_gltf_model_asset_init(
+    eg_gltf_model_asset_t *model, const char *path, bool flip_uvs);
 
 void eg_gltf_model_asset_destroy(eg_gltf_model_asset_t *model);
