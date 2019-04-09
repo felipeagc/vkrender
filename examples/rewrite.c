@@ -50,80 +50,111 @@ void game_char_callback(re_window_t *window, unsigned int c) {
   re_imgui_char_callback(window, c);
 }
 
-int main(int argc, const char *argv[]) {
-  game_t game;
-
+void game_init(game_t *game, int argc, const char *argv[]) {
   re_context_init();
-  re_window_init(&game.window, "Re-write", 1600, 900);
-  re_imgui_init(&game.window);
+  re_window_init(&game->window, "Re-write", 1600, 900);
+  re_imgui_init(&game->window);
   eg_engine_init(argv[0]);
   assert(eg_mount("./assets", "/assets"));
   assert(eg_mount("./shaders/out", "/shaders"));
 
-  game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  game.window.user_ptr = &game;
-  game.window.mouse_button_callback = game_mouse_button_callback;
-  game.window.scroll_callback = game_scroll_callback;
-  game.window.key_callback = game_key_callback;
-  game.window.char_callback = game_char_callback;
+  game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  game->window.user_ptr = &game;
+  game->window.mouse_button_callback = game_mouse_button_callback;
+  game->window.scroll_callback = game_scroll_callback;
+  game->window.key_callback = game_key_callback;
+  game->window.char_callback = game_char_callback;
 
   eg_init_pipeline_spv(
-      &game.pbr_pipeline,
-      &game.window.render_target,
+      &game->pbr_pipeline,
+      &game->window.render_target,
       "/shaders/pbr.vert.spv",
       "/shaders/pbr.frag.spv",
       eg_pbr_pipeline_parameters());
 
   eg_init_pipeline_spv(
-      &game.skybox_pipeline,
-      &game.window.render_target,
+      &game->skybox_pipeline,
+      &game->window.render_target,
       "/shaders/skybox.vert.spv",
       "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
 
-  eg_asset_manager_init(&game.asset_manager);
+  eg_asset_manager_init(&game->asset_manager);
 
   eg_environment_asset_t *environment_asset =
-      eg_asset_alloc(&game.asset_manager, eg_environment_asset_t);
+      eg_asset_alloc(&game->asset_manager, eg_environment_asset_t);
   eg_environment_asset_init(
       environment_asset, "/assets/ice_lake.env", "/assets/brdf_lut.png");
 
-  eg_gltf_model_asset_t *model_asset =
-      eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
-  eg_gltf_model_asset_init(model_asset, "/assets/DamagedHelmet.glb");
+  eg_world_init(&game->world, environment_asset);
 
-  eg_world_init(&game.world, environment_asset);
+  eg_fps_camera_system_init(&game->fps_system);
+}
 
-  eg_fps_camera_system_init(&game.fps_system);
+void game_destroy(game_t *game) {
+  eg_world_destroy(&game->world);
+  eg_asset_manager_destroy(&game->asset_manager);
 
-  re_vertex_t vertices[] = {
-      {{-1, -1, 0}, {0, 0, 1}, {0, 0}},
-      {{1, -1, 0}, {0, 0, 1}, {1, 0}},
-      {{1, 1, 0}, {0, 0, 1}, {1, 1}},
-      {{-1, 1, 0}, {0, 0, 1}, {0, 1}},
-  };
+  re_pipeline_destroy(&game->pbr_pipeline);
+  re_pipeline_destroy(&game->skybox_pipeline);
 
-  uint32_t indices[] = {0, 1, 2, 2, 3, 0};
+  eg_engine_destroy();
 
-  eg_mesh_asset_t *mesh_asset =
-      eg_asset_alloc(&game.asset_manager, eg_mesh_asset_t);
-  eg_mesh_asset_init(
-      mesh_asset, vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
+  re_imgui_destroy();
+  re_window_destroy(&game->window);
+  re_context_destroy();
+}
 
-  eg_pbr_material_asset_t *material =
-      eg_asset_alloc(&game.asset_manager, eg_pbr_material_asset_t);
-  eg_pbr_material_asset_init(material, NULL, NULL, NULL, NULL, NULL);
+int main(int argc, const char *argv[]) {
+  game_t game;
+  game_init(&game, argc, argv);
 
   {
+    eg_gltf_model_asset_t *model_asset =
+        eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
+    eg_gltf_model_asset_init(model_asset, "/assets/DamagedHelmet.glb", true);
+
     eg_entity_t ent = eg_world_add_entity(&game.world);
 
     eg_transform_component_t *transform_comp =
         eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
     eg_transform_component_init(transform_comp);
 
-    /* eg_mesh_component_t *mesh_comp = */
-    /*     eg_world_add_comp(&world, ent, EG_MESH_COMPONENT_TYPE); */
-    /* eg_mesh_component_init(mesh_comp, mesh_asset, material); */
+    eg_gltf_model_component_t *model_comp =
+        eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
+    eg_gltf_model_component_init(model_comp, model_asset);
+  }
+
+  {
+    eg_gltf_model_asset_t *model_asset =
+        eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
+    eg_gltf_model_asset_init(model_asset, "/assets/WaterBottle.glb", false);
+
+    eg_entity_t ent = eg_world_add_entity(&game.world);
+
+    eg_transform_component_t *transform_comp =
+        eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+    eg_transform_component_init(transform_comp);
+    transform_comp->position = (vec3_t){2.0, 0.0, 0.0};
+    transform_comp->scale= (vec3_t){10.0, 10.0, 10.0};
+
+    eg_gltf_model_component_t *model_comp =
+        eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
+    eg_gltf_model_component_init(model_comp, model_asset);
+  }
+
+  {
+    eg_gltf_model_asset_t *model_asset =
+        eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
+    eg_gltf_model_asset_init(model_asset, "/assets/BoomBox.glb", false);
+
+    eg_entity_t ent = eg_world_add_entity(&game.world);
+
+    eg_transform_component_t *transform_comp =
+        eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+    eg_transform_component_init(transform_comp);
+    transform_comp->position = (vec3_t){-2.0, 0.0, 0.0};
+    transform_comp->scale= (vec3_t){100.0, 100.0, 100.0};
 
     eg_gltf_model_component_t *model_comp =
         eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
@@ -195,17 +226,7 @@ int main(int argc, const char *argv[]) {
     re_window_end_frame(&game.window);
   }
 
-  eg_world_destroy(&game.world);
-  eg_asset_manager_destroy(&game.asset_manager);
-
-  re_pipeline_destroy(&game.pbr_pipeline);
-  re_pipeline_destroy(&game.skybox_pipeline);
-
-  eg_engine_destroy();
-
-  re_imgui_destroy();
-  re_window_destroy(&game.window);
-  re_context_destroy();
+  game_destroy(&game);
 
   return 0;
 }
