@@ -169,7 +169,7 @@ int main(int argc, const char *argv[]) {
 
     re_imgui_begin(&game.window);
 
-    eg_draw_inspector(&game.world, &game.asset_manager);
+    eg_draw_inspector(&game.window, &game.world, &game.asset_manager);
 
     re_imgui_end();
 
