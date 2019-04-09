@@ -737,9 +737,9 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path, bo
   model->meshes = calloc(model->mesh_count, sizeof(*model->meshes));
 
   re_vertex_t *vertices = NULL;
-  uint32_t vertex_count = 0;
+  model->vertex_count = 0;
   uint32_t *indices = NULL;
-  uint32_t index_count = 0;
+  model->index_count = 0;
 
   for (size_t i = 0; i < data->scene->nodes_count; i++) {
     load_node(
@@ -748,9 +748,9 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path, bo
         data->scene->nodes[i],
         data,
         &vertices,
-        &vertex_count,
+        &model->vertex_count,
         &indices,
-        &index_count,
+        &model->index_count,
         flip_uvs);
   }
 
@@ -761,8 +761,8 @@ void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path, bo
   }
 
   // Vertex and index buffers
-  size_t vertex_buffer_size = vertex_count * sizeof(re_vertex_t);
-  size_t index_buffer_size = index_count * sizeof(uint32_t);
+  size_t vertex_buffer_size = model->vertex_count * sizeof(re_vertex_t);
+  size_t index_buffer_size = model->index_count * sizeof(uint32_t);
 
   assert((vertex_buffer_size > 0) && (index_buffer_size > 0));
 

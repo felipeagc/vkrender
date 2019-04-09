@@ -148,7 +148,8 @@ void eg_draw_inspector(
           eg_asset_t *asset = asset_manager->assets[i];
           igPushIDInt(i);
 
-          if (asset->type == EG_ENVIRONMENT_ASSET_TYPE) {
+          switch (asset->type) {
+          case EG_ENVIRONMENT_ASSET_TYPE: {
             snprintf(
                 header_title,
                 sizeof(header_title),
@@ -156,9 +157,9 @@ void eg_draw_inspector(
                 asset->name);
             if (igCollapsingHeader(header_title, 0)) {
             }
+            break;
           }
-
-          if (asset->type == EG_PBR_MATERIAL_ASSET_TYPE) {
+          case EG_PBR_MATERIAL_ASSET_TYPE: {
             eg_pbr_material_asset_t *material =
                 (eg_pbr_material_asset_t *)asset;
 
@@ -188,12 +189,12 @@ void eg_draw_inspector(
               igColorEdit4(
                   "Emissive factor", &material->uniform.emissive_factor.x, 0);
             }
+            break;
           }
-
-          if (asset->type == EG_MESH_ASSET_TYPE) {
+          case EG_MESH_ASSET_TYPE: {
+            break;
           }
-
-          if (asset->type == EG_GLTF_MODEL_ASSET_TYPE) {
+          case EG_GLTF_MODEL_ASSET_TYPE: {
             snprintf(
                 header_title,
                 sizeof(header_title),
@@ -202,6 +203,11 @@ void eg_draw_inspector(
             if (igCollapsingHeader(header_title, 0)) {
               eg_gltf_model_asset_t *gltf_asset =
                   (eg_gltf_model_asset_t *)asset;
+
+              igText("Vertex count: %u", gltf_asset->vertex_count);
+              igText("Index count: %u", gltf_asset->index_count);
+              igText("Image count: %u", gltf_asset->image_count);
+              igText("Mesh count: %u", gltf_asset->mesh_count);
 
               for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
                 igPushIDInt(j);
@@ -237,6 +243,10 @@ void eg_draw_inspector(
                 igPopID();
               }
             }
+            break;
+          }
+          default:
+            break;
           }
 
           igPopID();

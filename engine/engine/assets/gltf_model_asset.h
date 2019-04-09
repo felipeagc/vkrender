@@ -61,6 +61,7 @@ typedef struct eg_gltf_model_asset_t {
 
   re_buffer_t vertex_buffer;
   re_buffer_t index_buffer;
+  uint32_t vertex_count;
   uint32_t index_count;
 
   re_image_t *images;
