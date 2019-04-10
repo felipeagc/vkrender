@@ -14,7 +14,6 @@
 #include <engine/world.h>
 #include <fstd_util.h>
 #include <renderer/renderer.h>
-#include <util/log.h>
 
 #ifdef _MSC_VER
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
@@ -136,7 +135,7 @@ int main(int argc, const char *argv[]) {
         eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
     eg_transform_component_init(transform_comp);
     transform_comp->position = (vec3_t){2.0, 0.0, 0.0};
-    transform_comp->scale= (vec3_t){10.0, 10.0, 10.0};
+    transform_comp->scale = (vec3_t){10.0, 10.0, 10.0};
 
     eg_gltf_model_component_t *model_comp =
         eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
@@ -154,7 +153,7 @@ int main(int argc, const char *argv[]) {
         eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
     eg_transform_component_init(transform_comp);
     transform_comp->position = (vec3_t){-2.0, 0.0, 0.0};
-    transform_comp->scale= (vec3_t){100.0, 100.0, 100.0};
+    transform_comp->scale = (vec3_t){100.0, 100.0, 100.0};
 
     eg_gltf_model_component_t *model_comp =
         eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);

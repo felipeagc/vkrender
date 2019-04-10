@@ -3,7 +3,6 @@
 #include "util.h"
 #include <fstd_util.h>
 #include <gmath.h>
-#include <util/log.h>
 
 static inline uint32_t
 get_swapchain_num_images(VkSurfaceCapabilitiesKHR *surface_capabilities) {
@@ -69,11 +68,11 @@ get_swapchain_usage_flags(VkSurfaceCapabilitiesKHR *surface_capabilities) {
            VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
 
-  ut_log_fatal(
+  RE_LOG_FATAL(
       "VK_IMAGE_USAGE_TRANSFER_DST image usage is not supported by the "
       "swapchain!\n"
       "Supported swapchain image usages include:\n"
-      "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n",
+      "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
       (surface_capabilities->supportedUsageFlags &
                VK_IMAGE_USAGE_TRANSFER_SRC_BIT
            ? "    VK_IMAGE_USAGE_TRANSFER_SRC\n"
@@ -122,26 +121,26 @@ static inline VkPresentModeKHR get_swapchain_present_mode(
     VkPresentModeKHR *present_modes, uint32_t present_mode_count) {
   for (uint32_t i = 0; i < present_mode_count; i++) {
     if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-      ut_log_debug("Recreating swapchain using immediate present mode");
+      RE_LOG_DEBUG("Recreating swapchain using immediate present mode");
       return present_modes[i];
     }
   }
 
   for (uint32_t i = 0; i < present_mode_count; i++) {
     if (present_modes[i] == VK_PRESENT_MODE_FIFO_KHR) {
-      ut_log_debug("Recreating swapchain using FIFO present mode");
+      RE_LOG_DEBUG("Recreating swapchain using FIFO present mode");
       return present_modes[i];
     }
   }
 
   for (uint32_t i = 0; i < present_mode_count; i++) {
     if (present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-      ut_log_debug("Recreating swapchain using mailbox present mode");
+      RE_LOG_DEBUG("Recreating swapchain using mailbox present mode");
       return present_modes[i];
     }
   }
 
-  ut_log_fatal("FIFO present mode is not supported by the swapchain!");
+  RE_LOG_FATAL("FIFO present mode is not supported by the swapchain!");
 
   return (VkPresentModeKHR)-1;
 }

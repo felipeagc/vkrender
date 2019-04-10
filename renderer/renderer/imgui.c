@@ -6,11 +6,10 @@
 #include <fstd_util.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-#include <util/log.h>
 
 static void check_vk_result_fn(VkResult result) {
   if (result != VK_SUCCESS) {
-    ut_log_fatal("Failed to initialize IMGUI!");
+    RE_LOG_FATAL("Failed to initialize IMGUI!");
     abort();
   }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <stdio.h>
 #include <vulkan/vulkan.h>
 
 #define VK_CHECK(exp)                                                          \
@@ -8,6 +9,23 @@
     VkResult result = exp;                                                     \
     assert(result == VK_SUCCESS);                                              \
   } while (0)
+
+#define _RE_LOG_INTERNAL(prefix, ...)                                           \
+  do {                                                                         \
+    printf(prefix __VA_ARGS__);                                                \
+    puts("");                                                                  \
+  } while (0);
+
+#ifndef NDEBUG
+#define RE_LOG_DEBUG(...) _RE_LOG_INTERNAL("[Renderer-debug] ", __VA_ARGS__);
+#else
+#define RE_LOG_DEBUG(...)
+#endif
+
+#define RE_LOG_INFO(...) _RE_LOG_INTERNAL("[Renderer-info] ", __VA_ARGS__);
+#define RE_LOG_WARN(...) _RE_LOG_INTERNAL("[Renderer-warn] ", __VA_ARGS__);
+#define RE_LOG_ERROR(...) _RE_LOG_INTERNAL("[Renderer-error] ", __VA_ARGS__);
+#define RE_LOG_FATAL(...) _RE_LOG_INTERNAL("[Renderer-fatal] ", __VA_ARGS__);
 
 void re_set_image_layout(
     VkCommandBuffer command_buffer,

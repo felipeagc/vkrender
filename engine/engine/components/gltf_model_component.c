@@ -7,7 +7,6 @@
 #include <renderer/util.h>
 #include <renderer/window.h>
 #include <string.h>
-#include <util/log.h>
 
 static void draw_node(
     eg_gltf_model_component_t *model,

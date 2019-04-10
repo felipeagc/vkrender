@@ -10,7 +10,6 @@ endif()
 find_package(Vulkan REQUIRED)
 
 add_subdirectory(thirdparty)
-add_subdirectory(util)
 add_subdirectory(renderer)
 add_subdirectory(engine)
 add_subdirectory(examples)

@@ -10,7 +10,7 @@
 #include <renderer/util.h>
 #include <stb_image.h>
 #include <stdlib.h>
-#include <util/log.h>
+#include <string.h>
 
 static void dimensions_init(eg_gltf_model_asset_dimensions_t *dimensions) {
   dimensions->min = (vec3_t){FLT_MAX, FLT_MAX, FLT_MAX};
@@ -599,7 +599,8 @@ static void get_scene_dimensions(eg_gltf_model_asset_t *model) {
       vec3_distance(model->dimensions.min, model->dimensions.max) / 2.0f;
 }
 
-void eg_gltf_model_asset_init(eg_gltf_model_asset_t *model, const char *path, bool flip_uvs) {
+void eg_gltf_model_asset_init(
+    eg_gltf_model_asset_t *model, const char *path, bool flip_uvs) {
   eg_asset_init_named(&model->asset, EG_GLTF_MODEL_ASSET_TYPE, path);
 
   model->vertex_buffer = (re_buffer_t){0};

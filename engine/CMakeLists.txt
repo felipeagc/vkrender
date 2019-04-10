@@ -3,6 +3,7 @@ add_library(
 
 	engine/engine.c
 	engine/engine.h
+	engine/util.h
 	engine/world.c
 	engine/world.h
 	engine/asset_manager.c

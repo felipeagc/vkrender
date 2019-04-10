@@ -3,7 +3,6 @@
 #include "components/transform_component.h"
 #include "components/gltf_model_component.h"
 #include <string.h>
-#include <util/log.h>
 
 static inline void eg_init_comps(eg_world_t *world, eg_component_type_t comp) {
   world->components[comp] =

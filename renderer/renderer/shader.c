@@ -3,7 +3,6 @@
 #include "util.h"
 #include <stdio.h>
 #include <string.h>
-#include <util/log.h>
 
 static inline VkShaderModule
 create_shader_module(const uint32_t *code, size_t code_size) {

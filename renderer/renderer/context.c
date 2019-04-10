@@ -2,7 +2,7 @@
 #include "util.h"
 #include "window.h"
 #include <fstd_util.h>
-#include <util/log.h>
+#include <string.h>
 
 re_context_t g_ctx;
 
@@ -22,7 +22,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     const char *layerPrefix,
     const char *msg,
     void *userData) {
-  ut_log_error("Validation layer: %s", msg);
+  RE_LOG_ERROR("Validation layer: %s", msg);
 
   return VK_FALSE;
 }
@@ -141,8 +141,8 @@ static inline bool check_physical_device_properties(
     }
 
     if (!found) {
-      ut_log_warn(
-          "Physical device {} doesn't support extension named \"{}\"",
+      RE_LOG_WARN(
+          "Physical device %s doesn't support extension named \"%s\"",
           device_properties.deviceName,
           required_extension);
       free(available_extensions);
@@ -158,8 +158,8 @@ static inline bool check_physical_device_properties(
 
   if (major_version < 1 &&
       device_properties.limits.maxImageDimension2D < 4096) {
-    ut_log_warn(
-        "Physical device {} doesn't support required parameters!",
+    RE_LOG_WARN(
+        "Physical device %s doesn't support required parameters!",
         device_properties.deviceName);
     return false;
   }
@@ -168,8 +168,8 @@ static inline bool check_physical_device_properties(
   VkPhysicalDeviceFeatures features = {0};
   vkGetPhysicalDeviceFeatures(physical_device, &features);
   if (!features.wideLines) {
-    ut_log_warn(
-        "Physical device {} doesn't support required features!",
+    RE_LOG_WARN(
+        "Physical device %s doesn't support required features!",
         device_properties.deviceName);
     return false;
   }
@@ -242,9 +242,9 @@ static inline bool check_physical_device_properties(
   if (graphics_queue_family_index == UINT32_MAX ||
       present_queue_family_index == UINT32_MAX ||
       transfer_queue_family_index == UINT32_MAX) {
-    ut_log_warn(
+    RE_LOG_WARN(
         "Could not find queue family with requested properties on physical "
-        "device {}",
+        "device %s",
         device_properties.deviceName);
 
     free(queue_family_properties);
@@ -265,15 +265,15 @@ static inline bool check_physical_device_properties(
 }
 
 static inline void create_instance(re_context_t *ctx) {
-  ut_log_debug("Creating vulkan instance");
+  RE_LOG_DEBUG("Creating vulkan instance");
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
-    ut_log_debug("Using validation layers");
+    RE_LOG_DEBUG("Using validation layers");
   } else {
-    ut_log_debug("Validation layers requested but not available");
+    RE_LOG_DEBUG("Validation layers requested but not available");
   }
 #else
-  ut_log_debug("Not using validation layers");
+  RE_LOG_DEBUG("Not using validation layers");
 #endif
 
   VkApplicationInfo appInfo = {0};
@@ -348,14 +348,14 @@ static inline void create_device(re_context_t *ctx) {
   free(physical_devices);
 
   if (!ctx->physical_device) {
-    ut_log_fatal("Could not select physical device based on chosen properties");
+    RE_LOG_FATAL("Could not select physical device based on chosen properties");
     abort();
   }
 
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(ctx->physical_device, &properties);
 
-  ut_log_debug("Using physical device: %s", properties.deviceName);
+  RE_LOG_DEBUG("Using physical device: %s", properties.deviceName);
 
   uint32_t queue_create_info_count = 0;
   VkDeviceQueueCreateInfo queue_create_infos[3] = {0};
@@ -603,31 +603,31 @@ VkSampleCountFlagBits re_context_get_max_sample_count() {
       color_samples < depth_samples ? color_samples : depth_samples;
 
   if (counts & VK_SAMPLE_COUNT_64_BIT) {
-    ut_log_debug("Max samples: %d", 64);
+    RE_LOG_DEBUG("Max samples: %d", 64);
     return VK_SAMPLE_COUNT_64_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_32_BIT) {
-    ut_log_debug("Max samples: %d", 32);
+    RE_LOG_DEBUG("Max samples: %d", 32);
     return VK_SAMPLE_COUNT_32_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_16_BIT) {
-    ut_log_debug("Max samples: %d", 16);
+    RE_LOG_DEBUG("Max samples: %d", 16);
     return VK_SAMPLE_COUNT_16_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_8_BIT) {
-    ut_log_debug("Max samples: %d", 8);
+    RE_LOG_DEBUG("Max samples: %d", 8);
     return VK_SAMPLE_COUNT_8_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_4_BIT) {
-    ut_log_debug("Max samples: %d", 4);
+    RE_LOG_DEBUG("Max samples: %d", 4);
     return VK_SAMPLE_COUNT_4_BIT;
   }
   if (counts & VK_SAMPLE_COUNT_2_BIT) {
-    ut_log_debug("Max samples: %d", 2);
+    RE_LOG_DEBUG("Max samples: %d", 2);
     return VK_SAMPLE_COUNT_2_BIT;
   }
 
-  ut_log_debug("Max samples: %d", 1);
+  RE_LOG_DEBUG("Max samples: %d", 1);
 
   return VK_SAMPLE_COUNT_1_BIT;
 }
@@ -654,7 +654,7 @@ bool re_context_get_supported_depth_format(VkFormat *depth_format) {
 }
 
 void re_context_destroy() {
-  ut_log_debug("Vulkan context shutting down...");
+  RE_LOG_DEBUG("Vulkan context shutting down...");
 
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

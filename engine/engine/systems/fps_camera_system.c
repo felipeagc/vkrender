@@ -2,7 +2,6 @@
 #include "../camera.h"
 #include <renderer/imgui.h>
 #include <renderer/window.h>
-#include <util/log.h>
 
 #define INITIAL_FOV to_radians(160)
 #define GOAL_FOV to_radians(70)

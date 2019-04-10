@@ -22,7 +22,7 @@
 
 ### GLTF models
 - [x] Load glTF models
-- [ ] Figure out UV flipping of GltfModels
+- [x] Figure out UV flipping of GltfModels
 - [ ] Animation
 - [ ] Alpha blending
 
