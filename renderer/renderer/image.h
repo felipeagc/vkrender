@@ -3,16 +3,6 @@
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-typedef enum re_format_t {
-  RE_FORMAT_UNDEFINED,
-
-  RE_FORMAT_R8G8B8_UNORM,
-  RE_FORMAT_R8G8B8A8_UNORM,
-  RE_FORMAT_R32G32B32A32_SFLOAT,
-
-  RE_FORMAT_MAX,
-} re_format_t;
-
 typedef struct re_image_t {
   VkImage image;
   VmaAllocation allocation;
@@ -25,7 +15,7 @@ typedef struct re_image_t {
   uint32_t height;
   uint32_t layer_count;
   uint32_t mip_level_count;
-  re_format_t format;
+  VkFormat format;
 } re_image_t;
 
 /*
@@ -38,7 +28,7 @@ typedef struct re_image_options_t {
   uint32_t height;
   uint32_t layer_count;
   uint32_t mip_level_count;
-  re_format_t format;
+  VkFormat format;
 } re_image_options_t;
 
 void re_image_init(re_image_t *image, re_image_options_t *options);

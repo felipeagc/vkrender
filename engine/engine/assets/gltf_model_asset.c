@@ -661,7 +661,7 @@ void eg_gltf_model_asset_init(
         .height = height,
         .layer_count = 1,
         .mip_level_count = 1,
-        .format = RE_FORMAT_R8G8B8A8_UNORM,
+        .format = VK_FORMAT_R8G8B8A8_UNORM,
     };
 
     re_image_init(&model->images[i], &image_options);

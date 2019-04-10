@@ -5,32 +5,6 @@
 #include <math.h>
 #include <string.h>
 
-static inline VkFormat to_vulkan_format(re_format_t format) {
-  switch (format) {
-  case RE_FORMAT_R8G8B8_UNORM:
-    return VK_FORMAT_R8G8B8_UNORM;
-  case RE_FORMAT_R8G8B8A8_UNORM:
-    return VK_FORMAT_R8G8B8A8_UNORM;
-  case RE_FORMAT_R32G32B32A32_SFLOAT:
-    return VK_FORMAT_R32G32B32A32_SFLOAT;
-  default:
-    return VK_FORMAT_UNDEFINED;
-  }
-}
-
-size_t get_format_pixel_size(re_format_t format) {
-  switch (format) {
-  case RE_FORMAT_R8G8B8_UNORM:
-    return sizeof(uint8_t) * 3;
-  case RE_FORMAT_R8G8B8A8_UNORM:
-    return sizeof(uint8_t) * 4;
-  case RE_FORMAT_R32G32B32A32_SFLOAT:
-    return sizeof(float) * 4;
-  default:
-    return 0;
-  }
-}
-
 static inline void create_image(
     VkImage *image,
     VmaAllocation *allocation,
@@ -139,7 +113,8 @@ static inline void upload_data_to_image(
     uint32_t layer,
     uint32_t level) {
   // Upload data to image
-  size_t img_size = (size_t)width * (size_t)height * get_format_pixel_size(image->format);
+  size_t img_size =
+      (size_t)width * (size_t)height * re_format_pixel_size(image->format);
 
   re_buffer_t staging_buffer;
   re_buffer_init(
@@ -170,7 +145,7 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
   }
 
   if (options->format == 0) {
-    options->format = RE_FORMAT_R8G8B8A8_UNORM;
+    options->format = VK_FORMAT_R8G8B8A8_UNORM;
   }
 
   assert(options->width > 0);
@@ -189,7 +164,7 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
       &image->allocation,
       &image->image_view,
       &image->sampler,
-      to_vulkan_format(image->format),
+      image->format,
       image->width,
       image->height,
       image->layer_count,
@@ -208,7 +183,7 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
           level);
       current_pos += (image->width / (uint32_t)pow(2, level)) *
                      (image->width / (uint32_t)pow(2, level)) *
-                     get_format_pixel_size(image->format);
+                     re_format_pixel_size(image->format);
     }
   }
 

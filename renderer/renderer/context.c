@@ -577,7 +577,7 @@ void re_context_init() {
           .data = white,
           .width = 1,
           .height = 1,
-          .format = RE_FORMAT_R8G8B8A8_UNORM,
+          .format = VK_FORMAT_R8G8B8A8_UNORM,
       });
 
   re_image_init(
@@ -586,7 +586,7 @@ void re_context_init() {
           .data = black,
           .width = 1,
           .height = 1,
-          .format = RE_FORMAT_R8G8B8A8_UNORM,
+          .format = VK_FORMAT_R8G8B8A8_UNORM,
       });
 }
 

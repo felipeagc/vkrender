@@ -10,7 +10,7 @@
     assert(result == VK_SUCCESS);                                              \
   } while (0)
 
-#define _RE_LOG_INTERNAL(prefix, ...)                                           \
+#define _RE_LOG_INTERNAL(prefix, ...)                                          \
   do {                                                                         \
     printf(prefix __VA_ARGS__);                                                \
     puts("");                                                                  \
@@ -35,3 +35,16 @@ void re_set_image_layout(
     VkImageSubresourceRange subresource_range,
     VkPipelineStageFlags src_stage_mask,
     VkPipelineStageFlags dst_stage_mask);
+
+static inline size_t re_format_pixel_size(VkFormat format) {
+  switch (format) {
+  case VK_FORMAT_R8G8B8_UNORM:
+    return sizeof(uint8_t) * 3;
+  case VK_FORMAT_R8G8B8A8_UNORM:
+    return sizeof(uint8_t) * 4;
+  case VK_FORMAT_R32G32B32A32_SFLOAT:
+    return sizeof(float) * 4;
+  default:
+    return 0;
+  }
+}

@@ -53,7 +53,7 @@ void eg_environment_asset_init(
           .height = skybox_dim,
           .layer_count = 6,
           .mip_level_count = 1,
-          .format = RE_FORMAT_R32G32B32A32_SFLOAT,
+          .format = VK_FORMAT_R32G32B32A32_SFLOAT,
       });
 
   // Irradiance
@@ -65,7 +65,7 @@ void eg_environment_asset_init(
           .height = irradiance_dim,
           .layer_count = 6,
           .mip_level_count = 1,
-          .format = RE_FORMAT_R32G32B32A32_SFLOAT,
+          .format = VK_FORMAT_R32G32B32A32_SFLOAT,
       });
 
   // Radiance
@@ -77,7 +77,7 @@ void eg_environment_asset_init(
           .height = radiance_dim,
           .layer_count = 6,
           .mip_level_count = radiance_mip_levels,
-          .format = RE_FORMAT_R32G32B32A32_SFLOAT,
+          .format = VK_FORMAT_R32G32B32A32_SFLOAT,
       });
 
   {
