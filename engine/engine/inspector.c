@@ -14,6 +14,134 @@
 
 #define INDENT_LEVEL 8.0f
 
+static void inspector_camera(eg_camera_t *camera) {
+  float deg = to_degrees(camera->fov);
+  igDragFloat("FOV", &deg, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+  camera->fov = to_radians(deg);
+}
+
+static void inspector_environment(eg_environment_t *environment) {
+  igDragFloat3(
+      "Sun direction",
+      &environment->uniform.sun_direction.x,
+      0.01f,
+      0.0f,
+      0.0f,
+      "%.3f",
+      1.0f);
+
+  igColorEdit3("Sun color", &environment->uniform.sun_color.x, 0);
+
+  igDragFloat(
+      "Sun intensity",
+      &environment->uniform.sun_intensity,
+      0.01f,
+      0.0f,
+      0.0f,
+      "%.3f",
+      1.0f);
+
+  igDragFloat(
+      "Exposure",
+      &environment->uniform.exposure,
+      0.01f,
+      0.0f,
+      0.0f,
+      "%.3f",
+      1.0f);
+}
+
+static void inspector_statistics(re_window_t *window) {
+  igText("Delta time: %.4fms", window->delta_time);
+  igText("FPS: %.2f", 1.0f / window->delta_time);
+}
+
+static void inspector_environment_asset(eg_asset_t *asset) {}
+
+static void inspector_pbr_material_asset(eg_asset_t *asset) {
+  eg_pbr_material_asset_t *material = (eg_pbr_material_asset_t *)asset;
+
+  igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
+  igDragFloat(
+      "Metallic", &material->uniform.metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+  igDragFloat(
+      "Roughness",
+      &material->uniform.roughness,
+      0.01f,
+      0.0f,
+      1.0f,
+      "%.3f",
+      1.0f);
+  igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+}
+
+static void inspector_gltf_model_asset(eg_asset_t *asset) {
+  eg_gltf_model_asset_t *gltf_asset = (eg_gltf_model_asset_t *)asset;
+
+  igText("Vertex count: %u", gltf_asset->vertex_count);
+  igText("Index count: %u", gltf_asset->index_count);
+  igText("Image count: %u", gltf_asset->image_count);
+  igText("Mesh count: %u", gltf_asset->mesh_count);
+
+  for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
+    igPushIDInt(j);
+    eg_gltf_model_asset_material_t *material = &gltf_asset->materials[j];
+
+    if (igCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
+      igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
+      igDragFloat(
+          "Metallic",
+          &material->uniform.metallic,
+          0.01f,
+          0.0f,
+          1.0f,
+          "%.3f",
+          1.0f);
+      igDragFloat(
+          "Roughness",
+          &material->uniform.roughness,
+          0.01f,
+          0.0f,
+          1.0f,
+          "%.3f",
+          1.0f);
+      igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+    }
+    igPopID();
+  }
+}
+
+static void
+inspector_transform_component(eg_world_t *world, eg_entity_t entity) {
+  eg_transform_component_t *transform =
+      EG_GET_COMP(world, entity, eg_transform_component_t);
+
+  igDragFloat3(
+      "Position", &transform->position.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+  igDragFloat3("Scale", &transform->scale.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+  igDragFloat3("Axis", &transform->axis.x, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+  igDragFloat("Angle", &transform->angle, 0.01f, 0.0f, 0.0f, "%.3f rad", 1.0f);
+}
+
+static void
+inspector_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
+  eg_gltf_model_component_t *gltf_model =
+      EG_GET_COMP(world, entity, eg_gltf_model_component_t);
+
+  igText("Asset: %s", gltf_model->asset->asset.name);
+  igSameLine(0.0f, -1.0f);
+  if (igSmallButton("Inspect")) {
+    igOpenPopup("gltfmodelpopup");
+  }
+
+  if (igBeginPopup("gltfmodelpopup", 0)) {
+    inspector_gltf_model_asset((eg_asset_t *)gltf_model->asset);
+    igEndPopup();
+  }
+}
+
+static void inspector_mesh_component(eg_world_t *world, eg_entity_t entity) {}
+
 void eg_draw_inspector(
     re_window_t *window, eg_world_t *world, eg_asset_manager_t *asset_manager) {
   static char header_title[256] = "";
@@ -23,48 +151,18 @@ void eg_draw_inspector(
 
       if (igBeginTabItem("World", NULL, 0)) {
         if (igCollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
-          float deg = to_degrees(world->camera.fov);
-          igDragFloat("FOV", &deg, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
-          world->camera.fov = to_radians(deg);
+          inspector_camera(&world->camera);
         }
 
         if (igCollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen)) {
-          igDragFloat3(
-              "Sun direction",
-              &world->environment.uniform.sun_direction.x,
-              0.01f,
-              0.0f,
-              0.0f,
-              "%.3f",
-              1.0f);
-
-          igColorEdit3("Sun color", &world->environment.uniform.sun_color.x, 0);
-
-          igDragFloat(
-              "Sun intensity",
-              &world->environment.uniform.sun_intensity,
-              0.01f,
-              0.0f,
-              0.0f,
-              "%.3f",
-              1.0f);
-
-          igDragFloat(
-              "Exposure",
-              &world->environment.uniform.exposure,
-              0.01f,
-              0.0f,
-              0.0f,
-              "%.3f",
-              1.0f);
+          inspector_environment(&world->environment);
         }
 
         igEndTabItem();
       }
 
       if (igBeginTabItem("Statistics", NULL, 0)) {
-        igText("Delta time: %.4fms", window->delta_time);
-        igText("FPS: %.2f", 1.0f / window->delta_time);
+        inspector_statistics(window);
         igEndTabItem();
       }
 
@@ -79,58 +177,22 @@ void eg_draw_inspector(
             igPushIDInt(entity);
             igIndent(INDENT_LEVEL);
 
-            if (eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
-              eg_transform_component_t *transform =
-                  EG_GET_COMP(world, entity, eg_transform_component_t);
+            if (eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE) &&
+                igCollapsingHeader(
+                    "Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+              inspector_transform_component(world, entity);
+            }
 
-              if (igCollapsingHeader(
-                      "Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-                igDragFloat3(
-                    "Position",
-                    &transform->position.x,
-                    0.1f,
-                    0.0f,
-                    0.0f,
-                    "%.3f",
-                    1.0f);
-                igDragFloat3(
-                    "Scale",
-                    &transform->scale.x,
-                    0.1f,
-                    0.0f,
-                    0.0f,
-                    "%.3f",
-                    1.0f);
-                igDragFloat3(
-                    "Axis",
-                    &transform->axis.x,
-                    0.01f,
-                    0.0f,
-                    0.0f,
-                    "%.3f",
-                    1.0f);
-                igDragFloat(
-                    "Angle",
-                    &transform->angle,
-                    0.01f,
-                    0.0f,
-                    0.0f,
-                    "%.3f rad",
-                    1.0f);
-
-                transform->axis = vec3_normalize(transform->axis);
-              }
+            if (eg_world_has_comp(world, entity, EG_MESH_COMPONENT_TYPE) &&
+                igCollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
+              inspector_mesh_component(world, entity);
             }
 
             if (eg_world_has_comp(
-                    world, entity, EG_GLTF_MODEL_COMPONENT_TYPE)) {
-              eg_gltf_model_component_t *gltf_model =
-                  EG_GET_COMP(world, entity, eg_gltf_model_component_t);
-
-              if (igCollapsingHeader(
-                      "GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
-                igText("Asset: %s", gltf_model->asset->asset.name);
-              }
+                    world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
+                igCollapsingHeader(
+                    "GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
+              inspector_gltf_model_component(world, entity);
             }
 
             igUnindent(INDENT_LEVEL);
@@ -148,100 +210,30 @@ void eg_draw_inspector(
           eg_asset_t *asset = asset_manager->assets[i];
           igPushIDInt(i);
 
+#define ASSET_HEADER(format, ...)                                              \
+  snprintf(header_title, sizeof(header_title), format, __VA_ARGS__);           \
+  if (igCollapsingHeader(header_title, 0))
+
           switch (asset->type) {
           case EG_ENVIRONMENT_ASSET_TYPE: {
-            snprintf(
-                header_title,
-                sizeof(header_title),
-                "Environment: %s",
-                asset->name);
-            if (igCollapsingHeader(header_title, 0)) {
+            ASSET_HEADER("Environment: %s", asset->name) {
+              inspector_environment_asset(asset);
             }
             break;
           }
           case EG_PBR_MATERIAL_ASSET_TYPE: {
-            eg_pbr_material_asset_t *material =
-                (eg_pbr_material_asset_t *)asset;
-
-            snprintf(
-                header_title,
-                sizeof(header_title),
-                "Material: %s",
-                asset->name);
-            if (igCollapsingHeader(header_title, 0)) {
-              igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
-              igDragFloat(
-                  "Metallic",
-                  &material->uniform.metallic,
-                  0.01f,
-                  0.0f,
-                  1.0f,
-                  "%.3f",
-                  1.0f);
-              igDragFloat(
-                  "Roughness",
-                  &material->uniform.roughness,
-                  0.01f,
-                  0.0f,
-                  1.0f,
-                  "%.3f",
-                  1.0f);
-              igColorEdit4(
-                  "Emissive factor", &material->uniform.emissive_factor.x, 0);
+            ASSET_HEADER("Material: %s", asset->name) {
+              inspector_pbr_material_asset(asset);
             }
             break;
           }
           case EG_MESH_ASSET_TYPE: {
+            ASSET_HEADER("Mesh: %s", asset->name) {}
             break;
           }
           case EG_GLTF_MODEL_ASSET_TYPE: {
-            snprintf(
-                header_title,
-                sizeof(header_title),
-                "GLTF model: %s",
-                asset->name);
-            if (igCollapsingHeader(header_title, 0)) {
-              eg_gltf_model_asset_t *gltf_asset =
-                  (eg_gltf_model_asset_t *)asset;
-
-              igText("Vertex count: %u", gltf_asset->vertex_count);
-              igText("Index count: %u", gltf_asset->index_count);
-              igText("Image count: %u", gltf_asset->image_count);
-              igText("Mesh count: %u", gltf_asset->mesh_count);
-
-              for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
-                igPushIDInt(j);
-                eg_gltf_model_asset_material_t *material =
-                    &gltf_asset->materials[j];
-
-                if (igCollapsingHeader(
-                        "Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-                  igColorEdit4(
-                      "Color", &material->uniform.base_color_factor.x, 0);
-                  igDragFloat(
-                      "Metallic",
-                      &material->uniform.metallic,
-                      0.01f,
-                      0.0f,
-                      1.0f,
-                      "%.3f",
-                      1.0f);
-                  igDragFloat(
-                      "Roughness",
-                      &material->uniform.roughness,
-                      0.01f,
-                      0.0f,
-                      1.0f,
-                      "%.3f",
-                      1.0f);
-                  igColorEdit4(
-                      "Emissive factor",
-                      &material->uniform.emissive_factor.x,
-                      0);
-                }
-
-                igPopID();
-              }
+            ASSET_HEADER("GLTF model: %s", asset->name) {
+              inspector_gltf_model_asset(asset);
             }
             break;
           }
