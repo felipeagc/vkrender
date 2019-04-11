@@ -45,7 +45,6 @@ target_link_libraries(
 	glfw
 	imgui
 	fstd
-	util
 	gmath
 	stb_image
 	tinycthread

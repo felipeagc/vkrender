@@ -5,7 +5,6 @@ wc -l \
 	./engine/**/*.c \
 	./renderer/**/*.c \
 	./renderer/**/*.h \
-	./util/**/*.h \
 	./examples/*.c \
 	./thirdparty/gmath/**/*.h \
 	./thirdparty/fstd/**/*.h \
