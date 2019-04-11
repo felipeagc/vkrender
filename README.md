@@ -54,8 +54,7 @@
 
 ### Misc
 - [x] Make standalone skybox baker
-- [ ] Object picking (use OBB testing with bouding box provided by gltf)
-- [ ] Object picking with a color buffer
+- [x] Object picking with a color buffer
 - [ ] Transformation gizmos
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [x] Fullscreen post process shader

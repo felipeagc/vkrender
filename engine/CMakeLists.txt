@@ -35,6 +35,8 @@ add_library(
 
 	engine/systems/fps_camera_system.c
 	engine/systems/fps_camera_system.h
+	engine/systems/picking_system.c
+	engine/systems/picking_system.h
 
 	engine/assets/env_file.h
 	engine/assets/asset_types.c
