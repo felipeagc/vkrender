@@ -14,6 +14,17 @@ re_pipeline_parameters_t eg_pbr_pipeline_parameters() {
   return params;
 }
 
+re_pipeline_parameters_t eg_picking_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
+
+  params.pipeline_layout = g_eng.pipeline_layouts.picking;
+
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
+
+  return params;
+}
+
 re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 

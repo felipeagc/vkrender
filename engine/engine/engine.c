@@ -183,6 +183,18 @@ static inline void init_pipeline_layouts() {
         set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.pbr);
   }
 
+  // Picking
+  {
+    VkDescriptorSetLayout set_layouts[] = {
+        g_eng.set_layouts.camera,
+        g_eng.set_layouts.model,
+        g_eng.set_layouts.model,
+    };
+
+    create_pipeline_layout(
+        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.picking);
+  }
+
   // Billboard
   {
     VkDescriptorSetLayout set_layouts[] = {
@@ -235,6 +247,7 @@ static inline void init_pipeline_layouts() {
 
 static inline void destroy_pipeline_layouts() {
   vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.pbr, NULL);
+  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.picking, NULL);
   vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.billboard, NULL);
   vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.wireframe, NULL);
   vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.skybox, NULL);

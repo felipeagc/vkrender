@@ -12,6 +12,7 @@ typedef struct eg_engine_t {
 
   struct {
     VkPipelineLayout pbr;
+    VkPipelineLayout picking;
     VkPipelineLayout billboard;
     VkPipelineLayout wireframe;
     VkPipelineLayout skybox;

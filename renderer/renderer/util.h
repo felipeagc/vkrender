@@ -38,6 +38,8 @@ void re_set_image_layout(
 
 static inline size_t re_format_pixel_size(VkFormat format) {
   switch (format) {
+  case VK_FORMAT_R32_UINT:
+    return sizeof(uint32_t);
   case VK_FORMAT_R8G8B8_UNORM:
     return sizeof(uint8_t) * 3;
   case VK_FORMAT_R8G8B8A8_UNORM:

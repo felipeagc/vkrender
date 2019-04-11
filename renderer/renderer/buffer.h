@@ -40,4 +40,14 @@ void re_buffer_transfer_to_image(
     uint32_t layer,
     uint32_t level);
 
+void re_image_transfer_to_buffer(
+    VkImage image,
+    re_buffer_t *buffer,
+    uint32_t offset_x,
+    uint32_t offset_y,
+    uint32_t width,
+    uint32_t height,
+    uint32_t layer,
+    uint32_t level);
+
 void re_buffer_destroy(re_buffer_t *buffer);

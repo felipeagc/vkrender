@@ -119,7 +119,8 @@ void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
   case RE_BUFFER_TYPE_TRANSFER:
-    buffer_usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    buffer_usage =
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
@@ -213,6 +214,67 @@ void re_buffer_transfer_to_image(
       command_buffer,
       dest,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      subresource_range,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+  end_single_time_command_buffer(command_buffer);
+}
+
+void re_image_transfer_to_buffer(
+    VkImage image,
+    re_buffer_t *buffer,
+    uint32_t offset_x,
+    uint32_t offset_y,
+    uint32_t width,
+    uint32_t height,
+    uint32_t layer,
+    uint32_t level) {
+  VkCommandBuffer command_buffer = begin_single_time_command_buffer();
+
+  VkImageSubresourceRange subresource_range = {0};
+  subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresource_range.baseMipLevel = level;
+  subresource_range.levelCount = 1;
+  subresource_range.baseArrayLayer = layer;
+  subresource_range.layerCount = 1;
+
+  re_set_image_layout(
+      command_buffer,
+      image,
+      VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      subresource_range,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+  VkBufferImageCopy region = {
+      0, // bufferOffset
+      0, // bufferRowLength
+      0, // bufferImageHeight
+      {
+          VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+          level,                     // mipLevel
+          layer,                     // baseArrayLayer
+          1,                         // layerCount
+      },                             // imageSubresource
+      {offset_x, offset_y, 0},       // imageOffset
+      {width, height, 1},            // imageExtent
+  };
+
+  vkCmdCopyImageToBuffer(
+      command_buffer,
+      image,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      buffer->buffer,
+      1,
+      &region);
+
+  re_set_image_layout(
+      command_buffer,
+      image,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       subresource_range,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,

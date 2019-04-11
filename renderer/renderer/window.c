@@ -311,16 +311,13 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
   allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocate_info.commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT;
 
-  VkCommandBuffer *command_buffers = (VkCommandBuffer *)malloc(
-      sizeof(VkCommandBuffer) * RE_MAX_FRAMES_IN_FLIGHT);
+  VkCommandBuffer command_buffers[RE_MAX_FRAMES_IN_FLIGHT];
 
   vkAllocateCommandBuffers(g_ctx.device, &allocate_info, command_buffers);
 
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     window->frame_resources[i].command_buffer = command_buffers[i];
   }
-
-  free(command_buffers);
 }
 
 // Populates the depthStencil member struct

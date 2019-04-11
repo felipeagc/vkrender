@@ -142,13 +142,43 @@ inspector_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
 
 static void inspector_mesh_component(eg_world_t *world, eg_entity_t entity) {}
 
+void eg_inspector_init(eg_inspector_t *inspector) {
+  inspector->selected_entity = UINT32_MAX;
+}
+
 void eg_draw_inspector(
-    re_window_t *window, eg_world_t *world, eg_asset_manager_t *asset_manager) {
-  static char header_title[256] = "";
+    eg_inspector_t *inspector,
+    re_window_t *window,
+    eg_world_t *world,
+    eg_asset_manager_t *asset_manager) {
+  static char str[256] = "";
+
+  if (inspector->selected_entity != UINT32_MAX) {
+    if (igBegin("Selected entity", NULL, 0)) {
+      eg_entity_t entity = inspector->selected_entity;
+
+      igText("Entity #%u", inspector->selected_entity);
+
+      if (eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE) &&
+          igCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+        inspector_transform_component(world, entity);
+      }
+
+      if (eg_world_has_comp(world, entity, EG_MESH_COMPONENT_TYPE) &&
+          igCollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
+        inspector_mesh_component(world, entity);
+      }
+
+      if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
+          igCollapsingHeader("GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
+        inspector_gltf_model_component(world, entity);
+      }
+    }
+    igEnd();
+  }
 
   if (igBegin("Inspector", NULL, 0)) {
     if (igBeginTabBar("Inspector", 0)) {
-
       if (igBeginTabItem("World", NULL, 0)) {
         if (igCollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
           inspector_camera(&world->camera);
@@ -172,34 +202,10 @@ void eg_draw_inspector(
             continue;
           }
 
-          snprintf(header_title, sizeof(header_title), "Entity: %d", entity);
-          if (igCollapsingHeader(header_title, 0)) {
-            igPushIDInt(entity);
-            igIndent(INDENT_LEVEL);
-
-            if (eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE) &&
-                igCollapsingHeader(
-                    "Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-              inspector_transform_component(world, entity);
-            }
-
-            if (eg_world_has_comp(world, entity, EG_MESH_COMPONENT_TYPE) &&
-                igCollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-              inspector_mesh_component(world, entity);
-            }
-
-            if (eg_world_has_comp(
-                    world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
-                igCollapsingHeader(
-                    "GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
-              inspector_gltf_model_component(world, entity);
-            }
-
-            igUnindent(INDENT_LEVEL);
-            igPopID();
+          snprintf(str, sizeof(str), "Entity #%d", entity);
+          if (igSelectable(str, false, 0, (ImVec2){0.0f, 0.0f})) {
+            inspector->selected_entity = entity;
           }
-
-          igSeparator();
         }
 
         igEndTabItem();
@@ -211,8 +217,8 @@ void eg_draw_inspector(
           igPushIDInt(i);
 
 #define ASSET_HEADER(format, ...)                                              \
-  snprintf(header_title, sizeof(header_title), format, __VA_ARGS__);           \
-  if (igCollapsingHeader(header_title, 0))
+  snprintf(str, sizeof(str), format, __VA_ARGS__);                             \
+  if (igCollapsingHeader(str, 0))
 
           switch (asset->type) {
           case EG_ENVIRONMENT_ASSET_TYPE: {
@@ -250,7 +256,7 @@ void eg_draw_inspector(
 
       igEndTabBar();
     }
-
-    igEnd();
   }
+
+  igEnd();
 }

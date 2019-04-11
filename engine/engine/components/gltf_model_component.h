@@ -29,4 +29,11 @@ void eg_gltf_model_component_draw(
     re_pipeline_t *pipeline,
     mat4_t transform);
 
+void eg_gltf_model_component_draw_picking(
+    eg_gltf_model_component_t *model,
+    re_window_t *window,
+    VkCommandBuffer command_buffer,
+    re_pipeline_t *pipeline,
+    mat4_t transform);
+
 void eg_gltf_model_component_destroy(eg_gltf_model_component_t *model);

@@ -35,6 +35,7 @@ void eg_camera_update(eg_camera_t *camera, struct re_window_t *window);
 void eg_camera_bind(
     eg_camera_t *camera,
     struct re_window_t *window,
+    VkCommandBuffer command_buffer,
     struct re_pipeline_t *pipeline,
     uint32_t set_index);
 

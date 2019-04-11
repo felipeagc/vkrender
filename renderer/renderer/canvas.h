@@ -3,11 +3,14 @@
 #include "common.h"
 #include "pipeline.h"
 #include "render_target.h"
+#include <gmath.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 typedef struct re_canvas_t {
   re_render_target_t render_target;
+
+  VkClearColorValue clear_color;
 
   uint32_t width;
   uint32_t height;

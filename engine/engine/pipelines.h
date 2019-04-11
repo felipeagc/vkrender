@@ -45,6 +45,8 @@ static inline bool eg_init_pipeline_spv(
 
 re_pipeline_parameters_t eg_pbr_pipeline_parameters();
 
+re_pipeline_parameters_t eg_picking_pipeline_parameters();
+
 re_pipeline_parameters_t eg_billboard_pipeline_parameters();
 
 re_pipeline_parameters_t eg_wireframe_pipeline_parameters();

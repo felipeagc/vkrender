@@ -248,7 +248,11 @@ static inline void create_descriptor_sets(re_canvas_t *canvas) {
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device,
+        ARRAY_SIZE(descriptor_writes),
+        descriptor_writes,
+        0,
+        NULL);
   }
 }
 
@@ -278,7 +282,7 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
         NULL,                                      // pNext
         0,                                         // flags
         canvas->render_target.render_pass,         // renderPass
-        (uint32_t)ARRAY_SIZE(attachments),          // attachmentCount
+        (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
         attachments,                               // pAttachments
         canvas->width,                             // width
         canvas->height,                            // height
@@ -378,15 +382,15 @@ static inline void create_render_pass(re_canvas_t *canvas) {
   };
 
   VkRenderPassCreateInfo render_pass_create_info = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,    // sType
-      NULL,                                         // pNext
-      0,                                            // flags
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,     // sType
+      NULL,                                          // pNext
+      0,                                             // flags
       (uint32_t)ARRAY_SIZE(attachment_descriptions), // attachmentCount
-      attachment_descriptions,                      // pAttachments
-      1,                                            // subpassCount
-      &subpass_description,                         // pSubpasses
+      attachment_descriptions,                       // pAttachments
+      1,                                             // subpassCount
+      &subpass_description,                          // pSubpasses
       (uint32_t)ARRAY_SIZE(dependencies),            // dependencyCount
-      dependencies,                                 // pDependencies
+      dependencies,                                  // pDependencies
   };
 
   VK_CHECK(vkCreateRenderPass(
@@ -412,6 +416,7 @@ void re_canvas_init(
   canvas->height = height;
   canvas->color_format = color_format;
   canvas->render_target.sample_count = VK_SAMPLE_COUNT_1_BIT;
+  canvas->clear_color = (VkClearColorValue){0};
 
   assert(re_context_get_supported_depth_format(&canvas->depth_format));
 
@@ -428,7 +433,7 @@ void re_canvas_begin(
 
   // @TODO: make this customizable
   VkClearValue clear_values[2] = {
-      {.color = {{0.0f, 0.0f, 0.0f, 1.0f}}},
+      {.color = canvas->clear_color},
       {.depthStencil = {1.0f, 0}},
   };
 
@@ -438,7 +443,7 @@ void re_canvas_begin(
       canvas->render_target.render_pass,         // renderPass
       resource->framebuffer,                     // framebuffer
       {{0, 0}, {canvas->width, canvas->height}}, // renderArea
-      ARRAY_SIZE(clear_values),                   // clearValueCount
+      ARRAY_SIZE(clear_values),                  // clearValueCount
       clear_values,                              // pClearValues
   };
 
