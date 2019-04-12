@@ -10,8 +10,6 @@ void eg_environment_asset_init(
     eg_environment_asset_t *environment,
     const char *path,
     const char *brdf_lut_path) {
-  eg_asset_init_named(&environment->asset, EG_ENVIRONMENT_ASSET_TYPE, path);
-
   uint8_t *skybox_data;
   uint32_t skybox_dim;
 
@@ -117,8 +115,6 @@ void eg_environment_asset_init(
 }
 
 void eg_environment_asset_destroy(eg_environment_asset_t *environment) {
-  eg_asset_destroy(&environment->asset);
-
   re_image_destroy(&environment->skybox_cubemap);
   re_image_destroy(&environment->irradiance_cubemap);
   re_image_destroy(&environment->radiance_cubemap);

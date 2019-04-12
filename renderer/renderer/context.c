@@ -462,6 +462,7 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
       ctx->device, &create_info, NULL, &ctx->transient_command_pool));
 }
 
+// TODO: I think this should be moved to the engine, not the renderer.
 static inline void create_thread_command_pools(re_context_t *ctx) {
   for (uint32_t i = 0; i < RE_THREAD_COUNT; i++) {
     VkCommandPoolCreateInfo create_info = {0};

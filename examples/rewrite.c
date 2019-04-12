@@ -113,8 +113,8 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
 
   eg_asset_manager_init(&game->asset_manager);
 
-  eg_environment_asset_t *environment_asset =
-      eg_asset_alloc(&game->asset_manager, eg_environment_asset_t);
+  eg_environment_asset_t *environment_asset = eg_asset_alloc(
+      &game->asset_manager, "Environment", eg_environment_asset_t);
   eg_environment_asset_init(
       environment_asset, "/assets/ice_lake.env", "/assets/brdf_lut.png");
 
@@ -150,7 +150,7 @@ int main(int argc, const char *argv[]) {
 
   {
     eg_gltf_model_asset_t *model_asset =
-        eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
+        eg_asset_alloc(&game.asset_manager, "Helmet", eg_gltf_model_asset_t);
     eg_gltf_model_asset_init(model_asset, "/assets/DamagedHelmet.glb", true);
 
     eg_entity_t ent = eg_world_add_entity(&game.world);
@@ -165,8 +165,8 @@ int main(int argc, const char *argv[]) {
   }
 
   {
-    eg_gltf_model_asset_t *model_asset =
-        eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
+    eg_gltf_model_asset_t *model_asset = eg_asset_alloc(
+        &game.asset_manager, "Water bottle", eg_gltf_model_asset_t);
     eg_gltf_model_asset_init(model_asset, "/assets/WaterBottle.glb", false);
 
     eg_entity_t ent = eg_world_add_entity(&game.world);
@@ -184,7 +184,7 @@ int main(int argc, const char *argv[]) {
 
   {
     eg_gltf_model_asset_t *model_asset =
-        eg_asset_alloc(&game.asset_manager, eg_gltf_model_asset_t);
+        eg_asset_alloc(&game.asset_manager, "Boom box", eg_gltf_model_asset_t);
     eg_gltf_model_asset_init(model_asset, "/assets/BoomBox.glb", false);
 
     eg_entity_t ent = eg_world_add_entity(&game.world);

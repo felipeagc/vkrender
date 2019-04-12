@@ -212,8 +212,12 @@ void eg_draw_inspector(
       }
 
       if (igBeginTabItem("Assets", NULL, 0)) {
-        for (uint32_t i = 0; i < asset_manager->asset_count; i++) {
-          eg_asset_t *asset = asset_manager->assets[i];
+        for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
+          eg_asset_t *asset = eg_asset_manager_get_by_index(asset_manager, i);
+          if (asset == NULL) {
+            continue;
+          }
+
           igPushIDInt(i);
 
 #define ASSET_HEADER(format, ...)                                              \

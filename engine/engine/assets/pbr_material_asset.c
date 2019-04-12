@@ -2,8 +2,8 @@
 #include "../engine.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
-#include <renderer/pipeline.h>
 #include <renderer/image.h>
+#include <renderer/pipeline.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
 
@@ -14,8 +14,6 @@ void eg_pbr_material_asset_init(
     re_image_t *metallic_roughness_texture,
     re_image_t *occlusion_texture,
     re_image_t *emissive_texture) {
-  eg_asset_init(&material->asset, EG_PBR_MATERIAL_ASSET_TYPE);
-
   material->uniform.base_color_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.metallic = 1.0;
   material->uniform.roughness = 1.0;
@@ -132,7 +130,11 @@ void eg_pbr_material_asset_init(
     };
 
     vkUpdateDescriptorSets(
-        g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
+        g_ctx.device,
+        ARRAY_SIZE(descriptor_writes),
+        descriptor_writes,
+        0,
+        NULL);
   }
 }
 
@@ -171,6 +173,4 @@ void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {
       g_ctx.descriptor_pool,
       ARRAY_SIZE(material->descriptor_sets),
       material->descriptor_sets);
-
-  eg_asset_destroy(&material->asset);
 }

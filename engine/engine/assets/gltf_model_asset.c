@@ -601,8 +601,6 @@ static void get_scene_dimensions(eg_gltf_model_asset_t *model) {
 
 void eg_gltf_model_asset_init(
     eg_gltf_model_asset_t *model, const char *path, bool flip_uvs) {
-  eg_asset_init_named(&model->asset, EG_GLTF_MODEL_ASSET_TYPE, path);
-
   model->vertex_buffer = (re_buffer_t){0};
   model->index_buffer = (re_buffer_t){0};
 
