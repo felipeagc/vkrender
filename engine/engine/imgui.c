@@ -1,11 +1,11 @@
 #include "imgui.h"
 
-#include "context.h"
-#include "util.h"
-#include "window.h"
 #include <fstd_util.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <renderer/context.h>
+#include <renderer/util.h>
+#include <renderer/window.h>
 
 static void check_vk_result_fn(VkResult result) {
   if (result != VK_SUCCESS) {
@@ -14,7 +14,7 @@ static void check_vk_result_fn(VkResult result) {
   }
 }
 
-void re_imgui_init(re_window_t *window) {
+void eg_imgui_init(re_window_t *window) {
   igCreateContext(NULL);
   igGetIO();
 
@@ -72,40 +72,38 @@ void re_imgui_init(re_window_t *window) {
   }
 }
 
-void re_imgui_begin(re_window_t *window) {
+void eg_imgui_begin() {
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   igNewFrame();
 }
 
-void re_imgui_end() { igRender(); }
+void eg_imgui_end() { igRender(); }
 
-void re_imgui_draw(re_window_t *window) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
-  ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), command_buffer);
+void eg_imgui_draw(const eg_cmd_info_t *cmd_info) {
+  ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), cmd_info->cmd_buffer);
 }
 
-void re_imgui_mouse_button_callback(
+void eg_imgui_mouse_button_callback(
     re_window_t *window, int button, int action, int mods) {
   ImGui_ImplGlfw_MouseButtonCallback(window->glfw_window, button, action, mods);
 }
 
-void re_imgui_scroll_callback(
+void eg_imgui_scroll_callback(
     re_window_t *window, double xoffset, double yoffset) {
   ImGui_ImplGlfw_ScrollCallback(window->glfw_window, xoffset, yoffset);
 }
 
-void re_imgui_key_callback(
+void eg_imgui_key_callback(
     re_window_t *window, int key, int scancode, int action, int mods) {
   ImGui_ImplGlfw_KeyCallback(window->glfw_window, key, scancode, action, mods);
 }
 
-void re_imgui_char_callback(re_window_t *window, unsigned int c) {
+void eg_imgui_char_callback(re_window_t *window, unsigned int c) {
   ImGui_ImplGlfw_CharCallback(window->glfw_window, c);
 }
 
-void re_imgui_destroy() {
+void eg_imgui_destroy() {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   ImGui_ImplVulkan_Shutdown();

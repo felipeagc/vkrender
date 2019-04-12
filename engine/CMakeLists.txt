@@ -14,6 +14,9 @@ add_library(
 	engine/filesystem.c
 	engine/filesystem.h
 
+	engine/imgui.c
+	engine/imgui.h
+
 	engine/inspector.c
 	engine/inspector.h
 

@@ -427,8 +427,7 @@ void re_canvas_init(
   create_framebuffers(canvas);
 }
 
-void re_canvas_begin(
-    re_canvas_t *canvas, const VkCommandBuffer command_buffer) {
+void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
   struct re_canvas_resource_t *resource = &canvas->resources[0];
 
   // @TODO: make this customizable
@@ -466,13 +465,13 @@ void re_canvas_begin(
   vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
 
-void re_canvas_end(re_canvas_t *canvas, const VkCommandBuffer command_buffer) {
+void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
   vkCmdEndRenderPass(command_buffer);
 }
 
 void re_canvas_draw(
     re_canvas_t *canvas,
-    const VkCommandBuffer command_buffer,
+    re_cmd_buffer_t command_buffer,
     re_pipeline_t *pipeline) {
   struct re_canvas_resource_t *resource = &canvas->resources[0];
 

@@ -8,6 +8,7 @@
 #include <engine/components/mesh_component.h>
 #include <engine/components/transform_component.h>
 #include <engine/engine.h>
+#include <engine/imgui.h>
 #include <engine/inspector.h>
 #include <engine/pbr.h>
 #include <engine/pipelines.h>
@@ -47,7 +48,7 @@ static void game_mouse_button_callback(
     re_window_t *window, int button, int action, int mods) {
   game_t *game = window->user_ptr;
 
-  re_imgui_mouse_button_callback(window, button, action, mods);
+  eg_imgui_mouse_button_callback(window, button, action, mods);
 
   double mouse_x, mouse_y;
   re_window_get_cursor_pos(window, &mouse_x, &mouse_y);
@@ -67,22 +68,22 @@ static void game_mouse_button_callback(
 }
 
 static void game_scroll_callback(re_window_t *window, double x, double y) {
-  re_imgui_scroll_callback(window, x, y);
+  eg_imgui_scroll_callback(window, x, y);
 }
 
 static void game_key_callback(
     re_window_t *window, int key, int scancode, int action, int mods) {
-  re_imgui_key_callback(window, key, scancode, action, mods);
+  eg_imgui_key_callback(window, key, scancode, action, mods);
 }
 
 static void game_char_callback(re_window_t *window, unsigned int c) {
-  re_imgui_char_callback(window, c);
+  eg_imgui_char_callback(window, c);
 }
 
 static void game_init(game_t *game, int argc, const char *argv[]) {
   re_context_init();
   re_window_init(&game->window, "Re-write", 1600, 900);
-  re_imgui_init(&game->window);
+  eg_imgui_init(&game->window);
   eg_engine_init(argv[0]);
   assert(eg_mount("./assets", "/assets"));
   assert(eg_mount("./shaders/out", "/shaders"));
@@ -120,7 +121,7 @@ static void game_destroy(game_t *game) {
 
   eg_engine_destroy();
 
-  re_imgui_destroy();
+  eg_imgui_destroy();
   re_window_destroy(&game->window);
   re_context_destroy();
 }
@@ -207,10 +208,10 @@ int main(int argc, const char *argv[]) {
         .cmd_buffer = re_window_get_current_command_buffer(&game.window),
     };
 
-    re_imgui_begin(&game.window);
+    eg_imgui_begin();
     eg_draw_inspector(
         &game.inspector, &game.window, &game.world, &game.asset_manager);
-    re_imgui_end();
+    eg_imgui_end();
 
     // Per-frame updates
     eg_environment_update(&game.world.environment, &cmd_info);
@@ -239,7 +240,7 @@ int main(int argc, const char *argv[]) {
 
     eg_rendering_system_render(&cmd_info, &game.world, &pbr_pipeline->pipeline);
 
-    re_imgui_draw(&game.window);
+    eg_imgui_draw(&cmd_info);
 
     // End window renderpass
     re_window_end_render_pass(&game.window);

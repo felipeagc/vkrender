@@ -3,15 +3,15 @@
 #include "context.h"
 
 void re_allocate_cmd_buffers(
-    re_cmd_buffer_alloc_info_t alloc_info, re_cmd_buffer_t *buffers) {
+    re_cmd_buffer_alloc_info_t *alloc_info, re_cmd_buffer_t *buffers) {
   VK_CHECK(vkAllocateCommandBuffers(
       g_ctx.device,
       &(VkCommandBufferAllocateInfo){
           .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
           .pNext = NULL,
-          .commandPool = alloc_info.pool,
-          .level = (VkCommandBufferLevel)alloc_info.level,
-          .commandBufferCount = alloc_info.count,
+          .commandPool = alloc_info->pool,
+          .level = (VkCommandBufferLevel)alloc_info->level,
+          .commandBufferCount = alloc_info->count,
       },
       buffers));
 }

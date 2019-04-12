@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cmd_buffer.h"
 #include "common.h"
 #include "pipeline.h"
 #include "render_target.h"
@@ -48,13 +49,13 @@ void re_canvas_init(
     const uint32_t height,
     const VkFormat color_format);
 
-void re_canvas_begin(re_canvas_t *canvas, const VkCommandBuffer command_buffer);
+void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer);
 
-void re_canvas_end(re_canvas_t *canvas, const VkCommandBuffer command_buffer);
+void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t command_buffer);
 
 void re_canvas_draw(
     re_canvas_t *canvas,
-    const VkCommandBuffer command_buffer,
+    re_cmd_buffer_t command_buffer,
     re_pipeline_t *pipeline);
 
 void re_canvas_resize(

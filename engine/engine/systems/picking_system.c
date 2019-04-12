@@ -40,7 +40,7 @@ eg_entity_t eg_picking_system_pick(
     uint32_t mouse_x,
     uint32_t mouse_y) {
 
-  VkCommandBuffer command_buffer;
+  re_cmd_buffer_t command_buffer;
 
   VkFence fence;
 
@@ -54,28 +54,19 @@ eg_entity_t eg_picking_system_pick(
     VK_CHECK(vkCreateFence(g_ctx.device, &fence_create_info, NULL, &fence));
   }
 
-  // Create and begin command buffer
-  {
-    VkCommandBufferAllocateInfo allocate_info = {
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        NULL,
-        g_ctx.graphics_command_pool,     // commandPool
-        VK_COMMAND_BUFFER_LEVEL_PRIMARY, // level
-        1,                               // commandBufferCount
-    };
+  re_allocate_cmd_buffers(
+      &(re_cmd_buffer_alloc_info_t){
+          .pool = g_ctx.graphics_command_pool,
+          .count = 1,
+          .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
+      },
+      &command_buffer);
 
-    VK_CHECK(vkAllocateCommandBuffers(
-        g_ctx.device, &allocate_info, &command_buffer));
-
-    VkCommandBufferBeginInfo command_buffer_begin_info = {
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        NULL,
-        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-        NULL,                                        // pInheritanceInfo
-    };
-
-    VK_CHECK(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
-  }
+  re_begin_cmd_buffer(
+      command_buffer,
+      &(re_cmd_buffer_begin_info_t){
+          .usage = RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT,
+      });
 
   const eg_cmd_info_t cmd_info = {
       .frame_index = frame_index,
@@ -84,8 +75,7 @@ eg_entity_t eg_picking_system_pick(
 
   re_canvas_begin(&system->canvas, command_buffer);
 
-  eg_camera_bind(
-      &world->camera, &cmd_info, &system->picking_pipeline, 0);
+  eg_camera_bind(&world->camera, &cmd_info, &system->picking_pipeline, 0);
 
   for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
     if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
@@ -115,7 +105,7 @@ eg_entity_t eg_picking_system_pick(
 
   // End and free command buffer
   {
-    VK_CHECK(vkEndCommandBuffer(command_buffer));
+    re_end_cmd_buffer(command_buffer);
 
     VkSubmitInfo submit_info = {
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -133,8 +123,7 @@ eg_entity_t eg_picking_system_pick(
 
     VK_CHECK(vkWaitForFences(g_ctx.device, 1, &fence, VK_TRUE, UINT64_MAX));
 
-    vkFreeCommandBuffers(
-        g_ctx.device, g_ctx.graphics_command_pool, 1, &command_buffer);
+    re_free_cmd_buffers(g_ctx.graphics_command_pool, 1, &command_buffer);
   }
 
   // Destroy fence

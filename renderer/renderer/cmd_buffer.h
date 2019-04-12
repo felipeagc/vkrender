@@ -30,7 +30,7 @@ typedef struct re_cmd_buffer_begin_info_t {
 } re_cmd_buffer_begin_info_t;
 
 void re_allocate_cmd_buffers(
-    re_cmd_buffer_alloc_info_t alloc_info, re_cmd_buffer_t *buffers);
+    re_cmd_buffer_alloc_info_t *alloc_info, re_cmd_buffer_t *buffers);
 
 void re_free_cmd_buffers(
     re_cmd_pool_t pool, uint32_t buffer_count, re_cmd_buffer_t *buffers);

@@ -20,9 +20,6 @@ add_library(
 	renderer/image.c
 	renderer/image.h
 
-	renderer/imgui.c
-	renderer/imgui.h
-
 	renderer/pipeline.c
 	renderer/pipeline.h
 
