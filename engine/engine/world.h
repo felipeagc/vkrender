@@ -14,6 +14,11 @@
 
 typedef uint32_t eg_entity_t;
 
+typedef enum eg_entity_tag_t {
+  EG_ENTITY_TAG_NONE = 0,
+  EG_ENTITY_TAG_MAX
+} eg_entity_tag_t;
+
 typedef FSTD_BITSET(EG_MAX_ENTITIES) eg_entities_bitset_t;
 
 typedef struct {
@@ -25,6 +30,7 @@ typedef struct eg_world_t {
   eg_environment_t environment;
 
   uint8_t *components[EG_COMPONENT_TYPE_COUNT];
+  eg_entity_tag_t *tags;
   eg_entities_bitset_t component_bitsets[EG_COMPONENT_TYPE_COUNT];
 } eg_world_t;
 
@@ -34,6 +40,11 @@ void eg_world_init(
 eg_entity_t eg_world_add_entity(eg_world_t *world);
 
 void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity);
+
+void eg_world_set_tags(
+    eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag);
+
+eg_entity_tag_t eg_world_get_tags(eg_world_t *world, eg_entity_t entity);
 
 void *eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp);

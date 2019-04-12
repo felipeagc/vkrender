@@ -1,18 +1,19 @@
 #include "world.h"
+#include "components/gltf_model_component.h"
 #include "components/mesh_component.h"
 #include "components/transform_component.h"
-#include "components/gltf_model_component.h"
 #include <string.h>
 
 static inline void eg_init_comps(eg_world_t *world, eg_component_type_t comp) {
-  world->components[comp] =
-      (uint8_t *)calloc(EG_MAX_ENTITIES, eg_component_sizes[comp]);
+  world->components[comp] = calloc(EG_MAX_ENTITIES, eg_component_sizes[comp]);
 }
 
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset) {
   eg_camera_init(&world->camera);
   eg_environment_init(&world->environment, environment_asset);
+
+  world->tags = calloc(EG_MAX_ENTITIES, sizeof(*world->tags));
 
   // Register component types
   EG_REGISTER_COMP(eg_transform_component_t);
@@ -55,6 +56,15 @@ void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity) {
       fstd_bitset_set(world->component_bitsets[c].bytes, entity, true);
     }
   }
+}
+
+void eg_world_set_tags(
+    eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag) {
+  world->tags[entity] = tag;
+}
+
+eg_entity_tag_t eg_world_get_tags(eg_world_t *world, eg_entity_t entity) {
+  return world->tags[entity];
 }
 
 void *eg_world_add_comp(
@@ -114,6 +124,8 @@ void eg_world_destroy(eg_world_t *world) {
   for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
     free(world->components[c]);
   }
+
+  free(world->tags);
 
   eg_environment_destroy(&world->environment);
   eg_camera_destroy(&world->camera);
