@@ -1,13 +1,13 @@
 #pragma once
 
+#include "cmd_info.h"
+#include <fstd_util.h>
 #include <gmath.h>
 #include <renderer/buffer.h>
 #include <renderer/common.h>
-#include <fstd_util.h>
 
 #define EG_MAX_POINT_LIGHTS 20
 
-typedef struct re_window_t re_window_t;
 typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_environment_asset_t eg_environment_asset_t;
 
@@ -35,21 +35,20 @@ typedef struct eg_environment_t {
 } eg_environment_t;
 
 void eg_environment_init(
-    eg_environment_t *environment,
-    eg_environment_asset_t *asset);
+    eg_environment_t *environment, eg_environment_asset_t *asset);
 
 void eg_environment_update(
-    eg_environment_t *environment, re_window_t *window);
+    eg_environment_t *environment, const eg_cmd_info_t *cmd_info);
 
 void eg_environment_bind(
     eg_environment_t *environment,
-    re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     uint32_t set_index);
 
 void eg_environment_draw_skybox(
     eg_environment_t *environment,
-    re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline);
 
 bool eg_environment_add_point_light(

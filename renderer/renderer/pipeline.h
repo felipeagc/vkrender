@@ -38,7 +38,4 @@ void re_pipeline_init_graphics(
     const re_shader_t *shader,
     const re_pipeline_parameters_t parameters);
 
-void re_pipeline_bind_graphics(
-    re_pipeline_t *pipeline, re_window_t *window);
-
 void re_pipeline_destroy(re_pipeline_t *pipeline);

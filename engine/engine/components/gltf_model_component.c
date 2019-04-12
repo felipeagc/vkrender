@@ -11,20 +11,16 @@
 static void draw_node(
     eg_gltf_model_component_t *model,
     eg_gltf_model_asset_node_t *node,
-    re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
-  uint32_t i = window->current_frame;
-
   if (node->mesh != NULL) {
     vkCmdBindDescriptorSets(
-        command_buffer,
+        cmd_info->cmd_buffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipeline->layout,
         2,
         1,
-        &node->mesh->descriptor_sets[i],
+        &node->mesh->descriptor_sets[cmd_info->frame_index],
         0,
         NULL);
 
@@ -33,7 +29,7 @@ static void draw_node(
 
       if (primitive->material != NULL) {
         vkCmdPushConstants(
-            command_buffer,
+            cmd_info->cmd_buffer,
             pipeline->layout,
             VK_SHADER_STAGE_ALL_GRAPHICS,
             0,
@@ -41,17 +37,17 @@ static void draw_node(
             &primitive->material->uniform);
 
         vkCmdBindDescriptorSets(
-            command_buffer,
+            cmd_info->cmd_buffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline->layout,
             4,
             1,
-            &primitive->material->descriptor_sets[i],
+            &primitive->material->descriptor_sets[cmd_info->frame_index],
             0,
             NULL);
 
         vkCmdDrawIndexed(
-            command_buffer,
+            cmd_info->cmd_buffer,
             primitive->index_count,
             1,
             primitive->first_index,
@@ -62,26 +58,23 @@ static void draw_node(
   }
 
   for (uint32_t j = 0; j < node->children_count; j++) {
-    draw_node(model, node->children[j], window, pipeline);
+    draw_node(model, node->children[j], cmd_info, pipeline);
   }
 }
 
 static void draw_node_picking(
     eg_gltf_model_component_t *model,
     eg_gltf_model_asset_node_t *node,
-    re_window_t *window,
-    VkCommandBuffer command_buffer,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline) {
-  uint32_t i = window->current_frame;
-
   if (node->mesh != NULL) {
     vkCmdBindDescriptorSets(
-        command_buffer,
+        cmd_info->cmd_buffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipeline->layout,
         1,
         1,
-        &node->mesh->descriptor_sets[i],
+        &node->mesh->descriptor_sets[cmd_info->frame_index],
         0,
         NULL);
 
@@ -90,7 +83,7 @@ static void draw_node_picking(
 
       if (primitive->material != NULL) {
         vkCmdDrawIndexed(
-            command_buffer,
+            cmd_info->cmd_buffer,
             primitive->index_count,
             1,
             primitive->first_index,
@@ -101,8 +94,7 @@ static void draw_node_picking(
   }
 
   for (uint32_t j = 0; j < node->children_count; j++) {
-    draw_node_picking(
-        model, node->children[j], window, command_buffer, pipeline);
+    draw_node_picking(model, node->children[j], cmd_info, pipeline);
   }
 }
 
@@ -160,81 +152,79 @@ void eg_gltf_model_component_init(
 
 void eg_gltf_model_component_draw(
     eg_gltf_model_component_t *model,
-    re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     mat4_t transform) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
-  uint32_t i = window->current_frame;
-
   model->ubo.matrix = transform;
-  memcpy(model->mappings[i], &model->ubo, sizeof(model->ubo));
+  memcpy(
+      model->mappings[cmd_info->frame_index], &model->ubo, sizeof(model->ubo));
 
   vkCmdBindPipeline(
-      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+      cmd_info->cmd_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline->pipeline);
 
   VkDeviceSize offset = 0;
   VkBuffer vertex_buffer = model->asset->vertex_buffer.buffer;
-  vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+  vkCmdBindVertexBuffers(cmd_info->cmd_buffer, 0, 1, &vertex_buffer, &offset);
 
   vkCmdBindIndexBuffer(
-      command_buffer,
+      cmd_info->cmd_buffer,
       model->asset->index_buffer.buffer,
       0,
       VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       3,
       1,
-      &model->descriptor_sets[i],
+      &model->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 
   for (uint32_t j = 0; j < model->asset->node_count; j++) {
-    draw_node(model, &model->asset->nodes[j], window, pipeline);
+    draw_node(model, &model->asset->nodes[j], cmd_info, pipeline);
   }
 }
 
 void eg_gltf_model_component_draw_picking(
     eg_gltf_model_component_t *model,
-    re_window_t *window,
-    VkCommandBuffer command_buffer,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     mat4_t transform) {
-  uint32_t i = window->current_frame;
-
   model->ubo.matrix = transform;
-  memcpy(model->mappings[i], &model->ubo, sizeof(model->ubo));
+  memcpy(
+      model->mappings[cmd_info->frame_index], &model->ubo, sizeof(model->ubo));
 
   vkCmdBindPipeline(
-      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+      cmd_info->cmd_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline->pipeline);
 
   VkDeviceSize offset = 0;
   VkBuffer vertex_buffer = model->asset->vertex_buffer.buffer;
-  vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+  vkCmdBindVertexBuffers(cmd_info->cmd_buffer, 0, 1, &vertex_buffer, &offset);
 
   vkCmdBindIndexBuffer(
-      command_buffer,
+      cmd_info->cmd_buffer,
       model->asset->index_buffer.buffer,
       0,
       VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       2,
       1,
-      &model->descriptor_sets[i],
+      &model->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 
   for (uint32_t j = 0; j < model->asset->node_count; j++) {
-    draw_node_picking(
-        model, &model->asset->nodes[j], window, command_buffer, pipeline);
+    draw_node_picking(model, &model->asset->nodes[j], cmd_info, pipeline);
   }
 }
 

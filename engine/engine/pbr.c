@@ -58,28 +58,25 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
 }
 
 void eg_pbr_model_update_uniform(
-    eg_pbr_model_t *model, struct re_window_t *window) {
+    eg_pbr_model_t *model, const eg_cmd_info_t *cmd_info) {
   memcpy(
-      model->mappings[window->current_frame],
+      model->mappings[cmd_info->frame_index],
       &model->uniform,
       sizeof(model->uniform));
 }
 
 void eg_pbr_model_bind(
     eg_pbr_model_t *model,
-    struct re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline,
     uint32_t set_index) {
-  uint32_t i = window->current_frame;
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       set_index, // firstSet
       1,
-      &model->descriptor_sets[i],
+      &model->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 }

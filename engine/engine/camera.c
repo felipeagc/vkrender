@@ -65,17 +65,13 @@ void eg_camera_init(eg_camera_t *camera) {
   }
 }
 
-void eg_camera_update(eg_camera_t *camera, struct re_window_t *window) {
-  uint32_t i = window->current_frame;
-
-  uint32_t width, height;
-  re_window_get_size(window, &width, &height);
-
+void eg_camera_update(
+    eg_camera_t *camera,
+    const eg_cmd_info_t *cmd_info,
+    float width,
+    float height) {
   camera->uniform.proj = mat4_perspective(
-      camera->fov,
-      (float)width / (float)height,
-      camera->near_clip,
-      camera->far_clip);
+      camera->fov, width / height, camera->near_clip, camera->far_clip);
 
   // @note: See:
   // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
@@ -103,24 +99,24 @@ void eg_camera_update(eg_camera_t *camera, struct re_window_t *window) {
   camera->uniform.pos =
       (vec4_t){camera->position.x, camera->position.y, camera->position.z, 1.0};
 
-  memcpy(camera->mappings[i], &camera->uniform, sizeof(eg_camera_uniform_t));
+  memcpy(
+      camera->mappings[cmd_info->frame_index],
+      &camera->uniform,
+      sizeof(eg_camera_uniform_t));
 }
 
 void eg_camera_bind(
     eg_camera_t *camera,
-    struct re_window_t *window,
-    VkCommandBuffer command_buffer,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline,
     uint32_t set_index) {
-  uint32_t i = window->current_frame;
-
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       set_index,
       1,
-      &camera->descriptor_sets[i],
+      &camera->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 }

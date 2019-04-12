@@ -6,8 +6,6 @@
 #include <renderer/buffer.h>
 #include <renderer/image.h>
 
-typedef struct re_window_t re_window_t;
-
 typedef struct eg_gltf_model_asset_dimensions_t {
   vec3_t min;
   vec3_t max;

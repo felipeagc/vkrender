@@ -135,58 +135,54 @@ void eg_environment_init(
 }
 
 void eg_environment_update(
-    eg_environment_t *environment, struct re_window_t *window) {
+    eg_environment_t *environment, const eg_cmd_info_t *cmd_info) {
   memcpy(
-      environment->mappings[window->current_frame],
+      environment->mappings[cmd_info->frame_index],
       &environment->uniform,
       sizeof(eg_environment_uniform_t));
 }
 
 void eg_environment_bind(
     eg_environment_t *environment,
-    struct re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline,
     uint32_t set_index) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
-  uint32_t i = window->current_frame;
-
   vkCmdBindPipeline(
-      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+      cmd_info->cmd_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline->pipeline);
 
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       set_index, // firstSet
       1,
-      &environment->descriptor_sets[i],
+      &environment->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 }
 
 void eg_environment_draw_skybox(
     eg_environment_t *environment,
-    struct re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
-  uint32_t i = window->current_frame;
-
   vkCmdBindPipeline(
-      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+      cmd_info->cmd_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline->pipeline);
 
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       1, // firstSet
       1,
-      &environment->descriptor_sets[i],
+      &environment->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 
-  vkCmdDraw(command_buffer, 36, 1, 0, 0);
+  vkCmdDraw(cmd_info->cmd_buffer, 36, 1, 0, 0);
 }
 
 bool eg_environment_add_point_light(

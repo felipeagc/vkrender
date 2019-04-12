@@ -5,6 +5,9 @@ add_library(
 
 	renderer/common.h
 
+	renderer/cmd_buffer.c
+	renderer/cmd_buffer.h
+
 	renderer/buffer.c
 	renderer/buffer.h
 

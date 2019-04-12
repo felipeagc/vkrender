@@ -1,11 +1,10 @@
 #pragma once
 
+#include "../cmd_info.h"
 #include "../pbr.h"
 #include "asset_types.h"
 #include <renderer/buffer.h>
 #include <renderer/pipeline.h>
-
-typedef struct re_window_t re_window_t;
 
 typedef struct eg_mesh_asset_t {
   eg_asset_t asset;
@@ -22,6 +21,6 @@ void eg_mesh_asset_init(
     uint32_t *indices,
     uint32_t index_count);
 
-void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, struct re_window_t *window);
+void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, const eg_cmd_info_t *cmd_info);
 
 void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh);

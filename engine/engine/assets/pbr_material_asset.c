@@ -140,14 +140,11 @@ void eg_pbr_material_asset_init(
 
 void eg_pbr_material_asset_bind(
     eg_pbr_material_asset_t *material,
-    re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     uint32_t set_index) {
-  uint32_t i = window->current_frame;
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
   vkCmdPushConstants(
-      command_buffer,
+      cmd_info->cmd_buffer,
       pipeline->layout,
       VK_SHADER_STAGE_ALL_GRAPHICS,
       0,
@@ -155,12 +152,12 @@ void eg_pbr_material_asset_bind(
       &material->uniform);
 
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout,
       set_index, // firstSet
       1,
-      &material->descriptor_sets[i],
+      &material->descriptor_sets[cmd_info->frame_index],
       0,
       NULL);
 }

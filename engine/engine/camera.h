@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cmd_info.h"
 #include <gmath.h>
 #include <renderer/buffer.h>
 #include <renderer/common.h>
@@ -30,12 +31,15 @@ typedef struct eg_camera_t {
 
 void eg_camera_init(eg_camera_t *camera);
 
-void eg_camera_update(eg_camera_t *camera, struct re_window_t *window);
+void eg_camera_update(
+    eg_camera_t *camera,
+    const eg_cmd_info_t *cmd_info,
+    float width,
+    float height);
 
 void eg_camera_bind(
     eg_camera_t *camera,
-    struct re_window_t *window,
-    VkCommandBuffer command_buffer,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline,
     uint32_t set_index);
 

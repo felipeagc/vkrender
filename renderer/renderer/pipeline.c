@@ -230,13 +230,6 @@ void re_pipeline_init_graphics(
       &pipeline->pipeline));
 }
 
-void re_pipeline_bind_graphics(
-    re_pipeline_t *pipeline, struct re_window_t *window) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-  vkCmdBindPipeline(
-      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
-}
-
 void re_pipeline_destroy(re_pipeline_t *pipeline) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 

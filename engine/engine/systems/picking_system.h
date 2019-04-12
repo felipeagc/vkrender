@@ -19,7 +19,7 @@ void eg_picking_system_resize(
 
 eg_entity_t eg_picking_system_pick(
     eg_picking_system_t *system,
-    re_window_t *window,
+    uint32_t frame_index,
     eg_world_t *world,
     uint32_t mouse_x,
     uint32_t mouse_y);

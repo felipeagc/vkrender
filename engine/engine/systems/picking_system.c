@@ -5,6 +5,7 @@
 #include <engine/components/transform_component.h>
 #include <renderer/context.h>
 #include <renderer/util.h>
+#include <renderer/window.h>
 #include <string.h>
 
 void eg_picking_system_init(
@@ -34,7 +35,7 @@ void eg_picking_system_resize(
 
 eg_entity_t eg_picking_system_pick(
     eg_picking_system_t *system,
-    re_window_t *window,
+    uint32_t frame_index,
     eg_world_t *world,
     uint32_t mouse_x,
     uint32_t mouse_y) {
@@ -76,10 +77,15 @@ eg_entity_t eg_picking_system_pick(
     VK_CHECK(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
   }
 
+  const eg_cmd_info_t cmd_info = {
+      .frame_index = frame_index,
+      .cmd_buffer = command_buffer,
+  };
+
   re_canvas_begin(&system->canvas, command_buffer);
 
   eg_camera_bind(
-      &world->camera, window, command_buffer, &system->picking_pipeline, 0);
+      &world->camera, &cmd_info, &system->picking_pipeline, 0);
 
   for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
     if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
@@ -99,8 +105,7 @@ eg_entity_t eg_picking_system_pick(
 
       eg_gltf_model_component_draw_picking(
           model,
-          window,
-          command_buffer,
+          &cmd_info,
           &system->picking_pipeline,
           eg_transform_component_to_mat4(transform));
     }

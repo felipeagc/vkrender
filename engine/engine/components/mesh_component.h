@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../assets/pbr_material_asset.h"
+#include "../cmd_info.h"
 #include "../pbr.h"
 
 typedef struct eg_mesh_component_t {
@@ -17,7 +18,7 @@ void eg_mesh_component_init(
 
 void eg_mesh_component_draw(
     eg_mesh_component_t *mesh,
-    struct re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline);
 
 void eg_mesh_component_destroy(eg_mesh_component_t *mesh);

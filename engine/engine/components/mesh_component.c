@@ -14,14 +14,14 @@ void eg_mesh_component_init(
 
 void eg_mesh_component_draw(
     eg_mesh_component_t *mesh,
-    struct re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline) {
-  eg_pbr_material_asset_bind(mesh->material, window, pipeline, 4);
-  eg_pbr_model_update_uniform(&mesh->local_model, window);
-  eg_pbr_model_update_uniform(&mesh->model, window);
-  eg_pbr_model_bind(&mesh->local_model, window, pipeline, 2);
-  eg_pbr_model_bind(&mesh->model, window, pipeline, 3);
-  eg_mesh_asset_draw(mesh->asset, window);
+  eg_pbr_material_asset_bind(mesh->material, cmd_info, pipeline, 4);
+  eg_pbr_model_update_uniform(&mesh->local_model, cmd_info);
+  eg_pbr_model_update_uniform(&mesh->model, cmd_info);
+  eg_pbr_model_bind(&mesh->local_model, cmd_info, pipeline, 2);
+  eg_pbr_model_bind(&mesh->model, cmd_info, pipeline, 3);
+  eg_mesh_asset_draw(mesh->asset, cmd_info);
 }
 
 void eg_mesh_component_destroy(eg_mesh_component_t *mesh) {

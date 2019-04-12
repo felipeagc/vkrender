@@ -50,15 +50,13 @@ void eg_mesh_asset_init(
   re_buffer_destroy(&staging_buffer);
 }
 
-void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, struct re_window_t *window) {
-  VkCommandBuffer command_buffer = re_window_get_current_command_buffer(window);
-
+void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, const eg_cmd_info_t *cmd_info) {
   vkCmdBindIndexBuffer(
-      command_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+      cmd_info->cmd_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
   VkDeviceSize offsets = 0;
   vkCmdBindVertexBuffers(
-      command_buffer, 0, 1, &mesh->vertex_buffer.buffer, &offsets);
-  vkCmdDrawIndexed(command_buffer, mesh->index_count, 1, 0, 0, 0);
+      cmd_info->cmd_buffer, 0, 1, &mesh->vertex_buffer.buffer, &offsets);
+  vkCmdDrawIndexed(cmd_info->cmd_buffer, mesh->index_count, 1, 0, 0, 0);
 }
 
 void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {

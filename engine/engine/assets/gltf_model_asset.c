@@ -816,9 +816,6 @@ void eg_gltf_model_asset_init(
   }
 }
 
-void eg_gltf_model_asset_draw(
-    eg_gltf_model_asset_t *model, struct re_window_t *window) {}
-
 void eg_gltf_model_asset_destroy(eg_gltf_model_asset_t *model) {
   re_buffer_destroy(&model->vertex_buffer);
   re_buffer_destroy(&model->index_buffer);

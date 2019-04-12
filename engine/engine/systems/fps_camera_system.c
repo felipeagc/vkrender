@@ -40,7 +40,12 @@ void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
 }
 
 void eg_fps_camera_system_update(
-    eg_fps_camera_system_t *system, re_window_t *window, eg_camera_t *camera) {
+    eg_fps_camera_system_t *system,
+    re_window_t *window,
+    eg_camera_t *camera,
+    const eg_cmd_info_t *cmd_info,
+    float width,
+    float height) {
   // Camera control toggle
   {
     if (system->prev_right_pressed !=
@@ -147,5 +152,5 @@ void eg_fps_camera_system_update(
     }
   }
 
-  eg_camera_update(camera, window);
+  eg_camera_update(camera, cmd_info, width, height);
 }

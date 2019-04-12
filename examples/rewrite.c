@@ -59,7 +59,7 @@ static void game_mouse_button_callback(
           ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
     game->inspector.selected_entity = eg_picking_system_pick(
         &game->picking_system,
-        window,
+        window->current_frame,
         &game->world,
         (uint32_t)mouse_x,
         (uint32_t)mouse_y);
@@ -202,8 +202,10 @@ int main(int argc, const char *argv[]) {
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);
 
-    VkCommandBuffer command_buffer =
-        re_window_get_current_command_buffer(&game.window);
+    const eg_cmd_info_t cmd_info = {
+        .frame_index = game.window.current_frame,
+        .cmd_buffer = re_window_get_current_command_buffer(&game.window),
+    };
 
     re_imgui_begin(&game.window);
     eg_draw_inspector(
@@ -211,28 +213,31 @@ int main(int argc, const char *argv[]) {
     re_imgui_end();
 
     // Per-frame updates
-    eg_environment_update(&game.world.environment, &game.window);
+    eg_environment_update(&game.world.environment, &cmd_info);
 
     // Begin command buffer recording
     re_window_begin_frame(&game.window);
 
+    uint32_t width, height;
+    re_window_get_size(&game.window, &width, &height);
+
     eg_fps_camera_system_update(
-        &game.fps_system, &game.window, &game.world.camera);
+        &game.fps_system,
+        &game.window,
+        &game.world.camera,
+        &cmd_info,
+        (float)width,
+        (float)height);
 
     // Begin window renderpass
     re_window_begin_render_pass(&game.window);
 
     eg_camera_bind(
-        &game.world.camera,
-        &game.window,
-        command_buffer,
-        &skybox_pipeline->pipeline,
-        0);
+        &game.world.camera, &cmd_info, &skybox_pipeline->pipeline, 0);
     eg_environment_draw_skybox(
-        &game.world.environment, &game.window, &skybox_pipeline->pipeline);
+        &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
 
-    eg_rendering_system_render(
-        &game.window, &game.world, command_buffer, &pbr_pipeline->pipeline);
+    eg_rendering_system_render(&cmd_info, &game.world, &pbr_pipeline->pipeline);
 
     re_imgui_draw(&game.window);
 

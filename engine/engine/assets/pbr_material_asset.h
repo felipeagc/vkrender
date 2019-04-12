@@ -1,12 +1,12 @@
 #pragma once
 
+#include "../cmd_info.h"
 #include "asset_types.h"
 #include <gmath.h>
 #include <renderer/common.h>
 #include <vulkan/vulkan.h>
 
 typedef struct re_image_t re_image_t;
-typedef struct re_window_t re_window_t;
 typedef struct re_pipeline_t re_pipeline_t;
 
 typedef struct eg_pbr_material_uniform_t {
@@ -33,7 +33,7 @@ void eg_pbr_material_asset_init(
 
 void eg_pbr_material_asset_bind(
     eg_pbr_material_asset_t *material,
-    struct re_window_t *window,
+    const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline,
     uint32_t set_index);
 
