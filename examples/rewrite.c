@@ -2,6 +2,7 @@
 #include <engine/assets/environment_asset.h>
 #include <engine/assets/gltf_model_asset.h>
 #include <engine/assets/mesh_asset.h>
+#include <engine/assets/pipeline_asset.h>
 #include <engine/camera.h>
 #include <engine/components/gltf_model_component.h>
 #include <engine/components/mesh_component.h>
@@ -25,9 +26,6 @@
 
 typedef struct game_t {
   re_window_t window;
-
-  re_pipeline_t pbr_pipeline;
-  re_pipeline_t skybox_pipeline;
 
   eg_asset_manager_t asset_manager;
   eg_world_t world;
@@ -97,20 +95,6 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   game->window.char_callback = game_char_callback;
   game->window.framebuffer_resize_callback = game_framebuffer_resize_callback;
 
-  eg_init_pipeline_spv(
-      &game->pbr_pipeline,
-      &game->window.render_target,
-      "/shaders/pbr.vert.spv",
-      "/shaders/pbr.frag.spv",
-      eg_pbr_pipeline_parameters());
-
-  eg_init_pipeline_spv(
-      &game->skybox_pipeline,
-      &game->window.render_target,
-      "/shaders/skybox.vert.spv",
-      "/shaders/skybox.frag.spv",
-      eg_skybox_pipeline_parameters());
-
   eg_asset_manager_init(&game->asset_manager);
 
   eg_environment_asset_t *environment_asset = eg_asset_alloc(
@@ -132,9 +116,6 @@ static void game_destroy(game_t *game) {
   eg_world_destroy(&game->world);
   eg_asset_manager_destroy(&game->asset_manager);
 
-  re_pipeline_destroy(&game->pbr_pipeline);
-  re_pipeline_destroy(&game->skybox_pipeline);
-
   eg_picking_system_destroy(&game->picking_system);
 
   eg_engine_destroy();
@@ -147,6 +128,24 @@ static void game_destroy(game_t *game) {
 int main(int argc, const char *argv[]) {
   game_t game;
   game_init(&game, argc, argv);
+
+  eg_pipeline_asset_t *pbr_pipeline =
+      eg_asset_alloc(&game.asset_manager, "PBR pipeline", eg_pipeline_asset_t);
+  eg_pipeline_asset_init(
+      pbr_pipeline,
+      &game.window.render_target,
+      "/shaders/pbr.vert.spv",
+      "/shaders/pbr.frag.spv",
+      eg_pbr_pipeline_parameters());
+
+  eg_pipeline_asset_t *skybox_pipeline = eg_asset_alloc(
+      &game.asset_manager, "Skybox pipeline", eg_pipeline_asset_t);
+  eg_pipeline_asset_init(
+      skybox_pipeline,
+      &game.window.render_target,
+      "/shaders/skybox.vert.spv",
+      "/shaders/skybox.frag.spv",
+      eg_skybox_pipeline_parameters());
 
   {
     eg_gltf_model_asset_t *model_asset =
@@ -227,13 +226,13 @@ int main(int argc, const char *argv[]) {
         &game.world.camera,
         &game.window,
         command_buffer,
-        &game.skybox_pipeline,
+        &skybox_pipeline->pipeline,
         0);
     eg_environment_draw_skybox(
-        &game.world.environment, &game.window, &game.skybox_pipeline);
+        &game.world.environment, &game.window, &skybox_pipeline->pipeline);
 
     eg_rendering_system_render(
-        &game.window, &game.world, command_buffer, &game.pbr_pipeline);
+        &game.window, &game.world, command_buffer, &pbr_pipeline->pipeline);
 
     re_imgui_draw(&game.window);
 

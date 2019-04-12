@@ -241,6 +241,10 @@ void eg_draw_inspector(
             ASSET_HEADER("Mesh: %s", asset->name) {}
             break;
           }
+          case EG_PIPELINE_ASSET_TYPE: {
+            ASSET_HEADER("Pipeline: %s", asset->name) {}
+            break;
+          }
           case EG_GLTF_MODEL_ASSET_TYPE: {
             ASSET_HEADER("GLTF model: %s", asset->name) {
               inspector_gltf_model_asset(asset);

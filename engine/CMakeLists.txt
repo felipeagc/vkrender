@@ -43,6 +43,8 @@ add_library(
 	engine/assets/env_file.h
 	engine/assets/asset_types.c
 	engine/assets/asset_types.h
+	engine/assets/pipeline_asset.c
+	engine/assets/pipeline_asset.h
 	engine/assets/environment_asset.c
 	engine/assets/environment_asset.h
 	engine/assets/mesh_asset.c

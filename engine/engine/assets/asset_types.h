@@ -15,12 +15,14 @@ typedef void (*eg_asset_destructor_t)(void *);
 
 #define EG_ASSET_TYPE(type) EG_ASSET_TYPE_##type
 
+#define EG_ASSET_TYPE_eg_pipeline_asset_t EG_PIPELINE_ASSET_TYPE
 #define EG_ASSET_TYPE_eg_environment_asset_t EG_ENVIRONMENT_ASSET_TYPE
 #define EG_ASSET_TYPE_eg_mesh_asset_t EG_MESH_ASSET_TYPE
 #define EG_ASSET_TYPE_eg_pbr_material_asset_t EG_PBR_MATERIAL_ASSET_TYPE
 #define EG_ASSET_TYPE_eg_gltf_model_asset_t EG_GLTF_MODEL_ASSET_TYPE
 
 typedef enum eg_asset_type_t {
+  EG_PIPELINE_ASSET_TYPE,
   EG_ENVIRONMENT_ASSET_TYPE,
   EG_MESH_ASSET_TYPE,
   EG_PBR_MATERIAL_ASSET_TYPE,
