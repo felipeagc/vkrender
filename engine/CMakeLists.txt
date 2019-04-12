@@ -33,6 +33,8 @@ add_library(
 	engine/components/gltf_model_component.c
 	engine/components/gltf_model_component.h
 
+	engine/systems/rendering_system.c
+	engine/systems/rendering_system.h
 	engine/systems/fps_camera_system.c
 	engine/systems/fps_camera_system.h
 	engine/systems/picking_system.c

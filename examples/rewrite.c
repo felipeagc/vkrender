@@ -12,6 +12,7 @@
 #include <engine/pipelines.h>
 #include <engine/systems/fps_camera_system.h>
 #include <engine/systems/picking_system.h>
+#include <engine/systems/rendering_system.h>
 #include <engine/util.h>
 #include <engine/world.h>
 #include <fstd_util.h>
@@ -54,7 +55,10 @@ static void game_mouse_button_callback(
   re_window_get_cursor_pos(window, &mouse_x, &mouse_y);
 
   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS &&
-      !igIsWindowHovered(ImGuiHoveredFlags_AnyWindow)) {
+      !igIsWindowHovered(
+          ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows |
+          ImGuiHoveredFlags_AllowWhenBlockedByPopup |
+          ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
     game->inspector.selected_entity = eg_picking_system_pick(
         &game->picking_system,
         window,
@@ -228,45 +232,8 @@ int main(int argc, const char *argv[]) {
     eg_environment_draw_skybox(
         &game.world.environment, &game.window, &game.skybox_pipeline);
 
-    re_pipeline_bind_graphics(&game.pbr_pipeline, &game.window);
-    eg_camera_bind(
-        &game.world.camera,
-        &game.window,
-        command_buffer,
-        &game.pbr_pipeline,
-        0);
-    eg_environment_bind(
-        &game.world.environment, &game.window, &game.pbr_pipeline, 1);
-
-    // Draw all meshes
-    for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
-      if (eg_world_has_comp(&game.world, entity, EG_MESH_COMPONENT_TYPE) &&
-          eg_world_has_comp(&game.world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
-        eg_mesh_component_t *mesh =
-            EG_GET_COMP(&game.world, entity, eg_mesh_component_t);
-        eg_transform_component_t *transform =
-            EG_GET_COMP(&game.world, entity, eg_transform_component_t);
-
-        mesh->model.uniform.transform =
-            eg_transform_component_to_mat4(transform);
-        eg_mesh_component_draw(mesh, &game.window, &game.pbr_pipeline);
-      }
-
-      if (eg_world_has_comp(
-              &game.world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
-          eg_world_has_comp(&game.world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
-        eg_gltf_model_component_t *model =
-            EG_GET_COMP(&game.world, entity, eg_gltf_model_component_t);
-        eg_transform_component_t *transform =
-            EG_GET_COMP(&game.world, entity, eg_transform_component_t);
-
-        eg_gltf_model_component_draw(
-            model,
-            &game.window,
-            &game.pbr_pipeline,
-            eg_transform_component_to_mat4(transform));
-      }
-    }
+    eg_rendering_system_render(
+        &game.window, &game.world, command_buffer, &game.pbr_pipeline);
 
     re_imgui_draw(&game.window);
 
