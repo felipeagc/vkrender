@@ -8,15 +8,17 @@
 #include <renderer/window.h>
 
 void eg_rendering_system_render(
-    const eg_cmd_info_t *cmd_info,
-    eg_world_t *world,
-    re_pipeline_t *pipeline) {
+    const eg_cmd_info_t *cmd_info, eg_world_t *world, re_pipeline_t *pipeline) {
   re_cmd_bind_graphics_pipeline(cmd_info->cmd_buffer, pipeline);
   eg_camera_bind(&world->camera, cmd_info, pipeline, 0);
   eg_environment_bind(&world->environment, cmd_info, pipeline, 1);
 
   // Draw all meshes
   for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
+    if (eg_world_has_tag(world, entity, EG_ENTITY_TAG_HIDDEN)) {
+      continue;
+    }
+
     if (eg_world_has_comp(world, entity, EG_MESH_COMPONENT_TYPE) &&
         eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
       eg_mesh_component_t *mesh =

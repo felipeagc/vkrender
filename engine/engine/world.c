@@ -67,6 +67,11 @@ eg_entity_tag_t eg_world_get_tags(eg_world_t *world, eg_entity_t entity) {
   return world->tags[entity];
 }
 
+bool eg_world_has_tag(
+    eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag) {
+  return world->tags[entity] & tag;
+}
+
 void *eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
   fstd_bitset_set(world->component_bitsets[comp].bytes, entity, true);

@@ -78,6 +78,10 @@ eg_entity_t eg_picking_system_pick(
   eg_camera_bind(&world->camera, &cmd_info, &system->picking_pipeline, 0);
 
   for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
+    if (eg_world_has_tag(world, entity, EG_ENTITY_TAG_HIDDEN)) {
+      continue;
+    }
+
     if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
         eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
       eg_gltf_model_component_t *model =

@@ -180,6 +180,8 @@ int main(int argc, const char *argv[]) {
     eg_gltf_model_component_t *model_comp =
         eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
     eg_gltf_model_component_init(model_comp, model_asset);
+
+    eg_world_set_tags(&game.world, ent, EG_ENTITY_TAG_HIDDEN);
   }
 
   {

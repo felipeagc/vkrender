@@ -16,6 +16,9 @@ typedef uint32_t eg_entity_t;
 
 typedef enum eg_entity_tag_t {
   EG_ENTITY_TAG_NONE = 0,
+
+  EG_ENTITY_TAG_HIDDEN = 1 << 0,
+
   EG_ENTITY_TAG_MAX
 } eg_entity_tag_t;
 
@@ -45,6 +48,9 @@ void eg_world_set_tags(
     eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag);
 
 eg_entity_tag_t eg_world_get_tags(eg_world_t *world, eg_entity_t entity);
+
+bool eg_world_has_tag(
+    eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag);
 
 void *eg_world_add_comp(
     eg_world_t *world, eg_entity_t entity, eg_component_type_t comp);
