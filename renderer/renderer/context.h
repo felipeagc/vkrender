@@ -12,8 +12,6 @@ typedef struct re_window_t re_window_t;
 #define RE_ENABLE_VALIDATION
 #endif
 
-#define RE_THREAD_COUNT 4
-
 #ifdef RE_ENABLE_VALIDATION
 static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
     "VK_LAYER_LUNARG_standard_validation",
@@ -48,8 +46,6 @@ typedef struct re_context_t {
 
   VkCommandPool graphics_command_pool;
   VkCommandPool transient_command_pool;
-
-  VkCommandPool thread_command_pools[RE_THREAD_COUNT];
 
   VkDescriptorPool descriptor_pool;
   VkDescriptorSetLayout canvas_descriptor_set_layout;

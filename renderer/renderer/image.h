@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cmd_buffer.h"
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -31,7 +32,8 @@ typedef struct re_image_options_t {
   VkFormat format;
 } re_image_options_t;
 
-void re_image_init(re_image_t *image, re_image_options_t *options);
+void re_image_init(
+    re_image_t *image, re_cmd_pool_t pool, re_image_options_t *options);
 
 void re_image_destroy(re_image_t *image);
 

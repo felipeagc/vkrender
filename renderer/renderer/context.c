@@ -462,20 +462,6 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
       ctx->device, &create_info, NULL, &ctx->transient_command_pool));
 }
 
-// TODO: I think this should be moved to the engine, not the renderer.
-static inline void create_thread_command_pools(re_context_t *ctx) {
-  for (uint32_t i = 0; i < RE_THREAD_COUNT; i++) {
-    VkCommandPoolCreateInfo create_info = {0};
-    create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    create_info.pNext = 0;
-    create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    create_info.queueFamilyIndex = ctx->graphics_queue_family_index;
-
-    VK_CHECK(vkCreateCommandPool(
-        ctx->device, &create_info, NULL, &ctx->thread_command_pools[i]));
-  }
-}
-
 void re_context_init() {
   assert(glfwInit());
 
@@ -499,10 +485,6 @@ void re_context_init() {
 
   mtx_init(&g_ctx.queue_mutex, mtx_plain);
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(g_ctx.thread_command_pools); i++) {
-    g_ctx.thread_command_pools[i] = VK_NULL_HANDLE;
-  }
-
   create_instance(&g_ctx);
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
@@ -522,7 +504,6 @@ void re_context_init() {
 
   create_graphics_command_pool(&g_ctx);
   create_transient_command_pool(&g_ctx);
-  create_thread_command_pools(&g_ctx);
 
   VkDescriptorPoolSize pool_sizes[] = {
       {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
@@ -574,6 +555,7 @@ void re_context_init() {
   uint8_t black[] = {0, 0, 0, 255};
   re_image_init(
       &g_ctx.white_texture,
+      g_ctx.transient_command_pool,
       &(re_image_options_t){
           .data = white,
           .width = 1,
@@ -583,6 +565,7 @@ void re_context_init() {
 
   re_image_init(
       &g_ctx.black_texture,
+      g_ctx.transient_command_pool,
       &(re_image_options_t){
           .data = black,
           .width = 1,
@@ -670,10 +653,6 @@ void re_context_destroy() {
   vkDestroyCommandPool(g_ctx.device, g_ctx.transient_command_pool, NULL);
 
   vkDestroyCommandPool(g_ctx.device, g_ctx.graphics_command_pool, NULL);
-
-  for (uint32_t i = 0; i < ARRAY_SIZE(g_ctx.thread_command_pools); i++) {
-    vkDestroyCommandPool(g_ctx.device, g_ctx.thread_command_pools[i], NULL);
-  }
 
   vmaDestroyAllocator(g_ctx.gpu_allocator);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cmd_buffer.h"
 #include <stdbool.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -30,11 +31,15 @@ bool re_buffer_map_memory(re_buffer_t *buffer, void **dest);
 void re_buffer_unmap_memory(re_buffer_t *buffer);
 
 void re_buffer_transfer_to_buffer(
-    re_buffer_t *buffer, re_buffer_t *dest, size_t size);
+    re_buffer_t *buffer,
+    re_buffer_t *dest,
+    re_cmd_pool_t cmd_pool,
+    size_t size);
 
 void re_buffer_transfer_to_image(
     re_buffer_t *buffer,
     VkImage dest,
+    re_cmd_pool_t cmd_pool,
     uint32_t width,
     uint32_t height,
     uint32_t layer,
@@ -43,6 +48,7 @@ void re_buffer_transfer_to_image(
 void re_image_transfer_to_buffer(
     VkImage image,
     re_buffer_t *buffer,
+    re_cmd_pool_t cmd_pool,
     uint32_t offset_x,
     uint32_t offset_y,
     uint32_t width,

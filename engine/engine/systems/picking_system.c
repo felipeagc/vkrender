@@ -140,6 +140,7 @@ eg_entity_t eg_picking_system_pick(
   re_image_transfer_to_buffer(
       system->canvas.resources[0].color.image,
       &staging_buffer,
+      g_ctx.transient_command_pool,
       mouse_x,
       mouse_y,
       1,

@@ -1,4 +1,5 @@
 #include "mesh_asset.h"
+#include <renderer/context.h>
 #include <renderer/window.h>
 #include <string.h>
 
@@ -39,11 +40,17 @@ void eg_mesh_asset_init(
 
   memcpy(memory, vertices, vertex_buffer_size);
   re_buffer_transfer_to_buffer(
-      &staging_buffer, &mesh->vertex_buffer, vertex_buffer_size);
+      &staging_buffer,
+      &mesh->vertex_buffer,
+      g_ctx.transient_command_pool,
+      vertex_buffer_size);
 
   memcpy(memory, indices, index_buffer_size);
   re_buffer_transfer_to_buffer(
-      &staging_buffer, &mesh->index_buffer, index_buffer_size);
+      &staging_buffer,
+      &mesh->index_buffer,
+      g_ctx.transient_command_pool,
+      index_buffer_size);
 
   re_buffer_unmap_memory(&staging_buffer);
 

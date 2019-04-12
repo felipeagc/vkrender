@@ -107,6 +107,7 @@ static inline void create_image(
 
 static inline void upload_data_to_image(
     re_image_t *image,
+    re_cmd_pool_t pool,
     uint8_t *data,
     uint32_t width,
     uint32_t height,
@@ -129,13 +130,14 @@ static inline void upload_data_to_image(
   memcpy(staging_memory_pointer, data, img_size);
 
   re_buffer_transfer_to_image(
-      &staging_buffer, image->image, width, height, layer, level);
+      &staging_buffer, image->image, pool, width, height, layer, level);
 
   re_buffer_unmap_memory(&staging_buffer);
   re_buffer_destroy(&staging_buffer);
 }
 
-void re_image_init(re_image_t *image, re_image_options_t *options) {
+void re_image_init(
+    re_image_t *image, re_cmd_pool_t pool, re_image_options_t *options) {
   if (options->layer_count == 0) {
     options->layer_count = 1;
   }
@@ -176,6 +178,7 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
     for (uint32_t layer = 0; layer < image->layer_count; layer++) {
       upload_data_to_image(
           image,
+          pool,
           &options->data[current_pos],
           image->width / (uint32_t)pow(2, level),
           image->height / (uint32_t)pow(2, level),

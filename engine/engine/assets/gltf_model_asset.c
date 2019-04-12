@@ -662,7 +662,8 @@ void eg_gltf_model_asset_init(
         .format = VK_FORMAT_R8G8B8A8_UNORM,
     };
 
-    re_image_init(&model->images[i], &image_options);
+    re_image_init(
+        &model->images[i], g_ctx.transient_command_pool, &image_options);
 
     free(image_data);
   }
@@ -793,11 +794,17 @@ void eg_gltf_model_asset_init(
 
   memcpy(staging_memory_ptr, vertices, vertex_buffer_size);
   re_buffer_transfer_to_buffer(
-      &staging_buffer, &model->vertex_buffer, vertex_buffer_size);
+      &staging_buffer,
+      &model->vertex_buffer,
+      g_ctx.transient_command_pool,
+      vertex_buffer_size);
 
   memcpy(staging_memory_ptr, indices, index_buffer_size);
   re_buffer_transfer_to_buffer(
-      &staging_buffer, &model->index_buffer, index_buffer_size);
+      &staging_buffer,
+      &model->index_buffer,
+      g_ctx.transient_command_pool,
+      index_buffer_size);
 
   re_buffer_unmap_memory(&staging_buffer);
   re_buffer_destroy(&staging_buffer);

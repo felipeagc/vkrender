@@ -2,6 +2,7 @@
 #include "../engine.h"
 #include "../filesystem.h"
 #include "env_file.h"
+#include <renderer/context.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +46,7 @@ void eg_environment_asset_init(
   // Skybox
   re_image_init(
       &environment->skybox_cubemap,
+      g_ctx.transient_command_pool,
       &(re_image_options_t){
           .data = skybox_data,
           .width = skybox_dim,
@@ -57,6 +59,7 @@ void eg_environment_asset_init(
   // Irradiance
   re_image_init(
       &environment->irradiance_cubemap,
+      g_ctx.transient_command_pool,
       &(re_image_options_t){
           .data = irradiance_data,
           .width = irradiance_dim,
@@ -69,6 +72,7 @@ void eg_environment_asset_init(
   // Radiance
   re_image_init(
       &environment->radiance_cubemap,
+      g_ctx.transient_command_pool,
       &(re_image_options_t){
           .data = radiance_data,
           .width = radiance_dim,
@@ -100,6 +104,7 @@ void eg_environment_asset_init(
 
     re_image_init(
         &environment->brdf_lut,
+        g_ctx.transient_command_pool,
         &(re_image_options_t){
             .data = brdf_lut_data,
             .width = (uint32_t)width,
