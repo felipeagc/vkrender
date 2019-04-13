@@ -6,6 +6,7 @@
 #include <renderer/pipeline.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
+#include <string.h>
 
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,
@@ -19,6 +20,17 @@ void eg_pbr_material_asset_init(
   material->uniform.roughness = 1.0;
   material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
+
+  for (uint32_t i = 0; i < ARRAY_SIZE(material->uniform_buffers); i++) {
+    re_buffer_init(
+        &material->uniform_buffers[i],
+        &(re_buffer_options_t){
+            .type = RE_BUFFER_TYPE_UNIFORM,
+            .size = sizeof(material->uniform),
+        });
+
+    re_buffer_map_memory(&material->uniform_buffers[i], &material->mappings[i]);
+  }
 
   if (albedo_texture == NULL) {
     albedo_texture = &g_ctx.white_texture;
@@ -65,6 +77,11 @@ void eg_pbr_material_asset_init(
         metallic_roughness_texture->descriptor;
     VkDescriptorImageInfo occlusion_descriptor = occlusion_texture->descriptor;
     VkDescriptorImageInfo emissive_descriptor = emissive_texture->descriptor;
+    VkDescriptorBufferInfo uniform_buffer_descriptor = {
+        .buffer = material->uniform_buffers[i].buffer,
+        .offset = 0,
+        .range = sizeof(material->uniform),
+    };
 
     VkWriteDescriptorSet descriptor_writes[] = {
         (VkWriteDescriptorSet){
@@ -127,6 +144,18 @@ void eg_pbr_material_asset_init(
             NULL,                                      // pBufferInfo
             NULL,                                      // pTexelBufferView
         },
+        (VkWriteDescriptorSet){
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            NULL,
+            material->descriptor_sets[i],      // dstSet
+            5,                                 // dstBinding
+            0,                                 // dstArrayElement
+            1,                                 // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            NULL,                              // pImageInfo
+            &uniform_buffer_descriptor,        // pBufferInfo
+            NULL,                              // pTexelBufferView
+        },
     };
 
     vkUpdateDescriptorSets(
@@ -143,13 +172,10 @@ void eg_pbr_material_asset_bind(
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     uint32_t set_index) {
-  vkCmdPushConstants(
-      cmd_info->cmd_buffer,
-      pipeline->layout,
-      VK_SHADER_STAGE_ALL_GRAPHICS,
-      0,
-      sizeof(material->uniform),
-      &material->uniform);
+  memcpy(
+      material->mappings[cmd_info->frame_index],
+      &material->uniform,
+      sizeof(material->uniform));
 
   vkCmdBindDescriptorSets(
       cmd_info->cmd_buffer,
@@ -164,6 +190,11 @@ void eg_pbr_material_asset_bind(
 
 void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  for (uint32_t i = 0; i < ARRAY_SIZE(material->uniform_buffers); i++) {
+    re_buffer_unmap_memory(&material->uniform_buffers[i]);
+    re_buffer_destroy(&material->uniform_buffers[i]);
+  }
 
   vkFreeDescriptorSets(
       g_ctx.device,

@@ -33,6 +33,17 @@ static void material_init(
   material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
 
+  for (uint32_t i = 0; i < ARRAY_SIZE(material->uniform_buffers); i++) {
+    re_buffer_init(
+        &material->uniform_buffers[i],
+        &(re_buffer_options_t){
+            .type = RE_BUFFER_TYPE_UNIFORM,
+            .size = sizeof(material->uniform),
+        });
+
+    re_buffer_map_memory(&material->uniform_buffers[i], &material->mappings[i]);
+  }
+
   if (albedo_texture == NULL) {
     albedo_texture = &g_ctx.white_texture;
   }
@@ -78,6 +89,11 @@ static void material_init(
         metallic_roughness_texture->descriptor;
     VkDescriptorImageInfo occlusion_descriptor = occlusion_texture->descriptor;
     VkDescriptorImageInfo emissive_descriptor = emissive_texture->descriptor;
+    VkDescriptorBufferInfo uniform_buffer_descriptor = {
+        .buffer = material->uniform_buffers[i].buffer,
+        .offset = 0,
+        .range = sizeof(material->uniform),
+    };
 
     VkWriteDescriptorSet descriptor_writes[] = {
         (VkWriteDescriptorSet){
@@ -140,6 +156,18 @@ static void material_init(
             NULL,                                      // pBufferInfo
             NULL,                                      // pTexelBufferView
         },
+        (VkWriteDescriptorSet){
+            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            NULL,
+            material->descriptor_sets[i],      // dstSet
+            5,                                 // dstBinding
+            0,                                 // dstArrayElement
+            1,                                 // descriptorCount
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            NULL,                              // pImageInfo
+            &uniform_buffer_descriptor,        // pBufferInfo
+            NULL,                              // pTexelBufferView
+        },
     };
 
     vkUpdateDescriptorSets(
@@ -155,6 +183,10 @@ static void material_destroy(eg_gltf_model_asset_material_t *material) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (uint32_t j = 0; j < ARRAY_SIZE(material->descriptor_sets); j++) {
+    if (material->uniform_buffers[j].buffer != VK_NULL_HANDLE) {
+      re_buffer_unmap_memory(&material->uniform_buffers[j]);
+      re_buffer_destroy(&material->uniform_buffers[j]);
+    }
     if (material->descriptor_sets[j] != VK_NULL_HANDLE) {
       vkFreeDescriptorSets(
           g_ctx.device,
@@ -820,6 +852,18 @@ void eg_gltf_model_asset_init(
   }
   if (indices != NULL) {
     free(indices);
+  }
+}
+
+void eg_gltf_model_asset_update(
+    eg_gltf_model_asset_t *model, const eg_cmd_info_t *cmd_info) {
+  for (uint32_t i = 0; i < model->material_count; i++) {
+    eg_gltf_model_asset_material_t *mat = &model->materials[i];
+
+    memcpy(
+        mat->mappings[cmd_info->frame_index],
+        &mat->uniform,
+        sizeof(mat->uniform));
   }
 }
 

@@ -16,6 +16,8 @@ typedef struct eg_gltf_model_asset_dimensions_t {
 
 typedef struct eg_gltf_model_asset_material_t {
   eg_pbr_material_uniform_t uniform;
+  re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
+  void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_gltf_model_asset_material_t;
 
@@ -79,5 +81,8 @@ typedef struct eg_gltf_model_asset_t {
 
 void eg_gltf_model_asset_init(
     eg_gltf_model_asset_t *model, const char *path, bool flip_uvs);
+
+void eg_gltf_model_asset_update(
+    eg_gltf_model_asset_t *model, const eg_cmd_info_t *cmd_info);
 
 void eg_gltf_model_asset_destroy(eg_gltf_model_asset_t *model);

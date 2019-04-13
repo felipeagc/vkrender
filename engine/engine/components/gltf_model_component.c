@@ -28,14 +28,6 @@ static void draw_node(
       eg_gltf_model_asset_primitive_t *primitive = &node->mesh->primitives[j];
 
       if (primitive->material != NULL) {
-        vkCmdPushConstants(
-            cmd_info->cmd_buffer,
-            pipeline->layout,
-            VK_SHADER_STAGE_ALL_GRAPHICS,
-            0,
-            sizeof(primitive->material->uniform),
-            &primitive->material->uniform);
-
         vkCmdBindDescriptorSets(
             cmd_info->cmd_buffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -159,6 +151,8 @@ void eg_gltf_model_component_draw(
   memcpy(
       model->mappings[cmd_info->frame_index], &model->ubo, sizeof(model->ubo));
 
+  eg_gltf_model_asset_update(model->asset, cmd_info);
+
   vkCmdBindPipeline(
       cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -197,6 +191,8 @@ void eg_gltf_model_component_draw_picking(
   model->ubo.matrix = transform;
   memcpy(
       model->mappings[cmd_info->frame_index], &model->ubo, sizeof(model->ubo));
+
+  eg_gltf_model_asset_update(model->asset, cmd_info);
 
   vkCmdBindPipeline(
       cmd_info->cmd_buffer,

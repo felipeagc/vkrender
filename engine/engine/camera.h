@@ -5,7 +5,6 @@
 #include <renderer/buffer.h>
 #include <renderer/common.h>
 
-typedef struct re_window_t re_window_t;
 typedef struct re_pipeline_t re_pipeline_t;
 
 typedef struct eg_camera_uniform_t {

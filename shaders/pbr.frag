@@ -37,8 +37,7 @@ layout (set = 4, binding = 1) uniform sampler2D normal_texture;
 layout (set = 4, binding = 2) uniform sampler2D metallic_roughness_texture;
 layout (set = 4, binding = 3) uniform sampler2D occlusion_texture;
 layout (set = 4, binding = 4) uniform sampler2D emissive_texture;
-
-layout (push_constant) uniform MaterialPushConstant {
+layout (set = 4, binding = 5) uniform MaterialUniform {
   vec4 base_color;
   float metallic;
   float roughness;

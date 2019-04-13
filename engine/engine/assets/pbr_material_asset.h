@@ -3,6 +3,7 @@
 #include "../cmd_info.h"
 #include "asset_types.h"
 #include <gmath.h>
+#include <renderer/buffer.h>
 #include <renderer/common.h>
 #include <vulkan/vulkan.h>
 
@@ -20,6 +21,8 @@ typedef struct eg_pbr_material_uniform_t {
 typedef struct eg_pbr_material_asset_t {
   eg_asset_t asset;
   eg_pbr_material_uniform_t uniform;
+  re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
+  void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
   VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_pbr_material_asset_t;
 

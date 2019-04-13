@@ -153,7 +153,15 @@ static inline void init_set_layouts() {
             1,                                         // descriptorCount
             VK_SHADER_STAGE_ALL_GRAPHICS,              // stageFlags
             NULL,                                      // pImmutableSamplers
-        }};
+        },
+        {
+            5,                                 // binding
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            1,                                 // descriptorCount
+            VK_SHADER_STAGE_ALL_GRAPHICS,      // stageFlags
+            NULL,                              // pImmutableSamplers
+        },
+    };
 
     create_descriptor_set_layout(
         bindings, ARRAY_SIZE(bindings), &g_eng.set_layouts.material);
