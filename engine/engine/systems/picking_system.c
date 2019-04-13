@@ -9,7 +9,10 @@
 #include <string.h>
 
 void eg_picking_system_init(
-    eg_picking_system_t *system, uint32_t width, uint32_t height) {
+    eg_picking_system_t *system,
+    re_render_target_t *render_target,
+    uint32_t width,
+    uint32_t height) {
   re_canvas_init(&system->canvas, width, height, VK_FORMAT_R32_UINT);
   system->canvas.clear_color = (VkClearColorValue){
       .uint32 = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX},
@@ -21,9 +24,104 @@ void eg_picking_system_init(
       "/shaders/picking.vert.spv",
       "/shaders/picking.frag.spv",
       eg_picking_pipeline_parameters());
+
+  eg_init_pipeline_spv(
+      &system->gizmo_pipeline,
+      render_target,
+      "/shaders/gizmo.vert.spv",
+      "/shaders/gizmo.frag.spv",
+      eg_gizmo_pipeline_parameters());
+
+  const float thick = 0.05f;
+
+  const re_vertex_t pos_gizmo_vertices[] = {
+      (re_vertex_t){.pos = (vec3_t){thick, thick, thick}},
+      (re_vertex_t){.pos = (vec3_t){thick, -thick, thick}},
+      (re_vertex_t){.pos = (vec3_t){thick, -thick, -thick}},
+      (re_vertex_t){.pos = (vec3_t){thick, thick, -thick}},
+
+      (re_vertex_t){.pos = (vec3_t){thick * 20.0f, thick, thick}},
+      (re_vertex_t){.pos = (vec3_t){thick * 20.0f, -thick, thick}},
+      (re_vertex_t){.pos = (vec3_t){thick * 20.0f, -thick, -thick}},
+      (re_vertex_t){.pos = (vec3_t){thick * 20.0f, thick, -thick}},
+  };
+
+  // clang-format off
+  const uint32_t pos_gizmo_indices[] = {
+    1, 2, 3,
+    3, 0, 1,
+
+    1, 0, 4,
+    4, 5, 1,
+
+    6, 7, 3,
+    3, 2, 6,
+
+    0, 3, 7,
+    7, 4, 0,
+
+    5, 6, 2,
+    2, 1, 5,
+
+    5, 4, 7,
+    7, 6, 5,
+  };
+  // clang-format on
+
+  system->pos_gizmo_index_count = ARRAY_SIZE(pos_gizmo_indices);
+
+  re_buffer_init(
+      &system->pos_gizmo_vertex_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_VERTEX,
+          .size = sizeof(pos_gizmo_vertices),
+      });
+  re_buffer_init(
+      &system->pos_gizmo_index_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_INDEX,
+          .size = sizeof(pos_gizmo_indices),
+      });
+
+  size_t staging_size = sizeof(pos_gizmo_vertices) > sizeof(pos_gizmo_indices)
+                            ? sizeof(pos_gizmo_vertices)
+                            : sizeof(pos_gizmo_indices);
+
+  re_buffer_t staging_buffer;
+  re_buffer_init(
+      &staging_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_TRANSFER,
+          .size = staging_size,
+      });
+
+  void *memory;
+  re_buffer_map_memory(&staging_buffer, &memory);
+
+  memcpy(memory, pos_gizmo_vertices, sizeof(pos_gizmo_vertices));
+  re_buffer_transfer_to_buffer(
+      &staging_buffer,
+      &system->pos_gizmo_vertex_buffer,
+      g_ctx.transient_command_pool,
+      sizeof(pos_gizmo_vertices));
+
+  memcpy(memory, pos_gizmo_indices, sizeof(pos_gizmo_indices));
+  re_buffer_transfer_to_buffer(
+      &staging_buffer,
+      &system->pos_gizmo_index_buffer,
+      g_ctx.transient_command_pool,
+      sizeof(pos_gizmo_indices));
+
+  re_buffer_unmap_memory(&staging_buffer);
+
+  re_buffer_destroy(&staging_buffer);
 }
 
 void eg_picking_system_destroy(eg_picking_system_t *system) {
+  re_pipeline_destroy(&system->gizmo_pipeline);
+  re_buffer_destroy(&system->pos_gizmo_vertex_buffer);
+  re_buffer_destroy(&system->pos_gizmo_index_buffer);
+
   re_pipeline_destroy(&system->picking_pipeline);
   re_canvas_destroy(&system->canvas);
 }
@@ -31,6 +129,106 @@ void eg_picking_system_destroy(eg_picking_system_t *system) {
 void eg_picking_system_resize(
     eg_picking_system_t *system, uint32_t width, uint32_t height) {
   re_canvas_resize(&system->canvas, width, height);
+}
+
+void eg_picking_system_draw_gizmos(
+    eg_picking_system_t *system,
+    eg_world_t *world,
+    eg_entity_t entity,
+    const eg_cmd_info_t *cmd_info,
+    eg_camera_t *camera,
+    uint32_t width,
+    uint32_t height) {
+  if (entity >= EG_MAX_ENTITIES) {
+    return;
+  }
+
+  if (!eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+    return;
+  }
+
+  vkCmdClearAttachments(
+      cmd_info->cmd_buffer,
+      1,
+      &(VkClearAttachment){
+          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .clearValue.depthStencil.depth = 1.0f,
+          .clearValue.depthStencil.stencil = 0,
+      },
+      1,
+      &(VkClearRect){
+          .rect.offset.x = 0,
+          .rect.offset.y = 0,
+          .rect.extent.width = width,
+          .rect.extent.height = height,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+      });
+
+  re_cmd_bind_graphics_pipeline(cmd_info->cmd_buffer, &system->gizmo_pipeline);
+
+  vkCmdBindIndexBuffer(
+      cmd_info->cmd_buffer,
+      system->pos_gizmo_index_buffer.buffer,
+      0,
+      VK_INDEX_TYPE_UINT32);
+  VkDeviceSize offsets = 0;
+  vkCmdBindVertexBuffers(
+      cmd_info->cmd_buffer,
+      0,
+      1,
+      &system->pos_gizmo_vertex_buffer.buffer,
+      &offsets);
+
+  struct {
+    mat4_t mvp;
+    vec4_t color;
+  } push_constant;
+
+  eg_transform_component_t *transform =
+      EG_GET_COMP(world, entity, eg_transform_component_t);
+
+  mat4_t object_mat = eg_transform_component_to_mat4(transform);
+  mat4_t mats[] = {
+      mat4_identity(),
+      mat4_identity(),
+      mat4_identity(),
+  };
+
+  // Y axis
+  mats[1].v[0] = (vec4_t){0.0f, 1.0f, 0.0f, 0.0f};
+  mats[1].v[1] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
+
+  // Z axis
+  mats[2].v[0] = (vec4_t){0.0f, 0.0f, 1.0f, 0.0f};
+  mats[2].v[2] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
+
+  vec4_t colors[] = {
+      (vec4_t){1.0f, 0.0f, 0.0f, 0.5f},
+      (vec4_t){0.0f, 1.0f, 0.0f, 0.5f},
+      (vec4_t){0.0f, 0.0f, 1.0f, 0.5f},
+  };
+
+  for (uint32_t i = 0; i < 3; i++) {
+    mats[i].columns[3][0] = object_mat.columns[3][0];
+    mats[i].columns[3][1] = object_mat.columns[3][1];
+    mats[i].columns[3][2] = object_mat.columns[3][2];
+
+    push_constant.mvp =
+        mat4_mul(mats[i], mat4_mul(camera->uniform.view, camera->uniform.proj));
+    push_constant.color = colors[i];
+
+    vkCmdPushConstants(
+        cmd_info->cmd_buffer,
+        system->gizmo_pipeline.layout,
+        VK_SHADER_STAGE_ALL_GRAPHICS,
+        0,
+        sizeof(push_constant),
+        &push_constant);
+
+    vkCmdDrawIndexed(
+        cmd_info->cmd_buffer, system->pos_gizmo_index_count, 1, 0, 0, 0);
+  }
 }
 
 eg_entity_t eg_picking_system_pick(

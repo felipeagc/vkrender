@@ -54,3 +54,5 @@ re_pipeline_parameters_t eg_wireframe_pipeline_parameters();
 re_pipeline_parameters_t eg_skybox_pipeline_parameters();
 
 re_pipeline_parameters_t eg_fullscreen_pipeline_parameters();
+
+re_pipeline_parameters_t eg_gizmo_pipeline_parameters();

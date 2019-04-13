@@ -17,6 +17,7 @@ typedef struct eg_engine_t {
     VkPipelineLayout wireframe;
     VkPipelineLayout skybox;
     VkPipelineLayout fullscreen;
+    VkPipelineLayout gizmo;
   } pipeline_layouts;
 } eg_engine_t;
 

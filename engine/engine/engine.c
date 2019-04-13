@@ -251,6 +251,14 @@ static inline void init_pipeline_layouts() {
         ARRAY_SIZE(set_layouts),
         &g_eng.pipeline_layouts.fullscreen);
   }
+
+  // Gizmos
+  {
+    VkDescriptorSetLayout set_layouts[] = {};
+
+    create_pipeline_layout(
+        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.gizmo);
+  }
 }
 
 static inline void destroy_pipeline_layouts() {
@@ -261,6 +269,7 @@ static inline void destroy_pipeline_layouts() {
   vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.skybox, NULL);
   vkDestroyPipelineLayout(
       g_ctx.device, g_eng.pipeline_layouts.fullscreen, NULL);
+  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.gizmo, NULL);
 }
 
 void eg_engine_init(const char *argv0) {

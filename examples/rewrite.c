@@ -109,7 +109,8 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   uint32_t width, height;
   re_window_get_size(&game->window, &width, &height);
   eg_inspector_init(&game->inspector);
-  eg_picking_system_init(&game->picking_system, width, height);
+  eg_picking_system_init(
+      &game->picking_system, &game->window.render_target, width, height);
   eg_fps_camera_system_init(&game->fps_system);
 }
 
@@ -180,8 +181,6 @@ int main(int argc, const char *argv[]) {
     eg_gltf_model_component_t *model_comp =
         eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
     eg_gltf_model_component_init(model_comp, model_asset);
-
-    eg_world_set_tags(&game.world, ent, EG_ENTITY_TAG_HIDDEN);
   }
 
   {
@@ -203,6 +202,9 @@ int main(int argc, const char *argv[]) {
   }
 
   while (!re_window_should_close(&game.window)) {
+    uint32_t width, height;
+    re_window_get_size(&game.window, &width, &height);
+
     re_window_poll_events(&game.window);
 
     const eg_cmd_info_t cmd_info = {
@@ -211,7 +213,7 @@ int main(int argc, const char *argv[]) {
     };
 
     eg_imgui_begin();
-    eg_draw_inspector(
+    eg_inspector_draw_ui(
         &game.inspector, &game.window, &game.world, &game.asset_manager);
     eg_imgui_end();
 
@@ -220,9 +222,6 @@ int main(int argc, const char *argv[]) {
 
     // Begin command buffer recording
     re_window_begin_frame(&game.window);
-
-    uint32_t width, height;
-    re_window_get_size(&game.window, &width, &height);
 
     eg_fps_camera_system_update(
         &game.fps_system,
@@ -241,6 +240,15 @@ int main(int argc, const char *argv[]) {
         &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
 
     eg_rendering_system_render(&cmd_info, &game.world, &pbr_pipeline->pipeline);
+
+    eg_picking_system_draw_gizmos(
+        &game.picking_system,
+        &game.world,
+        game.inspector.selected_entity,
+        &cmd_info,
+        &game.world.camera,
+        width,
+        height);
 
     eg_imgui_draw(&cmd_info);
 

@@ -142,11 +142,12 @@ inspector_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
 
 static void inspector_mesh_component(eg_world_t *world, eg_entity_t entity) {}
 
-void eg_inspector_init(eg_inspector_t *inspector) {
+void eg_inspector_init(
+    eg_inspector_t *inspector) {
   inspector->selected_entity = UINT32_MAX;
 }
 
-void eg_draw_inspector(
+void eg_inspector_draw_ui(
     eg_inspector_t *inspector,
     re_window_t *window,
     eg_world_t *world,
