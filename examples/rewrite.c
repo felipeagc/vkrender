@@ -247,8 +247,8 @@ int main(int argc, const char *argv[]) {
         game.inspector.selected_entity,
         &cmd_info,
         &game.world.camera,
-        width,
-        height);
+        game.window.swapchain_extent.width,
+        game.window.swapchain_extent.height);
 
     eg_imgui_draw(&cmd_info);
 
