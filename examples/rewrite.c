@@ -41,8 +41,12 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   re_window_init(&game->window, "Re-write", 1600, 900);
   eg_imgui_init(&game->window);
   eg_engine_init(argv[0]);
-  assert(eg_mount("./assets", "/assets"));
-  assert(eg_mount("./shaders/out", "/shaders"));
+  eg_fs_mount("./assets", "/assets");
+  eg_fs_mount("../assets", "/assets");
+  eg_fs_mount("../../assets", "/assets");
+  eg_fs_mount("./shaders/out", "/shaders");
+  eg_fs_mount("../shaders/out", "/shaders");
+  eg_fs_mount("../../shaders/out", "/shaders");
 
   game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
 

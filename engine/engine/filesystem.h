@@ -7,7 +7,7 @@ typedef struct eg_file_t {
 } eg_file_t;
 
 // path_to_archive is relative to the directory the executable is in.
-int eg_mount(const char *path_to_archive, const char *mount_point);
+int eg_fs_mount(const char *path_to_archive, const char *mount_point);
 
 eg_file_t *eg_file_open_read(const char *path);
 

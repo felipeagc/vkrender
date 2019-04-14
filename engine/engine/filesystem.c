@@ -4,12 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-int eg_mount(const char *path_to_archive, const char *mount_point) {
+int eg_fs_mount(const char *path_to_archive, const char *mount_point) {
   const char *base_dir = PHYSFS_getBaseDir();
 
   size_t path_size = strlen(path_to_archive) + strlen(base_dir) + 2;
-  path_size = path_size > strlen(path_to_archive)+7 ?
-	  path_size : strlen(path_to_archive)+7;
   char *path = malloc(path_size);
 
   snprintf(path, path_size, "%s/%s", base_dir, path_to_archive);
@@ -17,14 +15,6 @@ int eg_mount(const char *path_to_archive, const char *mount_point) {
   int res = PHYSFS_mount(path, mount_point, 1);
   if (!res) {
     res = PHYSFS_mount(path_to_archive, mount_point, 1);
-  }
-  if (!res) {
-    snprintf(path, strlen(path_to_archive)+4, "../%s", path_to_archive);
-    res = PHYSFS_mount(path, mount_point, 1);
-  }
-  if (!res) {
-    snprintf(path, strlen(path_to_archive)+7, "../../%s", path_to_archive);
-    res = PHYSFS_mount(path, mount_point, 1);
   }
 
   free(path);
