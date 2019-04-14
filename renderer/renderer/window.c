@@ -3,6 +3,22 @@
 #include "util.h"
 #include <fstd_util.h>
 #include <gmath.h>
+#include <string.h>
+
+/*
+ *
+ * Event queue
+ *
+ */
+#define RE_EVENT_QUEUE_CAPACITY 65535
+
+typedef struct re_event_queue_t {
+  re_event_t events[RE_EVENT_QUEUE_CAPACITY];
+  size_t head;
+  size_t tail;
+} re_event_queue_t;
+
+static re_event_queue_t g_event_queue = {{}, 0, 0};
 
 /*
  *
@@ -127,21 +143,21 @@ static inline VkPresentModeKHR get_swapchain_present_mode(
     VkPresentModeKHR *present_modes, uint32_t present_mode_count) {
   for (uint32_t i = 0; i < present_mode_count; i++) {
     if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-      RE_LOG_DEBUG("Recreating swapchain using immediate present mode");
+      // RE_LOG_DEBUG("Recreating swapchain using immediate present mode");
       return present_modes[i];
     }
   }
 
   for (uint32_t i = 0; i < present_mode_count; i++) {
     if (present_modes[i] == VK_PRESENT_MODE_FIFO_KHR) {
-      RE_LOG_DEBUG("Recreating swapchain using FIFO present mode");
+      // RE_LOG_DEBUG("Recreating swapchain using FIFO present mode");
       return present_modes[i];
     }
   }
 
   for (uint32_t i = 0; i < present_mode_count; i++) {
     if (present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-      RE_LOG_DEBUG("Recreating swapchain using mailbox present mode");
+      // RE_LOG_DEBUG("Recreating swapchain using mailbox present mode");
       return present_modes[i];
     }
   }
@@ -262,6 +278,8 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
 
   window->swapchain_image_format = desired_format.format;
   window->swapchain_extent = desired_extent;
+  window->render_target.width = window->swapchain_extent.width;
+  window->render_target.height = window->swapchain_extent.height;
 
   VK_CHECK(vkGetSwapchainImagesKHR(
       g_ctx.device, window->swapchain, &window->swapchain_image_count, NULL));
@@ -557,59 +575,190 @@ static inline void update_size(re_window_t *window) {
  *
  */
 
-void framebuffer_resize_callback(
-    GLFWwindow *glfw_window, int width, int height) {
-  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
-
-  update_size(window);
-
-  if (window->framebuffer_resize_callback != NULL) {
-    window->framebuffer_resize_callback(window, width, height);
-  }
+static re_event_t *new_event() {
+  re_event_t *event = g_event_queue.events + g_event_queue.head;
+  g_event_queue.head = (g_event_queue.head + 1) % RE_EVENT_QUEUE_CAPACITY;
+  assert(g_event_queue.head != g_event_queue.tail);
+  memset(event, 0, sizeof(re_event_t));
+  return event;
 }
 
-void mouse_button_callback(
-    GLFWwindow *glfw_window, int button, int action, int mods) {
-  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
-
-  if (window->mouse_button_callback != NULL) {
-    window->mouse_button_callback(window, button, action, mods);
-  }
+static void re_window_pos_callback(GLFWwindow *window, int x, int y) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_WINDOW_MOVED;
+  event->window = win;
+  event->pos.x = x;
+  event->pos.y = y;
 }
 
-void scroll_callback(GLFWwindow *glfw_window, double xoffset, double yoffset) {
-  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
-
-  if (window->scroll_callback != NULL) {
-    window->scroll_callback(window, xoffset, yoffset);
-  }
+static void re_window_size_callback(GLFWwindow *window, int width, int height) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_WINDOW_RESIZED;
+  event->window = win;
+  event->size.width = width;
+  event->size.height = height;
 }
 
-void key_callback(
-    GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
-  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
-
-  if (window->key_callback != NULL) {
-    window->key_callback(window, key, scancode, action, mods);
-  }
+static void re_window_close_callback(GLFWwindow *window) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_WINDOW_CLOSED;
+  event->window = win;
 }
 
-void char_callback(GLFWwindow *glfw_window, unsigned int c) {
-  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
-
-  if (window->char_callback != NULL) {
-    window->char_callback(window, c);
-  }
+static void re_window_refresh_callback(GLFWwindow *window) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_WINDOW_REFRESH;
+  event->window = win;
 }
 
-void cursor_pos_callback(
-    GLFWwindow *glfw_window, double cursor_x, double cursor_y) {
-  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+static void re_window_focus_callback(GLFWwindow *window, int focused) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
 
-  if (window->cursor_pos_callback != NULL) {
-    window->cursor_pos_callback(window, cursor_x, cursor_y);
-  }
+  if (focused)
+    event->type = RE_EVENT_WINDOW_FOCUSED;
+  else
+    event->type = RE_EVENT_WINDOW_DEFOCUSED;
 }
+
+static void re_window_iconify_callback(GLFWwindow *window, int iconified) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
+
+  if (iconified)
+    event->type = RE_EVENT_WINDOW_ICONIFIED;
+  else
+    event->type = RE_EVENT_WINDOW_UNICONIFIED;
+}
+
+static void
+re_framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_FRAMEBUFFER_RESIZED;
+  event->window = win;
+  event->size.width = width;
+  event->size.height = height;
+}
+
+static void
+re_mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
+  event->mouse.button = button;
+  event->mouse.mods = mods;
+
+  if (action == GLFW_PRESS)
+    event->type = RE_EVENT_BUTTON_PRESSED;
+  else if (action == GLFW_RELEASE)
+    event->type = RE_EVENT_BUTTON_RELEASED;
+}
+
+static void re_cursor_pos_callback(GLFWwindow *window, double x, double y) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_CURSOR_MOVED;
+  event->window = win;
+  event->pos.x = (int)x;
+  event->pos.y = (int)y;
+}
+
+static void re_cursor_enter_callback(GLFWwindow *window, int entered) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
+
+  if (entered)
+    event->type = RE_EVENT_CURSOR_ENTERED;
+  else
+    event->type = RE_EVENT_CURSOR_LEFT;
+}
+
+static void re_scroll_callback(GLFWwindow *window, double x, double y) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_SCROLLED;
+  event->window = win;
+  event->scroll.x = x;
+  event->scroll.y = y;
+}
+
+static void re_key_callback(
+    GLFWwindow *window, int key, int scancode, int action, int mods) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
+  event->keyboard.key = key;
+  event->keyboard.scancode = scancode;
+  event->keyboard.mods = mods;
+
+  if (action == GLFW_PRESS)
+    event->type = RE_EVENT_KEY_PRESSED;
+  else if (action == GLFW_RELEASE)
+    event->type = RE_EVENT_KEY_RELEASED;
+  else if (action == GLFW_REPEAT)
+    event->type = RE_EVENT_KEY_REPEATED;
+}
+
+static void re_char_callback(GLFWwindow *window, unsigned int codepoint) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->type = RE_EVENT_CODEPOINT_INPUT;
+  event->window = win;
+  event->codepoint = codepoint;
+}
+
+static void re_monitor_callback(GLFWmonitor *monitor, int action) {
+  re_event_t *event = new_event();
+  event->monitor = monitor;
+
+  if (action == GLFW_CONNECTED)
+    event->type = RE_EVENT_MONITOR_CONNECTED;
+  else if (action == GLFW_DISCONNECTED)
+    event->type = RE_EVENT_MONITOR_DISCONNECTED;
+}
+
+#if GLFW_VERSION_MINOR >= 2
+static void re_joystick_callback(int jid, int action) {
+  re_event_t *event = new_event();
+  event->joystick = jid;
+
+  if (action == GLFW_CONNECTED)
+    event->type = RE_EVENT_JOYSTICK_CONNECTED;
+  else if (action == GLFW_DISCONNECTED)
+    event->type = RE_EVENT_JOYSTICK_DISCONNECTED;
+}
+#endif
+
+#if GLFW_VERSION_MINOR >= 3
+static void re_window_maximize_callback(GLFWwindow *window, int maximized) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
+
+  if (maximized)
+    event->type = RE_EVENT_WINDOW_MAXIMIZED;
+  else
+    event->type = RE_EVENT_WINDOW_UNMAXIMIZED;
+}
+
+static void re_window_content_scale_callback(
+    GLFWwindow *window, float xscale, float yscale) {
+  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_event_t *event = new_event();
+  event->window = win;
+  event->type = RE_EVENT_WINDOW_SCALE_CHANGED;
+  event->scale.x = xscale;
+  event->scale.y = yscale;
+}
+#endif
 
 /*
  *
@@ -622,12 +771,6 @@ bool re_window_init(
   window->clear_color = (vec4_t){0.0, 0.0, 0.0, 1.0};
   window->delta_time = 0.0f;
   window->time_before = 0.0f;
-  window->user_ptr = NULL;
-  window->framebuffer_resize_callback = NULL;
-  window->mouse_button_callback = NULL;
-  window->scroll_callback = NULL;
-  window->key_callback = NULL;
-  window->char_callback = NULL;
 
   window->swapchain = VK_NULL_HANDLE;
   window->surface = VK_NULL_HANDLE;
@@ -647,18 +790,36 @@ bool re_window_init(
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   window->glfw_window = glfwCreateWindow(width, height, title, NULL, NULL);
 
+  assert(window->glfw_window != NULL);
+
   glfwSetWindowUserPointer(window->glfw_window, window);
 
   // Set callbacks
-  glfwSetFramebufferSizeCallback(
-      window->glfw_window, framebuffer_resize_callback);
-  glfwSetMouseButtonCallback(window->glfw_window, mouse_button_callback);
-  glfwSetScrollCallback(window->glfw_window, scroll_callback);
-  glfwSetKeyCallback(window->glfw_window, key_callback);
-  glfwSetCharCallback(window->glfw_window, char_callback);
-  glfwSetCursorPosCallback(window->glfw_window, cursor_pos_callback);
+  glfwSetMonitorCallback(re_monitor_callback);
+#if GLFW_VERSION_MINOR >= 2
+  glfwSetJoystickCallback(re_joystick_callback);
+#endif
 
-  assert(window->glfw_window != NULL);
+  glfwSetWindowPosCallback(window->glfw_window, re_window_pos_callback);
+  glfwSetWindowSizeCallback(window->glfw_window, re_window_size_callback);
+  glfwSetWindowCloseCallback(window->glfw_window, re_window_close_callback);
+  glfwSetWindowRefreshCallback(window->glfw_window, re_window_refresh_callback);
+  glfwSetWindowFocusCallback(window->glfw_window, re_window_focus_callback);
+  glfwSetWindowIconifyCallback(window->glfw_window, re_window_iconify_callback);
+  glfwSetFramebufferSizeCallback(
+      window->glfw_window, re_framebuffer_size_callback);
+  glfwSetMouseButtonCallback(window->glfw_window, re_mouse_button_callback);
+  glfwSetCursorPosCallback(window->glfw_window, re_cursor_pos_callback);
+  glfwSetCursorEnterCallback(window->glfw_window, re_cursor_enter_callback);
+  glfwSetScrollCallback(window->glfw_window, re_scroll_callback);
+  glfwSetKeyCallback(window->glfw_window, re_key_callback);
+  glfwSetCharCallback(window->glfw_window, re_char_callback);
+#if GLFW_VERSION_MINOR >= 3
+  glfwSetWindowMaximizeCallback(
+      window->glfw_window, re_window_maximize_callback);
+  glfwSetWindowContentScaleCallback(
+      window->glfw_window, re_window_content_scale_callback);
+#endif
 
   VK_CHECK(create_vulkan_surface(window));
 
@@ -722,6 +883,26 @@ void re_window_destroy(re_window_t *window) {
 }
 
 void re_window_poll_events(re_window_t *window) { glfwPollEvents(); }
+
+bool re_window_next_event(re_window_t *window, re_event_t *event) {
+  memset(event, 0, sizeof(re_event_t));
+
+  if (g_event_queue.head != g_event_queue.tail) {
+    *event = g_event_queue.events[g_event_queue.tail];
+    g_event_queue.tail = (g_event_queue.tail + 1) % RE_EVENT_QUEUE_CAPACITY;
+  }
+
+  switch (event->type) {
+  case RE_EVENT_FRAMEBUFFER_RESIZED: {
+    update_size(window);
+    break;
+  }
+  default:
+    break;
+  }
+
+  return event->type != RE_EVENT_NONE;
+}
 
 bool re_window_should_close(re_window_t *window) {
   return glfwWindowShouldClose(window->glfw_window);

@@ -4,20 +4,12 @@
 #include "render_target.h"
 #define GLFW_INCLUDE_VULKAN
 #include "cmd_buffer.h"
+#include "event.h"
 #include <GLFW/glfw3.h>
 #include <gmath.h>
 #include <stdbool.h>
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
-
-typedef struct re_window_t re_window_t;
-
-typedef void (*re_framebuffer_resize_callback_t)(re_window_t *, int, int);
-typedef void (*re_mouse_button_callback_t)(re_window_t *, int, int, int);
-typedef void (*re_scroll_callback_t)(re_window_t *, double, double);
-typedef void (*re_key_callback_t)(re_window_t *, int, int, int, int);
-typedef void (*re_char_callback_t)(re_window_t *, unsigned int);
-typedef void (*re_cursor_pos_callback_t)(re_window_t *, double, double);
 
 typedef struct re_frame_resources_t {
   VkSemaphore image_available_semaphore;
@@ -30,9 +22,9 @@ typedef struct re_frame_resources_t {
 } re_frame_resources_t;
 
 typedef struct re_window_t {
-  vec4_t clear_color;
-
   re_render_target_t render_target;
+
+  vec4_t clear_color;
   GLFWwindow *glfw_window;
 
   double delta_time;
@@ -65,20 +57,14 @@ typedef struct re_window_t {
   uint32_t swapchain_image_count;
   VkImage *swapchain_images;
   VkImageView *swapchain_image_views;
-
-  void *user_ptr;
-  re_framebuffer_resize_callback_t framebuffer_resize_callback;
-  re_mouse_button_callback_t mouse_button_callback;
-  re_scroll_callback_t scroll_callback;
-  re_key_callback_t key_callback;
-  re_char_callback_t char_callback;
-  re_cursor_pos_callback_t cursor_pos_callback;
 } re_window_t;
 
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height);
 
 void re_window_poll_events(re_window_t *window);
+
+bool re_window_next_event(re_window_t *window, re_event_t *event);
 
 bool re_window_should_close(re_window_t *window);
 

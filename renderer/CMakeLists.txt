@@ -5,6 +5,11 @@ add_library(
 
 	renderer/common.h
 
+	renderer/window.c
+	renderer/window.h
+
+	renderer/event.h
+
 	renderer/cmd_buffer.c
 	renderer/cmd_buffer.h
 
@@ -33,9 +38,6 @@ add_library(
 
 	renderer/util.c
 	renderer/util.h
-
-	renderer/window.c
-	renderer/window.h
 	)
 
 target_link_libraries(

@@ -2,6 +2,7 @@
 
 #include "../world.h"
 #include <renderer/canvas.h>
+#include <renderer/event.h>
 #include <renderer/pipeline.h>
 
 typedef enum eg_drag_direction_t {
@@ -14,6 +15,8 @@ typedef enum eg_drag_direction_t {
 typedef struct eg_picking_system_t {
   eg_world_t *world;
   re_window_t *window;
+
+  re_render_target_t *drawing_render_target;
 
   re_canvas_t canvas;
   re_pipeline_t picking_pipeline;
@@ -34,33 +37,20 @@ typedef struct eg_picking_system_t {
 void eg_picking_system_init(
     eg_picking_system_t *system,
     re_window_t *window,
-    eg_world_t *world,
     re_render_target_t *render_target,
-    uint32_t width,
-    uint32_t height);
+    eg_world_t *world);
 
 void eg_picking_system_destroy(eg_picking_system_t *system);
 
-void eg_picking_system_resize(
-    eg_picking_system_t *system, uint32_t width, uint32_t height);
+void eg_picking_system_process_event(
+    eg_picking_system_t *system,
+    const re_event_t *event,
+    eg_entity_t *selected_entity);
 
 void eg_picking_system_draw_gizmos(
     eg_picking_system_t *system,
-    eg_entity_t entity,
     const eg_cmd_info_t *cmd_info,
-    uint32_t width,
-    uint32_t height);
-
-void eg_picking_system_mouse_press(
-    eg_picking_system_t *system,
-    eg_entity_t *selected_entity,
-    uint32_t width,
-    uint32_t height);
-
-void eg_picking_system_mouse_release(eg_picking_system_t *system);
+    eg_entity_t entity);
 
 void eg_picking_system_update(
-    eg_picking_system_t *system,
-    eg_entity_t selected_entity,
-    uint32_t width,
-    uint32_t height);
+    eg_picking_system_t *system, eg_entity_t selected_entity);

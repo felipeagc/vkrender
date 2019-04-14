@@ -84,23 +84,63 @@ void eg_imgui_draw(const eg_cmd_info_t *cmd_info) {
   ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), cmd_info->cmd_buffer);
 }
 
-void eg_imgui_mouse_button_callback(
-    re_window_t *window, int button, int action, int mods) {
-  ImGui_ImplGlfw_MouseButtonCallback(window->glfw_window, button, action, mods);
-}
-
-void eg_imgui_scroll_callback(
-    re_window_t *window, double xoffset, double yoffset) {
-  ImGui_ImplGlfw_ScrollCallback(window->glfw_window, xoffset, yoffset);
-}
-
-void eg_imgui_key_callback(
-    re_window_t *window, int key, int scancode, int action, int mods) {
-  ImGui_ImplGlfw_KeyCallback(window->glfw_window, key, scancode, action, mods);
-}
-
-void eg_imgui_char_callback(re_window_t *window, unsigned int c) {
-  ImGui_ImplGlfw_CharCallback(window->glfw_window, c);
+void eg_imgui_process_event(const re_event_t *event) {
+  switch (event->type) {
+  case RE_EVENT_BUTTON_PRESSED: {
+    ImGui_ImplGlfw_MouseButtonCallback(
+        event->window->glfw_window,
+        event->mouse.button,
+        GLFW_PRESS,
+        event->mouse.mods);
+    break;
+  }
+  case RE_EVENT_BUTTON_RELEASED: {
+    ImGui_ImplGlfw_MouseButtonCallback(
+        event->window->glfw_window,
+        event->mouse.button,
+        GLFW_RELEASE,
+        event->mouse.mods);
+    break;
+  }
+  case RE_EVENT_SCROLLED: {
+    ImGui_ImplGlfw_ScrollCallback(
+        event->window->glfw_window, event->scroll.x, event->scroll.y);
+    break;
+  }
+  case RE_EVENT_KEY_PRESSED: {
+    ImGui_ImplGlfw_KeyCallback(
+        event->window->glfw_window,
+        event->keyboard.key,
+        event->keyboard.scancode,
+        GLFW_PRESS,
+        event->keyboard.mods);
+    break;
+  }
+  case RE_EVENT_KEY_REPEATED: {
+    ImGui_ImplGlfw_KeyCallback(
+        event->window->glfw_window,
+        event->keyboard.key,
+        event->keyboard.scancode,
+        GLFW_REPEAT,
+        event->keyboard.mods);
+    break;
+  }
+  case RE_EVENT_KEY_RELEASED: {
+    ImGui_ImplGlfw_KeyCallback(
+        event->window->glfw_window,
+        event->keyboard.key,
+        event->keyboard.scancode,
+        GLFW_RELEASE,
+        event->keyboard.mods);
+    break;
+  }
+  case RE_EVENT_CODEPOINT_INPUT: {
+    ImGui_ImplGlfw_CharCallback(event->window->glfw_window, event->codepoint);
+    break;
+  }
+  default:
+    break;
+  }
 }
 
 void eg_imgui_destroy() {

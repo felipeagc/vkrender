@@ -15,8 +15,8 @@ static inline void create_color_target(re_canvas_t *canvas) {
         VK_IMAGE_TYPE_2D,     // imageType
         canvas->color_format, // format
         {
-            canvas->width,                  // width
-            canvas->height,                 // height
+            canvas->render_target.width,    // width
+            canvas->render_target.height,   // height
             1,                              // depth
         },                                  // extent
         1,                                  // mipLevels
@@ -135,8 +135,8 @@ static inline void create_depth_target(re_canvas_t *canvas) {
         VK_IMAGE_TYPE_2D,                    // imageType
         canvas->depth_format,                // format
         {
-            canvas->width,                  // width
-            canvas->height,                 // height
+            canvas->render_target.width,    // width
+            canvas->render_target.height,   // height
             1,                              // depth
         },                                  // extent
         1,                                  // mipLevels
@@ -284,8 +284,8 @@ static inline void create_framebuffers(re_canvas_t *canvas) {
         canvas->render_target.render_pass,         // renderPass
         (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
         attachments,                               // pAttachments
-        canvas->width,                             // width
-        canvas->height,                            // height
+        canvas->render_target.width,               // width
+        canvas->render_target.height,              // height
         1,                                         // layers
     };
 
@@ -412,8 +412,8 @@ void re_canvas_init(
     const uint32_t width,
     const uint32_t height,
     const VkFormat color_format) {
-  canvas->width = width;
-  canvas->height = height;
+  canvas->render_target.width = width;
+  canvas->render_target.height = height;
   canvas->color_format = color_format;
   canvas->render_target.sample_count = VK_SAMPLE_COUNT_1_BIT;
   canvas->clear_color = (VkClearColorValue){0};
@@ -437,30 +437,33 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
   };
 
   VkRenderPassBeginInfo render_pass_begin_info = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,  // sType
-      NULL,                                      // pNext
-      canvas->render_target.render_pass,         // renderPass
-      resource->framebuffer,                     // framebuffer
-      {{0, 0}, {canvas->width, canvas->height}}, // renderArea
-      ARRAY_SIZE(clear_values),                  // clearValueCount
-      clear_values,                              // pClearValues
+      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, // sType
+      NULL,                                     // pNext
+      canvas->render_target.render_pass,        // renderPass
+      resource->framebuffer,                    // framebuffer
+      {{0, 0},
+       {canvas->render_target.width,
+        canvas->render_target.height}}, // renderArea
+      ARRAY_SIZE(clear_values),         // clearValueCount
+      clear_values,                     // pClearValues
   };
 
   vkCmdBeginRenderPass(
       command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport = {
-      0.0f,                  // x
-      0.0f,                  // y
-      (float)canvas->width,  // width
-      (float)canvas->height, // height
-      0.0f,                  // minDepth
-      1.0f,                  // maxDepth
+      0.0f,                                // x
+      0.0f,                                // y
+      (float)canvas->render_target.width,  // width
+      (float)canvas->render_target.height, // height
+      0.0f,                                // minDepth
+      1.0f,                                // maxDepth
   };
 
   vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 
-  VkRect2D scissor = {{0, 0}, {canvas->width, canvas->height}};
+  VkRect2D scissor = {
+      {0, 0}, {canvas->render_target.width, canvas->render_target.height}};
 
   vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
@@ -494,8 +497,8 @@ void re_canvas_draw(
 void re_canvas_resize(
     re_canvas_t *canvas, const uint32_t width, const uint32_t height) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-  canvas->width = width;
-  canvas->height = height;
+  canvas->render_target.width = width;
+  canvas->render_target.height = height;
 
   destroy_framebuffers(canvas);
   destroy_render_pass(canvas);

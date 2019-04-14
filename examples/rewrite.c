@@ -36,59 +36,6 @@ typedef struct game_t {
   eg_inspector_t inspector;
 } game_t;
 
-static void
-game_framebuffer_resize_callback(re_window_t *window, int width, int height) {
-  game_t *game = window->user_ptr;
-
-  eg_picking_system_resize(
-      &game->picking_system, (uint32_t)width, (uint32_t)height);
-}
-
-static void game_mouse_button_callback(
-    re_window_t *window, int button, int action, int mods) {
-  game_t *game = window->user_ptr;
-
-  eg_imgui_mouse_button_callback(window, button, action, mods);
-
-  double mouse_x, mouse_y;
-  re_window_get_cursor_pos(window, &mouse_x, &mouse_y);
-
-  uint32_t width, height;
-  re_window_get_size(window, &width, &height);
-
-  if (button == GLFW_MOUSE_BUTTON_LEFT) {
-    if (action == GLFW_PRESS) {
-      eg_picking_system_mouse_press(
-          &game->picking_system,
-          &game->inspector.selected_entity,
-          width,
-          height);
-    } else if (action == GLFW_RELEASE) {
-      eg_picking_system_mouse_release(&game->picking_system);
-    }
-  }
-}
-
-static void game_scroll_callback(re_window_t *window, double x, double y) {
-  eg_imgui_scroll_callback(window, x, y);
-}
-
-static void game_key_callback(
-    re_window_t *window, int key, int scancode, int action, int mods) {
-  eg_imgui_key_callback(window, key, scancode, action, mods);
-}
-
-static void game_char_callback(re_window_t *window, unsigned int c) {
-  eg_imgui_char_callback(window, c);
-}
-
-static void game_cursor_pos_callback(re_window_t *window, double x, double y) {
-  game_t *game = window->user_ptr;
-
-  uint32_t width, height;
-  re_window_get_size(window, &width, &height);
-}
-
 static void game_init(game_t *game, int argc, const char *argv[]) {
   re_context_init();
   re_window_init(&game->window, "Re-write", 1600, 900);
@@ -98,13 +45,6 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   assert(eg_mount("./shaders/out", "/shaders"));
 
   game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  game->window.user_ptr = game;
-  game->window.mouse_button_callback = game_mouse_button_callback;
-  game->window.scroll_callback = game_scroll_callback;
-  game->window.key_callback = game_key_callback;
-  game->window.char_callback = game_char_callback;
-  game->window.cursor_pos_callback = game_cursor_pos_callback;
-  game->window.framebuffer_resize_callback = game_framebuffer_resize_callback;
 
   eg_asset_manager_init(&game->asset_manager);
 
@@ -122,10 +62,8 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   eg_picking_system_init(
       &game->picking_system,
       &game->window,
-      &game->world,
       &game->window.render_target,
-      width,
-      height);
+      &game->world);
   eg_fps_camera_system_init(&game->fps_system);
 }
 
@@ -217,10 +155,17 @@ int main(int argc, const char *argv[]) {
   }
 
   while (!re_window_should_close(&game.window)) {
+    re_window_poll_events(&game.window);
+
+    re_event_t event;
+    while (re_window_next_event(&game.window, &event)) {
+      eg_imgui_process_event(&event);
+      eg_picking_system_process_event(
+          &game.picking_system, &event, &game.inspector.selected_entity);
+    }
+
     uint32_t width, height;
     re_window_get_size(&game.window, &width, &height);
-
-    re_window_poll_events(&game.window);
 
     const eg_cmd_info_t cmd_info = {
         .frame_index = game.window.current_frame,
@@ -257,17 +202,10 @@ int main(int argc, const char *argv[]) {
     eg_rendering_system_render(&cmd_info, &game.world, &pbr_pipeline->pipeline);
 
     eg_picking_system_draw_gizmos(
-        &game.picking_system,
-        game.inspector.selected_entity,
-        &cmd_info,
-        width,
-        height);
+        &game.picking_system, &cmd_info, game.inspector.selected_entity);
 
     eg_picking_system_update(
-        &game.picking_system,
-        game.inspector.selected_entity,
-        width,
-        height);
+        &game.picking_system, game.inspector.selected_entity);
 
     eg_imgui_draw(&cmd_info);
 

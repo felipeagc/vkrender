@@ -13,9 +13,6 @@ typedef struct re_canvas_t {
 
   VkClearColorValue clear_color;
 
-  uint32_t width;
-  uint32_t height;
-
   VkFormat depth_format;
   VkFormat color_format;
 
