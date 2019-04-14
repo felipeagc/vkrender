@@ -1,12 +1,20 @@
 #include "picking_system.h"
 
+#include "../components/gltf_model_component.h"
+#include "../components/transform_component.h"
+#include "../imgui.h"
 #include "../pipelines.h"
-#include <engine/components/gltf_model_component.h>
-#include <engine/components/transform_component.h>
+#include <float.h>
 #include <renderer/context.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
 #include <string.h>
+
+typedef enum eg_special_selection_t {
+  EG_GIZMOS_POS_X = UINT32_MAX - 1,
+  EG_GIZMOS_POS_Y = UINT32_MAX - 2,
+  EG_GIZMOS_POS_Z = UINT32_MAX - 3,
+} eg_special_selection_t;
 
 void eg_picking_system_init(
     eg_picking_system_t *system,
@@ -31,6 +39,15 @@ void eg_picking_system_init(
       "/shaders/gizmo.vert.spv",
       "/shaders/gizmo.frag.spv",
       eg_gizmo_pipeline_parameters());
+
+  eg_init_pipeline_spv(
+      &system->gizmo_picking_pipeline,
+      &system->canvas.render_target,
+      "/shaders/gizmo_picking.vert.spv",
+      "/shaders/gizmo_picking.frag.spv",
+      eg_gizmo_pipeline_parameters());
+
+  system->drag_direction = (vec3_t){0.0f, 0.0f, 0.0f};
 
   const float thick = 0.05f;
 
@@ -119,6 +136,7 @@ void eg_picking_system_init(
 
 void eg_picking_system_destroy(eg_picking_system_t *system) {
   re_pipeline_destroy(&system->gizmo_pipeline);
+  re_pipeline_destroy(&system->gizmo_picking_pipeline);
   re_buffer_destroy(&system->pos_gizmo_vertex_buffer);
   re_buffer_destroy(&system->pos_gizmo_index_buffer);
 
@@ -136,7 +154,6 @@ void eg_picking_system_draw_gizmos(
     eg_world_t *world,
     eg_entity_t entity,
     const eg_cmd_info_t *cmd_info,
-    eg_camera_t *camera,
     uint32_t width,
     uint32_t height) {
   if (entity >= EG_MAX_ENTITIES) {
@@ -210,12 +227,13 @@ void eg_picking_system_draw_gizmos(
   };
 
   for (uint32_t i = 0; i < 3; i++) {
-    mats[i].columns[3][0] = object_mat.columns[3][0];
-    mats[i].columns[3][1] = object_mat.columns[3][1];
-    mats[i].columns[3][2] = object_mat.columns[3][2];
+    mats[i].cols[3][0] = object_mat.cols[3][0];
+    mats[i].cols[3][1] = object_mat.cols[3][1];
+    mats[i].cols[3][2] = object_mat.cols[3][2];
 
-    push_constant.mvp =
-        mat4_mul(mats[i], mat4_mul(camera->uniform.view, camera->uniform.proj));
+    push_constant.mvp = mat4_mul(
+        mats[i],
+        mat4_mul(world->camera.uniform.view, world->camera.uniform.proj));
     push_constant.color = colors[i];
 
     vkCmdPushConstants(
@@ -231,12 +249,120 @@ void eg_picking_system_draw_gizmos(
   }
 }
 
-eg_entity_t eg_picking_system_pick(
+static void draw_gizmos_picking(
     eg_picking_system_t *system,
-    uint32_t frame_index,
     eg_world_t *world,
+    eg_entity_t entity,
+    const eg_cmd_info_t *cmd_info,
+    uint32_t width,
+    uint32_t height) {
+  if (entity >= EG_MAX_ENTITIES) {
+    return;
+  }
+
+  if (!eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+    return;
+  }
+
+  vkCmdClearAttachments(
+      cmd_info->cmd_buffer,
+      1,
+      &(VkClearAttachment){
+          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .clearValue.depthStencil.depth = 1.0f,
+          .clearValue.depthStencil.stencil = 0,
+      },
+      1,
+      &(VkClearRect){
+          .rect.offset.x = 0,
+          .rect.offset.y = 0,
+          .rect.extent.width = width,
+          .rect.extent.height = height,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+      });
+
+  re_cmd_bind_graphics_pipeline(
+      cmd_info->cmd_buffer, &system->gizmo_picking_pipeline);
+
+  vkCmdBindIndexBuffer(
+      cmd_info->cmd_buffer,
+      system->pos_gizmo_index_buffer.buffer,
+      0,
+      VK_INDEX_TYPE_UINT32);
+  VkDeviceSize offsets = 0;
+  vkCmdBindVertexBuffers(
+      cmd_info->cmd_buffer,
+      0,
+      1,
+      &system->pos_gizmo_vertex_buffer.buffer,
+      &offsets);
+
+  struct {
+    mat4_t mvp;
+    uint32_t index;
+  } push_constant;
+
+  eg_transform_component_t *transform =
+      EG_GET_COMP(world, entity, eg_transform_component_t);
+
+  mat4_t object_mat = eg_transform_component_to_mat4(transform);
+  mat4_t mats[] = {
+      mat4_identity(),
+      mat4_identity(),
+      mat4_identity(),
+  };
+
+  // Y axis
+  mats[1].v[0] = (vec4_t){0.0f, 1.0f, 0.0f, 0.0f};
+  mats[1].v[1] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
+
+  // Z axis
+  mats[2].v[0] = (vec4_t){0.0f, 0.0f, 1.0f, 0.0f};
+  mats[2].v[2] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
+
+  uint32_t color_indices[] = {
+      EG_GIZMOS_POS_X,
+      EG_GIZMOS_POS_Y,
+      EG_GIZMOS_POS_Z,
+  };
+
+  for (uint32_t i = 0; i < 3; i++) {
+    mats[i].cols[3][0] = object_mat.cols[3][0];
+    mats[i].cols[3][1] = object_mat.cols[3][1];
+    mats[i].cols[3][2] = object_mat.cols[3][2];
+
+    push_constant.mvp = mat4_mul(
+        mats[i],
+        mat4_mul(world->camera.uniform.view, world->camera.uniform.proj));
+    push_constant.index = color_indices[i];
+
+    vkCmdPushConstants(
+        cmd_info->cmd_buffer,
+        system->gizmo_picking_pipeline.layout,
+        VK_SHADER_STAGE_ALL_GRAPHICS,
+        0,
+        sizeof(push_constant),
+        &push_constant);
+
+    vkCmdDrawIndexed(
+        cmd_info->cmd_buffer, system->pos_gizmo_index_count, 1, 0, 0, 0);
+  }
+}
+
+void eg_picking_system_mouse_press(
+    eg_picking_system_t *system,
+    eg_world_t *world,
+    eg_entity_t *selected_entity,
+    uint32_t frame_index,
     uint32_t mouse_x,
     uint32_t mouse_y) {
+  if (igIsWindowHovered(
+          ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows |
+          ImGuiHoveredFlags_AllowWhenBlockedByPopup |
+          ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
+    return;
+  }
 
   re_cmd_buffer_t command_buffer;
 
@@ -303,6 +429,14 @@ eg_entity_t eg_picking_system_pick(
     }
   }
 
+  draw_gizmos_picking(
+      system,
+      world,
+      *selected_entity,
+      &cmd_info,
+      system->canvas.width,
+      system->canvas.height);
+
   re_canvas_end(&system->canvas, command_buffer);
 
   // End and free command buffer
@@ -360,5 +494,85 @@ eg_entity_t eg_picking_system_pick(
 
   re_buffer_destroy(&staging_buffer);
 
-  return entity;
+  switch (entity) {
+  case EG_GIZMOS_POS_X: {
+    system->drag_direction = (vec3_t){1.0f, 0.0f, 0.0f};
+    break;
+  }
+  case EG_GIZMOS_POS_Y: {
+    system->drag_direction = (vec3_t){0.0f, 1.0f, 0.0f};
+    break;
+  }
+  case EG_GIZMOS_POS_Z: {
+    system->drag_direction = (vec3_t){0.0f, 0.0f, 1.0f};
+    break;
+  }
+  default: {
+    *selected_entity = entity;
+    break;
+  }
+  }
+}
+
+void eg_picking_system_mouse_release(eg_picking_system_t *system) {
+  system->drag_direction = (vec3_t){0.0f, 0.0f, 0.0f};
+}
+
+void eg_picking_system_cursor_move(
+    eg_picking_system_t *system,
+    eg_world_t *world,
+    eg_entity_t selected_entity,
+    uint32_t width,
+    uint32_t height,
+    double cursor_x,
+    double cursor_y) {
+  if (vec3_mag(system->drag_direction) == 0.0f) {
+    return;
+  }
+
+  if (selected_entity >= EG_MAX_ENTITIES) {
+    return;
+  }
+
+  if (!eg_world_has_comp(world, selected_entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+    return;
+  }
+
+  float nx = (((float)cursor_x / (float)width) * 2.0f) - 1.0f;
+  float ny = (((float)cursor_y / (float)height) * 2.0f) - 1.0f;
+
+  eg_transform_component_t *transform =
+      EG_GET_COMP(world, selected_entity, eg_transform_component_t);
+
+  mat4_t view = world->camera.uniform.view;
+  mat4_t proj = world->camera.uniform.proj;
+  mat4_t inv_view = mat4_inverse(view);
+  mat4_t inv_proj = mat4_inverse(proj);
+
+  vec4_t device_obj_pos = mat4_mulv(
+      proj,
+      mat4_mulv(
+          view,
+          (vec4_t){
+              transform->position,
+              1.0f,
+          }));
+  if (fabs(device_obj_pos.w) >= FLT_EPSILON) {
+    device_obj_pos.xyz = vec3_divs(device_obj_pos.xyz, device_obj_pos.w);
+  }
+  device_obj_pos.w = 1.0f;
+
+  vec4_t device_cursor_pos = {nx, ny, device_obj_pos.z, 1.0f};
+  vec4_t world_cur_pos = mat4_mulv(inv_proj, device_cursor_pos);
+  world_cur_pos = mat4_mulv(inv_view, world_cur_pos);
+
+  if (fabs(world_cur_pos.w) >= FLT_EPSILON) {
+    world_cur_pos.xyz = vec3_divs(world_cur_pos.xyz, world_cur_pos.w);
+  }
+
+  transform->position = (vec3_t){
+      world_cur_pos.x,
+      world_cur_pos.y,
+      world_cur_pos.z,
+  };
 }

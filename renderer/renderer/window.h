@@ -3,6 +3,7 @@
 #include "common.h"
 #include "render_target.h"
 #define GLFW_INCLUDE_VULKAN
+#include "cmd_buffer.h"
 #include <GLFW/glfw3.h>
 #include <gmath.h>
 #include <stdbool.h>
@@ -16,6 +17,7 @@ typedef void (*re_mouse_button_callback_t)(re_window_t *, int, int, int);
 typedef void (*re_scroll_callback_t)(re_window_t *, double, double);
 typedef void (*re_key_callback_t)(re_window_t *, int, int, int, int);
 typedef void (*re_char_callback_t)(re_window_t *, unsigned int);
+typedef void (*re_cursor_pos_callback_t)(re_window_t *, double, double);
 
 typedef struct re_frame_resources_t {
   VkSemaphore image_available_semaphore;
@@ -70,13 +72,11 @@ typedef struct re_window_t {
   re_scroll_callback_t scroll_callback;
   re_key_callback_t key_callback;
   re_char_callback_t char_callback;
+  re_cursor_pos_callback_t cursor_pos_callback;
 } re_window_t;
 
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height);
-
-void re_window_get_size(
-    const re_window_t *window, uint32_t *width, uint32_t *height);
 
 void re_window_poll_events(re_window_t *window);
 
@@ -91,6 +91,9 @@ void re_window_end_render_pass(re_window_t *window);
 void re_window_set_input_mode(const re_window_t *window, int mode, int value);
 int re_window_get_input_mode(const re_window_t *window, int mode);
 
+void re_window_get_size(
+    const re_window_t *window, uint32_t *width, uint32_t *height);
+
 void re_window_get_cursor_pos(const re_window_t *window, double *x, double *y);
 void re_window_set_cursor_pos(re_window_t *window, double x, double y);
 
@@ -99,6 +102,6 @@ bool re_window_is_mouse_right_pressed(const re_window_t *window);
 
 bool re_window_is_key_pressed(const re_window_t *window, int key);
 
-VkCommandBuffer re_window_get_current_command_buffer(const re_window_t *window);
+re_cmd_buffer_t re_window_get_current_command_buffer(const re_window_t *window);
 
 void re_window_destroy(re_window_t *window);

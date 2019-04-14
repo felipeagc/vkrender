@@ -81,11 +81,11 @@ typedef union GMATH_ALIGN(16) vec4_t {
 } vec4_t;
 
 typedef union GMATH_ALIGN(16) mat4_t {
-  float columns[4][4];
+  float cols[4][4];
   float elems[16];
   vec4_t v[4];
 #ifdef GMATH_USE_SSE
-  __m128 sse_columns[4];
+  __m128 sse_cols[4];
 #endif
 } mat4_t;
 
@@ -118,7 +118,7 @@ GMATH_INLINE float vec3_mag(vec3_t vec) {
   return sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE vec3_t vec3_add(vec3_t left, vec3_t right) {
   vec3_t result;
   result.x = left.x + right.x;
@@ -127,7 +127,7 @@ GMATH_INLINE vec3_t vec3_add(vec3_t left, vec3_t right) {
   return result;
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_adds(vec3_t left, float right) {
   vec3_t result;
   result.x = left.x + right;
@@ -136,7 +136,7 @@ GMATH_INLINE vec3_t vec3_adds(vec3_t left, float right) {
   return result;
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_sub(vec3_t left, vec3_t right) {
   vec3_t result;
   result.x = left.x - right.x;
@@ -145,7 +145,7 @@ GMATH_INLINE vec3_t vec3_sub(vec3_t left, vec3_t right) {
   return result;
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_subs(vec3_t left, float right) {
   vec3_t result;
   result.x = left.x - right;
@@ -154,7 +154,7 @@ GMATH_INLINE vec3_t vec3_subs(vec3_t left, float right) {
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE vec3_t vec3_mul(vec3_t left, vec3_t right) {
   vec3_t result;
   result.x = left.x * right.x;
@@ -163,7 +163,7 @@ GMATH_INLINE vec3_t vec3_mul(vec3_t left, vec3_t right) {
   return result;
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_muls(vec3_t left, float right) {
   vec3_t result;
   result.x = left.x * right;
@@ -172,7 +172,7 @@ GMATH_INLINE vec3_t vec3_muls(vec3_t left, float right) {
   return result;
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_div(vec3_t left, vec3_t right) {
   vec3_t result;
   result.x = left.x / right.x;
@@ -181,7 +181,7 @@ GMATH_INLINE vec3_t vec3_div(vec3_t left, vec3_t right) {
   return result;
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_divs(vec3_t left, float right) {
   vec3_t result;
   result.x = left.x / right;
@@ -194,12 +194,12 @@ GMATH_INLINE float vec3_distance(vec3_t left, vec3_t right) {
   return vec3_mag(vec3_sub(left, right));
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE float vec3_dot(vec3_t left, vec3_t right) {
   return (left.x * right.x) + (left.y * right.y) + (left.z * right.z);
 }
 
-// @TODO: test
+// TODO: test
 GMATH_INLINE vec3_t vec3_cross(vec3_t left, vec3_t right) {
   vec3_t result;
   result.x = (left.y * right.z) - (left.z * right.y);
@@ -208,9 +208,9 @@ GMATH_INLINE vec3_t vec3_cross(vec3_t left, vec3_t right) {
   return result;
 }
 
-// @TODO: test
-// @TODO: make compatible with glm
-// @TODO: test with zero norm vector
+// TODO: test
+// TODO: make compatible with glm
+// TODO: test with zero norm vector
 GMATH_INLINE vec3_t vec3_normalize(vec3_t vec) {
   vec3_t result = vec;
   float norm = sqrtf(vec3_dot(vec, vec));
@@ -228,7 +228,7 @@ GMATH_INLINE vec4_t vec4_zero() { return (vec4_t){0.0f, 0.0f, 0.0f, 0.0f}; }
 
 GMATH_INLINE vec4_t vec4_one() { return (vec4_t){1.0f, 1.0f, 1.0f, 1.0f}; }
 
-// @TESTED
+// TESTED
 GMATH_INLINE vec4_t vec4_add(vec4_t left, vec4_t right) {
   vec4_t result;
 #ifdef GMATH_USE_SSE
@@ -244,7 +244,7 @@ GMATH_INLINE vec4_t vec4_add(vec4_t left, vec4_t right) {
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE vec4_t vec4_mul(vec4_t left, vec4_t right) {
   vec4_t result;
 #ifdef GMATH_USE_SSE
@@ -264,7 +264,7 @@ GMATH_INLINE vec4_t vec4_muls(vec4_t left, float right) {
   return vec4_mul(left, (vec4_t){right, right, right, right});
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE float vec4_dot(vec4_t left, vec4_t right) {
   float result;
 #ifdef GMATH_USE_SSE
@@ -285,7 +285,7 @@ GMATH_INLINE float vec4_dot(vec4_t left, vec4_t right) {
  * mat4 functions
  */
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_zero() {
   return (mat4_t){{
       {0, 0, 0, 0},
@@ -295,7 +295,7 @@ GMATH_INLINE mat4_t mat4_zero() {
   }};
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_diagonal(float f) {
   return (mat4_t){{
       {f, 0, 0, 0},
@@ -305,46 +305,46 @@ GMATH_INLINE mat4_t mat4_diagonal(float f) {
   }};
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_identity() { return mat4_diagonal(1.0f); }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_transpose(mat4_t mat) {
   mat4_t result = mat;
 #ifdef GMATH_USE_SSE
   _MM_TRANSPOSE4_PS(
-      result.sse_columns[0],
-      result.sse_columns[1],
-      result.sse_columns[2],
-      result.sse_columns[3]);
+      result.sse_cols[0],
+      result.sse_cols[1],
+      result.sse_cols[2],
+      result.sse_cols[3]);
 #else
-  result.columns[0][1] = mat.columns[1][0];
-  result.columns[0][2] = mat.columns[2][0];
-  result.columns[0][3] = mat.columns[3][0];
+  result.cols[0][1] = mat.cols[1][0];
+  result.cols[0][2] = mat.cols[2][0];
+  result.cols[0][3] = mat.cols[3][0];
 
-  result.columns[1][0] = mat.columns[0][1];
-  result.columns[1][2] = mat.columns[2][1];
-  result.columns[1][3] = mat.columns[3][1];
+  result.cols[1][0] = mat.cols[0][1];
+  result.cols[1][2] = mat.cols[2][1];
+  result.cols[1][3] = mat.cols[3][1];
 
-  result.columns[2][0] = mat.columns[0][2];
-  result.columns[2][1] = mat.columns[1][2];
-  result.columns[2][3] = mat.columns[3][2];
+  result.cols[2][0] = mat.cols[0][2];
+  result.cols[2][1] = mat.cols[1][2];
+  result.cols[2][3] = mat.cols[3][2];
 
-  result.columns[3][0] = mat.columns[0][3];
-  result.columns[3][1] = mat.columns[1][3];
-  result.columns[3][2] = mat.columns[2][3];
+  result.cols[3][0] = mat.cols[0][3];
+  result.cols[3][1] = mat.cols[1][3];
+  result.cols[3][2] = mat.cols[2][3];
 #endif
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_add(mat4_t left, mat4_t right) {
   mat4_t result;
 #ifdef GMATH_USE_SSE
-  result.sse_columns[0] = _mm_add_ps(left.sse_columns[0], right.sse_columns[0]);
-  result.sse_columns[1] = _mm_add_ps(left.sse_columns[1], right.sse_columns[1]);
-  result.sse_columns[2] = _mm_add_ps(left.sse_columns[2], right.sse_columns[2]);
-  result.sse_columns[3] = _mm_add_ps(left.sse_columns[3], right.sse_columns[3]);
+  result.sse_cols[0] = _mm_add_ps(left.sse_cols[0], right.sse_cols[0]);
+  result.sse_cols[1] = _mm_add_ps(left.sse_cols[1], right.sse_cols[1]);
+  result.sse_cols[2] = _mm_add_ps(left.sse_cols[2], right.sse_cols[2]);
+  result.sse_cols[3] = _mm_add_ps(left.sse_cols[3], right.sse_cols[3]);
 #else
   for (unsigned char i = 0; i < 16; i++) {
     result.elems[i] = left.elems[i] + right.elems[i];
@@ -353,14 +353,14 @@ GMATH_INLINE mat4_t mat4_add(mat4_t left, mat4_t right) {
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_sub(mat4_t left, mat4_t right) {
   mat4_t result;
 #ifdef GMATH_USE_SSE
-  result.sse_columns[0] = _mm_sub_ps(left.sse_columns[0], right.sse_columns[0]);
-  result.sse_columns[1] = _mm_sub_ps(left.sse_columns[1], right.sse_columns[1]);
-  result.sse_columns[2] = _mm_sub_ps(left.sse_columns[2], right.sse_columns[2]);
-  result.sse_columns[3] = _mm_sub_ps(left.sse_columns[3], right.sse_columns[3]);
+  result.sse_cols[0] = _mm_sub_ps(left.sse_cols[0], right.sse_cols[0]);
+  result.sse_cols[1] = _mm_sub_ps(left.sse_cols[1], right.sse_cols[1]);
+  result.sse_cols[2] = _mm_sub_ps(left.sse_cols[2], right.sse_cols[2]);
+  result.sse_cols[3] = _mm_sub_ps(left.sse_cols[3], right.sse_cols[3]);
 #else
   for (unsigned char i = 0; i < 16; i++) {
     result.elems[i] = left.elems[i] - right.elems[i];
@@ -369,15 +369,15 @@ GMATH_INLINE mat4_t mat4_sub(mat4_t left, mat4_t right) {
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_muls(mat4_t left, float right) {
   mat4_t result;
 #ifdef GMATH_USE_SSE
   __m128 sse_scalar = _mm_load_ps1(&right);
-  result.sse_columns[0] = _mm_mul_ps(left.sse_columns[0], sse_scalar);
-  result.sse_columns[1] = _mm_mul_ps(left.sse_columns[1], sse_scalar);
-  result.sse_columns[2] = _mm_mul_ps(left.sse_columns[2], sse_scalar);
-  result.sse_columns[3] = _mm_mul_ps(left.sse_columns[3], sse_scalar);
+  result.sse_cols[0] = _mm_mul_ps(left.sse_cols[0], sse_scalar);
+  result.sse_cols[1] = _mm_mul_ps(left.sse_cols[1], sse_scalar);
+  result.sse_cols[2] = _mm_mul_ps(left.sse_cols[2], sse_scalar);
+  result.sse_cols[3] = _mm_mul_ps(left.sse_cols[3], sse_scalar);
 #else
   for (unsigned char i = 0; i < 16; i++) {
     result.elems[i] = left.elems[i] * right;
@@ -386,15 +386,15 @@ GMATH_INLINE mat4_t mat4_muls(mat4_t left, float right) {
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_divs(mat4_t left, float right) {
   mat4_t result;
 #ifdef GMATH_USE_SSE
   __m128 sse_scalar = _mm_load_ps1(&right);
-  result.sse_columns[0] = _mm_div_ps(left.sse_columns[0], sse_scalar);
-  result.sse_columns[1] = _mm_div_ps(left.sse_columns[1], sse_scalar);
-  result.sse_columns[2] = _mm_div_ps(left.sse_columns[2], sse_scalar);
-  result.sse_columns[3] = _mm_div_ps(left.sse_columns[3], sse_scalar);
+  result.sse_cols[0] = _mm_div_ps(left.sse_cols[0], sse_scalar);
+  result.sse_cols[1] = _mm_div_ps(left.sse_cols[1], sse_scalar);
+  result.sse_cols[2] = _mm_div_ps(left.sse_cols[2], sse_scalar);
+  result.sse_cols[3] = _mm_div_ps(left.sse_cols[3], sse_scalar);
 #else
   for (unsigned char i = 0; i < 16; i++) {
     result.elems[i] = left.elems[i] / right;
@@ -403,7 +403,7 @@ GMATH_INLINE mat4_t mat4_divs(mat4_t left, float right) {
   return result;
 }
 
-// @TESTED
+// TESTED
 GMATH_INLINE mat4_t mat4_mul(mat4_t left, mat4_t right) {
   mat4_t result;
 #ifdef GMATH_USE_SSE
@@ -414,11 +414,11 @@ GMATH_INLINE mat4_t mat4_mul(mat4_t left, mat4_t right) {
     __m128 brod4 = _mm_set1_ps(left.elems[4 * i + 3]);
     __m128 row = _mm_add_ps(
         _mm_add_ps(
-            _mm_mul_ps(brod1, right.sse_columns[0]),
-            _mm_mul_ps(brod2, right.sse_columns[1])),
+            _mm_mul_ps(brod1, right.sse_cols[0]),
+            _mm_mul_ps(brod2, right.sse_cols[1])),
         _mm_add_ps(
-            _mm_mul_ps(brod3, right.sse_columns[2]),
-            _mm_mul_ps(brod4, right.sse_columns[3])));
+            _mm_mul_ps(brod3, right.sse_cols[2]),
+            _mm_mul_ps(brod4, right.sse_cols[3])));
     _mm_store_ps(&result.elems[4 * i], row);
   }
 #else
@@ -426,7 +426,7 @@ GMATH_INLINE mat4_t mat4_mul(mat4_t left, mat4_t right) {
   for (unsigned char i = 0; i < 4; i++) {
     for (unsigned char j = 0; j < 4; j++) {
       for (unsigned char p = 0; p < 4; p++) {
-        result.columns[i][j] += left.columns[i][p] * right.columns[p][j];
+        result.cols[i][j] += left.cols[i][p] * right.cols[p][j];
       }
     }
   }
@@ -434,44 +434,104 @@ GMATH_INLINE mat4_t mat4_mul(mat4_t left, mat4_t right) {
   return result;
 }
 
+// TODO: test
 GMATH_INLINE vec4_t mat4_mulv(mat4_t left, vec4_t right) {
-  vec4_t result;
-
   // TODO: SIMD version
 
-  result.v[0] =
-      left.columns[0][0] * right.v[0] + left.columns[1][0] * right.v[1] +
-      left.columns[2][0] * right.v[2] + left.columns[3][0] * right.v[3];
-  result.v[1] =
-      left.columns[0][1] * right.v[0] + left.columns[1][1] * right.v[1] +
-      left.columns[2][1] * right.v[2] + left.columns[3][1] * right.v[3];
-  result.v[2] =
-      left.columns[0][2] * right.v[0] + left.columns[1][2] * right.v[1] +
-      left.columns[2][2] * right.v[2] + left.columns[3][2] * right.v[3];
-  result.v[3] =
-      left.columns[0][3] * right.v[0] + left.columns[1][3] * right.v[1] +
-      left.columns[2][3] * right.v[2] + left.columns[3][3] * right.v[3];
+  vec4_t result;
+
+  result.v[0] = left.cols[0][0] * right.v[0] + left.cols[1][0] * right.v[1] +
+                left.cols[2][0] * right.v[2] + left.cols[3][0] * right.v[3];
+  result.v[1] = left.cols[0][1] * right.v[0] + left.cols[1][1] * right.v[1] +
+                left.cols[2][1] * right.v[2] + left.cols[3][1] * right.v[3];
+  result.v[2] = left.cols[0][2] * right.v[0] + left.cols[1][2] * right.v[1] +
+                left.cols[2][2] * right.v[2] + left.cols[3][2] * right.v[3];
+  result.v[3] = left.cols[0][3] * right.v[0] + left.cols[1][3] * right.v[1] +
+                left.cols[2][3] * right.v[2] + left.cols[3][3] * right.v[3];
 
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED
+GMATH_INLINE mat4_t mat4_inverse(mat4_t mat) {
+  // TODO: SIMD version
+
+  mat4_t inv = {0};
+
+  float t[6];
+  float a = mat.cols[0][0], b = mat.cols[0][1], c = mat.cols[0][2],
+        d = mat.cols[0][3], e = mat.cols[1][0], f = mat.cols[1][1],
+        g = mat.cols[1][2], h = mat.cols[1][3], i = mat.cols[2][0],
+        j = mat.cols[2][1], k = mat.cols[2][2], l = mat.cols[2][3],
+        m = mat.cols[3][0], n = mat.cols[3][1], o = mat.cols[3][2],
+        p = mat.cols[3][3];
+
+  t[0] = k * p - o * l;
+  t[1] = j * p - n * l;
+  t[2] = j * o - n * k;
+  t[3] = i * p - m * l;
+  t[4] = i * o - m * k;
+  t[5] = i * n - m * j;
+
+  inv.cols[0][0] = f * t[0] - g * t[1] + h * t[2];
+  inv.cols[1][0] = -(e * t[0] - g * t[3] + h * t[4]);
+  inv.cols[2][0] = e * t[1] - f * t[3] + h * t[5];
+  inv.cols[3][0] = -(e * t[2] - f * t[4] + g * t[5]);
+
+  inv.cols[0][1] = -(b * t[0] - c * t[1] + d * t[2]);
+  inv.cols[1][1] = a * t[0] - c * t[3] + d * t[4];
+  inv.cols[2][1] = -(a * t[1] - b * t[3] + d * t[5]);
+  inv.cols[3][1] = a * t[2] - b * t[4] + c * t[5];
+
+  t[0] = g * p - o * h;
+  t[1] = f * p - n * h;
+  t[2] = f * o - n * g;
+  t[3] = e * p - m * h;
+  t[4] = e * o - m * g;
+  t[5] = e * n - m * f;
+
+  inv.cols[0][2] = b * t[0] - c * t[1] + d * t[2];
+  inv.cols[1][2] = -(a * t[0] - c * t[3] + d * t[4]);
+  inv.cols[2][2] = a * t[1] - b * t[3] + d * t[5];
+  inv.cols[3][2] = -(a * t[2] - b * t[4] + c * t[5]);
+
+  t[0] = g * l - k * h;
+  t[1] = f * l - j * h;
+  t[2] = f * k - j * g;
+  t[3] = e * l - i * h;
+  t[4] = e * k - i * g;
+  t[5] = e * j - i * f;
+
+  inv.cols[0][3] = -(b * t[0] - c * t[1] + d * t[2]);
+  inv.cols[1][3] = a * t[0] - c * t[3] + d * t[4];
+  inv.cols[2][3] = -(a * t[1] - b * t[3] + d * t[5]);
+  inv.cols[3][3] = a * t[2] - b * t[4] + c * t[5];
+
+  float det = a * inv.cols[0][0] + b * inv.cols[1][0] + c * inv.cols[2][0] +
+              d * inv.cols[3][0];
+
+  inv = mat4_muls(inv, 1.0f / det);
+
+  return inv;
+}
+
+// TESTED: compatible with glm
 GMATH_INLINE mat4_t
 mat4_perspective(float fovy, float aspect_ratio, float znear, float zfar) {
   mat4_t result = mat4_zero();
 
   float tan_half_fovy = tanf(fovy / 2.0f);
 
-  result.columns[0][0] = 1.0f / (aspect_ratio * tan_half_fovy);
-  result.columns[1][1] = 1.0f / tan_half_fovy;
-  result.columns[2][2] = -(zfar + znear) / (zfar - znear);
-  result.columns[2][3] = -1.0f;
-  result.columns[3][2] = -(2.0f * zfar * znear) / (zfar - znear);
+  result.cols[0][0] = 1.0f / (aspect_ratio * tan_half_fovy);
+  result.cols[1][1] = 1.0f / tan_half_fovy;
+  result.cols[2][2] = -(zfar + znear) / (zfar - znear);
+  result.cols[2][3] = -1.0f;
+  result.cols[3][2] = -(2.0f * zfar * znear) / (zfar - znear);
 
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE mat4_t mat4_look_at(vec3_t eye, vec3_t center, vec3_t up) {
   vec3_t f = vec3_normalize(vec3_sub(center, eye));
   vec3_t s = vec3_normalize(vec3_cross(f, up));
@@ -479,87 +539,80 @@ GMATH_INLINE mat4_t mat4_look_at(vec3_t eye, vec3_t center, vec3_t up) {
 
   mat4_t result = mat4_identity();
 
-  result.columns[0][0] = s.x;
-  result.columns[1][0] = s.y;
-  result.columns[2][0] = s.z;
+  result.cols[0][0] = s.x;
+  result.cols[1][0] = s.y;
+  result.cols[2][0] = s.z;
 
-  result.columns[0][1] = u.x;
-  result.columns[1][1] = u.y;
-  result.columns[2][1] = u.z;
+  result.cols[0][1] = u.x;
+  result.cols[1][1] = u.y;
+  result.cols[2][1] = u.z;
 
-  result.columns[0][2] = -f.x;
-  result.columns[1][2] = -f.y;
-  result.columns[2][2] = -f.z;
+  result.cols[0][2] = -f.x;
+  result.cols[1][2] = -f.y;
+  result.cols[2][2] = -f.z;
 
-  result.columns[3][0] = -vec3_dot(s, eye);
-  result.columns[3][1] = -vec3_dot(u, eye);
-  result.columns[3][2] = vec3_dot(f, eye);
+  result.cols[3][0] = -vec3_dot(s, eye);
+  result.cols[3][1] = -vec3_dot(u, eye);
+  result.cols[3][2] = vec3_dot(f, eye);
 
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE quat_t mat4_to_quat(mat4_t mat) {
   quat_t result;
-  float trace = mat.columns[0][0] + mat.columns[1][1] + mat.columns[2][2];
+  float trace = mat.cols[0][0] + mat.cols[1][1] + mat.cols[2][2];
   if (trace > 0.0f) {
     float s = sqrtf(1.0f + trace) * 2.0f;
     result.w = 0.25f * s;
-    result.x = (mat.columns[1][2] - mat.columns[2][1]) / s;
-    result.y = (mat.columns[2][0] - mat.columns[0][2]) / s;
-    result.z = (mat.columns[0][1] - mat.columns[1][0]) / s;
+    result.x = (mat.cols[1][2] - mat.cols[2][1]) / s;
+    result.y = (mat.cols[2][0] - mat.cols[0][2]) / s;
+    result.z = (mat.cols[0][1] - mat.cols[1][0]) / s;
   } else if (
-      mat.columns[0][0] > mat.columns[1][1] &&
-      mat.columns[0][0] > mat.columns[2][2]) {
+      mat.cols[0][0] > mat.cols[1][1] && mat.cols[0][0] > mat.cols[2][2]) {
     float s =
-        sqrtf(
-            1.0f + mat.columns[0][0] - mat.columns[1][1] - mat.columns[2][2]) *
-        2.0f;
-    result.w = (mat.columns[1][2] - mat.columns[2][1]) / s;
+        sqrtf(1.0f + mat.cols[0][0] - mat.cols[1][1] - mat.cols[2][2]) * 2.0f;
+    result.w = (mat.cols[1][2] - mat.cols[2][1]) / s;
     result.x = 0.25f * s;
-    result.y = (mat.columns[1][0] + mat.columns[0][1]) / s;
-    result.z = (mat.columns[2][0] + mat.columns[0][2]) / s;
-  } else if (mat.columns[1][1] > mat.columns[2][2]) {
+    result.y = (mat.cols[1][0] + mat.cols[0][1]) / s;
+    result.z = (mat.cols[2][0] + mat.cols[0][2]) / s;
+  } else if (mat.cols[1][1] > mat.cols[2][2]) {
     float s =
-        sqrtf(
-            1.0f + mat.columns[1][1] - mat.columns[0][0] - mat.columns[2][2]) *
-        2.0f;
-    result.w = (mat.columns[2][0] - mat.columns[0][2]) / s;
-    result.x = (mat.columns[1][0] + mat.columns[0][1]) / s;
+        sqrtf(1.0f + mat.cols[1][1] - mat.cols[0][0] - mat.cols[2][2]) * 2.0f;
+    result.w = (mat.cols[2][0] - mat.cols[0][2]) / s;
+    result.x = (mat.cols[1][0] + mat.cols[0][1]) / s;
     result.y = 0.25f * s;
-    result.z = (mat.columns[2][1] + mat.columns[1][2]) / s;
+    result.z = (mat.cols[2][1] + mat.cols[1][2]) / s;
   } else {
     float s =
-        sqrtf(
-            1.0f + mat.columns[2][2] - mat.columns[0][0] - mat.columns[1][1]) *
-        2.0f;
-    result.w = (mat.columns[0][1] - mat.columns[1][0]) / s;
-    result.x = (mat.columns[2][0] + mat.columns[0][2]) / s;
-    result.y = (mat.columns[2][1] + mat.columns[1][2]) / s;
+        sqrtf(1.0f + mat.cols[2][2] - mat.cols[0][0] - mat.cols[1][1]) * 2.0f;
+    result.w = (mat.cols[0][1] - mat.cols[1][0]) / s;
+    result.x = (mat.cols[2][0] + mat.cols[0][2]) / s;
+    result.y = (mat.cols[2][1] + mat.cols[1][2]) / s;
     result.z = 0.25f * s;
   }
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE mat4_t mat4_translate(mat4_t mat, vec3_t translation) {
   mat4_t result = mat;
-  result.columns[3][0] += translation.x;
-  result.columns[3][1] += translation.y;
-  result.columns[3][2] += translation.z;
+  result.cols[3][0] += translation.x;
+  result.cols[3][1] += translation.y;
+  result.cols[3][2] += translation.z;
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE mat4_t mat4_scale(mat4_t mat, vec3_t scale) {
   mat4_t result = mat;
-  result.columns[0][0] *= scale.x;
-  result.columns[1][1] *= scale.y;
-  result.columns[2][2] *= scale.z;
+  result.cols[0][0] *= scale.x;
+  result.cols[1][1] *= scale.y;
+  result.cols[2][2] *= scale.z;
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE mat4_t mat4_rotate(mat4_t mat, float angle, vec3_t axis) {
   float c = cosf(angle);
   float s = sinf(angle);
@@ -568,34 +621,34 @@ GMATH_INLINE mat4_t mat4_rotate(mat4_t mat, float angle, vec3_t axis) {
   vec3_t temp = vec3_muls(axis, (1.0f - c));
 
   mat4_t rotate;
-  rotate.columns[0][0] = c + temp.x * axis.x;
-  rotate.columns[0][1] = temp.x * axis.y + s * axis.z;
-  rotate.columns[0][2] = temp.x * axis.z - s * axis.y;
+  rotate.cols[0][0] = c + temp.x * axis.x;
+  rotate.cols[0][1] = temp.x * axis.y + s * axis.z;
+  rotate.cols[0][2] = temp.x * axis.z - s * axis.y;
 
-  rotate.columns[1][0] = temp.y * axis.x - s * axis.z;
-  rotate.columns[1][1] = c + temp.y * axis.y;
-  rotate.columns[1][2] = temp.y * axis.z + s * axis.x;
+  rotate.cols[1][0] = temp.y * axis.x - s * axis.z;
+  rotate.cols[1][1] = c + temp.y * axis.y;
+  rotate.cols[1][2] = temp.y * axis.z + s * axis.x;
 
-  rotate.columns[2][0] = temp.z * axis.x + s * axis.y;
-  rotate.columns[2][1] = temp.z * axis.y - s * axis.x;
-  rotate.columns[2][2] = c + temp.z * axis.z;
+  rotate.cols[2][0] = temp.z * axis.x + s * axis.y;
+  rotate.cols[2][1] = temp.z * axis.y - s * axis.x;
+  rotate.cols[2][2] = c + temp.z * axis.z;
 
   mat4_t result;
   result.v[0] = vec4_add(
       vec4_add(
-          vec4_muls(mat.v[0], rotate.columns[0][0]),
-          vec4_muls(mat.v[1], rotate.columns[0][1])),
-      vec4_muls(mat.v[2], rotate.columns[0][2]));
+          vec4_muls(mat.v[0], rotate.cols[0][0]),
+          vec4_muls(mat.v[1], rotate.cols[0][1])),
+      vec4_muls(mat.v[2], rotate.cols[0][2]));
   result.v[1] = vec4_add(
       vec4_add(
-          vec4_muls(mat.v[0], rotate.columns[1][0]),
-          vec4_muls(mat.v[1], rotate.columns[1][1])),
-      vec4_muls(mat.v[2], rotate.columns[1][2]));
+          vec4_muls(mat.v[0], rotate.cols[1][0]),
+          vec4_muls(mat.v[1], rotate.cols[1][1])),
+      vec4_muls(mat.v[2], rotate.cols[1][2]));
   result.v[2] = vec4_add(
       vec4_add(
-          vec4_muls(mat.v[0], rotate.columns[2][0]),
-          vec4_muls(mat.v[1], rotate.columns[2][1])),
-      vec4_muls(mat.v[2], rotate.columns[2][2]));
+          vec4_muls(mat.v[0], rotate.cols[2][0]),
+          vec4_muls(mat.v[1], rotate.cols[2][1])),
+      vec4_muls(mat.v[2], rotate.cols[2][2]));
   result.v[3] = mat.v[3];
   return result;
 }
@@ -604,13 +657,13 @@ GMATH_INLINE mat4_t mat4_rotate(mat4_t mat, float angle, vec3_t axis) {
  * quat functions
  */
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE float quat_dot(quat_t left, quat_t right) {
   return (left.x * right.x) + (left.y * right.y) + (left.z * right.z) +
          (left.w * right.w);
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE quat_t quat_normalize(quat_t left) {
   float length = sqrtf(quat_dot(left, left));
   if (length <= 0.0f) {
@@ -623,7 +676,7 @@ GMATH_INLINE quat_t quat_normalize(quat_t left) {
                   left.w * one_over_length};
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE quat_t quat_from_axis_angle(vec3_t axis, float angle) {
   float s = sinf(angle / 2.0f);
   quat_t result;
@@ -634,7 +687,7 @@ GMATH_INLINE quat_t quat_from_axis_angle(vec3_t axis, float angle) {
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE void quat_to_axis_angle(quat_t quat, vec3_t *axis, float *angle) {
   quat = quat_normalize(quat);
   *angle = 2.0f * acosf(quat.w);
@@ -650,7 +703,7 @@ GMATH_INLINE void quat_to_axis_angle(quat_t quat, vec3_t *axis, float *angle) {
   }
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE quat_t quat_conjugate(quat_t quat) {
   quat_t result;
   result.w = quat.w;
@@ -660,7 +713,7 @@ GMATH_INLINE quat_t quat_conjugate(quat_t quat) {
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE mat4_t quat_to_mat4(quat_t quat) {
   mat4_t result = mat4_identity();
 
@@ -674,22 +727,22 @@ GMATH_INLINE mat4_t quat_to_mat4(quat_t quat) {
   float wy = quat.w * quat.y;
   float wz = quat.w * quat.z;
 
-  result.columns[0][0] = 1.0f - 2.0f * (yy + zz);
-  result.columns[0][1] = 2.0f * (xy + wz);
-  result.columns[0][2] = 2.0f * (xz - wy);
+  result.cols[0][0] = 1.0f - 2.0f * (yy + zz);
+  result.cols[0][1] = 2.0f * (xy + wz);
+  result.cols[0][2] = 2.0f * (xz - wy);
 
-  result.columns[1][0] = 2.0f * (xy - wz);
-  result.columns[1][1] = 1.0f - 2.0f * (xx + zz);
-  result.columns[1][2] = 2.0f * (yz + wx);
+  result.cols[1][0] = 2.0f * (xy - wz);
+  result.cols[1][1] = 1.0f - 2.0f * (xx + zz);
+  result.cols[1][2] = 2.0f * (yz + wx);
 
-  result.columns[2][0] = 2.0f * (xz + wy);
-  result.columns[2][1] = 2.0f * (yz - wx);
-  result.columns[2][2] = 1.0f - 2.0f * (xx + yy);
+  result.cols[2][0] = 2.0f * (xz + wy);
+  result.cols[2][1] = 2.0f * (yz - wx);
+  result.cols[2][2] = 1.0f - 2.0f * (xx + yy);
 
   return result;
 }
 
-// @TESTED: compatible with glm
+// TESTED: compatible with glm
 GMATH_INLINE quat_t quat_look_at(vec3_t direction, vec3_t up) {
   float m[3][3] = {
       {0, 0, 0},

@@ -53,17 +53,18 @@ static void game_mouse_button_callback(
   double mouse_x, mouse_y;
   re_window_get_cursor_pos(window, &mouse_x, &mouse_y);
 
-  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS &&
-      !igIsWindowHovered(
-          ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows |
-          ImGuiHoveredFlags_AllowWhenBlockedByPopup |
-          ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
-    game->inspector.selected_entity = eg_picking_system_pick(
-        &game->picking_system,
-        window->current_frame,
-        &game->world,
-        (uint32_t)mouse_x,
-        (uint32_t)mouse_y);
+  if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (action == GLFW_PRESS) {
+      eg_picking_system_mouse_press(
+          &game->picking_system,
+          &game->world,
+          &game->inspector.selected_entity,
+          window->current_frame,
+          (uint32_t)mouse_x,
+          (uint32_t)mouse_y);
+    } else if (action == GLFW_RELEASE) {
+      eg_picking_system_mouse_release(&game->picking_system);
+    }
   }
 }
 
@@ -80,6 +81,22 @@ static void game_char_callback(re_window_t *window, unsigned int c) {
   eg_imgui_char_callback(window, c);
 }
 
+static void game_cursor_pos_callback(re_window_t *window, double x, double y) {
+  game_t *game = window->user_ptr;
+
+  uint32_t width, height;
+  re_window_get_size(window, &width, &height);
+
+  eg_picking_system_cursor_move(
+      &game->picking_system,
+      &game->world,
+      game->inspector.selected_entity,
+      width,
+      height,
+      x,
+      y);
+}
+
 static void game_init(game_t *game, int argc, const char *argv[]) {
   re_context_init();
   re_window_init(&game->window, "Re-write", 1600, 900);
@@ -94,6 +111,7 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   game->window.scroll_callback = game_scroll_callback;
   game->window.key_callback = game_key_callback;
   game->window.char_callback = game_char_callback;
+  game->window.cursor_pos_callback = game_cursor_pos_callback;
   game->window.framebuffer_resize_callback = game_framebuffer_resize_callback;
 
   eg_asset_manager_init(&game->asset_manager);
@@ -207,6 +225,17 @@ int main(int argc, const char *argv[]) {
 
     re_window_poll_events(&game.window);
 
+    /* double mouse_x, mouse_y; */
+    /* re_window_get_cursor_pos(&game.window, &mouse_x, &mouse_y); */
+
+    /* eg_picking_system_pick( */
+    /*     &game.picking_system, */
+    /*     &game.world, */
+    /*     game.inspector.selected_entity, */
+    /*     game.window.current_frame, */
+    /*     (uint32_t)mouse_x, */
+    /*     (uint32_t)mouse_y); */
+
     const eg_cmd_info_t cmd_info = {
         .frame_index = game.window.current_frame,
         .cmd_buffer = re_window_get_current_command_buffer(&game.window),
@@ -246,9 +275,8 @@ int main(int argc, const char *argv[]) {
         &game.world,
         game.inspector.selected_entity,
         &cmd_info,
-        &game.world.camera,
-        game.window.swapchain_extent.width,
-        game.window.swapchain_extent.height);
+        width,
+        height);
 
     eg_imgui_draw(&cmd_info);
 

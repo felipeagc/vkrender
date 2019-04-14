@@ -4,6 +4,12 @@
 #include <fstd_util.h>
 #include <gmath.h>
 
+/*
+ *
+ * Helper functions
+ *
+ */
+
 static inline uint32_t
 get_swapchain_num_images(VkSurfaceCapabilitiesKHR *surface_capabilities) {
   uint32_t image_count = surface_capabilities->minImageCount + 1;
@@ -545,6 +551,12 @@ static inline void update_size(re_window_t *window) {
   allocate_graphics_command_buffers(window);
 }
 
+/*
+ *
+ * Callbacks
+ *
+ */
+
 void framebuffer_resize_callback(
     GLFWwindow *glfw_window, int width, int height) {
   re_window_t *window = glfwGetWindowUserPointer(glfw_window);
@@ -590,6 +602,21 @@ void char_callback(GLFWwindow *glfw_window, unsigned int c) {
   }
 }
 
+void cursor_pos_callback(
+    GLFWwindow *glfw_window, double cursor_x, double cursor_y) {
+  re_window_t *window = glfwGetWindowUserPointer(glfw_window);
+
+  if (window->cursor_pos_callback != NULL) {
+    window->cursor_pos_callback(window, cursor_x, cursor_y);
+  }
+}
+
+/*
+ *
+ * Window functions
+ *
+ */
+
 bool re_window_init(
     re_window_t *window, const char *title, uint32_t width, uint32_t height) {
   window->clear_color = (vec4_t){0.0, 0.0, 0.0, 1.0};
@@ -629,6 +656,7 @@ bool re_window_init(
   glfwSetScrollCallback(window->glfw_window, scroll_callback);
   glfwSetKeyCallback(window->glfw_window, key_callback);
   glfwSetCharCallback(window->glfw_window, char_callback);
+  glfwSetCursorPosCallback(window->glfw_window, cursor_pos_callback);
 
   assert(window->glfw_window != NULL);
 
@@ -658,14 +686,6 @@ bool re_window_init(
   create_render_pass(window);
 
   return true;
-}
-
-void re_window_get_size(
-    const re_window_t *window, uint32_t *width, uint32_t *height) {
-  int iwidth, iheight;
-  glfwGetWindowSize(window->glfw_window, &iwidth, &iheight);
-  *width = (uint32_t)iwidth;
-  *height = (uint32_t)iheight;
 }
 
 void re_window_destroy(re_window_t *window) {
@@ -933,6 +953,12 @@ int re_window_get_input_mode(const re_window_t *window, int mode) {
   return glfwGetInputMode(window->glfw_window, mode);
 }
 
+void re_window_get_size(
+    const re_window_t *window, uint32_t *width, uint32_t *height) {
+  *width = window->swapchain_extent.width;
+  *height = window->swapchain_extent.height;
+}
+
 void re_window_get_cursor_pos(const re_window_t *window, double *x, double *y) {
   glfwGetCursorPos(window->glfw_window, x, y);
 }
@@ -955,7 +981,7 @@ bool re_window_is_key_pressed(const re_window_t *window, int key) {
   return glfwGetKey(window->glfw_window, key) == GLFW_PRESS;
 }
 
-VkCommandBuffer
+re_cmd_buffer_t
 re_window_get_current_command_buffer(const re_window_t *window) {
   return window->frame_resources[window->current_frame].command_buffer;
 }
