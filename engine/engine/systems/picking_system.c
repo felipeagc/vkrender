@@ -10,12 +10,6 @@
 #include <renderer/window.h>
 #include <string.h>
 
-typedef enum eg_special_selection_t {
-  EG_GIZMOS_POS_X = UINT32_MAX - 1,
-  EG_GIZMOS_POS_Y = UINT32_MAX - 2,
-  EG_GIZMOS_POS_Z = UINT32_MAX - 3,
-} eg_special_selection_t;
-
 void eg_picking_system_init(
     eg_picking_system_t *system,
     re_render_target_t *render_target,
@@ -47,7 +41,9 @@ void eg_picking_system_init(
       "/shaders/gizmo_picking.frag.spv",
       eg_gizmo_pipeline_parameters());
 
-  system->drag_direction = (vec3_t){0.0f, 0.0f, 0.0f};
+  system->drag_direction = EG_DRAG_DIRECTION_NONE;
+  system->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
+  system->left_pressed = false;
 
   const float thick = 0.05f;
 
@@ -322,9 +318,9 @@ static void draw_gizmos_picking(
   mats[2].v[2] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
 
   uint32_t color_indices[] = {
-      EG_GIZMOS_POS_X,
-      EG_GIZMOS_POS_Y,
-      EG_GIZMOS_POS_Z,
+      EG_DRAG_DIRECTION_X,
+      EG_DRAG_DIRECTION_Y,
+      EG_DRAG_DIRECTION_Z,
   };
 
   for (uint32_t i = 0; i < 3; i++) {
@@ -363,6 +359,8 @@ void eg_picking_system_mouse_press(
           ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
     return;
   }
+
+  system->left_pressed = true;
 
   re_cmd_buffer_t command_buffer;
 
@@ -495,16 +493,10 @@ void eg_picking_system_mouse_press(
   re_buffer_destroy(&staging_buffer);
 
   switch (entity) {
-  case EG_GIZMOS_POS_X: {
-    system->drag_direction = (vec3_t){1.0f, 0.0f, 0.0f};
-    break;
-  }
-  case EG_GIZMOS_POS_Y: {
-    system->drag_direction = (vec3_t){0.0f, 1.0f, 0.0f};
-    break;
-  }
-  case EG_GIZMOS_POS_Z: {
-    system->drag_direction = (vec3_t){0.0f, 0.0f, 1.0f};
+  case EG_DRAG_DIRECTION_X:
+  case EG_DRAG_DIRECTION_Y:
+  case EG_DRAG_DIRECTION_Z: {
+    system->drag_direction = entity;
     break;
   }
   default: {
@@ -515,18 +507,18 @@ void eg_picking_system_mouse_press(
 }
 
 void eg_picking_system_mouse_release(eg_picking_system_t *system) {
-  system->drag_direction = (vec3_t){0.0f, 0.0f, 0.0f};
+  system->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
+  system->drag_direction = EG_DRAG_DIRECTION_NONE;
 }
 
-void eg_picking_system_cursor_move(
+void eg_picking_system_update(
     eg_picking_system_t *system,
+    re_window_t *window,
     eg_world_t *world,
     eg_entity_t selected_entity,
     uint32_t width,
-    uint32_t height,
-    double cursor_x,
-    double cursor_y) {
-  if (vec3_mag(system->drag_direction) == 0.0f) {
+    uint32_t height) {
+  if (system->drag_direction == EG_DRAG_DIRECTION_NONE) {
     return;
   }
 
@@ -537,6 +529,9 @@ void eg_picking_system_cursor_move(
   if (!eg_world_has_comp(world, selected_entity, EG_TRANSFORM_COMPONENT_TYPE)) {
     return;
   }
+
+  double cursor_x, cursor_y;
+  re_window_get_cursor_pos(window, &cursor_x, &cursor_y);
 
   float nx = (((float)cursor_x / (float)width) * 2.0f) - 1.0f;
   float ny = (((float)cursor_y / (float)height) * 2.0f) - 1.0f;
@@ -560,7 +555,6 @@ void eg_picking_system_cursor_move(
   if (fabs(device_obj_pos.w) >= FLT_EPSILON) {
     device_obj_pos.xyz = vec3_divs(device_obj_pos.xyz, device_obj_pos.w);
   }
-  device_obj_pos.w = 1.0f;
 
   vec4_t device_cursor_pos = {nx, ny, device_obj_pos.z, 1.0f};
   vec4_t world_cur_pos = mat4_mulv(inv_proj, device_cursor_pos);
@@ -570,9 +564,27 @@ void eg_picking_system_cursor_move(
     world_cur_pos.xyz = vec3_divs(world_cur_pos.xyz, world_cur_pos.w);
   }
 
-  transform->position = (vec3_t){
-      world_cur_pos.x,
-      world_cur_pos.y,
-      world_cur_pos.z,
-  };
+  if (system->left_pressed) {
+    // Left was just pressed
+    system->pos_delta = vec3_sub(transform->position, world_cur_pos.xyz);
+    system->left_pressed = false;
+  }
+
+  switch (system->drag_direction) {
+  case EG_DRAG_DIRECTION_X: {
+    transform->position.x = world_cur_pos.x + system->pos_delta.x;
+    break;
+  }
+  case EG_DRAG_DIRECTION_Y: {
+    transform->position.y = world_cur_pos.y + system->pos_delta.y;
+    break;
+  }
+  case EG_DRAG_DIRECTION_Z: {
+    transform->position.z = world_cur_pos.z + system->pos_delta.z;
+    break;
+  }
+  default: {
+    break;
+  }
+  }
 }

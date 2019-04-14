@@ -86,15 +86,6 @@ static void game_cursor_pos_callback(re_window_t *window, double x, double y) {
 
   uint32_t width, height;
   re_window_get_size(window, &width, &height);
-
-  eg_picking_system_cursor_move(
-      &game->picking_system,
-      &game->world,
-      game->inspector.selected_entity,
-      width,
-      height,
-      x,
-      y);
 }
 
 static void game_init(game_t *game, int argc, const char *argv[]) {
@@ -275,6 +266,14 @@ int main(int argc, const char *argv[]) {
         &game.world,
         game.inspector.selected_entity,
         &cmd_info,
+        width,
+        height);
+
+    eg_picking_system_update(
+        &game.picking_system,
+        &game.window,
+        &game.world,
+        game.inspector.selected_entity,
         width,
         height);
 

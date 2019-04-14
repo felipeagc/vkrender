@@ -4,6 +4,13 @@
 #include <renderer/canvas.h>
 #include <renderer/pipeline.h>
 
+typedef enum eg_drag_direction_t {
+  EG_DRAG_DIRECTION_NONE = 0,
+  EG_DRAG_DIRECTION_X = UINT32_MAX - 1,
+  EG_DRAG_DIRECTION_Y = UINT32_MAX - 2,
+  EG_DRAG_DIRECTION_Z = UINT32_MAX - 3,
+} eg_drag_direction_t;
+
 typedef struct eg_picking_system_t {
   re_canvas_t canvas;
   re_pipeline_t picking_pipeline;
@@ -15,7 +22,10 @@ typedef struct eg_picking_system_t {
   re_buffer_t pos_gizmo_vertex_buffer;
   re_buffer_t pos_gizmo_index_buffer;
 
-  vec3_t drag_direction;
+  eg_drag_direction_t drag_direction;
+
+  bool left_pressed;
+  vec3_t pos_delta;
 } eg_picking_system_t;
 
 // render_target will be used to render the gizmos
@@ -48,11 +58,10 @@ void eg_picking_system_mouse_press(
 
 void eg_picking_system_mouse_release(eg_picking_system_t *system);
 
-void eg_picking_system_cursor_move(
+void eg_picking_system_update(
     eg_picking_system_t *system,
+    re_window_t *window,
     eg_world_t *world,
     eg_entity_t selected_entity,
     uint32_t width,
-    uint32_t height,
-    double cursor_x,
-    double cursor_y);
+    uint32_t height);
