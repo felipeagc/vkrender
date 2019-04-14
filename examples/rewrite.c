@@ -53,15 +53,16 @@ static void game_mouse_button_callback(
   double mouse_x, mouse_y;
   re_window_get_cursor_pos(window, &mouse_x, &mouse_y);
 
+  uint32_t width, height;
+  re_window_get_size(window, &width, &height);
+
   if (button == GLFW_MOUSE_BUTTON_LEFT) {
     if (action == GLFW_PRESS) {
       eg_picking_system_mouse_press(
           &game->picking_system,
-          &game->world,
           &game->inspector.selected_entity,
-          window->current_frame,
-          (uint32_t)mouse_x,
-          (uint32_t)mouse_y);
+          width,
+          height);
     } else if (action == GLFW_RELEASE) {
       eg_picking_system_mouse_release(&game->picking_system);
     }
@@ -119,7 +120,12 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   re_window_get_size(&game->window, &width, &height);
   eg_inspector_init(&game->inspector);
   eg_picking_system_init(
-      &game->picking_system, &game->window.render_target, width, height);
+      &game->picking_system,
+      &game->window,
+      &game->world,
+      &game->window.render_target,
+      width,
+      height);
   eg_fps_camera_system_init(&game->fps_system);
 }
 
@@ -216,17 +222,6 @@ int main(int argc, const char *argv[]) {
 
     re_window_poll_events(&game.window);
 
-    /* double mouse_x, mouse_y; */
-    /* re_window_get_cursor_pos(&game.window, &mouse_x, &mouse_y); */
-
-    /* eg_picking_system_pick( */
-    /*     &game.picking_system, */
-    /*     &game.world, */
-    /*     game.inspector.selected_entity, */
-    /*     game.window.current_frame, */
-    /*     (uint32_t)mouse_x, */
-    /*     (uint32_t)mouse_y); */
-
     const eg_cmd_info_t cmd_info = {
         .frame_index = game.window.current_frame,
         .cmd_buffer = re_window_get_current_command_buffer(&game.window),
@@ -263,7 +258,6 @@ int main(int argc, const char *argv[]) {
 
     eg_picking_system_draw_gizmos(
         &game.picking_system,
-        &game.world,
         game.inspector.selected_entity,
         &cmd_info,
         width,
@@ -271,8 +265,6 @@ int main(int argc, const char *argv[]) {
 
     eg_picking_system_update(
         &game.picking_system,
-        &game.window,
-        &game.world,
         game.inspector.selected_entity,
         width,
         height);

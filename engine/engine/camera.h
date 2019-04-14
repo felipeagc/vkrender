@@ -43,3 +43,7 @@ void eg_camera_bind(
     uint32_t set_index);
 
 void eg_camera_destroy(eg_camera_t *camera);
+
+vec3_t eg_camera_ndc_to_world(eg_camera_t *camera, vec3_t ndc);
+
+vec3_t eg_camera_world_to_ndc(eg_camera_t *camera, vec3_t world);

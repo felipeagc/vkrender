@@ -12,9 +12,14 @@
 
 void eg_picking_system_init(
     eg_picking_system_t *system,
+    re_window_t *window,
+    eg_world_t *world,
     re_render_target_t *render_target,
     uint32_t width,
     uint32_t height) {
+  system->window = window;
+  system->world = world;
+
   re_canvas_init(&system->canvas, width, height, VK_FORMAT_R32_UINT);
   system->canvas.clear_color = (VkClearColorValue){
       .uint32 = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX},
@@ -43,7 +48,6 @@ void eg_picking_system_init(
 
   system->drag_direction = EG_DRAG_DIRECTION_NONE;
   system->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
-  system->left_pressed = false;
 
   const float thick = 0.05f;
 
@@ -147,7 +151,6 @@ void eg_picking_system_resize(
 
 void eg_picking_system_draw_gizmos(
     eg_picking_system_t *system,
-    eg_world_t *world,
     eg_entity_t entity,
     const eg_cmd_info_t *cmd_info,
     uint32_t width,
@@ -156,7 +159,7 @@ void eg_picking_system_draw_gizmos(
     return;
   }
 
-  if (!eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+  if (!eg_world_has_comp(system->world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
     return;
   }
 
@@ -199,7 +202,7 @@ void eg_picking_system_draw_gizmos(
   } push_constant;
 
   eg_transform_component_t *transform =
-      EG_GET_COMP(world, entity, eg_transform_component_t);
+      EG_GET_COMP(system->world, entity, eg_transform_component_t);
 
   mat4_t object_mat = eg_transform_component_to_mat4(transform);
   mat4_t mats[] = {
@@ -229,7 +232,9 @@ void eg_picking_system_draw_gizmos(
 
     push_constant.mvp = mat4_mul(
         mats[i],
-        mat4_mul(world->camera.uniform.view, world->camera.uniform.proj));
+        mat4_mul(
+            system->world->camera.uniform.view,
+            system->world->camera.uniform.proj));
     push_constant.color = colors[i];
 
     vkCmdPushConstants(
@@ -247,7 +252,6 @@ void eg_picking_system_draw_gizmos(
 
 static void draw_gizmos_picking(
     eg_picking_system_t *system,
-    eg_world_t *world,
     eg_entity_t entity,
     const eg_cmd_info_t *cmd_info,
     uint32_t width,
@@ -256,7 +260,7 @@ static void draw_gizmos_picking(
     return;
   }
 
-  if (!eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+  if (!eg_world_has_comp(system->world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
     return;
   }
 
@@ -300,7 +304,7 @@ static void draw_gizmos_picking(
   } push_constant;
 
   eg_transform_component_t *transform =
-      EG_GET_COMP(world, entity, eg_transform_component_t);
+      EG_GET_COMP(system->world, entity, eg_transform_component_t);
 
   mat4_t object_mat = eg_transform_component_to_mat4(transform);
   mat4_t mats[] = {
@@ -330,7 +334,9 @@ static void draw_gizmos_picking(
 
     push_constant.mvp = mat4_mul(
         mats[i],
-        mat4_mul(world->camera.uniform.view, world->camera.uniform.proj));
+        mat4_mul(
+            system->world->camera.uniform.view,
+            system->world->camera.uniform.proj));
     push_constant.index = color_indices[i];
 
     vkCmdPushConstants(
@@ -348,19 +354,15 @@ static void draw_gizmos_picking(
 
 void eg_picking_system_mouse_press(
     eg_picking_system_t *system,
-    eg_world_t *world,
     eg_entity_t *selected_entity,
-    uint32_t frame_index,
-    uint32_t mouse_x,
-    uint32_t mouse_y) {
+    uint32_t width,
+    uint32_t height) {
   if (igIsWindowHovered(
           ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows |
           ImGuiHoveredFlags_AllowWhenBlockedByPopup |
           ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
     return;
   }
-
-  system->left_pressed = true;
 
   re_cmd_buffer_t command_buffer;
 
@@ -391,25 +393,27 @@ void eg_picking_system_mouse_press(
       });
 
   const eg_cmd_info_t cmd_info = {
-      .frame_index = frame_index,
+      .frame_index = system->window->current_frame,
       .cmd_buffer = command_buffer,
   };
 
   re_canvas_begin(&system->canvas, command_buffer);
 
-  eg_camera_bind(&world->camera, &cmd_info, &system->picking_pipeline, 0);
+  eg_camera_bind(
+      &system->world->camera, &cmd_info, &system->picking_pipeline, 0);
 
   for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
-    if (eg_world_has_tag(world, entity, EG_ENTITY_TAG_HIDDEN)) {
+    if (eg_world_has_tag(system->world, entity, EG_ENTITY_TAG_HIDDEN)) {
       continue;
     }
 
-    if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
-        eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+    if (eg_world_has_comp(
+            system->world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
+        eg_world_has_comp(system->world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
       eg_gltf_model_component_t *model =
-          EG_GET_COMP(world, entity, eg_gltf_model_component_t);
+          EG_GET_COMP(system->world, entity, eg_gltf_model_component_t);
       eg_transform_component_t *transform =
-          EG_GET_COMP(world, entity, eg_transform_component_t);
+          EG_GET_COMP(system->world, entity, eg_transform_component_t);
 
       vkCmdPushConstants(
           command_buffer,
@@ -429,7 +433,6 @@ void eg_picking_system_mouse_press(
 
   draw_gizmos_picking(
       system,
-      world,
       *selected_entity,
       &cmd_info,
       system->canvas.width,
@@ -471,12 +474,15 @@ void eg_picking_system_mouse_press(
           .size = sizeof(uint32_t),
       });
 
+  double cursor_x, cursor_y;
+  re_window_get_cursor_pos(system->window, &cursor_x, &cursor_y);
+
   re_image_transfer_to_buffer(
       system->canvas.resources[0].color.image,
       &staging_buffer,
       g_ctx.transient_command_pool,
-      mouse_x,
-      mouse_y,
+      (uint32_t)cursor_x,
+      (uint32_t)cursor_y,
       1,
       1,
       0,
@@ -504,6 +510,23 @@ void eg_picking_system_mouse_press(
     break;
   }
   }
+
+  if (*selected_entity < EG_MAX_ENTITIES &&
+      eg_world_has_comp(
+          system->world, *selected_entity, EG_TRANSFORM_COMPONENT_TYPE)) {
+    eg_transform_component_t *transform =
+        EG_GET_COMP(system->world, *selected_entity, eg_transform_component_t);
+    vec3_t transform_ndc =
+        eg_camera_world_to_ndc(&system->world->camera, transform->position);
+
+    float nx = (((float)cursor_x / (float)width) * 2.0f) - 1.0f;
+    float ny = (((float)cursor_y / (float)height) * 2.0f) - 1.0f;
+    vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
+    vec3_t cursor_world =
+        eg_camera_ndc_to_world(&system->world->camera, cursor_ndc);
+
+    system->pos_delta = vec3_sub(transform->position, cursor_world);
+  }
 }
 
 void eg_picking_system_mouse_release(eg_picking_system_t *system) {
@@ -513,74 +536,40 @@ void eg_picking_system_mouse_release(eg_picking_system_t *system) {
 
 void eg_picking_system_update(
     eg_picking_system_t *system,
-    re_window_t *window,
-    eg_world_t *world,
     eg_entity_t selected_entity,
     uint32_t width,
     uint32_t height) {
-  if (system->drag_direction == EG_DRAG_DIRECTION_NONE) {
+  if (system->drag_direction == EG_DRAG_DIRECTION_NONE ||
+      selected_entity >= EG_MAX_ENTITIES ||
+      !eg_world_has_comp(
+          system->world, selected_entity, EG_TRANSFORM_COMPONENT_TYPE)) {
     return;
   }
-
-  if (selected_entity >= EG_MAX_ENTITIES) {
-    return;
-  }
-
-  if (!eg_world_has_comp(world, selected_entity, EG_TRANSFORM_COMPONENT_TYPE)) {
-    return;
-  }
-
-  double cursor_x, cursor_y;
-  re_window_get_cursor_pos(window, &cursor_x, &cursor_y);
-
-  float nx = (((float)cursor_x / (float)width) * 2.0f) - 1.0f;
-  float ny = (((float)cursor_y / (float)height) * 2.0f) - 1.0f;
 
   eg_transform_component_t *transform =
-      EG_GET_COMP(world, selected_entity, eg_transform_component_t);
+      EG_GET_COMP(system->world, selected_entity, eg_transform_component_t);
+  vec3_t transform_ndc =
+      eg_camera_world_to_ndc(&system->world->camera, transform->position);
 
-  mat4_t view = world->camera.uniform.view;
-  mat4_t proj = world->camera.uniform.proj;
-  mat4_t inv_view = mat4_inverse(view);
-  mat4_t inv_proj = mat4_inverse(proj);
-
-  vec4_t device_obj_pos = mat4_mulv(
-      proj,
-      mat4_mulv(
-          view,
-          (vec4_t){
-              transform->position,
-              1.0f,
-          }));
-  if (fabs(device_obj_pos.w) >= FLT_EPSILON) {
-    device_obj_pos.xyz = vec3_divs(device_obj_pos.xyz, device_obj_pos.w);
-  }
-
-  vec4_t device_cursor_pos = {nx, ny, device_obj_pos.z, 1.0f};
-  vec4_t world_cur_pos = mat4_mulv(inv_proj, device_cursor_pos);
-  world_cur_pos = mat4_mulv(inv_view, world_cur_pos);
-
-  if (fabs(world_cur_pos.w) >= FLT_EPSILON) {
-    world_cur_pos.xyz = vec3_divs(world_cur_pos.xyz, world_cur_pos.w);
-  }
-
-  if (system->left_pressed) {
-    // Left was just pressed
-    system->pos_delta = vec3_sub(transform->position, world_cur_pos.xyz);
-    system->left_pressed = false;
-  }
+  double cursor_x, cursor_y;
+  re_window_get_cursor_pos(system->window, &cursor_x, &cursor_y);
+  float nx = (((float)cursor_x / (float)width) * 2.0f) - 1.0f;
+  float ny = (((float)cursor_y / (float)height) * 2.0f) - 1.0f;
+  vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
+  vec3_t cursor_world =
+      eg_camera_ndc_to_world(&system->world->camera, cursor_ndc);
 
   switch (system->drag_direction) {
   case EG_DRAG_DIRECTION_X: {
-    transform->position.x = world_cur_pos.x + system->pos_delta.x;
+    transform->position.x = cursor_world.x + system->pos_delta.x;
     break;
   }
   case EG_DRAG_DIRECTION_Y: {
-    transform->position.y = world_cur_pos.y + system->pos_delta.y;
+    transform->position.y = cursor_world.y + system->pos_delta.y;
     break;
   }
   case EG_DRAG_DIRECTION_Z: {
-    transform->position.z = world_cur_pos.z + system->pos_delta.z;
+    transform->position.z = cursor_world.z + system->pos_delta.z;
     break;
   }
   default: {

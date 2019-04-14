@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "engine.h"
+#include <float.h>
 #include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/pipeline.h>
@@ -134,4 +135,30 @@ void eg_camera_destroy(eg_camera_t *camera) {
     re_buffer_unmap_memory(&camera->uniform_buffers[i]);
     re_buffer_destroy(&camera->uniform_buffers[i]);
   }
+}
+
+vec3_t eg_camera_ndc_to_world(eg_camera_t *camera, vec3_t ndc) {
+  mat4_t inv_view = mat4_inverse(camera->uniform.view);
+  mat4_t inv_proj = mat4_inverse(camera->uniform.proj);
+
+  vec4_t world = mat4_mulv(inv_proj, (vec4_t){ndc, 1.0f});
+  world = mat4_mulv(inv_view, world);
+
+  if (fabs(world.w) >= FLT_EPSILON) {
+    world.xyz = vec3_divs(world.xyz, world.w);
+  }
+
+  return world.xyz;
+}
+
+vec3_t eg_camera_world_to_ndc(eg_camera_t *camera, vec3_t world) {
+  vec4_t ndc = mat4_mulv(
+      camera->uniform.proj,
+      mat4_mulv(camera->uniform.view, (vec4_t){world, 1.0f}));
+
+  if (fabs(ndc.w) >= FLT_EPSILON) {
+    ndc.xyz = vec3_divs(ndc.xyz, ndc.w);
+  }
+
+  return ndc.xyz;
 }
