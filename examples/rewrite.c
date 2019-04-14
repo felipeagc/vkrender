@@ -60,8 +60,6 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   eg_world_init(&game->world, environment_asset);
 
   // Systems
-  uint32_t width, height;
-  re_window_get_size(&game->window, &width, &height);
   eg_inspector_init(&game->inspector);
   eg_picking_system_init(
       &game->picking_system,

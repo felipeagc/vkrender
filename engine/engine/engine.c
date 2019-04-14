@@ -26,22 +26,25 @@ static inline void create_pipeline_layout(
     VkDescriptorSetLayout *set_layouts,
     uint32_t set_layout_count,
     VkPipelineLayout *pipeline_layout) {
-  VkPushConstantRange push_constant_range = {0};
-  push_constant_range.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
-  push_constant_range.offset = 0;
-  push_constant_range.size = 128;
-
-  VkPipelineLayoutCreateInfo create_info;
-  create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  create_info.pNext = NULL;
-  create_info.flags = 0;
-  create_info.setLayoutCount = set_layout_count;
-  create_info.pSetLayouts = set_layouts;
-  create_info.pushConstantRangeCount = 1;
-  create_info.pPushConstantRanges = &push_constant_range;
+  VkPushConstantRange push_constant_range = {
+      .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
+      .offset = 0,
+      .size = 128,
+  };
 
   VK_CHECK(vkCreatePipelineLayout(
-      g_ctx.device, &create_info, NULL, pipeline_layout));
+      g_ctx.device,
+      &(VkPipelineLayoutCreateInfo){
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+          .pNext = NULL,
+          .flags = 0,
+          .setLayoutCount = set_layout_count,
+          .pSetLayouts = set_layouts,
+          .pushConstantRangeCount = 1,
+          .pPushConstantRanges = &push_constant_range,
+      },
+      NULL,
+      pipeline_layout));
 }
 
 static inline void init_set_layouts() {
@@ -253,12 +256,7 @@ static inline void init_pipeline_layouts() {
   }
 
   // Gizmos
-  {
-    VkDescriptorSetLayout set_layouts[] = {};
-
-    create_pipeline_layout(
-        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.gizmo);
-  }
+  create_pipeline_layout(NULL, 0, &g_eng.pipeline_layouts.gizmo);
 }
 
 static inline void destroy_pipeline_layouts() {
