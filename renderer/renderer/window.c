@@ -18,7 +18,7 @@ typedef struct re_event_queue_t {
   size_t tail;
 } re_event_queue_t;
 
-static re_event_queue_t g_event_queue = {{}, 0, 0};
+static re_event_queue_t g_event_queue = {0};
 
 /*
  *
