@@ -1,5 +1,7 @@
 #version 450
 
+#include "common.glsl"
+
 layout (location = 0) in vec3 pos;
 
 out gl_PerVertex {
@@ -7,13 +9,12 @@ out gl_PerVertex {
 };
 
 layout (set = 0, binding = 0) uniform CameraUniform {
-  mat4 view;
-  mat4 proj;
-} camera_ubo;
+  Camera camera;
+};
 
 layout (set = 1, binding = 0) uniform ModelUniform {
-  mat4 matrix;
-} model_ubo;
+  Model model;
+};
 
 layout (push_constant) uniform PushConstant {
   vec3 scale;
@@ -21,7 +22,7 @@ layout (push_constant) uniform PushConstant {
 } pc;
 
 void main() {
-  vec4 worldPos = model_ubo.matrix * vec4(pos * pc.scale + pc.offset, 1.0);
+  vec4 world_pos = model.matrix * vec4(pos * pc.scale + pc.offset, 1.0);
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * worldPos;
+  gl_Position = camera.proj * camera.view * world_pos;
 }

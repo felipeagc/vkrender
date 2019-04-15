@@ -1,5 +1,7 @@
 #version 450
 
+#include "common.glsl"
+
 vec2 pos[6] = vec2[](
   // Bottom left
   vec2(-0.5, 0.5),
@@ -37,10 +39,8 @@ out gl_PerVertex {
 };
 
 layout (set = 0, binding = 0) uniform CameraUniform {
-  mat4 view;
-  mat4 proj;
-  vec3 pos;
-} camera_ubo;
+  Camera camera;
+};
 
 layout (push_constant) uniform BillboardUniform {
   mat4 model;
@@ -50,7 +50,7 @@ layout (push_constant) uniform BillboardUniform {
 layout (location = 0) out vec2 tex_coords0;
 
 void main() {
-  mat4 inv_view = inverse(camera_ubo.view);
+  mat4 inv_view = inverse(camera.view);
   vec3 camera_right_world_space = vec3(inv_view[0][0], inv_view[0][1], inv_view[0][2]);
   vec3 camera_up_world_space = -vec3(inv_view[1][0], inv_view[1][1], inv_view[1][2]);
 
@@ -58,7 +58,7 @@ void main() {
     camera_right_world_space * pos[gl_VertexIndex].x +
     camera_up_world_space * pos[gl_VertexIndex].y;
 
-  gl_Position = camera_ubo.proj * camera_ubo.view * billboard.model * vec4(world_pos, 1.0);
+  gl_Position = camera.proj * camera.view * billboard.model * vec4(world_pos, 1.0);
   tex_coords0 = tex_coords[gl_VertexIndex];
   tex_coords0.y = 1.0 - tex_coords0.y;
 }

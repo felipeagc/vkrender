@@ -1,12 +1,12 @@
 #version 450
 
+#include "common.glsl"
+
 layout (location = 0) in vec3 tex_coords;
 
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
-  vec3 sun_direction;
-  float exposure;
-  vec4 sun_color;
-} environment;
+  Environment environment;
+};
 
 layout (set = 1, binding = 1) uniform samplerCube env_map;
 

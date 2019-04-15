@@ -1,32 +1,18 @@
 #version 450
 
-#define MAX_LIGHTS 20
-const float PI = 3.14159265359;
-
-struct Light {
-  vec4 pos;
-  vec4 color;
-};
+#include "common.glsl"
 
 layout (location = 0) in vec2 tex_coords;
 layout (location = 1) in vec3 world_pos;
 layout (location = 2) in vec3 normal;
 
 layout (set = 0, binding = 0) uniform CameraUniform {
-  mat4 view;
-  mat4 proj;
-  vec4 pos;
-} camera;
+  Camera camera;
+};
 
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
-  vec3 sun_direction;
-  float exposure;
-  vec3 sun_color;
-  float sun_intensity;
-  float radiance_mip_levels;
-  uint light_count;
-  layout(offset = 48) Light lights[MAX_LIGHTS];
-} environment;
+  Environment environment;
+};
 
 layout (set = 1, binding = 2) uniform samplerCube irradiance_map;
 layout (set = 1, binding = 3) uniform samplerCube radiance_map;
@@ -38,12 +24,8 @@ layout (set = 4, binding = 2) uniform sampler2D metallic_roughness_texture;
 layout (set = 4, binding = 3) uniform sampler2D occlusion_texture;
 layout (set = 4, binding = 4) uniform sampler2D emissive_texture;
 layout (set = 4, binding = 5) uniform MaterialUniform {
-  vec4 base_color;
-  float metallic;
-  float roughness;
-  vec4 emissive;
-  float has_normal_texture;
-} material;
+  Material material;
+};
 
 layout (location = 0) out vec4 out_color;
 
