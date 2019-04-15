@@ -50,7 +50,8 @@ target_link_libraries(
 	gmath
 	stb_image
 	tinycthread
-	vma)
+	vma
+	spirv_reflect)
 
 target_include_directories(
 	renderer
