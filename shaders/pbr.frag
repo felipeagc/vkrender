@@ -13,7 +13,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
   Environment environment;
 };
-
+layout (set = 1, binding = 1) uniform samplerCube env_map;
 layout (set = 1, binding = 2) uniform samplerCube irradiance_map;
 layout (set = 1, binding = 3) uniform samplerCube radiance_map;
 layout (set = 1, binding = 4) uniform sampler2D brdf_lut;
