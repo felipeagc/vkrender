@@ -21,7 +21,6 @@ typedef struct re_pipeline_parameters_t {
   VkPipelineDynamicStateCreateInfo dynamic_state;
 } re_pipeline_parameters_t;
 
-// Does not have a default pipeline layout
 re_pipeline_parameters_t re_default_pipeline_parameters();
 
 typedef struct re_vertex_t {
