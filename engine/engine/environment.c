@@ -20,10 +20,15 @@ void eg_environment_init(
   environment->uniform.radiance_mip_levels =
       (float)asset->radiance_cubemap.mip_level_count;
 
+  VkDescriptorSetLayout set_layout =
+      g_default_pipeline_layouts.skybox.set_layouts[1];
+  VkDescriptorUpdateTemplate update_template =
+      g_default_pipeline_layouts.skybox.update_templates[1];
+
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(environment->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
-      set_layouts[i] = g_default_pipeline_layouts.skybox.set_layouts[1];
+      set_layouts[i] = set_layout;
     }
 
     VK_CHECK(vkAllocateDescriptorSets(
@@ -48,89 +53,19 @@ void eg_environment_init(
     re_buffer_map_memory(
         &environment->uniform_buffers[i], &environment->mappings[i]);
 
-    VkDescriptorBufferInfo buffer_info = {
-        environment->uniform_buffers[i].buffer,
-        0,
-        sizeof(eg_environment_uniform_t),
-    };
-
-    VkDescriptorImageInfo skybox_descriptor_info =
-        asset->skybox_cubemap.descriptor;
-    VkDescriptorImageInfo irradiance_descriptor_info =
-        asset->irradiance_cubemap.descriptor;
-    VkDescriptorImageInfo radiance_descriptor_info =
-        asset->radiance_cubemap.descriptor;
-    VkDescriptorImageInfo brdf_lut_descriptor_info = asset->brdf_lut.descriptor;
-
-    VkWriteDescriptorSet descriptor_writes[] = {
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            environment->descriptor_sets[i],   // dstSet
-            0,                                 // dstBinding
-            0,                                 // dstArrayElement
-            1,                                 // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            NULL,                              // pImageInfo
-            &buffer_info,                      // pBufferInfo
-            NULL,                              // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            environment->descriptor_sets[i],           // dstSet
-            1,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &skybox_descriptor_info,                   // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            environment->descriptor_sets[i],           // dstSet
-            2,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &irradiance_descriptor_info,               // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            environment->descriptor_sets[i],           // dstSet
-            3,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &radiance_descriptor_info,                 // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            environment->descriptor_sets[i],           // dstSet
-            4,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &brdf_lut_descriptor_info,                 // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-    };
-
-    vkUpdateDescriptorSets(
+    vkUpdateDescriptorSetWithTemplate(
         g_ctx.device,
-        ARRAY_SIZE(descriptor_writes),
-        descriptor_writes,
-        0,
-        NULL);
+        environment->descriptor_sets[i],
+        update_template,
+        (re_descriptor_update_info_t[]){
+            {.buffer_info = {.buffer = environment->uniform_buffers[i].buffer,
+                             .offset = 0,
+                             .range = sizeof(eg_environment_uniform_t)}},
+            {.image_info = asset->skybox_cubemap.descriptor},
+            {.image_info = asset->irradiance_cubemap.descriptor},
+            {.image_info = asset->radiance_cubemap.descriptor},
+            {.image_info = asset->brdf_lut.descriptor},
+        });
   }
 }
 

@@ -17,21 +17,26 @@ void eg_camera_init(eg_camera_t *camera) {
   camera->position = (vec3_t){0.0f, 0.0f, 0.0f};
   camera->rotation = (quat_t){0};
 
+  VkDescriptorSetLayout set_layout =
+      g_default_pipeline_layouts.pbr.set_layouts[0];
+  VkDescriptorUpdateTemplate update_template =
+      g_default_pipeline_layouts.pbr.update_templates[0];
+
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(camera->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(camera->descriptor_sets); i++) {
-      set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[0];
+      set_layouts[i] = set_layout;
     }
 
-    VkDescriptorSetAllocateInfo alloc_info = {0};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.pNext = NULL;
-    alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAY_SIZE(camera->descriptor_sets);
-    alloc_info.pSetLayouts = set_layouts;
-
     VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device, &alloc_info, camera->descriptor_sets));
+        g_ctx.device,
+        &(VkDescriptorSetAllocateInfo){
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_ctx.descriptor_pool,
+            .descriptorSetCount = ARRAY_SIZE(camera->descriptor_sets),
+            .pSetLayouts = set_layouts,
+        },
+        camera->descriptor_sets));
   }
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
@@ -43,26 +48,14 @@ void eg_camera_init(eg_camera_t *camera) {
         });
     re_buffer_map_memory(&camera->uniform_buffers[i], &camera->mappings[i]);
 
-    VkDescriptorBufferInfo buffer_info = {
-        camera->uniform_buffers[i].buffer,
-        0,
-        sizeof(eg_camera_uniform_t),
-    };
-
-    VkWriteDescriptorSet descriptor_write = {
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        NULL,
-        camera->descriptor_sets[i],        // dstSet
-        0,                                 // dstBinding
-        0,                                 // dstArrayElement
-        1,                                 // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        NULL,                              // pImageInfo
-        &buffer_info,                      // pBufferInfo
-        NULL,                              // pTexelBufferView
-    };
-
-    vkUpdateDescriptorSets(g_ctx.device, 1, &descriptor_write, 0, NULL);
+    vkUpdateDescriptorSetWithTemplate(
+        g_ctx.device,
+        camera->descriptor_sets[i],
+        update_template,
+        (re_descriptor_update_info_t[]){
+            {.buffer_info = {.buffer = camera->uniform_buffers[i].buffer,
+                             .offset = 0,
+                             .range = sizeof(eg_camera_uniform_t)}}});
   }
 }
 

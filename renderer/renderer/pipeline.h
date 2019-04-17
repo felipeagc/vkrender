@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 #define RE_MAX_DESCRIPTOR_SETS 8
+#define RE_MAX_DESCRIPTOR_SET_BINDINGS 8
 
 typedef struct re_window_t re_window_t;
 
@@ -28,9 +29,15 @@ typedef struct re_vertex_t {
   vec2_t uv;
 } re_vertex_t;
 
+typedef union re_descriptor_update_info_t {
+  VkDescriptorImageInfo image_info;
+  VkDescriptorBufferInfo buffer_info;
+} re_descriptor_update_info_t;
+
 typedef struct re_pipeline_layout_t {
   VkPipelineLayout layout;
 
+  VkDescriptorUpdateTemplate update_templates[RE_MAX_DESCRIPTOR_SETS];
   VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS];
   uint32_t set_layout_count;
 } re_pipeline_layout_t;

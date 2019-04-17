@@ -10,21 +10,26 @@
 void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
   model->uniform.transform = transform;
 
+  VkDescriptorSetLayout set_layout =
+      g_default_pipeline_layouts.pbr.set_layouts[2];
+  VkDescriptorUpdateTemplate update_template =
+      g_default_pipeline_layouts.pbr.update_templates[2];
+
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(model->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(model->descriptor_sets); i++) {
-      set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[2];
+      set_layouts[i] = set_layout;
     }
 
-    VkDescriptorSetAllocateInfo alloc_info = {0};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.pNext = NULL;
-    alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAY_SIZE(model->descriptor_sets);
-    alloc_info.pSetLayouts = set_layouts;
-
     VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device, &alloc_info, model->descriptor_sets));
+        g_ctx.device,
+        &(VkDescriptorSetAllocateInfo){
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_ctx.descriptor_pool,
+            .descriptorSetCount = ARRAY_SIZE(model->descriptor_sets),
+            .pSetLayouts = set_layouts,
+        },
+        model->descriptor_sets));
   }
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
@@ -34,26 +39,17 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
             .type = RE_BUFFER_TYPE_UNIFORM,
             .size = sizeof(model->uniform),
         });
-
-    VkDescriptorBufferInfo buffer_info = {
-        model->buffers[i].buffer, 0, sizeof(model->uniform)};
-
-    VkWriteDescriptorSet descriptor_write = {
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        NULL,
-        model->descriptor_sets[i],         // dstSet
-        0,                                 // dstBinding
-        0,                                 // dstArrayElement
-        1,                                 // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        NULL,                              // pImageInfo
-        &buffer_info,                      // pBufferInfo
-        NULL,                              // pTexelBufferView
-    };
-
-    vkUpdateDescriptorSets(g_ctx.device, 1, &descriptor_write, 0, NULL);
-
     re_buffer_map_memory(&model->buffers[i], &model->mappings[i]);
+
+    vkUpdateDescriptorSetWithTemplate(
+        g_ctx.device,
+        model->descriptor_sets[i],
+        update_template,
+        (re_descriptor_update_info_t[]){
+            {.buffer_info = {.buffer = model->buffers[i].buffer,
+                             .offset = 0,
+                             .range = sizeof(model->uniform)}},
+        });
   }
 }
 

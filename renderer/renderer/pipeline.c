@@ -201,7 +201,8 @@ void re_pipeline_layout_init(
   assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
   VkDescriptorSetLayoutCreateInfo set_layout_cis[RE_MAX_DESCRIPTOR_SETS] = {0};
-  VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SETS][8] = {0};
+  VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SETS]
+                                       [RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
 
   layout->set_layout_count = 0;
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
@@ -231,11 +232,18 @@ void re_pipeline_layout_init(
     }
   }
 
+  uint32_t binding_counts[RE_MAX_DESCRIPTOR_SETS] = {0};
+
+  VkDescriptorUpdateTemplateEntry entries[RE_MAX_DESCRIPTOR_SETS]
+                                         [RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
+
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
 
     for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
       SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
+
+      binding_counts[set->set] = set->binding_count;
 
       for (uint32_t b = 0; b < set->binding_count; b++) {
         SpvReflectDescriptorBinding *binding = set->bindings[b];
@@ -248,6 +256,16 @@ void re_pipeline_layout_init(
                 binding->count);
 
         bindings[set->set][binding->binding].stageFlags |= mod->shader_stage;
+
+        entries[set->set][binding->binding].dstBinding = binding->binding;
+        entries[set->set][binding->binding].dstArrayElement = 0;
+        entries[set->set][binding->binding].descriptorCount = 1;
+        entries[set->set][binding->binding].descriptorType =
+            (VkDescriptorType)binding->descriptor_type;
+        entries[set->set][binding->binding].offset =
+            sizeof(re_descriptor_update_info_t) * binding->binding;
+        entries[set->set][binding->binding].stride =
+            sizeof(re_descriptor_update_info_t);
       }
     }
   }
@@ -277,6 +295,25 @@ void re_pipeline_layout_init(
       NULL,
       &layout->layout));
 
+  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
+    VK_CHECK(vkCreateDescriptorUpdateTemplate(
+        g_ctx.device,
+        &(VkDescriptorUpdateTemplateCreateInfo){
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .descriptorUpdateEntryCount = binding_counts[i],
+            .pDescriptorUpdateEntries = entries[i],
+            .templateType = VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET,
+            .descriptorSetLayout = layout->set_layouts[i],
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .pipelineLayout = layout->layout,
+            .set = i,
+        },
+        NULL,
+        &layout->update_templates[i]));
+  }
+
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     spvReflectDestroyShaderModule(&modules[i]);
   }
@@ -286,6 +323,11 @@ void re_pipeline_layout_destroy(re_pipeline_layout_t *layout) {
   for (uint32_t i = 0; i < layout->set_layout_count; i++) {
     if (layout->set_layouts[i] != VK_NULL_HANDLE) {
       vkDestroyDescriptorSetLayout(g_ctx.device, layout->set_layouts[i], NULL);
+    }
+
+    if (layout->update_templates[i] != VK_NULL_HANDLE) {
+      vkDestroyDescriptorUpdateTemplate(
+          g_ctx.device, layout->update_templates[i], NULL);
     }
   }
 

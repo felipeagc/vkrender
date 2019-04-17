@@ -65,117 +65,43 @@ static void material_init(
     emissive_texture = &g_ctx.black_texture;
   }
 
+  VkDescriptorSetLayout set_layout =
+      g_default_pipeline_layouts.pbr.set_layouts[4];
+  VkDescriptorUpdateTemplate update_template =
+      g_default_pipeline_layouts.pbr.update_templates[4];
+
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(material->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(material->descriptor_sets); i++) {
-      set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[4];
+      set_layouts[i] = set_layout;
     }
 
-    VkDescriptorSetAllocateInfo alloc_info = {0};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.pNext = NULL;
-    alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAY_SIZE(material->descriptor_sets);
-    alloc_info.pSetLayouts = set_layouts;
-
     VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device, &alloc_info, material->descriptor_sets));
+        g_ctx.device,
+        &(VkDescriptorSetAllocateInfo){
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_ctx.descriptor_pool,
+            .descriptorSetCount = ARRAY_SIZE(material->descriptor_sets),
+            .pSetLayouts = set_layouts,
+        },
+        material->descriptor_sets));
   }
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    VkDescriptorImageInfo albedo_descriptor = albedo_texture->descriptor;
-    VkDescriptorImageInfo normal_descriptor = normal_texture->descriptor;
-    VkDescriptorImageInfo metallic_roughness_descriptor =
-        metallic_roughness_texture->descriptor;
-    VkDescriptorImageInfo occlusion_descriptor = occlusion_texture->descriptor;
-    VkDescriptorImageInfo emissive_descriptor = emissive_texture->descriptor;
-    VkDescriptorBufferInfo uniform_buffer_descriptor = {
-        .buffer = material->uniform_buffers[i].buffer,
-        .offset = 0,
-        .range = sizeof(material->uniform),
-    };
-
-    VkWriteDescriptorSet descriptor_writes[] = {
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            material->descriptor_sets[i],              // dstSet
-            0,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &albedo_descriptor,                        // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            material->descriptor_sets[i],              // dstSet
-            1,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &normal_descriptor,                        // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            material->descriptor_sets[i],              // dstSet
-            2,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &metallic_roughness_descriptor,            // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            material->descriptor_sets[i],              // dstSet
-            3,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &occlusion_descriptor,                     // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            material->descriptor_sets[i],              // dstSet
-            4,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &emissive_descriptor,                      // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            material->descriptor_sets[i],      // dstSet
-            5,                                 // dstBinding
-            0,                                 // dstArrayElement
-            1,                                 // descriptorCount
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            NULL,                              // pImageInfo
-            &uniform_buffer_descriptor,        // pBufferInfo
-            NULL,                              // pTexelBufferView
-        },
-    };
-
-    vkUpdateDescriptorSets(
+    vkUpdateDescriptorSetWithTemplate(
         g_ctx.device,
-        ARRAY_SIZE(descriptor_writes),
-        descriptor_writes,
-        0,
-        NULL);
+        material->descriptor_sets[i],
+        update_template,
+        (re_descriptor_update_info_t[]){
+            {.image_info = albedo_texture->descriptor},
+            {.image_info = normal_texture->descriptor},
+            {.image_info = metallic_roughness_texture->descriptor},
+            {.image_info = occlusion_texture->descriptor},
+            {.image_info = emissive_texture->descriptor},
+            {.buffer_info = {.buffer = material->uniform_buffers[i].buffer,
+                             .offset = 0,
+                             .range = sizeof(material->uniform)}},
+        });
   }
 }
 
@@ -223,20 +149,25 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
 
   mesh->ubo.matrix = mat4_identity();
 
+  VkDescriptorSetLayout set_layout =
+      g_default_pipeline_layouts.pbr.set_layouts[2];
+  VkDescriptorUpdateTemplate update_template =
+      g_default_pipeline_layouts.pbr.update_templates[2];
+
   VkDescriptorSetLayout set_layouts[ARRAY_SIZE(mesh->descriptor_sets)];
   for (size_t i = 0; i < ARRAY_SIZE(mesh->descriptor_sets); i++) {
-    set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[2];
+    set_layouts[i] = set_layout;
   }
 
-  VkDescriptorSetAllocateInfo alloc_info = {0};
-  alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  alloc_info.pNext = NULL;
-  alloc_info.descriptorPool = g_ctx.descriptor_pool;
-  alloc_info.descriptorSetCount = ARRAY_SIZE(mesh->descriptor_sets);
-  alloc_info.pSetLayouts = set_layouts;
-
   VK_CHECK(vkAllocateDescriptorSets(
-      g_ctx.device, &alloc_info, mesh->descriptor_sets));
+      g_ctx.device,
+      &(VkDescriptorSetAllocateInfo){
+          .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+          .descriptorPool = g_ctx.descriptor_pool,
+          .descriptorSetCount = ARRAY_SIZE(mesh->descriptor_sets),
+          .pSetLayouts = set_layouts,
+      },
+      mesh->descriptor_sets));
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_init(
@@ -248,23 +179,15 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
 
     re_buffer_map_memory(&mesh->uniform_buffers[i], &mesh->mappings[i]);
 
-    VkDescriptorBufferInfo buffer_info = {
-        mesh->uniform_buffers[i].buffer, 0, sizeof(mesh->ubo)};
-
-    VkWriteDescriptorSet descriptor_write = {
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        NULL,
-        mesh->descriptor_sets[i],          // dstSet
-        0,                                 // dstBinding
-        0,                                 // dstArrayElement
-        1,                                 // descriptorCount
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-        NULL,                              // pImageInfo
-        &buffer_info,                      // pBufferInfo
-        NULL,                              // pTexelBufferView
-    };
-
-    vkUpdateDescriptorSets(g_ctx.device, 1, &descriptor_write, 0, NULL);
+    vkUpdateDescriptorSetWithTemplate(
+        g_ctx.device,
+        mesh->descriptor_sets[i],
+        update_template,
+        (re_descriptor_update_info_t[]){
+            {.buffer_info = {.buffer = mesh->uniform_buffers[i].buffer,
+                             .offset = 0,
+                             .range = sizeof(mesh->ubo)}},
+        });
   }
 }
 

@@ -16,7 +16,7 @@ create_shader_module(const uint32_t *code, size_t code_size) {
 }
 
 void re_shader_init_spv(
-    re_shader_t *shader, const uint32_t *code, size_t code_size) {
+    re_shader_t *shader, uint32_t *code, size_t code_size) {
   shader->code = code;
   shader->code_size = code_size;
 
