@@ -13,9 +13,9 @@
 - [ ] Light billboard rendering
 - [x] Gltf models with cgltf
 
-### Shader compilation
-- [x] Compile GLSL shaders using glslang
-- [x] Shader live refresh
+### Shaders
+- [x] Shader reflection
+- [ ] Use `vkUpdateDescriptorSetWithTemplate`
 
 ### Filesystem
 - [x] Use PhysicsFS
@@ -41,7 +41,7 @@
 - [ ] Noise
 
 ### Window
-- [ ] Better event system
+- [x] Better event system
 
 ### Libraries
 - [ ] Use volk
@@ -55,7 +55,7 @@
 ### Misc
 - [x] Make standalone skybox baker
 - [x] Object picking with a color buffer
-- [ ] Transformation gizmos
+- [x] Transformation gizmos
 - [ ] Selected object outline (with stencil buffer + separate pipeline with `lineWidth = 2.0f`)
 - [x] Fullscreen post process shader
 - [ ] Document as much as possible
