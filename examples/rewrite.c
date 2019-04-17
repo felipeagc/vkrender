@@ -7,7 +7,7 @@
 #include <engine/components/gltf_model_component.h>
 #include <engine/components/mesh_component.h>
 #include <engine/components/transform_component.h>
-#include <engine/engine.h>
+#include <engine/filesystem.h>
 #include <engine/imgui.h>
 #include <engine/inspector.h>
 #include <engine/pbr.h>
@@ -40,13 +40,16 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   re_context_init();
   re_window_init(&game->window, "Re-write", 1600, 900);
   eg_imgui_init(&game->window);
-  eg_engine_init(argv[0]);
+
+  eg_fs_init(argv[0]);
   eg_fs_mount("./assets", "/assets");
   eg_fs_mount("../assets", "/assets");
   eg_fs_mount("../../assets", "/assets");
   eg_fs_mount("./shaders/out", "/shaders");
   eg_fs_mount("../shaders/out", "/shaders");
   eg_fs_mount("../../shaders/out", "/shaders");
+
+  eg_default_pipeline_layouts_init();
 
   game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
 
@@ -75,7 +78,9 @@ static void game_destroy(game_t *game) {
 
   eg_picking_system_destroy(&game->picking_system);
 
-  eg_engine_destroy();
+  eg_default_pipeline_layouts_destroy();
+
+  eg_fs_destroy();
 
   eg_imgui_destroy();
   re_window_destroy(&game->window);

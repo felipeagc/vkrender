@@ -186,12 +186,10 @@ re_pipeline_parameters_t re_default_pipeline_parameters() {
   return params;
 }
 
-void re_pipeline_init_graphics(
-    re_pipeline_t *pipeline,
-    const re_render_target_t *render_target,
+void re_pipeline_layout_init(
+    re_pipeline_layout_t *layout,
     const re_shader_t *vertex_shader,
-    const re_shader_t *fragment_shader,
-    const re_pipeline_parameters_t parameters) {
+    const re_shader_t *fragment_shader) {
   SpvReflectShaderModule modules[2];
 
   SpvReflectResult result;
@@ -205,18 +203,17 @@ void re_pipeline_init_graphics(
   VkDescriptorSetLayoutCreateInfo set_layout_cis[RE_MAX_DESCRIPTOR_SETS] = {0};
   VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SETS][8] = {0};
 
-  pipeline->set_layout_count = 0;
+  layout->set_layout_count = 0;
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
 
     for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
       SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
-      pipeline->set_layout_count =
-          MAX(pipeline->set_layout_count, set->set + 1);
+      layout->set_layout_count = MAX(layout->set_layout_count, set->set + 1);
     }
   }
 
-  assert(pipeline->set_layout_count <= RE_MAX_DESCRIPTOR_SETS);
+  assert(layout->set_layout_count <= RE_MAX_DESCRIPTOR_SETS);
 
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
@@ -250,19 +247,14 @@ void re_pipeline_init_graphics(
             MAX(bindings[set->set][binding->binding].descriptorCount,
                 binding->count);
 
-        // TODO: restore this
-        /* bindings[set->set][binding->binding].stageFlags |= mod->shader_stage;
-         */
-
-        bindings[set->set][binding->binding].stageFlags =
-            VK_SHADER_STAGE_ALL_GRAPHICS;
+        bindings[set->set][binding->binding].stageFlags |= mod->shader_stage;
       }
     }
   }
 
-  for (uint32_t i = 0; i < pipeline->set_layout_count; i++) {
+  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
     VK_CHECK(vkCreateDescriptorSetLayout(
-        g_ctx.device, &set_layout_cis[i], NULL, &pipeline->set_layouts[i]));
+        g_ctx.device, &set_layout_cis[i], NULL, &layout->set_layouts[i]));
   }
 
   VkPushConstantRange push_constant_range = {
@@ -277,17 +269,38 @@ void re_pipeline_init_graphics(
           .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
           .pNext = NULL,
           .flags = 0,
-          .setLayoutCount = pipeline->set_layout_count,
-          .pSetLayouts = pipeline->set_layouts,
+          .setLayoutCount = layout->set_layout_count,
+          .pSetLayouts = layout->set_layouts,
           .pushConstantRangeCount = 1,
           .pPushConstantRanges = &push_constant_range,
       },
       NULL,
-      &pipeline->layout));
+      &layout->layout));
 
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     spvReflectDestroyShaderModule(&modules[i]);
   }
+}
+
+void re_pipeline_layout_destroy(re_pipeline_layout_t *layout) {
+  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
+    if (layout->set_layouts[i] != VK_NULL_HANDLE) {
+      vkDestroyDescriptorSetLayout(g_ctx.device, layout->set_layouts[i], NULL);
+    }
+  }
+
+  if (layout->layout != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(g_ctx.device, layout->layout, NULL);
+  }
+}
+
+void re_pipeline_init_graphics(
+    re_pipeline_t *pipeline,
+    const re_render_target_t *render_target,
+    const re_shader_t *vertex_shader,
+    const re_shader_t *fragment_shader,
+    const re_pipeline_parameters_t parameters) {
+  re_pipeline_layout_init(&pipeline->layout, vertex_shader, fragment_shader);
 
   VkPipelineShaderStageCreateInfo pipeline_stages[] = {
       (VkPipelineShaderStageCreateInfo){
@@ -328,7 +341,7 @@ void re_pipeline_init_graphics(
       &parameters.depth_stencil_state,  // pDepthStencilState
       &parameters.color_blend_state,    // pColorBlendState
       &parameters.dynamic_state,        // pDynamicState
-      pipeline->layout,                 // pipelineLayout
+      pipeline->layout.layout,          // pipelineLayout
       render_target->render_pass,       // renderPass
       0,                                // subpass
       0,                                // basePipelineHandle
@@ -347,16 +360,7 @@ void re_pipeline_init_graphics(
 void re_pipeline_destroy(re_pipeline_t *pipeline) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (uint32_t i = 0; i < pipeline->set_layout_count; i++) {
-    if (pipeline->set_layouts[i] != VK_NULL_HANDLE) {
-      vkDestroyDescriptorSetLayout(
-          g_ctx.device, pipeline->set_layouts[i], NULL);
-    }
-  }
-
-  if (pipeline->layout != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(g_ctx.device, pipeline->layout, NULL);
-  }
+  re_pipeline_layout_destroy(&pipeline->layout);
 
   if (pipeline->pipeline != VK_NULL_HANDLE) {
     vkDestroyPipeline(g_ctx.device, pipeline->pipeline, NULL);

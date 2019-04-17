@@ -536,7 +536,7 @@ void re_context_init() {
         0,                                         // binding
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         1,                                         // descriptorCount
-        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
+        VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
         NULL, // pImmutableSamplers
     }};
 

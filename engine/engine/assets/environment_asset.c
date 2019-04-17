@@ -1,5 +1,4 @@
 #include "environment_asset.h"
-#include "../engine.h"
 #include "../filesystem.h"
 #include "env_file.h"
 #include <renderer/context.h>

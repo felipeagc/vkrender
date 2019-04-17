@@ -1,9 +1,6 @@
 add_library(
 	engine
 
-	engine/engine.c
-	engine/engine.h
-
 	engine/util.h
 	engine/cmd_info.h
 

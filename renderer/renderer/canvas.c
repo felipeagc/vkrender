@@ -484,7 +484,7 @@ void re_canvas_draw(
   vkCmdBindDescriptorSets(
       command_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout,
+      pipeline->layout.layout,
       0, // firstSet
       1,
       &resource->descriptor_set,

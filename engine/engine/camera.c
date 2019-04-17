@@ -1,5 +1,5 @@
 #include "camera.h"
-#include "engine.h"
+#include "pipelines.h"
 #include <float.h>
 #include <fstd_util.h>
 #include <renderer/context.h>
@@ -20,7 +20,7 @@ void eg_camera_init(eg_camera_t *camera) {
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(camera->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(camera->descriptor_sets); i++) {
-      set_layouts[i] = g_eng.set_layouts.camera;
+      set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[0];
     }
 
     VkDescriptorSetAllocateInfo alloc_info = {0};
@@ -77,22 +77,10 @@ void eg_camera_update(
   // @note: See:
   // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
   mat4_t correction = {{
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      -1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.5,
-      0.0,
-      0.0,
-      0.0,
-      0.5,
-      1.0,
+      {1.0, 0.0, 0.0, 0.0},
+      {0.0, -1.0, 0.0, 0.0},
+      {0.0, 0.0, 0.5, 0.0},
+      {0.0, 0.0, 0.5, 1.0},
   }};
 
   camera->uniform.proj = mat4_mul(camera->uniform.proj, correction);
@@ -114,7 +102,7 @@ void eg_camera_bind(
   vkCmdBindDescriptorSets(
       cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout,
+      pipeline->layout.layout,
       set_index,
       1,
       &camera->descriptor_sets[cmd_info->frame_index],

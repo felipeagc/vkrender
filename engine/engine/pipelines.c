@@ -1,7 +1,98 @@
 #include "pipelines.h"
-#include "engine.h"
+#include "filesystem.h"
 #include <renderer/context.h>
 #include <renderer/util.h>
+#include <renderer/window.h>
+
+eg_default_pipeline_layouts_t g_default_pipeline_layouts;
+
+static void init_pipeline_layout_spv(
+    re_pipeline_layout_t *layout,
+    const char *vertex_path,
+    const char *fragment_path) {
+  eg_file_t *vertex_file = eg_file_open_read(vertex_path);
+  assert(vertex_file);
+  size_t vertex_size = eg_file_size(vertex_file);
+  unsigned char *vertex_code = calloc(1, vertex_size);
+  eg_file_read_bytes(vertex_file, vertex_code, vertex_size);
+  eg_file_close(vertex_file);
+
+  eg_file_t *fragment_file = eg_file_open_read(fragment_path);
+  assert(fragment_file);
+  size_t fragment_size = eg_file_size(fragment_file);
+  unsigned char *fragment_code = calloc(1, fragment_size);
+  eg_file_read_bytes(fragment_file, fragment_code, fragment_size);
+  eg_file_close(fragment_file);
+
+  re_shader_t vertex_shader;
+  re_shader_init_spv(&vertex_shader, (uint32_t *)vertex_code, vertex_size);
+
+  re_shader_t fragment_shader;
+  re_shader_init_spv(
+      &fragment_shader, (uint32_t *)fragment_code, fragment_size);
+
+  re_pipeline_layout_init(layout, &vertex_shader, &fragment_shader);
+
+  free(vertex_code);
+  free(fragment_code);
+
+  re_shader_destroy(&fragment_shader);
+  re_shader_destroy(&vertex_shader);
+}
+
+void eg_default_pipeline_layouts_init() {
+  init_pipeline_layout_spv(
+      &g_default_pipeline_layouts.pbr,
+      "/shaders/pbr.vert.spv",
+      "/shaders/pbr.frag.spv");
+
+  init_pipeline_layout_spv(
+      &g_default_pipeline_layouts.skybox,
+      "/shaders/skybox.vert.spv",
+      "/shaders/skybox.frag.spv");
+}
+
+void eg_default_pipeline_layouts_destroy() {
+  re_pipeline_layout_destroy(&g_default_pipeline_layouts.pbr);
+  re_pipeline_layout_destroy(&g_default_pipeline_layouts.skybox);
+}
+
+void eg_init_pipeline_spv(
+    re_pipeline_t *pipeline,
+    const re_render_target_t *render_target,
+    const char *vertex_path,
+    const char *fragment_path,
+    const re_pipeline_parameters_t params) {
+  eg_file_t *vertex_file = eg_file_open_read(vertex_path);
+  assert(vertex_file);
+  size_t vertex_size = eg_file_size(vertex_file);
+  unsigned char *vertex_code = calloc(1, vertex_size);
+  eg_file_read_bytes(vertex_file, vertex_code, vertex_size);
+  eg_file_close(vertex_file);
+
+  eg_file_t *fragment_file = eg_file_open_read(fragment_path);
+  assert(fragment_file);
+  size_t fragment_size = eg_file_size(fragment_file);
+  unsigned char *fragment_code = calloc(1, fragment_size);
+  eg_file_read_bytes(fragment_file, fragment_code, fragment_size);
+  eg_file_close(fragment_file);
+
+  re_shader_t vertex_shader;
+  re_shader_init_spv(&vertex_shader, (uint32_t *)vertex_code, vertex_size);
+
+  re_shader_t fragment_shader;
+  re_shader_init_spv(
+      &fragment_shader, (uint32_t *)fragment_code, fragment_size);
+
+  re_pipeline_init_graphics(
+      pipeline, render_target, &vertex_shader, &fragment_shader, params);
+
+  free(vertex_code);
+  free(fragment_code);
+
+  re_shader_destroy(&fragment_shader);
+  re_shader_destroy(&vertex_shader);
+}
 
 re_pipeline_parameters_t eg_pbr_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();

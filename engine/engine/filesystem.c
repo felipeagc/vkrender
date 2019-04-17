@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+void eg_fs_init(const char *argv0) { PHYSFS_init(argv0); }
+
+void eg_fs_destroy() { PHYSFS_deinit(); }
+
 int eg_fs_mount(const char *path_to_archive, const char *mount_point) {
   const char *base_dir = PHYSFS_getBaseDir();
 

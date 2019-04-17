@@ -25,6 +25,7 @@ layout (set = 3, binding = 0) uniform ModelUniform {
 layout (location = 0) out vec2 tex_coords0;
 layout (location = 1) out vec3 world_pos;
 layout (location = 2) out vec3 normal0;
+layout (location = 3) out vec3 camera_pos;
 
 void main() {
   tex_coords0 = tex_coords;
@@ -35,6 +36,8 @@ void main() {
   normal0 = mat3(transpose(inverse(model0))) * normal;
 
   world_pos = loc_pos.xyz / loc_pos.w;
+
+  camera_pos = camera.pos.xyz;
 
   gl_Position = camera.proj * camera.view * vec4(world_pos, 1.0);
 }

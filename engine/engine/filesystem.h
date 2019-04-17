@@ -6,6 +6,10 @@ typedef struct eg_file_t {
   void *opaque;
 } eg_file_t;
 
+void eg_fs_init(const char *argv0);
+
+void eg_fs_destroy();
+
 // path_to_archive is relative to the directory the executable is in.
 int eg_fs_mount(const char *path_to_archive, const char *mount_point);
 

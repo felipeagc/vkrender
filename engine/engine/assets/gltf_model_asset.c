@@ -1,6 +1,6 @@
 #include "gltf_model_asset.h"
-#include "../engine.h"
 #include "../filesystem.h"
+#include "../pipelines.h"
 #include <assert.h>
 #include <cgltf.h>
 #include <float.h>
@@ -68,7 +68,7 @@ static void material_init(
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(material->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(material->descriptor_sets); i++) {
-      set_layouts[i] = g_eng.set_layouts.material;
+      set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[4];
     }
 
     VkDescriptorSetAllocateInfo alloc_info = {0};
@@ -225,7 +225,7 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
 
   VkDescriptorSetLayout set_layouts[ARRAY_SIZE(mesh->descriptor_sets)];
   for (size_t i = 0; i < ARRAY_SIZE(mesh->descriptor_sets); i++) {
-    set_layouts[i] = g_eng.set_layouts.model;
+    set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[2];
   }
 
   VkDescriptorSetAllocateInfo alloc_info = {0};

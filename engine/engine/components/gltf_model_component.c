@@ -1,6 +1,6 @@
 #include "gltf_model_component.h"
 #include "../assets/gltf_model_asset.h"
-#include "../engine.h"
+#include "../pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/pipeline.h>
@@ -17,7 +17,7 @@ static void draw_node(
     vkCmdBindDescriptorSets(
         cmd_info->cmd_buffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline->layout,
+        pipeline->layout.layout,
         2,
         1,
         &node->mesh->descriptor_sets[cmd_info->frame_index],
@@ -31,7 +31,7 @@ static void draw_node(
         vkCmdBindDescriptorSets(
             cmd_info->cmd_buffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline->layout,
+            pipeline->layout.layout,
             4,
             1,
             &primitive->material->descriptor_sets[cmd_info->frame_index],
@@ -63,7 +63,7 @@ static void draw_node_picking(
     vkCmdBindDescriptorSets(
         cmd_info->cmd_buffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline->layout,
+        pipeline->layout.layout,
         1,
         1,
         &node->mesh->descriptor_sets[cmd_info->frame_index],
@@ -98,7 +98,7 @@ void eg_gltf_model_component_init(
 
   VkDescriptorSetLayout set_layouts[ARRAY_SIZE(model->descriptor_sets)];
   for (size_t i = 0; i < ARRAY_SIZE(model->descriptor_sets); i++) {
-    set_layouts[i] = g_eng.set_layouts.model;
+    set_layouts[i] = g_default_pipeline_layouts.pbr.set_layouts[2];
   }
 
   VkDescriptorSetAllocateInfo alloc_info = {0};
@@ -171,7 +171,7 @@ void eg_gltf_model_component_draw(
   vkCmdBindDescriptorSets(
       cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout,
+      pipeline->layout.layout,
       3,
       1,
       &model->descriptor_sets[cmd_info->frame_index],
@@ -212,7 +212,7 @@ void eg_gltf_model_component_draw_picking(
   vkCmdBindDescriptorSets(
       cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout,
+      pipeline->layout.layout,
       2,
       1,
       &model->descriptor_sets[cmd_info->frame_index],

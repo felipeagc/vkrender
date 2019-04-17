@@ -5,10 +5,7 @@
 layout (location = 0) in vec2 tex_coords;
 layout (location = 1) in vec3 world_pos;
 layout (location = 2) in vec3 normal;
-
-layout (set = 0, binding = 0) uniform CameraUniform {
-  Camera camera;
-};
+layout (location = 3) in vec3 camera_pos;
 
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
   Environment environment;
@@ -51,16 +48,16 @@ float distribution_ggx(vec3 N, vec3 H, float roughness) {
 }
 
 float geometry_schlick_smith_ggx(float NdotL, float NdotV, float roughness) {
-	float r = (roughness + 1.0);
-	float k = (r*r) / 8.0;
-	float GL = NdotL / (NdotL * (1.0 - k) + k);
-	float GV = NdotV / (NdotV * (1.0 - k) + k);
-	return GL * GV;
+  float r = (roughness + 1.0);
+  float k = (r*r) / 8.0;
+  float GL = NdotL / (NdotL * (1.0 - k) + k);
+  float GV = NdotV / (NdotV * (1.0 - k) + k);
+  return GL * GV;
 }
 
 void main() {
   vec3 N = normalize(normal);
-  vec3 V = normalize(camera.pos.xyz - world_pos);
+  vec3 V = normalize(camera_pos - world_pos);
   vec3 R = -normalize(reflect(V, N));
 
   vec4 albedo_color = texture(albedo_texture, tex_coords);

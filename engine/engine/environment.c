@@ -1,6 +1,6 @@
 #include "environment.h"
 #include "assets/environment_asset.h"
-#include "engine.h"
+#include "pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/pipeline.h>
@@ -23,18 +23,18 @@ void eg_environment_init(
   {
     VkDescriptorSetLayout set_layouts[ARRAY_SIZE(environment->descriptor_sets)];
     for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
-      set_layouts[i] = g_eng.set_layouts.environment;
+      set_layouts[i] = g_default_pipeline_layouts.skybox.set_layouts[1];
     }
 
-    VkDescriptorSetAllocateInfo alloc_info = {0};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.pNext = NULL;
-    alloc_info.descriptorPool = g_ctx.descriptor_pool;
-    alloc_info.descriptorSetCount = ARRAY_SIZE(environment->descriptor_sets);
-    alloc_info.pSetLayouts = set_layouts;
-
     VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device, &alloc_info, environment->descriptor_sets));
+        g_ctx.device,
+        &(VkDescriptorSetAllocateInfo){
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_ctx.descriptor_pool,
+            .descriptorSetCount = ARRAY_SIZE(environment->descriptor_sets),
+            .pSetLayouts = set_layouts,
+        },
+        environment->descriptor_sets));
   }
 
   // Update descriptor sets
@@ -155,7 +155,7 @@ void eg_environment_bind(
   vkCmdBindDescriptorSets(
       cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout,
+      pipeline->layout.layout,
       set_index, // firstSet
       1,
       &environment->descriptor_sets[cmd_info->frame_index],
@@ -175,7 +175,7 @@ void eg_environment_draw_skybox(
   vkCmdBindDescriptorSets(
       cmd_info->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout,
+      pipeline->layout.layout,
       1, // firstSet
       1,
       &environment->descriptor_sets[cmd_info->frame_index],

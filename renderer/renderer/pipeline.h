@@ -28,13 +28,24 @@ typedef struct re_vertex_t {
   vec2_t uv;
 } re_vertex_t;
 
-typedef struct re_pipeline_t {
-  VkPipeline pipeline;
+typedef struct re_pipeline_layout_t {
   VkPipelineLayout layout;
 
   VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS];
   uint32_t set_layout_count;
+} re_pipeline_layout_t;
+
+typedef struct re_pipeline_t {
+  VkPipeline pipeline;
+  re_pipeline_layout_t layout;
 } re_pipeline_t;
+
+void re_pipeline_layout_init(
+    re_pipeline_layout_t *layout,
+    const re_shader_t *vertex_shader,
+    const re_shader_t *fragment_shader);
+
+void re_pipeline_layout_destroy(re_pipeline_layout_t *layout);
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
