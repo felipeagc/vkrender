@@ -153,10 +153,10 @@ static inline bool check_physical_device_properties(
   free(available_extensions);
 
   uint32_t major_version = VK_VERSION_MAJOR(device_properties.apiVersion);
-  // uint32_t minorVersion = VK_VERSION_MINOR(deviceProperties.apiVersion);
-  // uint32_t patchVersion = VK_VERSION_PATCH(deviceProperties.apiVersion);
+  uint32_t minor_version = VK_VERSION_MINOR(device_properties.apiVersion);
+  // uint32_t patch_version = VK_VERSION_PATCH(device_properties.apiVersion);
 
-  if (major_version < 1 &&
+  if (major_version < 1 || minor_version < 1 ||
       device_properties.limits.maxImageDimension2D < 4096) {
     RE_LOG_WARN(
         "Physical device %s doesn't support required parameters!",
@@ -280,10 +280,10 @@ static inline void create_instance(re_context_t *ctx) {
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   appInfo.pNext = NULL;
   appInfo.pApplicationName = "App";
-  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
   appInfo.pEngineName = "No engine";
-  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.apiVersion = VK_API_VERSION_1_0;
+  appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
+  appInfo.apiVersion = VK_API_VERSION_1_1;
 
   VkInstanceCreateInfo createInfo = {0};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -536,8 +536,8 @@ void re_context_init() {
         0,                                         // binding
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
         1,                                         // descriptorCount
-        VK_SHADER_STAGE_FRAGMENT_BIT, // stageFlags
-        NULL, // pImmutableSamplers
+        VK_SHADER_STAGE_FRAGMENT_BIT,              // stageFlags
+        NULL,                                      // pImmutableSamplers
     }};
 
     VkDescriptorSetLayoutCreateInfo create_info = {0};
