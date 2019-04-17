@@ -15,7 +15,7 @@
 
 ### Shaders
 - [x] Shader reflection
-- [ ] Use `vkUpdateDescriptorSetWithTemplate`
+- [x] Use `vkUpdateDescriptorSetWithTemplate`
 
 ### Filesystem
 - [x] Use PhysicsFS

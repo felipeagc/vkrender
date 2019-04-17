@@ -17,6 +17,7 @@ static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
     "VK_LAYER_LUNARG_standard_validation",
 };
 #else
+// TODO: why is it always using validation layers??
 static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
     "VK_LAYER_LUNARG_standard_validation",
 };
