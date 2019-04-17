@@ -105,8 +105,8 @@ static void draw_gizmos_picking(
     vkCmdPushConstants(
         cmd_info->cmd_buffer,
         system->gizmo_picking_pipeline.layout.layout,
-        VK_SHADER_STAGE_ALL_GRAPHICS,
-        0,
+        system->gizmo_picking_pipeline.layout.push_constants[0].stageFlags,
+        system->gizmo_picking_pipeline.layout.push_constants[0].offset,
         sizeof(push_constant),
         &push_constant);
 
@@ -178,8 +178,8 @@ mouse_pressed(eg_picking_system_t *system, eg_entity_t *selected_entity) {
       vkCmdPushConstants(
           command_buffer,
           system->picking_pipeline.layout.layout,
-          VK_SHADER_STAGE_ALL_GRAPHICS,
-          0,
+          system->picking_pipeline.layout.push_constants[0].stageFlags,
+          system->picking_pipeline.layout.push_constants[0].offset,
           sizeof(uint32_t),
           &entity);
 
@@ -548,8 +548,8 @@ void eg_picking_system_draw_gizmos(
     vkCmdPushConstants(
         cmd_info->cmd_buffer,
         system->gizmo_pipeline.layout.layout,
-        VK_SHADER_STAGE_ALL_GRAPHICS,
-        0,
+        system->gizmo_pipeline.layout.push_constants[0].stageFlags,
+        system->gizmo_pipeline.layout.push_constants[0].offset,
         sizeof(push_constant),
         &push_constant);
 

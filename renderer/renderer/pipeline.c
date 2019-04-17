@@ -275,11 +275,24 @@ void re_pipeline_layout_init(
         g_ctx.device, &set_layout_cis[i], NULL, &layout->set_layouts[i]));
   }
 
-  VkPushConstantRange push_constant_range = {
-      .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
-      .offset = 0,
-      .size = 128,
-  };
+  memset(layout->push_constants, 0, sizeof(layout->push_constants));
+  layout->push_constant_count = 0;
+
+  for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
+    SpvReflectShaderModule *mod = &modules[i];
+
+    layout->push_constant_count =
+        MAX(layout->push_constant_count, mod->push_constant_block_count);
+
+    for (uint32_t p = 0; p < mod->push_constant_block_count; p++) {
+      SpvReflectBlockVariable *pc = &mod->push_constant_blocks[p];
+
+      layout->push_constants[p].stageFlags |= mod->shader_stage;
+      layout->push_constants[p].offset = pc->absolute_offset;
+      layout->push_constants[p].size =
+          MAX(layout->push_constants[p].size, pc->size);
+    }
+  }
 
   VK_CHECK(vkCreatePipelineLayout(
       g_ctx.device,
@@ -289,8 +302,8 @@ void re_pipeline_layout_init(
           .flags = 0,
           .setLayoutCount = layout->set_layout_count,
           .pSetLayouts = layout->set_layouts,
-          .pushConstantRangeCount = 1,
-          .pPushConstantRanges = &push_constant_range,
+          .pushConstantRangeCount = layout->push_constant_count,
+          .pPushConstantRanges = layout->push_constants,
       },
       NULL,
       &layout->layout));

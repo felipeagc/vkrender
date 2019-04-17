@@ -7,6 +7,7 @@
 
 #define RE_MAX_DESCRIPTOR_SETS 8
 #define RE_MAX_DESCRIPTOR_SET_BINDINGS 8
+#define RE_MAX_PUSH_CONSTANT_RANGES 4
 
 typedef struct re_window_t re_window_t;
 
@@ -40,6 +41,9 @@ typedef struct re_pipeline_layout_t {
   VkDescriptorUpdateTemplate update_templates[RE_MAX_DESCRIPTOR_SETS];
   VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS];
   uint32_t set_layout_count;
+
+  VkPushConstantRange push_constants[RE_MAX_PUSH_CONSTANT_RANGES];
+  uint32_t push_constant_count;
 } re_pipeline_layout_t;
 
 typedef struct re_pipeline_t {
