@@ -4,6 +4,7 @@
 #include "util.h"
 #include "window.h"
 #include <fstd_util.h>
+#include <spirv_reflect.h>
 
 static inline VkPipelineVertexInputStateCreateInfo
 default_vertex_input_state() {
@@ -26,7 +27,7 @@ default_vertex_input_state() {
       NULL,                                                      // pNext
       0,                                                         // flags
       ARRAY_SIZE(vertex_binding_descriptions), // vertexBindingDescriptionCount
-      vertex_binding_descriptions,            // pVertexBindingDescriptions
+      vertex_binding_descriptions,             // pVertexBindingDescriptions
       ARRAY_SIZE(
           vertex_attribute_descriptions), // vertexAttributeDescriptionCount
       vertex_attribute_descriptions,      // pVertexAttributeDescriptions
@@ -165,9 +166,9 @@ static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
   VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {
       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
       NULL,
-      0,                                   // flags
+      0,                                    // flags
       (uint32_t)ARRAY_SIZE(dynamic_states), // dynamicStateCount
-      dynamic_states,                      // pDyanmicStates
+      dynamic_states,                       // pDyanmicStates
   };
 
   return dynamic_state_create_info;
@@ -182,19 +183,132 @@ re_pipeline_parameters_t re_default_pipeline_parameters() {
   params.depth_stencil_state = default_depth_stencil_state();
   params.color_blend_state = default_color_blend_state();
   params.dynamic_state = default_dynamic_state();
-  params.pipeline_layout = VK_NULL_HANDLE;
   return params;
 }
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
     const re_render_target_t *render_target,
-    const re_shader_t *shader,
+    const re_shader_t *vertex_shader,
+    const re_shader_t *fragment_shader,
     const re_pipeline_parameters_t parameters) {
-  pipeline->layout = parameters.pipeline_layout;
+  SpvReflectShaderModule modules[2];
 
-  VkPipelineShaderStageCreateInfo pipeline_stages[2];
-  re_shader_get_pipeline_stages(shader, pipeline_stages);
+  SpvReflectResult result;
+  result = spvReflectCreateShaderModule(
+      vertex_shader->code_size, vertex_shader->code, &modules[0]);
+  assert(result == SPV_REFLECT_RESULT_SUCCESS);
+  result = spvReflectCreateShaderModule(
+      fragment_shader->code_size, fragment_shader->code, &modules[1]);
+  assert(result == SPV_REFLECT_RESULT_SUCCESS);
+
+  VkDescriptorSetLayoutCreateInfo set_layout_cis[RE_MAX_DESCRIPTOR_SETS] = {0};
+  VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SETS][8] = {0};
+
+  pipeline->set_layout_count = 0;
+  for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
+    SpvReflectShaderModule *mod = &modules[i];
+
+    for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
+      SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
+      pipeline->set_layout_count =
+          MAX(pipeline->set_layout_count, set->set + 1);
+    }
+  }
+
+  assert(pipeline->set_layout_count <= RE_MAX_DESCRIPTOR_SETS);
+
+  for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
+    SpvReflectShaderModule *mod = &modules[i];
+
+    for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
+      SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
+
+      assert(set->set < ARRAY_SIZE(set_layout_cis));
+      set_layout_cis[set->set].sType =
+          VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+
+      set_layout_cis[set->set].bindingCount =
+          MAX(set_layout_cis[set->set].bindingCount, set->binding_count);
+      set_layout_cis[set->set].pBindings = bindings[set->set];
+    }
+  }
+
+  for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
+    SpvReflectShaderModule *mod = &modules[i];
+
+    for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
+      SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
+
+      for (uint32_t b = 0; b < set->binding_count; b++) {
+        SpvReflectDescriptorBinding *binding = set->bindings[b];
+
+        bindings[set->set][binding->binding].binding = binding->binding;
+        bindings[set->set][binding->binding].descriptorType =
+            (VkDescriptorType)binding->descriptor_type;
+        bindings[set->set][binding->binding].descriptorCount =
+            MAX(bindings[set->set][binding->binding].descriptorCount,
+                binding->count);
+
+        // TODO: restore this
+        /* bindings[set->set][binding->binding].stageFlags |= mod->shader_stage;
+         */
+
+        bindings[set->set][binding->binding].stageFlags =
+            VK_SHADER_STAGE_ALL_GRAPHICS;
+      }
+    }
+  }
+
+  for (uint32_t i = 0; i < pipeline->set_layout_count; i++) {
+    VK_CHECK(vkCreateDescriptorSetLayout(
+        g_ctx.device, &set_layout_cis[i], NULL, &pipeline->set_layouts[i]));
+  }
+
+  VkPushConstantRange push_constant_range = {
+      .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
+      .offset = 0,
+      .size = 128,
+  };
+
+  VK_CHECK(vkCreatePipelineLayout(
+      g_ctx.device,
+      &(VkPipelineLayoutCreateInfo){
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+          .pNext = NULL,
+          .flags = 0,
+          .setLayoutCount = pipeline->set_layout_count,
+          .pSetLayouts = pipeline->set_layouts,
+          .pushConstantRangeCount = 1,
+          .pPushConstantRanges = &push_constant_range,
+      },
+      NULL,
+      &pipeline->layout));
+
+  for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
+    spvReflectDestroyShaderModule(&modules[i]);
+  }
+
+  VkPipelineShaderStageCreateInfo pipeline_stages[] = {
+      (VkPipelineShaderStageCreateInfo){
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+          .pNext = NULL,
+          .flags = 0,
+          .stage = VK_SHADER_STAGE_VERTEX_BIT,
+          .module = vertex_shader->module,
+          .pName = "main",
+          .pSpecializationInfo = NULL,
+      },
+      (VkPipelineShaderStageCreateInfo){
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+          .pNext = NULL,
+          .flags = 0,
+          .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+          .module = fragment_shader->module,
+          .pName = "main",
+          .pSpecializationInfo = NULL,
+      },
+  };
 
   VkPipelineMultisampleStateCreateInfo multisample_state =
       default_multisample_state(render_target->sample_count);
@@ -203,7 +317,7 @@ void re_pipeline_init_graphics(
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       NULL,
       0,                                // flags
-      ARRAY_SIZE(pipeline_stages),       // stageCount
+      ARRAY_SIZE(pipeline_stages),      // stageCount
       pipeline_stages,                  // pStages
       &parameters.vertex_input_state,   // pVertexInputState
       &parameters.input_assembly_state, // pInputAssemblyState
@@ -232,6 +346,17 @@ void re_pipeline_init_graphics(
 
 void re_pipeline_destroy(re_pipeline_t *pipeline) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  for (uint32_t i = 0; i < pipeline->set_layout_count; i++) {
+    if (pipeline->set_layouts[i] != VK_NULL_HANDLE) {
+      vkDestroyDescriptorSetLayout(
+          g_ctx.device, pipeline->set_layouts[i], NULL);
+    }
+  }
+
+  if (pipeline->layout != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(g_ctx.device, pipeline->layout, NULL);
+  }
 
   if (pipeline->pipeline != VK_NULL_HANDLE) {
     vkDestroyPipeline(g_ctx.device, pipeline->pipeline, NULL);

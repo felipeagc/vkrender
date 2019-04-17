@@ -80,18 +80,18 @@ static inline void init_set_layouts() {
   {
     VkDescriptorSetLayoutBinding bindings[] = {
         {
-            0,                                 // binding
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
-            1,                                 // descriptorCount
-            VK_SHADER_STAGE_ALL_GRAPHICS,      // stageFlags
-            NULL,                              // pImmutableSamplers
-        },
-        {
             1,                                         // binding
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
             1,                                         // descriptorCount
             VK_SHADER_STAGE_ALL_GRAPHICS,              // stageFlags
             NULL,                                      // pImmutableSamplers
+        },
+        {
+            0,                                 // binding
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptorType
+            1,                                 // descriptorCount
+            VK_SHADER_STAGE_ALL_GRAPHICS,      // stageFlags
+            NULL,                              // pImmutableSamplers
         },
         {
             2,                                         // binding
@@ -179,106 +179,13 @@ static inline void destroy_set_layouts() {
   vkDestroyDescriptorSetLayout(g_ctx.device, g_eng.set_layouts.material, NULL);
 }
 
-static inline void init_pipeline_layouts() {
-  // PBR
-  {
-    VkDescriptorSetLayout set_layouts[] = {
-        g_eng.set_layouts.camera,
-        g_eng.set_layouts.environment,
-        g_eng.set_layouts.model,
-        g_eng.set_layouts.model,
-        g_eng.set_layouts.material,
-    };
-
-    create_pipeline_layout(
-        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.pbr);
-  }
-
-  // Picking
-  {
-    VkDescriptorSetLayout set_layouts[] = {
-        g_eng.set_layouts.camera,
-        g_eng.set_layouts.model,
-        g_eng.set_layouts.model,
-    };
-
-    create_pipeline_layout(
-        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.picking);
-  }
-
-  // Billboard
-  {
-    VkDescriptorSetLayout set_layouts[] = {
-        g_eng.set_layouts.camera,
-        g_eng.set_layouts.material,
-    };
-
-    create_pipeline_layout(
-        set_layouts,
-        ARRAY_SIZE(set_layouts),
-        &g_eng.pipeline_layouts.billboard);
-  }
-
-  // Wireframe
-  {
-    VkDescriptorSetLayout set_layouts[] = {
-        g_eng.set_layouts.camera,
-        g_eng.set_layouts.model,
-    };
-
-    create_pipeline_layout(
-        set_layouts,
-        ARRAY_SIZE(set_layouts),
-        &g_eng.pipeline_layouts.wireframe);
-  }
-
-  // Skybox
-  {
-    VkDescriptorSetLayout set_layouts[] = {
-        g_eng.set_layouts.camera,
-        g_eng.set_layouts.environment,
-    };
-
-    create_pipeline_layout(
-        set_layouts, ARRAY_SIZE(set_layouts), &g_eng.pipeline_layouts.skybox);
-  }
-
-  // Fullscreen
-  {
-    VkDescriptorSetLayout set_layouts[] = {
-        g_ctx.canvas_descriptor_set_layout,
-    };
-
-    create_pipeline_layout(
-        set_layouts,
-        ARRAY_SIZE(set_layouts),
-        &g_eng.pipeline_layouts.fullscreen);
-  }
-
-  // Gizmos
-  create_pipeline_layout(NULL, 0, &g_eng.pipeline_layouts.gizmo);
-}
-
-static inline void destroy_pipeline_layouts() {
-  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.pbr, NULL);
-  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.picking, NULL);
-  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.billboard, NULL);
-  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.wireframe, NULL);
-  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.skybox, NULL);
-  vkDestroyPipelineLayout(
-      g_ctx.device, g_eng.pipeline_layouts.fullscreen, NULL);
-  vkDestroyPipelineLayout(g_ctx.device, g_eng.pipeline_layouts.gizmo, NULL);
-}
-
 void eg_engine_init(const char *argv0) {
   PHYSFS_init(argv0);
 
   init_set_layouts();
-  init_pipeline_layouts();
 }
 
 void eg_engine_destroy() {
-  destroy_pipeline_layouts();
   destroy_set_layouts();
 
   PHYSFS_deinit();

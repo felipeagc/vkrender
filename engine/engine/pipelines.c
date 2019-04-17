@@ -6,8 +6,6 @@
 re_pipeline_parameters_t eg_pbr_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.pipeline_layout = g_eng.pipeline_layouts.pbr;
-
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -17,8 +15,6 @@ re_pipeline_parameters_t eg_pbr_pipeline_parameters() {
 re_pipeline_parameters_t eg_picking_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.pipeline_layout = g_eng.pipeline_layouts.picking;
-
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
 
@@ -27,8 +23,6 @@ re_pipeline_parameters_t eg_picking_pipeline_parameters() {
 
 re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
-
-  params.pipeline_layout = g_eng.pipeline_layouts.billboard;
 
   params.vertex_input_state = (VkPipelineVertexInputStateCreateInfo){
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
@@ -49,8 +43,6 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
 re_pipeline_parameters_t eg_wireframe_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.pipeline_layout = g_eng.pipeline_layouts.wireframe;
-
   params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   params.rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
@@ -61,8 +53,6 @@ re_pipeline_parameters_t eg_wireframe_pipeline_parameters() {
 
 re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
-
-  params.pipeline_layout = g_eng.pipeline_layouts.skybox;
 
   params.vertex_input_state = (VkPipelineVertexInputStateCreateInfo){
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
@@ -83,8 +73,6 @@ re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
 
 re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
-
-  params.pipeline_layout = g_eng.pipeline_layouts.fullscreen;
 
   params.vertex_input_state = (VkPipelineVertexInputStateCreateInfo){
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
@@ -129,8 +117,6 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
 
 re_pipeline_parameters_t eg_gizmo_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
-
-  params.pipeline_layout = g_eng.pipeline_layouts.gizmo;
 
   params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;

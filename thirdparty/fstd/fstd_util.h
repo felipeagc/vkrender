@@ -7,6 +7,14 @@ extern "C" {
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+#ifndef MAX
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
 #if defined(_MSC_VER)
 #define ALIGNAS(x) __declspec(align(x))
 #elif defined(__clang__)

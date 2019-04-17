@@ -9,16 +9,6 @@ typedef struct eg_engine_t {
     VkDescriptorSetLayout environment;
     VkDescriptorSetLayout material;
   } set_layouts;
-
-  struct {
-    VkPipelineLayout pbr;
-    VkPipelineLayout picking;
-    VkPipelineLayout billboard;
-    VkPipelineLayout wireframe;
-    VkPipelineLayout skybox;
-    VkPipelineLayout fullscreen;
-    VkPipelineLayout gizmo;
-  } pipeline_layouts;
 } eg_engine_t;
 
 extern eg_engine_t g_eng;

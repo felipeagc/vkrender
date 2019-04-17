@@ -25,20 +25,21 @@ static inline bool eg_init_pipeline_spv(
   eg_file_read_bytes(fragment_file, fragment_code, fragment_size);
   eg_file_close(fragment_file);
 
-  re_shader_t shader;
-  re_shader_init_spv(
-      &shader,
-      (uint32_t *)vertex_code,
-      vertex_size,
-      (uint32_t *)fragment_code,
-      fragment_size);
+  re_shader_t vertex_shader;
+  re_shader_init_spv(&vertex_shader, (uint32_t *)vertex_code, vertex_size);
 
-  re_pipeline_init_graphics(pipeline, render_target, &shader, params);
+  re_shader_t fragment_shader;
+  re_shader_init_spv(
+      &fragment_shader, (uint32_t *)fragment_code, fragment_size);
+
+  re_pipeline_init_graphics(
+      pipeline, render_target, &vertex_shader, &fragment_shader, params);
 
   free(vertex_code);
   free(fragment_code);
 
-  re_shader_destroy(&shader);
+  re_shader_destroy(&fragment_shader);
+  re_shader_destroy(&vertex_shader);
 
   return true;
 }
