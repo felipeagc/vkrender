@@ -24,10 +24,6 @@ typedef enum eg_entity_tag_t {
 
 typedef FSTD_BITSET(EG_MAX_ENTITIES) eg_entities_bitset_t;
 
-typedef struct {
-  uint8_t bytes[EG_MAX_ENTITIES / 8];
-} eg_bitset_t;
-
 typedef struct eg_world_t {
   eg_camera_t camera;
   eg_environment_t environment;

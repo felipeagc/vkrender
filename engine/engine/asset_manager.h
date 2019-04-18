@@ -2,6 +2,7 @@
 
 #include "assets/asset_types.h"
 #include <fstd_alloc.h>
+#include <fstd_map.h>
 #include <tinycthread.h>
 
 #define EG_MAX_ASSETS 521
@@ -10,16 +11,10 @@
   ((type *)eg_asset_manager_alloc(                                             \
       asset_manager, name, EG_ASSET_TYPE(type), sizeof(type)))
 
-typedef struct eg_asset_table_t {
-  struct eg_asset_table_bundle_t *data;
-  uint32_t capacity;
-  uint32_t filled;
-} eg_asset_table_t;
-
 typedef struct eg_asset_manager_t {
   fstd_allocator_t allocator;
   mtx_t allocator_mutex;
-  eg_asset_table_t table;
+  fstd_map_t map;
 } eg_asset_manager_t;
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager);

@@ -2,11 +2,6 @@
 #define FSTD_ALLOC_H
 
 /*
- * Do this:
- *   #define FSTD_ALLOC_IMPLEMENTATION
- * before you include this file in *one* C or C++ file to create the
- * implementation.
- *
  * NOTE: the library is not thread safe. You will have to handle that yourself.
  */
 
@@ -198,7 +193,7 @@ void fstd_free(fstd_allocator_t *allocator, void *ptr) {
   alloc_header_merge_if_necessary(header);
 }
 
-#endif
+#endif // FSTD_ALLOC_IMPLEMENTATION
 
 #ifdef __cplusplus
 }

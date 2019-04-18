@@ -2,6 +2,7 @@ add_library(
 	fstd
 	fstd.c
 	fstd_alloc.h
+	fstd_map.h
 	fstd_bitset.h
 	fstd_util.h)
 
