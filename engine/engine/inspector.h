@@ -38,6 +38,9 @@ typedef struct eg_inspector_t {
   eg_drag_direction_t drag_direction;
 
   vec3_t pos_delta;
+
+  re_cmd_buffer_t cmd_buffer;
+  VkFence fence;
 } eg_inspector_t;
 
 void eg_inspector_init(

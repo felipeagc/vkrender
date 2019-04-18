@@ -271,6 +271,24 @@ void eg_inspector_init(
   re_buffer_unmap_memory(&staging_buffer);
 
   re_buffer_destroy(&staging_buffer);
+
+  VK_CHECK(vkCreateFence(
+      g_ctx.device,
+      &(VkFenceCreateInfo){
+          .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+          .pNext = NULL,
+          .flags = 0,
+      },
+      NULL,
+      &inspector->fence));
+
+  re_allocate_cmd_buffers(
+      &(re_cmd_buffer_alloc_info_t){
+          .pool = g_ctx.graphics_command_pool,
+          .count = 1,
+          .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
+      },
+      &inspector->cmd_buffer);
 }
 
 void eg_inspector_destroy(eg_inspector_t *inspector) {
@@ -281,6 +299,11 @@ void eg_inspector_destroy(eg_inspector_t *inspector) {
 
   re_pipeline_destroy(&inspector->picking_pipeline);
   re_canvas_destroy(&inspector->canvas);
+
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  re_free_cmd_buffers(g_ctx.graphics_command_pool, 1, &inspector->cmd_buffer);
+  vkDestroyFence(g_ctx.device, inspector->fence, NULL);
 }
 
 /*
@@ -403,40 +426,20 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     return;
   }
 
-  re_cmd_buffer_t command_buffer;
-
-  VkFence fence;
-
-  // Create fence
-  {
-    VkFenceCreateInfo fence_create_info = {0};
-    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_create_info.pNext = NULL;
-    fence_create_info.flags = 0;
-
-    VK_CHECK(vkCreateFence(g_ctx.device, &fence_create_info, NULL, &fence));
-  }
-
-  re_allocate_cmd_buffers(
-      &(re_cmd_buffer_alloc_info_t){
-          .pool = g_ctx.graphics_command_pool,
-          .count = 1,
-          .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
-      },
-      &command_buffer);
+  vkResetFences(g_ctx.device, 1, &inspector->fence);
 
   re_begin_cmd_buffer(
-      command_buffer,
+      inspector->cmd_buffer,
       &(re_cmd_buffer_begin_info_t){
           .usage = RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT,
       });
 
   const eg_cmd_info_t cmd_info = {
       .frame_index = inspector->window->current_frame,
-      .cmd_buffer = command_buffer,
+      .cmd_buffer = inspector->cmd_buffer,
   };
 
-  re_canvas_begin(&inspector->canvas, command_buffer);
+  re_canvas_begin(&inspector->canvas, inspector->cmd_buffer);
 
   eg_camera_bind(
       &inspector->world->camera, &cmd_info, &inspector->picking_pipeline, 0);
@@ -456,7 +459,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           EG_GET_COMP(inspector->world, entity, eg_transform_component_t);
 
       vkCmdPushConstants(
-          command_buffer,
+          inspector->cmd_buffer,
           inspector->picking_pipeline.layout.layout,
           inspector->picking_pipeline.layout.push_constants[0].stageFlags,
           inspector->picking_pipeline.layout.push_constants[0].offset,
@@ -473,35 +476,25 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   draw_gizmos_picking(inspector, &cmd_info);
 
-  re_canvas_end(&inspector->canvas, command_buffer);
+  re_canvas_end(&inspector->canvas, inspector->cmd_buffer);
 
-  // End and free command buffer
-  {
-    re_end_cmd_buffer(command_buffer);
+  // End command buffer
+  re_end_cmd_buffer(inspector->cmd_buffer);
 
-    VK_CHECK(vkQueueSubmit(
-        g_ctx.graphics_queue,
-        1,
-        &(VkSubmitInfo){
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .pNext = NULL,
-            .waitSemaphoreCount = 0,
-            .pWaitSemaphores = NULL,
-            .pWaitDstStageMask = NULL,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &command_buffer,
-            .signalSemaphoreCount = 0,
-            .pSignalSemaphores = NULL,
-        },
-        fence));
+  VK_CHECK(vkQueueSubmit(
+      g_ctx.graphics_queue,
+      1,
+      &(VkSubmitInfo){
+          .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+          .commandBufferCount = 1,
+          .pCommandBuffers = &inspector->cmd_buffer,
+      },
+      inspector->fence));
 
-    VK_CHECK(vkWaitForFences(g_ctx.device, 1, &fence, VK_TRUE, UINT64_MAX));
-
-    re_free_cmd_buffers(g_ctx.graphics_command_pool, 1, &command_buffer);
-  }
+  VK_CHECK(
+      vkWaitForFences(g_ctx.device, 1, &inspector->fence, VK_TRUE, UINT64_MAX));
 
   // Destroy fence
-  vkDestroyFence(g_ctx.device, fence, NULL);
 
   re_buffer_t staging_buffer;
   re_buffer_init(
