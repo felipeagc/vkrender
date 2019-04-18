@@ -17,15 +17,3 @@ eg_asset_destructor_t eg_asset_destructors[EG_ASSET_TYPE_COUNT] = {
     [EG_GLTF_MODEL_ASSET_TYPE] =
         (eg_asset_destructor_t)eg_gltf_model_asset_destroy,
 };
-
-void eg_asset_init(eg_asset_t *asset, eg_asset_type_t type, const char *name) {
-  asset->type = type;
-  asset->name = malloc(strlen(name) + 1);
-  strncpy(asset->name, name, strlen(name) + 1);
-}
-
-void eg_asset_destroy(eg_asset_t *asset) {
-  if (asset->name != NULL) {
-    free(asset->name);
-  }
-}

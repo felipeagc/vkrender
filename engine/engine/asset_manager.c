@@ -51,8 +51,9 @@ eg_asset_t *eg_asset_manager_alloc(
   // TODO: allow replacing map entries
   assert(fstd_map_get(&asset_manager->map, name) == NULL);
 
-  eg_asset_init(asset, type, name);
-  assert(fstd_map_set(&asset_manager->map, name, &asset));
+  eg_asset_t **asset_entry = fstd_map_set(&asset_manager->map, name, &asset);
+  asset->type = type;
+  asset->name = fstd_map_get_key(&asset_manager->map, asset_entry);
 
   mtx_unlock(&asset_manager->allocator_mutex);
 
@@ -68,7 +69,6 @@ void eg_asset_manager_free(
   fstd_map_remove(&asset_manager->map, asset->name);
 
   eg_asset_destructors[asset->type](asset);
-  eg_asset_destroy(asset);
 
   mtx_lock(&asset_manager->allocator_mutex);
   fstd_free(&asset_manager->allocator, asset);
@@ -83,7 +83,6 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
       continue;
 
     eg_asset_destructors[asset->type](asset);
-    eg_asset_destroy(asset);
   }
 
   fstd_map_destroy(&asset_manager->map);

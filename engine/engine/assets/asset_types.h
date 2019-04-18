@@ -34,9 +34,8 @@ extern eg_asset_destructor_t eg_asset_destructors[EG_ASSET_TYPE_COUNT];
 
 typedef struct eg_asset_t {
   eg_asset_type_t type;
-  char *name;
+
+  // This string's lifetime is managed by the
+  // asset manager's hash map, so no need to free it.
+  const char *name;
 } eg_asset_t;
-
-void eg_asset_init(eg_asset_t *asset, eg_asset_type_t type, const char *name);
-
-void eg_asset_destroy(eg_asset_t *asset);
