@@ -13,7 +13,6 @@
 #include <engine/pbr.h>
 #include <engine/pipelines.h>
 #include <engine/systems/fps_camera_system.h>
-#include <engine/systems/picking_system.h>
 #include <engine/systems/rendering_system.h>
 #include <engine/util.h>
 #include <engine/world.h>
@@ -32,7 +31,6 @@ typedef struct game_t {
   eg_world_t world;
 
   eg_fps_camera_system_t fps_system;
-  eg_picking_system_t picking_system;
   eg_inspector_t inspector;
 } game_t;
 
@@ -63,20 +61,20 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   eg_world_init(&game->world, environment_asset);
 
   // Systems
-  eg_inspector_init(&game->inspector);
-  eg_picking_system_init(
-      &game->picking_system,
+  eg_inspector_init(
+      &game->inspector,
       &game->window,
       &game->window.render_target,
-      &game->world);
+      &game->world,
+      &game->asset_manager);
   eg_fps_camera_system_init(&game->fps_system);
 }
 
 static void game_destroy(game_t *game) {
+  eg_inspector_destroy(&game->inspector);
+
   eg_world_destroy(&game->world);
   eg_asset_manager_destroy(&game->asset_manager);
-
-  eg_picking_system_destroy(&game->picking_system);
 
   eg_default_pipeline_layouts_destroy();
 
@@ -167,8 +165,7 @@ int main(int argc, const char *argv[]) {
     re_event_t event;
     while (re_window_next_event(&game.window, &event)) {
       eg_imgui_process_event(&event);
-      eg_picking_system_process_event(
-          &game.picking_system, &event, &game.inspector.selected_entity);
+      eg_inspector_process_event(&game.inspector, &event);
     }
 
     uint32_t width, height;
@@ -180,8 +177,7 @@ int main(int argc, const char *argv[]) {
     };
 
     eg_imgui_begin();
-    eg_inspector_draw_ui(
-        &game.inspector, &game.window, &game.world, &game.asset_manager);
+    eg_inspector_draw_ui(&game.inspector);
     eg_imgui_end();
 
     // Per-frame updates
@@ -208,11 +204,9 @@ int main(int argc, const char *argv[]) {
 
     eg_rendering_system_render(&cmd_info, &game.world, &pbr_pipeline->pipeline);
 
-    eg_picking_system_draw_gizmos(
-        &game.picking_system, &cmd_info, game.inspector.selected_entity);
+    eg_inspector_draw_gizmos(&game.inspector, &cmd_info);
 
-    eg_picking_system_update(
-        &game.picking_system, game.inspector.selected_entity);
+    eg_inspector_update(&game.inspector);
 
     eg_imgui_draw(&cmd_info);
 
