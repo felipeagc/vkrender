@@ -18,7 +18,7 @@ typedef struct re_event_queue_t {
   size_t tail;
 } re_event_queue_t;
 
-static re_event_queue_t g_event_queue = {0};
+static re_event_queue_t g_event_queue = {};
 
 /*
  *
@@ -182,15 +182,11 @@ static inline void create_sync_objects(re_window_t *window) {
     semaphore_create_info.flags = 0;
 
     VK_CHECK(vkCreateSemaphore(
-        g_ctx.device,
-        &semaphore_create_info,
-        NULL,
+        g_ctx.device, &semaphore_create_info, NULL,
         &resources->image_available_semaphore));
 
     VK_CHECK(vkCreateSemaphore(
-        g_ctx.device,
-        &semaphore_create_info,
-        NULL,
+        g_ctx.device, &semaphore_create_info, NULL,
         &resources->rendering_finished_semaphore));
 
     VkFenceCreateInfo fence_create_info = {0};
@@ -219,9 +215,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   VkSurfaceFormatKHR *surface_formats = (VkSurfaceFormatKHR *)malloc(
       sizeof(VkSurfaceFormatKHR) * surface_format_count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      g_ctx.physical_device,
-      window->surface,
-      &surface_format_count,
+      g_ctx.physical_device, window->surface, &surface_format_count,
       surface_formats);
 
   uint32_t present_mode_count;
@@ -230,9 +224,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   VkPresentModeKHR *present_modes =
       (VkPresentModeKHR *)malloc(sizeof(VkPresentModeKHR) * present_mode_count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      g_ctx.physical_device,
-      window->surface,
-      &present_mode_count,
+      g_ctx.physical_device, window->surface, &present_mode_count,
       present_modes);
 
   uint32_t desired_num_images = get_swapchain_num_images(&surface_capabilities);
@@ -290,9 +282,7 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   window->swapchain_images =
       (VkImage *)malloc(sizeof(VkImage) * window->swapchain_image_count);
   VK_CHECK(vkGetSwapchainImagesKHR(
-      g_ctx.device,
-      window->swapchain,
-      &window->swapchain_image_count,
+      g_ctx.device, window->swapchain, &window->swapchain_image_count,
       window->swapchain_images));
 
   free(present_modes);
@@ -374,12 +364,8 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
-      g_ctx.gpu_allocator,
-      &image_create_info,
-      &alloc_info,
-      &window->depth_stencil.image,
-      &window->depth_stencil.allocation,
-      NULL));
+      g_ctx.gpu_allocator, &image_create_info, &alloc_info,
+      &window->depth_stencil.image, &window->depth_stencil.allocation, NULL));
 
   VkImageViewCreateInfo image_view_create_info = {
       VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
@@ -404,9 +390,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   };
 
   VK_CHECK(vkCreateImageView(
-      g_ctx.device,
-      &image_view_create_info,
-      NULL,
+      g_ctx.device, &image_view_create_info, NULL,
       &window->depth_stencil.view));
 }
 
@@ -500,9 +484,7 @@ static inline void create_render_pass(re_window_t *window) {
   };
 
   VK_CHECK(vkCreateRenderPass(
-      g_ctx.device,
-      &render_pass_create_info,
-      NULL,
+      g_ctx.device, &render_pass_create_info, NULL,
       &window->render_target.render_pass));
 }
 
@@ -537,17 +519,14 @@ static inline void destroy_resizables(re_window_t *window) {
 
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     vkFreeCommandBuffers(
-        g_ctx.device,
-        g_ctx.graphics_command_pool,
-        1,
+        g_ctx.device, g_ctx.graphics_command_pool, 1,
         &window->frame_resources[i].command_buffer);
   }
 
   if (window->depth_stencil.image) {
     vkDestroyImageView(g_ctx.device, window->depth_stencil.view, NULL);
     vmaDestroyImage(
-        g_ctx.gpu_allocator,
-        window->depth_stencil.image,
+        g_ctx.gpu_allocator, window->depth_stencil.image,
         window->depth_stencil.allocation);
     window->depth_stencil.image = VK_NULL_HANDLE;
     window->depth_stencil.allocation = VK_NULL_HANDLE;
@@ -825,9 +804,7 @@ bool re_window_init(
 
   VkBool32 supported;
   vkGetPhysicalDeviceSurfaceSupportKHR(
-      g_ctx.physical_device,
-      g_ctx.present_queue_family_index,
-      window->surface,
+      g_ctx.physical_device, g_ctx.present_queue_family_index, window->surface,
       &supported);
   if (!supported) {
     return false;
@@ -864,12 +841,10 @@ void re_window_destroy(re_window_t *window) {
     vkDestroyFramebuffer(
         g_ctx.device, window->frame_resources[i].framebuffer, NULL);
     vkDestroySemaphore(
-        g_ctx.device,
-        window->frame_resources[i].image_available_semaphore,
+        g_ctx.device, window->frame_resources[i].image_available_semaphore,
         NULL);
     vkDestroySemaphore(
-        g_ctx.device,
-        window->frame_resources[i].rendering_finished_semaphore,
+        g_ctx.device, window->frame_resources[i].rendering_finished_semaphore,
         NULL);
     vkDestroyFence(g_ctx.device, window->frame_resources[i].fence, NULL);
   }
@@ -913,19 +888,14 @@ void re_window_begin_frame(re_window_t *window) {
 
   // Begin
   vkWaitForFences(
-      g_ctx.device,
-      1,
-      &window->frame_resources[window->current_frame].fence,
-      VK_TRUE,
-      UINT64_MAX);
+      g_ctx.device, 1, &window->frame_resources[window->current_frame].fence,
+      VK_TRUE, UINT64_MAX);
 
   vkResetFences(
       g_ctx.device, 1, &window->frame_resources[window->current_frame].fence);
 
   if (vkAcquireNextImageKHR(
-          g_ctx.device,
-          window->swapchain,
-          UINT64_MAX,
+          g_ctx.device, window->swapchain, UINT64_MAX,
           window->frame_resources[window->current_frame]
               .image_available_semaphore,
           VK_NULL_HANDLE,
@@ -942,8 +912,7 @@ void re_window_begin_frame(re_window_t *window) {
   };
 
   regen_framebuffer(
-      window,
-      &window->frame_resources[window->current_frame].framebuffer,
+      window, &window->frame_resources[window->current_frame].framebuffer,
       &window->swapchain_image_views[window->current_image_index]);
 
   VkCommandBufferBeginInfo begin_info = {0};
@@ -971,15 +940,8 @@ void re_window_begin_frame(re_window_t *window) {
     };
 
     vkCmdPipelineBarrier(
-        command_buffer,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        0,
-        0,
-        NULL,
-        0,
-        NULL,
-        1,
+        command_buffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1,
         &barrier_from_present_to_draw);
   }
 }
@@ -1011,15 +973,8 @@ void re_window_end_frame(re_window_t *window) {
     };
 
     vkCmdPipelineBarrier(
-        command_buffer,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        0,
-        0,
-        NULL,
-        0,
-        NULL,
-        1,
+        command_buffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1,
         &barrierFromDrawToPresent);
   }
 
@@ -1045,9 +1000,7 @@ void re_window_end_frame(re_window_t *window) {
 
   mtx_lock(&g_ctx.queue_mutex);
   vkQueueSubmit(
-      g_ctx.graphics_queue,
-      1,
-      &submit_info,
+      g_ctx.graphics_queue, 1, &submit_info,
       window->frame_resources[window->current_frame].fence);
 
   VkPresentInfoKHR presentInfo = {

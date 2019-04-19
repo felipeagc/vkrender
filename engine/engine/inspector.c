@@ -38,147 +38,34 @@ static const uint32_t pos_gizmo_indices[] = {
 };
 // clang-format on
 
+static const mat4_t gizmo_matrices[] = {
+    {.cols = {{1.0, 0.0, 0.0, 0.0},
+              {0.0, 1.0, 0.0, 0.0},
+              {0.0, 0.0, 1.0, 0.0},
+              {0.0, 0.0, 0.0, 1.0}}},
+    {.cols = {{0.0, 1.0, 0.0, 0.0},
+              {1.0, 0.0, 0.0, 0.0},
+              {0.0, 0.0, 1.0, 0.0},
+              {0.0, 0.0, 0.0, 1.0}}},
+    {.cols = {{0.0, 0.0, 1.0, 0.0},
+              {0.0, 1.0, 0.0, 0.0},
+              {1.0, 0.0, 0.0, 0.0},
+              {0.0, 0.0, 0.0, 1.0}}},
+};
+
 static const float thickness = 0.05f;
 
 static const re_vertex_t pos_gizmo_vertices[] = {
-    (re_vertex_t){.pos = (vec3_t){thickness, thickness, thickness}},
-    (re_vertex_t){.pos = (vec3_t){thickness, -thickness, thickness}},
-    (re_vertex_t){.pos = (vec3_t){thickness, -thickness, -thickness}},
-    (re_vertex_t){.pos = (vec3_t){thickness, thickness, -thickness}},
+    {.pos = {thickness, thickness, thickness}},
+    {.pos = {thickness, -thickness, thickness}},
+    {.pos = {thickness, -thickness, -thickness}},
+    {.pos = {thickness, thickness, -thickness}},
 
-    (re_vertex_t){.pos = (vec3_t){thickness * 20.0f, thickness, thickness}},
-    (re_vertex_t){.pos = (vec3_t){thickness * 20.0f, -thickness, thickness}},
-    (re_vertex_t){.pos = (vec3_t){thickness * 20.0f, -thickness, -thickness}},
-    (re_vertex_t){.pos = (vec3_t){thickness * 20.0f, thickness, -thickness}},
+    {.pos = {thickness * 20.0f, thickness, thickness}},
+    {.pos = {thickness * 20.0f, -thickness, thickness}},
+    {.pos = {thickness * 20.0f, -thickness, -thickness}},
+    {.pos = {thickness * 20.0f, thickness, -thickness}},
 };
-
-static void inspector_camera(eg_camera_t *camera) {
-  float deg = to_degrees(camera->fov);
-  igDragFloat("FOV", &deg, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
-  camera->fov = to_radians(deg);
-}
-
-static void inspector_environment(eg_environment_t *environment) {
-  igDragFloat3(
-      "Sun direction",
-      &environment->uniform.sun_direction.x,
-      0.01f,
-      0.0f,
-      0.0f,
-      "%.3f",
-      1.0f);
-
-  igColorEdit3("Sun color", &environment->uniform.sun_color.x, 0);
-
-  igDragFloat(
-      "Sun intensity",
-      &environment->uniform.sun_intensity,
-      0.01f,
-      0.0f,
-      0.0f,
-      "%.3f",
-      1.0f);
-
-  igDragFloat(
-      "Exposure",
-      &environment->uniform.exposure,
-      0.01f,
-      0.0f,
-      0.0f,
-      "%.3f",
-      1.0f);
-}
-
-static void inspector_statistics(re_window_t *window) {
-  igText("Delta time: %.4fms", window->delta_time);
-  igText("FPS: %.2f", 1.0f / window->delta_time);
-}
-
-static void inspector_environment_asset(eg_asset_t *asset) {}
-
-static void inspector_pbr_material_asset(eg_asset_t *asset) {
-  eg_pbr_material_asset_t *material = (eg_pbr_material_asset_t *)asset;
-
-  igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
-  igDragFloat(
-      "Metallic", &material->uniform.metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-  igDragFloat(
-      "Roughness",
-      &material->uniform.roughness,
-      0.01f,
-      0.0f,
-      1.0f,
-      "%.3f",
-      1.0f);
-  igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
-}
-
-static void inspector_gltf_model_asset(eg_asset_t *asset) {
-  eg_gltf_model_asset_t *gltf_asset = (eg_gltf_model_asset_t *)asset;
-
-  igText("Vertex count: %u", gltf_asset->vertex_count);
-  igText("Index count: %u", gltf_asset->index_count);
-  igText("Image count: %u", gltf_asset->image_count);
-  igText("Mesh count: %u", gltf_asset->mesh_count);
-
-  for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
-    igPushIDInt(j);
-    eg_gltf_model_asset_material_t *material = &gltf_asset->materials[j];
-
-    if (igCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-      igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
-      igDragFloat(
-          "Metallic",
-          &material->uniform.metallic,
-          0.01f,
-          0.0f,
-          1.0f,
-          "%.3f",
-          1.0f);
-      igDragFloat(
-          "Roughness",
-          &material->uniform.roughness,
-          0.01f,
-          0.0f,
-          1.0f,
-          "%.3f",
-          1.0f);
-      igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
-    }
-    igPopID();
-  }
-}
-
-static void
-inspector_transform_component(eg_world_t *world, eg_entity_t entity) {
-  eg_transform_component_t *transform =
-      EG_GET_COMP(world, entity, eg_transform_component_t);
-
-  igDragFloat3(
-      "Position", &transform->position.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
-  igDragFloat3("Scale", &transform->scale.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
-  igDragFloat3("Axis", &transform->axis.x, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-  igDragFloat("Angle", &transform->angle, 0.01f, 0.0f, 0.0f, "%.3f rad", 1.0f);
-}
-
-static void
-inspector_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
-  eg_gltf_model_component_t *gltf_model =
-      EG_GET_COMP(world, entity, eg_gltf_model_component_t);
-
-  igText("Asset: %s", gltf_model->asset->asset.name);
-  igSameLine(0.0f, -1.0f);
-  if (igSmallButton("Inspect")) {
-    igOpenPopup("gltfmodelpopup");
-  }
-
-  if (igBeginPopup("gltfmodelpopup", 0)) {
-    inspector_gltf_model_asset((eg_asset_t *)gltf_model->asset);
-    igEndPopup();
-  }
-}
-
-static void inspector_mesh_component(eg_world_t *world, eg_entity_t entity) {}
 
 void eg_inspector_init(
     eg_inspector_t *inspector,
@@ -192,14 +79,11 @@ void eg_inspector_init(
   inspector->asset_manager = asset_manager;
   inspector->drawing_render_target = render_target;
 
-  re_canvas_init(
-      &inspector->canvas,
+  eg_picker_init(
+      &inspector->picker,
+      window,
       inspector->drawing_render_target->width,
-      inspector->drawing_render_target->height,
-      VK_FORMAT_R32_UINT);
-  inspector->canvas.clear_color = (VkClearColorValue){
-      .uint32 = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX},
-  };
+      inspector->drawing_render_target->height);
 
   eg_init_pipeline_spv(
       &inspector->gizmo_pipeline,
@@ -210,14 +94,14 @@ void eg_inspector_init(
 
   eg_init_pipeline_spv(
       &inspector->gizmo_picking_pipeline,
-      &inspector->canvas.render_target,
+      &inspector->picker.canvas.render_target,
       "/shaders/gizmo_picking.vert.spv",
       "/shaders/gizmo_picking.frag.spv",
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->picking_pipeline,
-      &inspector->canvas.render_target,
+      &inspector->picker.canvas.render_target,
       "/shaders/picking.vert.spv",
       "/shaders/picking.frag.spv",
       eg_picking_pipeline_parameters());
@@ -229,16 +113,12 @@ void eg_inspector_init(
 
   re_buffer_init(
       &inspector->pos_gizmo_vertex_buffer,
-      &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_VERTEX,
-          .size = sizeof(pos_gizmo_vertices),
-      });
+      &(re_buffer_options_t){.type = RE_BUFFER_TYPE_VERTEX,
+                             .size = sizeof(pos_gizmo_vertices)});
   re_buffer_init(
       &inspector->pos_gizmo_index_buffer,
-      &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_INDEX,
-          .size = sizeof(pos_gizmo_indices),
-      });
+      &(re_buffer_options_t){.type = RE_BUFFER_TYPE_INDEX,
+                             .size = sizeof(pos_gizmo_indices)});
 
   size_t staging_size =
       MAX(sizeof(pos_gizmo_vertices), sizeof(pos_gizmo_indices));
@@ -246,10 +126,8 @@ void eg_inspector_init(
   re_buffer_t staging_buffer;
   re_buffer_init(
       &staging_buffer,
-      &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_TRANSFER,
-          .size = staging_size,
-      });
+      &(re_buffer_options_t){.type = RE_BUFFER_TYPE_TRANSFER,
+                             .size = staging_size});
 
   void *memory;
   re_buffer_map_memory(&staging_buffer, &memory);
@@ -271,50 +149,17 @@ void eg_inspector_init(
   re_buffer_unmap_memory(&staging_buffer);
 
   re_buffer_destroy(&staging_buffer);
-
-  VK_CHECK(vkCreateFence(
-      g_ctx.device,
-      &(VkFenceCreateInfo){
-          .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-          .pNext = NULL,
-          .flags = 0,
-      },
-      NULL,
-      &inspector->fence));
-
-  re_allocate_cmd_buffers(
-      &(re_cmd_buffer_alloc_info_t){
-          .pool = g_ctx.graphics_command_pool,
-          .count = 1,
-          .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
-      },
-      &inspector->cmd_buffer);
 }
 
 void eg_inspector_destroy(eg_inspector_t *inspector) {
-  re_pipeline_destroy(&inspector->gizmo_pipeline);
-  re_pipeline_destroy(&inspector->gizmo_picking_pipeline);
   re_buffer_destroy(&inspector->pos_gizmo_vertex_buffer);
   re_buffer_destroy(&inspector->pos_gizmo_index_buffer);
 
+  re_pipeline_destroy(&inspector->gizmo_pipeline);
+  re_pipeline_destroy(&inspector->gizmo_picking_pipeline);
   re_pipeline_destroy(&inspector->picking_pipeline);
-  re_canvas_destroy(&inspector->canvas);
 
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  re_free_cmd_buffers(g_ctx.graphics_command_pool, 1, &inspector->cmd_buffer);
-  vkDestroyFence(g_ctx.device, inspector->fence, NULL);
-}
-
-/*
- *
- * Event callbacks
- *
- */
-
-static void framebuffer_resized(
-    eg_inspector_t *inspector, uint32_t width, uint32_t height) {
-  re_canvas_resize(&inspector->canvas, width, height);
+  eg_picker_destroy(&inspector->picker);
 }
 
 static void
@@ -342,8 +187,8 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
       &(VkClearRect){
           .rect.offset.x = 0,
           .rect.offset.y = 0,
-          .rect.extent.width = inspector->canvas.render_target.width,
-          .rect.extent.height = inspector->canvas.render_target.height,
+          .rect.extent.width = inspector->picker.canvas.render_target.width,
+          .rect.extent.height = inspector->picker.canvas.render_target.height,
           .baseArrayLayer = 0,
           .layerCount = 1,
       });
@@ -373,33 +218,18 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
       inspector->world, inspector->selected_entity, eg_transform_component_t);
 
   mat4_t object_mat = eg_transform_component_to_mat4(transform);
-  mat4_t mats[] = {
-      mat4_identity(),
-      mat4_identity(),
-      mat4_identity(),
-  };
-
-  // Y axis
-  mats[1].v[0] = (vec4_t){0.0f, 1.0f, 0.0f, 0.0f};
-  mats[1].v[1] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
-
-  // Z axis
-  mats[2].v[0] = (vec4_t){0.0f, 0.0f, 1.0f, 0.0f};
-  mats[2].v[2] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
 
   uint32_t color_indices[] = {
-      EG_DRAG_DIRECTION_X,
-      EG_DRAG_DIRECTION_Y,
-      EG_DRAG_DIRECTION_Z,
-  };
+      EG_DRAG_DIRECTION_X, EG_DRAG_DIRECTION_Y, EG_DRAG_DIRECTION_Z};
 
   for (uint32_t i = 0; i < 3; i++) {
-    mats[i].cols[3][0] = object_mat.cols[3][0];
-    mats[i].cols[3][1] = object_mat.cols[3][1];
-    mats[i].cols[3][2] = object_mat.cols[3][2];
+    mat4_t mat = gizmo_matrices[i];
+    mat.cols[3][0] = object_mat.cols[3][0];
+    mat.cols[3][1] = object_mat.cols[3][1];
+    mat.cols[3][2] = object_mat.cols[3][2];
 
     push_constant.mvp = mat4_mul(
-        mats[i],
+        mat,
         mat4_mul(
             inspector->world->camera.uniform.view,
             inspector->world->camera.uniform.proj));
@@ -426,20 +256,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     return;
   }
 
-  vkResetFences(g_ctx.device, 1, &inspector->fence);
-
-  re_begin_cmd_buffer(
-      inspector->cmd_buffer,
-      &(re_cmd_buffer_begin_info_t){
-          .usage = RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT,
-      });
-
-  const eg_cmd_info_t cmd_info = {
-      .frame_index = inspector->window->current_frame,
-      .cmd_buffer = inspector->cmd_buffer,
-  };
-
-  re_canvas_begin(&inspector->canvas, inspector->cmd_buffer);
+  const eg_cmd_info_t cmd_info = eg_picker_begin(&inspector->picker);
 
   eg_camera_bind(
       &inspector->world->camera, &cmd_info, &inspector->picking_pipeline, 0);
@@ -459,7 +276,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           EG_GET_COMP(inspector->world, entity, eg_transform_component_t);
 
       vkCmdPushConstants(
-          inspector->cmd_buffer,
+          cmd_info.cmd_buffer,
           inspector->picking_pipeline.layout.layout,
           inspector->picking_pipeline.layout.push_constants[0].stageFlags,
           inspector->picking_pipeline.layout.push_constants[0].offset,
@@ -476,67 +293,23 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   draw_gizmos_picking(inspector, &cmd_info);
 
-  re_canvas_end(&inspector->canvas, inspector->cmd_buffer);
-
-  // End command buffer
-  re_end_cmd_buffer(inspector->cmd_buffer);
-
-  VK_CHECK(vkQueueSubmit(
-      g_ctx.graphics_queue,
-      1,
-      &(VkSubmitInfo){
-          .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-          .commandBufferCount = 1,
-          .pCommandBuffers = &inspector->cmd_buffer,
-      },
-      inspector->fence));
-
-  VK_CHECK(
-      vkWaitForFences(g_ctx.device, 1, &inspector->fence, VK_TRUE, UINT64_MAX));
-
-  // Destroy fence
-
-  re_buffer_t staging_buffer;
-  re_buffer_init(
-      &staging_buffer,
-      &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_TRANSFER,
-          .size = sizeof(uint32_t),
-      });
+  eg_picker_end(&inspector->picker);
 
   double cursor_x, cursor_y;
   re_window_get_cursor_pos(inspector->window, &cursor_x, &cursor_y);
 
-  re_image_transfer_to_buffer(
-      inspector->canvas.resources[0].color.image,
-      &staging_buffer,
-      g_ctx.transient_command_pool,
-      (uint32_t)cursor_x,
-      (uint32_t)cursor_y,
-      1,
-      1,
-      0,
-      0);
+  uint32_t selected =
+      eg_picker_get(&inspector->picker, (uint32_t)cursor_x, (uint32_t)cursor_y);
 
-  void *mapping;
-  re_buffer_map_memory(&staging_buffer, &mapping);
-
-  uint32_t entity;
-  memcpy(&entity, mapping, sizeof(uint32_t));
-
-  re_buffer_unmap_memory(&staging_buffer);
-
-  re_buffer_destroy(&staging_buffer);
-
-  switch (entity) {
+  switch (selected) {
   case EG_DRAG_DIRECTION_X:
   case EG_DRAG_DIRECTION_Y:
   case EG_DRAG_DIRECTION_Z: {
-    inspector->drag_direction = entity;
+    inspector->drag_direction = selected;
     break;
   }
   default: {
-    inspector->selected_entity = entity;
+    inspector->selected_entity = selected;
     break;
   }
   }
@@ -551,14 +324,11 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     vec3_t transform_ndc =
         eg_camera_world_to_ndc(&inspector->world->camera, transform->position);
 
-    float nx =
-        (((float)cursor_x / (float)inspector->canvas.render_target.width) *
-         2.0f) -
-        1.0f;
-    float ny =
-        (((float)cursor_y / (float)inspector->canvas.render_target.height) *
-         2.0f) -
-        1.0f;
+    float width = (float)inspector->drawing_render_target->width;
+    float height = (float)inspector->drawing_render_target->height;
+
+    float nx = (((float)cursor_x / width) * 2.0f) - 1.0f;
+    float ny = (((float)cursor_y / height) * 2.0f) - 1.0f;
     vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
     vec3_t cursor_world =
         eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
@@ -567,17 +337,14 @@ static void mouse_pressed(eg_inspector_t *inspector) {
   }
 }
 
-static void mouse_released(eg_inspector_t *inspector) {
-  inspector->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
-  inspector->drag_direction = EG_DRAG_DIRECTION_NONE;
-}
-
 void eg_inspector_process_event(
     eg_inspector_t *inspector, const re_event_t *event) {
   switch (event->type) {
   case RE_EVENT_FRAMEBUFFER_RESIZED: {
-    framebuffer_resized(
-        inspector, (uint32_t)event->size.width, (uint32_t)event->size.height);
+    eg_picker_resize(
+        &inspector->picker,
+        (uint32_t)event->size.width,
+        (uint32_t)event->size.height);
     break;
   }
   case RE_EVENT_BUTTON_PRESSED: {
@@ -588,7 +355,8 @@ void eg_inspector_process_event(
   }
   case RE_EVENT_BUTTON_RELEASED: {
     if (event->mouse.button == GLFW_MOUSE_BUTTON_LEFT) {
-      mouse_released(inspector);
+      inspector->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
+      inspector->drag_direction = EG_DRAG_DIRECTION_NONE;
     }
     break;
   }
@@ -614,14 +382,12 @@ void eg_inspector_update(eg_inspector_t *inspector) {
 
   double cursor_x, cursor_y;
   re_window_get_cursor_pos(inspector->window, &cursor_x, &cursor_y);
-  float nx =
-      (((float)cursor_x / (float)inspector->drawing_render_target->width) *
-       2.0f) -
-      1.0f;
-  float ny =
-      (((float)cursor_y / (float)inspector->drawing_render_target->height) *
-       2.0f) -
-      1.0f;
+
+  float width = (float)inspector->drawing_render_target->width;
+  float height = (float)inspector->drawing_render_target->height;
+
+  float nx = (((float)cursor_x / width) * 2.0f) - 1.0f;
+  float ny = (((float)cursor_y / height) * 2.0f) - 1.0f;
   vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
   vec3_t cursor_world =
       eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
@@ -701,33 +467,19 @@ void eg_inspector_draw_gizmos(
       inspector->world, inspector->selected_entity, eg_transform_component_t);
 
   mat4_t object_mat = eg_transform_component_to_mat4(transform);
-  mat4_t mats[] = {
-      mat4_identity(),
-      mat4_identity(),
-      mat4_identity(),
-  };
 
-  // Y axis
-  mats[1].v[0] = (vec4_t){0.0f, 1.0f, 0.0f, 0.0f};
-  mats[1].v[1] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
-
-  // Z axis
-  mats[2].v[0] = (vec4_t){0.0f, 0.0f, 1.0f, 0.0f};
-  mats[2].v[2] = (vec4_t){1.0f, 0.0f, 0.0f, 0.0f};
-
-  vec4_t colors[] = {
-      (vec4_t){1.0f, 0.0f, 0.0f, 0.5f},
-      (vec4_t){0.0f, 1.0f, 0.0f, 0.5f},
-      (vec4_t){0.0f, 0.0f, 1.0f, 0.5f},
-  };
+  vec4_t colors[] = {{1.0f, 0.0f, 0.0f, 0.5f},
+                     {0.0f, 1.0f, 0.0f, 0.5f},
+                     {0.0f, 0.0f, 1.0f, 0.5f}};
 
   for (uint32_t i = 0; i < 3; i++) {
-    mats[i].cols[3][0] = object_mat.cols[3][0];
-    mats[i].cols[3][1] = object_mat.cols[3][1];
-    mats[i].cols[3][2] = object_mat.cols[3][2];
+    mat4_t mat = gizmo_matrices[i];
+    mat.cols[3][0] = object_mat.cols[3][0];
+    mat.cols[3][1] = object_mat.cols[3][1];
+    mat.cols[3][2] = object_mat.cols[3][2];
 
     push_constant.mvp = mat4_mul(
-        mats[i],
+        mat,
         mat4_mul(
             inspector->world->camera.uniform.view,
             inspector->world->camera.uniform.proj));
@@ -746,6 +498,133 @@ void eg_inspector_draw_gizmos(
   }
 }
 
+static void inspect_camera(eg_camera_t *camera) {
+  float deg = to_degrees(camera->fov);
+  igDragFloat("FOV", &deg, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+  camera->fov = to_radians(deg);
+}
+
+static void inspect_environment(eg_environment_t *environment) {
+  igDragFloat3(
+      "Sun direction",
+      &environment->uniform.sun_direction.x,
+      0.01f,
+      0.0f,
+      0.0f,
+      "%.3f",
+      1.0f);
+
+  igColorEdit3("Sun color", &environment->uniform.sun_color.x, 0);
+
+  igDragFloat(
+      "Sun intensity",
+      &environment->uniform.sun_intensity,
+      0.01f,
+      0.0f,
+      0.0f,
+      "%.3f",
+      1.0f);
+
+  igDragFloat(
+      "Exposure",
+      &environment->uniform.exposure,
+      0.01f,
+      0.0f,
+      0.0f,
+      "%.3f",
+      1.0f);
+}
+
+static void inspect_statistics(re_window_t *window) {
+  igText("Delta time: %.4fms", window->delta_time);
+  igText("FPS: %.2f", 1.0f / window->delta_time);
+}
+
+static void inspect_environment_asset(eg_asset_t *asset) {}
+
+static void inspect_pbr_material_asset(eg_asset_t *asset) {
+  eg_pbr_material_asset_t *material = (eg_pbr_material_asset_t *)asset;
+
+  igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
+  igDragFloat(
+      "Metallic", &material->uniform.metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+  igDragFloat(
+      "Roughness",
+      &material->uniform.roughness,
+      0.01f,
+      0.0f,
+      1.0f,
+      "%.3f",
+      1.0f);
+  igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+}
+
+static void inspect_gltf_model_asset(eg_asset_t *asset) {
+  eg_gltf_model_asset_t *gltf_asset = (eg_gltf_model_asset_t *)asset;
+
+  igText("Vertex count: %u", gltf_asset->vertex_count);
+  igText("Index count: %u", gltf_asset->index_count);
+  igText("Image count: %u", gltf_asset->image_count);
+  igText("Mesh count: %u", gltf_asset->mesh_count);
+
+  for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
+    igPushIDInt(j);
+    eg_gltf_model_asset_material_t *material = &gltf_asset->materials[j];
+
+    if (igCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
+      igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
+      igDragFloat(
+          "Metallic",
+          &material->uniform.metallic,
+          0.01f,
+          0.0f,
+          1.0f,
+          "%.3f",
+          1.0f);
+      igDragFloat(
+          "Roughness",
+          &material->uniform.roughness,
+          0.01f,
+          0.0f,
+          1.0f,
+          "%.3f",
+          1.0f);
+      igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+    }
+    igPopID();
+  }
+}
+
+static void inspect_transform_component(eg_world_t *world, eg_entity_t entity) {
+  eg_transform_component_t *transform =
+      EG_GET_COMP(world, entity, eg_transform_component_t);
+
+  igDragFloat3(
+      "Position", &transform->position.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+  igDragFloat3("Scale", &transform->scale.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+  igDragFloat3("Axis", &transform->axis.x, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+  igDragFloat("Angle", &transform->angle, 0.01f, 0.0f, 0.0f, "%.3f rad", 1.0f);
+}
+
+static void
+inspect_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
+  eg_gltf_model_component_t *gltf_model =
+      EG_GET_COMP(world, entity, eg_gltf_model_component_t);
+
+  igText("Asset: %s", gltf_model->asset->asset.name);
+  igSameLine(0.0f, -1.0f);
+  if (igSmallButton("Inspect")) {
+    igOpenPopup("gltfmodelpopup");
+  }
+
+  if (igBeginPopup("gltfmodelpopup", 0)) {
+    inspect_gltf_model_asset((eg_asset_t *)gltf_model->asset);
+    igEndPopup();
+  }
+}
+
+static void inspect_mesh_component(eg_world_t *world, eg_entity_t entity) {}
+
 void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   static char str[256] = "";
 
@@ -761,17 +640,17 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
 
       if (eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE) &&
           igCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspector_transform_component(world, entity);
+        inspect_transform_component(world, entity);
       }
 
       if (eg_world_has_comp(world, entity, EG_MESH_COMPONENT_TYPE) &&
           igCollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspector_mesh_component(world, entity);
+        inspect_mesh_component(world, entity);
       }
 
       if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
           igCollapsingHeader("GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspector_gltf_model_component(world, entity);
+        inspect_gltf_model_component(world, entity);
       }
     }
     igEnd();
@@ -781,18 +660,18 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
     if (igBeginTabBar("Inspector", 0)) {
       if (igBeginTabItem("World", NULL, 0)) {
         if (igCollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
-          inspector_camera(&world->camera);
+          inspect_camera(&world->camera);
         }
 
         if (igCollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen)) {
-          inspector_environment(&world->environment);
+          inspect_environment(&world->environment);
         }
 
         igEndTabItem();
       }
 
       if (igBeginTabItem("Statistics", NULL, 0)) {
-        inspector_statistics(window);
+        inspect_statistics(window);
         igEndTabItem();
       }
 
@@ -827,13 +706,13 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
           switch (asset->type) {
           case EG_ENVIRONMENT_ASSET_TYPE: {
             ASSET_HEADER("Environment: %s", asset->name) {
-              inspector_environment_asset(asset);
+              inspect_environment_asset(asset);
             }
             break;
           }
           case EG_PBR_MATERIAL_ASSET_TYPE: {
             ASSET_HEADER("Material: %s", asset->name) {
-              inspector_pbr_material_asset(asset);
+              inspect_pbr_material_asset(asset);
             }
             break;
           }
@@ -847,7 +726,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
           }
           case EG_GLTF_MODEL_ASSET_TYPE: {
             ASSET_HEADER("GLTF model: %s", asset->name) {
-              inspector_gltf_model_asset(asset);
+              inspect_gltf_model_asset(asset);
             }
             break;
           }

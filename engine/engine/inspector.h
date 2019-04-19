@@ -1,5 +1,6 @@
 #pragma once
 
+#include "picker.h"
 #include "world.h"
 #include <renderer/canvas.h>
 #include <renderer/event.h>
@@ -23,9 +24,10 @@ typedef struct eg_inspector_t {
   eg_world_t *world;
   eg_asset_manager_t *asset_manager;
 
+  eg_picker_t picker;
+
   re_render_target_t *drawing_render_target;
 
-  re_canvas_t canvas;
   re_pipeline_t picking_pipeline;
 
   re_pipeline_t gizmo_pipeline;
@@ -38,9 +40,6 @@ typedef struct eg_inspector_t {
   eg_drag_direction_t drag_direction;
 
   vec3_t pos_delta;
-
-  re_cmd_buffer_t cmd_buffer;
-  VkFence fence;
 } eg_inspector_t;
 
 void eg_inspector_init(

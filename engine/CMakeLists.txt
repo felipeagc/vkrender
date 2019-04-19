@@ -14,6 +14,8 @@ add_library(
 	engine/imgui.c
 	engine/imgui.h
 
+	engine/picker.c
+	engine/picker.h
 	engine/inspector.c
 	engine/inspector.h
 
