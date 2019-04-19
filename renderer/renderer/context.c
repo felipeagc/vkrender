@@ -6,8 +6,19 @@
 
 re_context_t g_ctx;
 
+#ifdef RE_ENABLE_VALIDATION
+static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
+    "VK_LAYER_LUNARG_standard_validation",
+};
+#endif
+
+static const char *const RE_REQUIRED_DEVICE_EXTENSIONS[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+};
+
 // Debug callback
 
+#ifdef RE_ENABLE_VALIDATION
 // Ignore warnings for this function
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
 #pragma GCC diagnostic push
@@ -56,7 +67,13 @@ void DestroyDebugReportCallbackEXT(
     func(instance, callback, pAllocator);
   }
 }
+#endif
 
+void glfw_error_callback(int error, const char *description) {
+  RE_LOG_ERROR("GLFW error (%d): %s", error, description);
+}
+
+#ifdef RE_ENABLE_VALIDATION
 static inline bool check_validation_layer_support() {
   uint32_t count;
   vkEnumerateInstanceLayerProperties(&count, NULL);
@@ -84,6 +101,7 @@ static inline bool check_validation_layer_support() {
   free(available_layers);
   return true;
 }
+#endif
 
 static inline void get_required_extensions(
     const char **out_extensions, uint32_t *out_extension_count) {
@@ -239,6 +257,10 @@ static inline bool check_physical_device_properties(
     }
   }
 
+  printf("%u\n", graphics_queue_family_index);
+  printf("%u\n", present_queue_family_index);
+  printf("%u\n", transfer_queue_family_index);
+
   if (graphics_queue_family_index == UINT32_MAX ||
       present_queue_family_index == UINT32_MAX ||
       transfer_queue_family_index == UINT32_MAX) {
@@ -314,6 +336,7 @@ static inline void create_instance(re_context_t *ctx) {
   free((void *)extensions);
 }
 
+#ifdef RE_ENABLE_VALIDATION
 static inline void setup_debug_callback(re_context_t *ctx) {
   VkDebugReportCallbackCreateInfoEXT createInfo = {0};
   createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -324,6 +347,7 @@ static inline void setup_debug_callback(re_context_t *ctx) {
   VK_CHECK(CreateDebugReportCallbackEXT(
       ctx->instance, &createInfo, NULL, &ctx->debug_callback));
 }
+#endif
 
 static inline void create_device(re_context_t *ctx) {
   uint32_t physical_device_count;
@@ -463,7 +487,8 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
 }
 
 void re_context_init() {
-  assert(glfwInit());
+  glfwInit();
+  glfwSetErrorCallback(glfw_error_callback);
 
   g_ctx.instance = VK_NULL_HANDLE;
   g_ctx.device = VK_NULL_HANDLE;
@@ -658,7 +683,9 @@ void re_context_destroy() {
 
   vkDestroyDevice(g_ctx.device, NULL);
 
+#ifdef RE_ENABLE_VALIDATION
   DestroyDebugReportCallbackEXT(g_ctx.instance, g_ctx.debug_callback, NULL);
+#endif
 
   vkDestroyInstance(g_ctx.instance, NULL);
 

@@ -418,7 +418,8 @@ void re_canvas_init(
   canvas->render_target.sample_count = VK_SAMPLE_COUNT_1_BIT;
   canvas->clear_color = (VkClearColorValue){0};
 
-  assert(re_context_get_supported_depth_format(&canvas->depth_format));
+  bool res = re_context_get_supported_depth_format(&canvas->depth_format);
+  assert(res);
 
   create_color_target(canvas);
   create_depth_target(canvas);

@@ -346,7 +346,8 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
 // Populates the depthStencil member struct
 static inline void create_depth_stencil_resources(re_window_t *window) {
-  assert(re_context_get_supported_depth_format(&window->depth_format));
+  bool res = re_context_get_supported_depth_format(&window->depth_format);
+  assert(res);
 
   VkImageCreateInfo image_create_info = {
       VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType

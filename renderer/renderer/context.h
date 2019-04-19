@@ -12,21 +12,6 @@ typedef struct re_window_t re_window_t;
 #define RE_ENABLE_VALIDATION
 #endif
 
-#ifdef RE_ENABLE_VALIDATION
-static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
-    "VK_LAYER_LUNARG_standard_validation",
-};
-#else
-// TODO: why is it always using validation layers??
-static const char *const RE_REQUIRED_VALIDATION_LAYERS[] = {
-    "VK_LAYER_LUNARG_standard_validation",
-};
-#endif
-
-static const char *const RE_REQUIRED_DEVICE_EXTENSIONS[] = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-};
-
 typedef struct re_context_t {
   VkInstance instance;
   VkDevice device;
