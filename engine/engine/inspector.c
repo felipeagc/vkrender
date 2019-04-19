@@ -53,18 +53,18 @@ static const mat4_t gizmo_matrices[] = {
               {0.0, 0.0, 0.0, 1.0}}},
 };
 
-static const float thickness = 0.05f;
+#define GIZMO_THICKNESS 0.05f
 
 static const re_vertex_t pos_gizmo_vertices[] = {
-    {.pos = {thickness, thickness, thickness}},
-    {.pos = {thickness, -thickness, thickness}},
-    {.pos = {thickness, -thickness, -thickness}},
-    {.pos = {thickness, thickness, -thickness}},
+    {.pos = {GIZMO_THICKNESS, GIZMO_THICKNESS, GIZMO_THICKNESS}},
+    {.pos = {GIZMO_THICKNESS, -GIZMO_THICKNESS, GIZMO_THICKNESS}},
+    {.pos = {GIZMO_THICKNESS, -GIZMO_THICKNESS, -GIZMO_THICKNESS}},
+    {.pos = {GIZMO_THICKNESS, GIZMO_THICKNESS, -GIZMO_THICKNESS}},
 
-    {.pos = {thickness * 20.0f, thickness, thickness}},
-    {.pos = {thickness * 20.0f, -thickness, thickness}},
-    {.pos = {thickness * 20.0f, -thickness, -thickness}},
-    {.pos = {thickness * 20.0f, thickness, -thickness}},
+    {.pos = {GIZMO_THICKNESS * 20.0f, GIZMO_THICKNESS, GIZMO_THICKNESS}},
+    {.pos = {GIZMO_THICKNESS * 20.0f, -GIZMO_THICKNESS, GIZMO_THICKNESS}},
+    {.pos = {GIZMO_THICKNESS * 20.0f, -GIZMO_THICKNESS, -GIZMO_THICKNESS}},
+    {.pos = {GIZMO_THICKNESS * 20.0f, GIZMO_THICKNESS, -GIZMO_THICKNESS}},
 };
 
 void eg_inspector_init(
