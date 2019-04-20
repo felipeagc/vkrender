@@ -112,7 +112,7 @@ int main(int argc, const char *argv[]) {
         eg_asset_alloc(&game.asset_manager, "Helmet", eg_gltf_model_asset_t);
     eg_gltf_model_asset_init(model_asset, "/assets/DamagedHelmet.glb", true);
 
-    eg_entity_t ent = eg_world_add_entity(&game.world);
+    eg_entity_t ent = eg_world_add(&game.world);
 
     eg_transform_component_t *transform_comp =
         EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
@@ -128,7 +128,7 @@ int main(int argc, const char *argv[]) {
         &game.asset_manager, "Water bottle", eg_gltf_model_asset_t);
     eg_gltf_model_asset_init(model_asset, "/assets/WaterBottle.glb", false);
 
-    eg_entity_t ent = eg_world_add_entity(&game.world);
+    eg_entity_t ent = eg_world_add(&game.world);
 
     eg_transform_component_t *transform_comp =
         EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
@@ -146,7 +146,7 @@ int main(int argc, const char *argv[]) {
         eg_asset_alloc(&game.asset_manager, "Boom box", eg_gltf_model_asset_t);
     eg_gltf_model_asset_init(model_asset, "/assets/BoomBox.glb", false);
 
-    eg_entity_t ent = eg_world_add_entity(&game.world);
+    eg_entity_t ent = eg_world_add(&game.world);
 
     eg_transform_component_t *transform_comp =
         EG_ADD_COMP(&game.world, eg_transform_component_t, ent);

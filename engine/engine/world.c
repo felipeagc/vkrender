@@ -2,7 +2,7 @@
 #include <string.h>
 
 #define EG__HAS_COMP(world, entity, comp_type)                                 \
-  fstd_bitset_at(world->masks[comp_type].bytes, entity)
+  fstd_bitset_at(&world->masks[comp_type], entity)
 
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset) {
@@ -15,15 +15,15 @@ void eg_world_init(
   }
 
   for (uint32_t i = 0; i < EG_COMP_TYPE_MAX; i++) {
-    fstd_bitset_reset(world->masks[i].bytes, EG_MAX_ENTITIES);
+    fstd_bitset_reset(&world->masks[i], EG_MAX_ENTITIES);
   }
 }
 
-eg_entity_t eg_world_add_entity(eg_world_t *world) {
+eg_entity_t eg_world_add(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     bool empty = true;
     for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
-      if (fstd_bitset_at(world->masks[c].bytes, e)) {
+      if (fstd_bitset_at(&world->masks[c], e)) {
         empty = false;
         break;
       }
@@ -37,18 +37,18 @@ eg_entity_t eg_world_add_entity(eg_world_t *world) {
   return UINT32_MAX;
 }
 
-void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity) {
+void eg_world_remove(eg_world_t *world, eg_entity_t entity) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
       EG_COMP_DESTRUCTORS[c](&world->pools[c].data[entity * EG_COMP_SIZES[c]]);
-      fstd_bitset_set(world->masks[c].bytes, entity, false);
+      fstd_bitset_set(&world->masks[c], entity, false);
     }
   }
 }
 
 void *eg_world__add_comp(
     eg_world_t *world, eg_component_type_t comp, eg_entity_t entity) {
-  fstd_bitset_set(world->masks[comp].bytes, entity, true);
+  fstd_bitset_set(&world->masks[comp], entity, true);
   memset(
       &world->pools[comp].data[entity * EG_COMP_SIZES[comp]],
       0,
@@ -76,7 +76,7 @@ void eg_world__remove_comp(
         &world->pools[comp].data[entity * EG_COMP_SIZES[comp]]);
   }
 
-  fstd_bitset_set(world->masks[comp].bytes, entity, false);
+  fstd_bitset_set(&world->masks[comp], entity, false);
 }
 
 bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity) {
