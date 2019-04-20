@@ -20,7 +20,7 @@ void eg_rendering_system_render(
       EG_COMP_ARRAY(world, eg_gltf_model_component_t);
 
   // Draw all meshes
-  for (eg_entity_t e = 0; e < EG_MAX_ENTITIES; e++) {
+  for (eg_entity_t e = 0; e < world->entity_max; e++) {
     if (EG_HAS_TAG(world, e, EG_TAG_HIDDEN)) {
       continue;
     }

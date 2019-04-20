@@ -278,7 +278,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
   eg_gltf_model_component_t *gltf_models =
       EG_COMP_ARRAY(inspector->world, eg_gltf_model_component_t);
 
-  for (eg_entity_t e = 0; e < EG_MAX_ENTITIES; e++) {
+  for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
     if (EG_HAS_COMP(inspector->world, eg_gltf_model_component_t, e) &&
         EG_HAS_COMP(inspector->world, eg_transform_component_t, e)) {
       vkCmdPushConstants(
@@ -731,8 +731,12 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
       }
 
       if (igBeginTabItem("Entities", NULL, 0)) {
-        for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
-          if (!eg_world_has_any_comp(world, entity)) {
+        if (igSmallButton("Add entity")) {
+          eg_world_add(world);
+        }
+
+        for (eg_entity_t entity = 0; entity < world->entity_max; entity++) {
+          if (!eg_world_exists(world, entity)) {
             continue;
           }
 

@@ -58,8 +58,11 @@ typedef struct eg_world_t {
   eg_camera_t camera;
   eg_environment_t environment;
 
+  eg_entity_t entity_max;
+
   eg_component_pool_t pools[EG_COMP_TYPE_MAX];
   eg_entity_mask_t comp_masks[EG_COMP_TYPE_MAX];
+  eg_entity_mask_t existence;
   uint64_t tags[EG_MAX_ENTITIES];
 } eg_world_t;
 
@@ -70,12 +73,12 @@ eg_entity_t eg_world_add(eg_world_t *world);
 
 void eg_world_remove(eg_world_t *world, eg_entity_t entity);
 
+bool eg_world_exists(eg_world_t *world, eg_entity_t entity);
+
 void *eg_world_add_comp(
     eg_world_t *world, eg_component_type_t comp, eg_entity_t entity);
 
 void eg_world_remove_comp(
     eg_world_t *world, eg_component_type_t comp, eg_entity_t entity);
-
-bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity);
 
 void eg_world_destroy(eg_world_t *world);
