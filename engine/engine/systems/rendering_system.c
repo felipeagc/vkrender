@@ -13,32 +13,28 @@ void eg_rendering_system_render(
   eg_camera_bind(&world->camera, cmd_info, pipeline, 0);
   eg_environment_bind(&world->environment, cmd_info, pipeline, 1);
 
+  eg_transform_component_t *transforms =
+      EG_COMP_ARRAY(world, eg_transform_component_t);
+  eg_mesh_component_t *meshes = EG_COMP_ARRAY(world, eg_mesh_component_t);
+  eg_gltf_model_component_t *gltf_models =
+      EG_COMP_ARRAY(world, eg_gltf_model_component_t);
+
   // Draw all meshes
-  for (eg_entity_t entity = 0; entity < EG_MAX_ENTITIES; entity++) {
-    if (eg_world_has_tag(world, entity, EG_ENTITY_TAG_HIDDEN)) {
-      continue;
+  for (eg_entity_t e = 0; e < EG_MAX_ENTITIES; e++) {
+    if (EG_HAS_COMP(world, eg_mesh_component_t, e) &&
+        EG_HAS_COMP(world, eg_transform_component_t, e)) {
+      meshes[e].model.uniform.transform =
+          eg_transform_component_to_mat4(&transforms[e]);
+      eg_mesh_component_draw(&meshes[e], cmd_info, pipeline);
     }
 
-    if (eg_world_has_comp(world, entity, EG_MESH_COMPONENT_TYPE) &&
-        eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
-      eg_mesh_component_t *mesh =
-          EG_GET_COMP(world, entity, eg_mesh_component_t);
-      eg_transform_component_t *transform =
-          EG_GET_COMP(world, entity, eg_transform_component_t);
-
-      mesh->model.uniform.transform = eg_transform_component_to_mat4(transform);
-      eg_mesh_component_draw(mesh, cmd_info, pipeline);
-    }
-
-    if (eg_world_has_comp(world, entity, EG_GLTF_MODEL_COMPONENT_TYPE) &&
-        eg_world_has_comp(world, entity, EG_TRANSFORM_COMPONENT_TYPE)) {
-      eg_gltf_model_component_t *model =
-          EG_GET_COMP(world, entity, eg_gltf_model_component_t);
-      eg_transform_component_t *transform =
-          EG_GET_COMP(world, entity, eg_transform_component_t);
-
+    if (EG_HAS_COMP(world, eg_gltf_model_component_t, e) &&
+        EG_HAS_COMP(world, eg_transform_component_t, e)) {
       eg_gltf_model_component_draw(
-          model, cmd_info, pipeline, eg_transform_component_to_mat4(transform));
+          &gltf_models[e],
+          cmd_info,
+          pipeline,
+          eg_transform_component_to_mat4(&transforms[e]));
     }
   }
 }

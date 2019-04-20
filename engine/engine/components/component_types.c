@@ -1,4 +1,16 @@
 #include "component_types.h"
+#include "gltf_model_component.h"
+#include "mesh_component.h"
+#include "transform_component.h"
 
-eg_component_destructor_t eg_component_destructors[EG_COMPONENT_TYPE_COUNT];
-size_t eg_component_sizes[EG_COMPONENT_TYPE_COUNT];
+#define E(t, destructor, name) sizeof(t),
+const size_t EG_COMP_SIZES[] = {EG__COMPS};
+#undef E
+
+#define E(t, destructor, name) name,
+const char *EG_COMP_NAMES[] = {EG__COMPS};
+#undef E
+
+#define E(t, destructor, name) ((eg_component_destructor_t)destructor),
+const eg_component_destructor_t EG_COMP_DESTRUCTORS[] = {EG__COMPS};
+#undef E

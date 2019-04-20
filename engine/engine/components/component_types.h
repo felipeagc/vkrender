@@ -12,33 +12,19 @@
 
 typedef void (*eg_component_destructor_t)(void *);
 
-typedef enum eg_component_type_t {
-  EG_TRANSFORM_COMPONENT_TYPE,
-  EG_MESH_COMPONENT_TYPE,
-  EG_GLTF_MODEL_COMPONENT_TYPE,
-  EG_COMPONENT_TYPE_COUNT,
-} eg_component_type_t;
-
-extern eg_component_destructor_t
-    eg_component_destructors[EG_COMPONENT_TYPE_COUNT];
-extern size_t eg_component_sizes[EG_COMPONENT_TYPE_COUNT];
-
 #define EG_COMP_TYPE(comp) EG_COMP_TYPE_##comp
-#define EG_COMP_DESTROY(comp) EG_COMP_DESTROY_##comp
 
-#define EG_COMP_TYPE_eg_transform_component_t EG_TRANSFORM_COMPONENT_TYPE
-#define EG_COMP_DESTROY_eg_transform_component_t eg_transform_component_destroy
+#define EG__COMPS                                                              \
+  E(eg_transform_component_t, eg_transform_component_destroy, "Transform")     \
+  E(eg_mesh_component_t, eg_mesh_component_destroy, "Mesh")                    \
+  E(eg_gltf_model_component_t, eg_gltf_model_component_destroy, "GLTF Model")
 
-#define EG_COMP_TYPE_eg_mesh_component_t EG_MESH_COMPONENT_TYPE
-#define EG_COMP_DESTROY_eg_mesh_component_t eg_mesh_component_destroy
+#define E(t, destructor, name) EG_COMP_TYPE(t),
+typedef enum eg_component_type_t {
+  EG__COMPS EG_COMP_TYPE_MAX
+} eg_component_type_t;
+#undef E
 
-#define EG_COMP_TYPE_eg_gltf_model_component_t EG_GLTF_MODEL_COMPONENT_TYPE
-#define EG_COMP_DESTROY_eg_gltf_model_component_t                              \
-  eg_gltf_model_component_destroy
-
-#define EG_REGISTER_COMP(comp)                                                 \
-  {                                                                            \
-    eg_component_sizes[EG_COMP_TYPE(comp)] = sizeof(comp);                     \
-    eg_component_destructors[EG_COMP_TYPE(comp)] =                             \
-        (eg_component_destructor_t)EG_COMP_DESTROY(comp);                      \
-  }
+extern const size_t EG_COMP_SIZES[EG_COMP_TYPE_MAX];
+extern const char *EG_COMP_NAMES[EG_COMP_TYPE_MAX];
+extern const eg_component_destructor_t EG_COMP_DESTRUCTORS[EG_COMP_TYPE_MAX];

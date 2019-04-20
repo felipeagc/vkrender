@@ -115,11 +115,11 @@ int main(int argc, const char *argv[]) {
     eg_entity_t ent = eg_world_add_entity(&game.world);
 
     eg_transform_component_t *transform_comp =
-        eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+        EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
     eg_transform_component_init(transform_comp);
 
     eg_gltf_model_component_t *model_comp =
-        eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
+        EG_ADD_COMP(&game.world, eg_gltf_model_component_t, ent);
     eg_gltf_model_component_init(model_comp, model_asset);
   }
 
@@ -131,13 +131,13 @@ int main(int argc, const char *argv[]) {
     eg_entity_t ent = eg_world_add_entity(&game.world);
 
     eg_transform_component_t *transform_comp =
-        eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+        EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
     eg_transform_component_init(transform_comp);
     transform_comp->position = (vec3_t){2.0, 0.0, 0.0};
     transform_comp->scale = (vec3_t){10.0, 10.0, 10.0};
 
     eg_gltf_model_component_t *model_comp =
-        eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
+        EG_ADD_COMP(&game.world, eg_gltf_model_component_t, ent);
     eg_gltf_model_component_init(model_comp, model_asset);
   }
 
@@ -149,13 +149,13 @@ int main(int argc, const char *argv[]) {
     eg_entity_t ent = eg_world_add_entity(&game.world);
 
     eg_transform_component_t *transform_comp =
-        eg_world_add_comp(&game.world, ent, EG_TRANSFORM_COMPONENT_TYPE);
+        EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
     eg_transform_component_init(transform_comp);
     transform_comp->position = (vec3_t){-2.0, 0.0, 0.0};
     transform_comp->scale = (vec3_t){100.0, 100.0, 100.0};
 
     eg_gltf_model_component_t *model_comp =
-        eg_world_add_comp(&game.world, ent, EG_GLTF_MODEL_COMPONENT_TYPE);
+        EG_ADD_COMP(&game.world, eg_gltf_model_component_t, ent);
     eg_gltf_model_component_init(model_comp, model_asset);
   }
 

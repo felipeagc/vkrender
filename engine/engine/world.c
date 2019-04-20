@@ -1,40 +1,29 @@
 #include "world.h"
-#include "components/gltf_model_component.h"
-#include "components/mesh_component.h"
-#include "components/transform_component.h"
 #include <string.h>
 
-static inline void eg_init_comps(eg_world_t *world, eg_component_type_t comp) {
-  world->components[comp] = calloc(EG_MAX_ENTITIES, eg_component_sizes[comp]);
-}
+#define EG__HAS_COMP(world, entity, comp_type)                                 \
+  fstd_bitset_at(world->masks[comp_type].bytes, entity)
 
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset) {
   eg_camera_init(&world->camera);
   eg_environment_init(&world->environment, environment_asset);
 
-  world->tags = calloc(EG_MAX_ENTITIES, sizeof(*world->tags));
+  // Initialize component pools
+  for (uint32_t comp = 0; comp < EG_COMP_TYPE_MAX; comp++) {
+    world->pools[comp].data = calloc(EG_MAX_ENTITIES, EG_COMP_SIZES[comp]);
+  }
 
-  // Register component types
-  EG_REGISTER_COMP(eg_transform_component_t);
-  EG_REGISTER_COMP(eg_mesh_component_t);
-  EG_REGISTER_COMP(eg_gltf_model_component_t);
-
-  // Initialize component types
-  eg_init_comps(world, EG_TRANSFORM_COMPONENT_TYPE);
-  eg_init_comps(world, EG_MESH_COMPONENT_TYPE);
-  eg_init_comps(world, EG_GLTF_MODEL_COMPONENT_TYPE);
-
-  for (uint32_t i = 0; i < EG_COMPONENT_TYPE_COUNT; i++) {
-    fstd_bitset_reset(world->component_bitsets[i].bytes, EG_MAX_ENTITIES);
+  for (uint32_t i = 0; i < EG_COMP_TYPE_MAX; i++) {
+    fstd_bitset_reset(world->masks[i].bytes, EG_MAX_ENTITIES);
   }
 }
 
 eg_entity_t eg_world_add_entity(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     bool empty = true;
-    for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-      if (fstd_bitset_at(world->component_bitsets[c].bytes, e)) {
+    for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
+      if (fstd_bitset_at(world->masks[c].bytes, e)) {
         empty = false;
         break;
       }
@@ -50,87 +39,65 @@ eg_entity_t eg_world_add_entity(eg_world_t *world) {
 
 void eg_world_remove_entity(eg_world_t *world, eg_entity_t entity) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
-    for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-      eg_component_destructors[c](
-          &world->components[c][entity * eg_component_sizes[c]]);
-      fstd_bitset_set(world->component_bitsets[c].bytes, entity, true);
+    for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
+      EG_COMP_DESTRUCTORS[c](&world->pools[c].data[entity * EG_COMP_SIZES[c]]);
+      fstd_bitset_set(world->masks[c].bytes, entity, false);
     }
   }
 }
 
-void eg_world_set_tags(
-    eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag) {
-  world->tags[entity] = tag;
-}
-
-eg_entity_tag_t eg_world_get_tags(eg_world_t *world, eg_entity_t entity) {
-  return world->tags[entity];
-}
-
-bool eg_world_has_tag(
-    eg_world_t *world, eg_entity_t entity, eg_entity_tag_t tag) {
-  return world->tags[entity] & tag;
-}
-
-void *eg_world_add_comp(
-    eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  fstd_bitset_set(world->component_bitsets[comp].bytes, entity, true);
+void *eg_world__add_comp(
+    eg_world_t *world, eg_component_type_t comp, eg_entity_t entity) {
+  fstd_bitset_set(world->masks[comp].bytes, entity, true);
   memset(
-      &world->components[comp][entity * eg_component_sizes[comp]],
+      &world->pools[comp].data[entity * EG_COMP_SIZES[comp]],
       0,
-      eg_component_sizes[comp]);
+      EG_COMP_SIZES[comp]);
 
-  return &world->components[comp][entity * eg_component_sizes[comp]];
+  return &world->pools[comp].data[entity * EG_COMP_SIZES[comp]];
 }
 
-bool eg_world_has_comp(
-    eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  return fstd_bitset_at(world->component_bitsets[comp].bytes, entity);
-}
-
-bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity) {
-  for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-    if (eg_world_has_comp(world, entity, (eg_component_type_t)c)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void eg_world_remove_comp(
-    eg_world_t *world, eg_entity_t entity, eg_component_type_t comp) {
-  if (!eg_world_has_comp(world, entity, comp)) {
+void eg_world__remove_comp(
+    eg_world_t *world, eg_component_type_t comp, eg_entity_t entity) {
+  if (!EG__HAS_COMP(world, entity, comp)) {
     return;
   }
 
   bool zeroed = true;
-  for (uint32_t i = 0; i < eg_component_sizes[comp]; i++) {
-    if (world->components[comp][entity * eg_component_sizes[comp] + i] != 0) {
+  for (uint32_t i = 0; i < EG_COMP_SIZES[comp]; i++) {
+    if (world->pools[comp].data[entity * EG_COMP_SIZES[comp] + i] != 0) {
       zeroed = false;
       break;
     }
   }
 
   if (!zeroed) {
-    eg_component_destructors[comp](
-        &world->components[comp][entity * eg_component_sizes[comp]]);
+    EG_COMP_DESTRUCTORS[comp](
+        &world->pools[comp].data[entity * EG_COMP_SIZES[comp]]);
   }
 
-  fstd_bitset_set(world->component_bitsets[comp].bytes, entity, false);
+  fstd_bitset_set(world->masks[comp].bytes, entity, false);
+}
+
+bool eg_world_has_any_comp(eg_world_t *world, eg_entity_t entity) {
+  for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
+    if (EG__HAS_COMP(world, entity, c)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void eg_world_destroy(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
-    for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-      eg_world_remove_comp(world, e, (eg_component_type_t)c);
+    for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
+      eg_world__remove_comp(world, (eg_component_type_t)c, e);
     }
   }
 
-  for (uint32_t c = 0; c < EG_COMPONENT_TYPE_COUNT; c++) {
-    free(world->components[c]);
+  for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
+    free(world->pools[c].data);
   }
-
-  free(world->tags);
 
   eg_environment_destroy(&world->environment);
   eg_camera_destroy(&world->camera);
