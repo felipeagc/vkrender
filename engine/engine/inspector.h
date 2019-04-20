@@ -33,6 +33,8 @@ typedef struct eg_inspector_t {
   re_pipeline_t gizmo_pipeline;
   re_pipeline_t gizmo_picking_pipeline;
 
+  re_pipeline_t outline_pipeline;
+
   uint32_t pos_gizmo_index_count;
   re_buffer_t pos_gizmo_vertex_buffer;
   re_buffer_t pos_gizmo_index_buffer;
@@ -57,6 +59,9 @@ void eg_inspector_process_event(
 void eg_inspector_update(eg_inspector_t *inspector);
 
 void eg_inspector_draw_gizmos(
+    eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info);
+
+void eg_inspector_draw_selected_outline(
     eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info);
 
 void eg_inspector_draw_ui(eg_inspector_t *inspector);

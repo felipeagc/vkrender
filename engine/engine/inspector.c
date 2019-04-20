@@ -93,6 +93,13 @@ void eg_inspector_init(
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
+      &inspector->outline_pipeline,
+      inspector->drawing_render_target,
+      "/shaders/outline.vert.spv",
+      "/shaders/outline.frag.spv",
+      eg_outline_pipeline_parameters());
+
+  eg_init_pipeline_spv(
       &inspector->gizmo_picking_pipeline,
       &inspector->picker.canvas.render_target,
       "/shaders/gizmo_picking.vert.spv",
@@ -158,6 +165,7 @@ void eg_inspector_destroy(eg_inspector_t *inspector) {
   re_pipeline_destroy(&inspector->gizmo_pipeline);
   re_pipeline_destroy(&inspector->gizmo_picking_pipeline);
   re_pipeline_destroy(&inspector->picking_pipeline);
+  re_pipeline_destroy(&inspector->outline_pipeline);
 
   eg_picker_destroy(&inspector->picker);
 }
@@ -283,7 +291,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           sizeof(uint32_t),
           &entity);
 
-      eg_gltf_model_component_draw_picking(
+      eg_gltf_model_component_draw_no_mat(
           model,
           &cmd_info,
           &inspector->picking_pipeline,
@@ -496,6 +504,59 @@ void eg_inspector_draw_gizmos(
     vkCmdDrawIndexed(
         cmd_info->cmd_buffer, inspector->pos_gizmo_index_count, 1, 0, 0, 0);
   }
+}
+
+void eg_inspector_draw_selected_outline(
+    eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
+  eg_camera_bind(
+      &inspector->world->camera, cmd_info, &inspector->outline_pipeline, 0);
+
+  vec4_t color = {1.0f, 0.5f, 0.0f, 1.0f};
+
+  vkCmdPushConstants(
+      cmd_info->cmd_buffer,
+      inspector->outline_pipeline.layout.layout,
+      inspector->outline_pipeline.layout.push_constants[0].stageFlags,
+      inspector->outline_pipeline.layout.push_constants[0].offset,
+      sizeof(color),
+      &color);
+
+  if (inspector->selected_entity < EG_MAX_ENTITIES &&
+      eg_world_has_comp(
+          inspector->world,
+          inspector->selected_entity,
+          EG_GLTF_MODEL_COMPONENT_TYPE) &&
+      eg_world_has_comp(
+          inspector->world,
+          inspector->selected_entity,
+          EG_TRANSFORM_COMPONENT_TYPE)) {
+    eg_gltf_model_component_t *model = EG_GET_COMP(
+        inspector->world,
+        inspector->selected_entity,
+        eg_gltf_model_component_t);
+    eg_transform_component_t *transform = EG_GET_COMP(
+        inspector->world, inspector->selected_entity, eg_transform_component_t);
+
+    eg_gltf_model_component_draw_no_mat(
+        model,
+        cmd_info,
+        &inspector->outline_pipeline,
+        eg_transform_component_to_mat4(transform));
+  }
+
+  vkCmdClearAttachments(
+      cmd_info->cmd_buffer,
+      1,
+      &(VkClearAttachment){
+          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .clearValue.depthStencil.depth = 1.0f,
+      },
+      1,
+      &(VkClearRect){
+          .rect.extent.width = inspector->drawing_render_target->width,
+          .rect.extent.height = inspector->drawing_render_target->height,
+          .layerCount = 1,
+      });
 }
 
 static void inspect_camera(eg_camera_t *camera) {

@@ -29,7 +29,7 @@ void eg_gltf_model_component_draw(
     re_pipeline_t *pipeline,
     mat4_t transform);
 
-void eg_gltf_model_component_draw_picking(
+void eg_gltf_model_component_draw_no_mat(
     eg_gltf_model_component_t *model,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,

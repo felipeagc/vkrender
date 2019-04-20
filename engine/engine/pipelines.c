@@ -131,13 +131,13 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
   return params;
 }
 
-re_pipeline_parameters_t eg_wireframe_pipeline_parameters() {
+re_pipeline_parameters_t eg_outline_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
   params.rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
-  params.rasterization_state.lineWidth = 2.0f;
+  params.rasterization_state.lineWidth = 4.0f;
 
   return params;
 }
@@ -157,6 +157,7 @@ re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
 
   params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
 
+  params.depth_stencil_state.depthWriteEnable = VK_FALSE;
   params.depth_stencil_state.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 
   return params;

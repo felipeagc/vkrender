@@ -54,7 +54,7 @@ static void draw_node(
   }
 }
 
-static void draw_node_picking(
+static void draw_node_no_mat(
     eg_gltf_model_component_t *model,
     eg_gltf_model_asset_node_t *node,
     const eg_cmd_info_t *cmd_info,
@@ -86,7 +86,7 @@ static void draw_node_picking(
   }
 
   for (uint32_t j = 0; j < node->children_count; j++) {
-    draw_node_picking(model, node->children[j], cmd_info, pipeline);
+    draw_node_no_mat(model, node->children[j], cmd_info, pipeline);
   }
 }
 
@@ -180,7 +180,7 @@ void eg_gltf_model_component_draw(
   }
 }
 
-void eg_gltf_model_component_draw_picking(
+void eg_gltf_model_component_draw_no_mat(
     eg_gltf_model_component_t *model,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
@@ -217,7 +217,7 @@ void eg_gltf_model_component_draw_picking(
       NULL);
 
   for (uint32_t j = 0; j < model->asset->node_count; j++) {
-    draw_node_picking(model, &model->asset->nodes[j], cmd_info, pipeline);
+    draw_node_no_mat(model, &model->asset->nodes[j], cmd_info, pipeline);
   }
 }
 
