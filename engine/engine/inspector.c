@@ -67,6 +67,10 @@ static const re_vertex_t pos_gizmo_vertices[] = {
     {.pos = {GIZMO_THICKNESS * 20.0f, GIZMO_THICKNESS, -GIZMO_THICKNESS}},
 };
 
+static inline void set_selected(eg_inspector_t *inspector, eg_entity_t entity) {
+  inspector->selected_entity = entity;
+}
+
 void eg_inspector_init(
     eg_inspector_t *inspector,
     re_window_t *window,
@@ -311,7 +315,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     break;
   }
   default: {
-    inspector->selected_entity = selected;
+    set_selected(inspector, selected);
     break;
   }
   }
@@ -537,20 +541,6 @@ void eg_inspector_draw_selected_outline(
         &inspector->outline_pipeline,
         eg_transform_component_to_mat4(transform));
   }
-
-  vkCmdClearAttachments(
-      cmd_info->cmd_buffer,
-      1,
-      &(VkClearAttachment){
-          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-          .clearValue.depthStencil.depth = 1.0f,
-      },
-      1,
-      &(VkClearRect){
-          .rect.extent.width = inspector->drawing_render_target->width,
-          .rect.extent.height = inspector->drawing_render_target->height,
-          .layerCount = 1,
-      });
 }
 
 static void inspect_camera(eg_camera_t *camera) {
@@ -687,11 +677,21 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   eg_world_t *world = inspector->world;
   eg_asset_manager_t *asset_manager = inspector->asset_manager;
 
-  if (inspector->selected_entity != UINT32_MAX) {
+  if (inspector->selected_entity < EG_MAX_ENTITIES) {
     if (igBegin("Selected entity", NULL, 0)) {
       eg_entity_t entity = inspector->selected_entity;
 
       igText("Entity #%u", inspector->selected_entity);
+
+      if (igCollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (eg_tag_t tag = 0; tag < EG_TAG_MAX; tag++) {
+          bool has_tag =
+              EG_HAS_TAG(inspector->world, inspector->selected_entity, tag);
+          igCheckbox(EG_TAG_NAMES[tag], &has_tag);
+          EG_SET_TAG(
+              inspector->world, inspector->selected_entity, tag, has_tag);
+        }
+      }
 
       if (EG_HAS_COMP(world, eg_transform_component_t, entity) &&
           igCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -738,7 +738,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
 
           snprintf(str, sizeof(str), "Entity #%d", entity);
           if (igSelectable(str, false, 0, (ImVec2){0.0f, 0.0f})) {
-            inspector->selected_entity = entity;
+            set_selected(inspector, entity);
           }
         }
 

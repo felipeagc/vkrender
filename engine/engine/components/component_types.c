@@ -14,3 +14,7 @@ const char *EG_COMP_NAMES[] = {EG__COMPS};
 #define E(t, destructor, name) ((eg_component_destructor_t)destructor),
 const eg_component_destructor_t EG_COMP_DESTRUCTORS[] = {EG__COMPS};
 #undef E
+
+#define E(enum_name, name) name,
+const char *EG_TAG_NAMES[] = {EG__TAGS};
+#undef E

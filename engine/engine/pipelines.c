@@ -137,7 +137,7 @@ re_pipeline_parameters_t eg_outline_pipeline_parameters() {
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
   params.rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
-  params.rasterization_state.lineWidth = 4.0f;
+  params.rasterization_state.lineWidth = 2.0f;
 
   return params;
 }

@@ -202,9 +202,9 @@ int main(int argc, const char *argv[]) {
     eg_environment_draw_skybox(
         &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
 
-    eg_inspector_draw_selected_outline(&game.inspector, &cmd_info);
+    eg_rendering_system_render(&game.world, &cmd_info, &pbr_pipeline->pipeline);
 
-    eg_rendering_system_render(&cmd_info, &game.world, &pbr_pipeline->pipeline);
+    eg_inspector_draw_selected_outline(&game.inspector, &cmd_info);
 
     eg_inspector_draw_gizmos(&game.inspector, &cmd_info);
 
