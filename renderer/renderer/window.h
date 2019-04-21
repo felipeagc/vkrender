@@ -77,7 +77,7 @@ void re_window_end_render_pass(re_window_t *window);
 void re_window_set_input_mode(const re_window_t *window, int mode, int value);
 int re_window_get_input_mode(const re_window_t *window, int mode);
 
-void re_window_get_size(
+void re_window_size(
     const re_window_t *window, uint32_t *width, uint32_t *height);
 
 void re_window_get_cursor_pos(const re_window_t *window, double *x, double *y);

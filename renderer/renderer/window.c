@@ -562,7 +562,7 @@ static inline void update_size(re_window_t *window) {
   destroy_resizables(window);
 
   uint32_t width, height;
-  re_window_get_size(window, &width, &height);
+  re_window_size(window, &width, &height);
   create_swapchain(window, width, height);
   create_swapchain_image_views(window);
   create_depth_stencil_resources(window);
@@ -1135,7 +1135,7 @@ int re_window_get_input_mode(const re_window_t *window, int mode) {
   return glfwGetInputMode(window->glfw_window, mode);
 }
 
-void re_window_get_size(
+void re_window_size(
     const re_window_t *window, uint32_t *width, uint32_t *height) {
   *width = window->swapchain_extent.width;
   *height = window->swapchain_extent.height;

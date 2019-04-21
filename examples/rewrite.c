@@ -30,6 +30,8 @@ typedef struct game_t {
   eg_asset_manager_t asset_manager;
   eg_world_t world;
 
+  re_canvas_t scene_canvas;
+
   eg_fps_camera_system_t fps_system;
   eg_inspector_t inspector;
 } game_t;
@@ -51,6 +53,16 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
 
   game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
 
+  uint32_t width, height;
+  re_window_size(&game->window, &width, &height);
+  re_canvas_init(
+      &game->scene_canvas,
+      &(re_canvas_options_t){
+          .width = width,
+          .height = height,
+          .sample_count = VK_SAMPLE_COUNT_2_BIT,
+      });
+
   eg_asset_manager_init(&game->asset_manager);
 
   eg_environment_asset_t *environment_asset = eg_asset_alloc(
@@ -64,7 +76,7 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   eg_inspector_init(
       &game->inspector,
       &game->window,
-      &game->window.render_target,
+      &game->scene_canvas.render_target,
       &game->world,
       &game->asset_manager);
   eg_fps_camera_system_init(&game->fps_system);
@@ -75,6 +87,8 @@ static void game_destroy(game_t *game) {
 
   eg_world_destroy(&game->world);
   eg_asset_manager_destroy(&game->asset_manager);
+
+  re_canvas_destroy(&game->scene_canvas);
 
   eg_default_pipeline_layouts_destroy();
 
@@ -93,7 +107,7 @@ int main(int argc, const char *argv[]) {
       eg_asset_alloc(&game.asset_manager, "PBR pipeline", eg_pipeline_asset_t);
   eg_pipeline_asset_init(
       pbr_pipeline,
-      &game.window.render_target,
+      &game.scene_canvas.render_target,
       "/shaders/pbr.vert.spv",
       "/shaders/pbr.frag.spv",
       eg_pbr_pipeline_parameters());
@@ -102,10 +116,19 @@ int main(int argc, const char *argv[]) {
       &game.asset_manager, "Skybox pipeline", eg_pipeline_asset_t);
   eg_pipeline_asset_init(
       skybox_pipeline,
-      &game.window.render_target,
+      &game.scene_canvas.render_target,
       "/shaders/skybox.vert.spv",
       "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
+
+  eg_pipeline_asset_t *fullscreen_pipeline = eg_asset_alloc(
+      &game.asset_manager, "Fullscreen pipeline", eg_pipeline_asset_t);
+  eg_pipeline_asset_init(
+      fullscreen_pipeline,
+      &game.window.render_target,
+      "/shaders/fullscreen.vert.spv",
+      "/shaders/fullscreen.frag.spv",
+      eg_fullscreen_pipeline_parameters());
 
   {
     eg_gltf_model_asset_t *model_asset =
@@ -166,10 +189,17 @@ int main(int argc, const char *argv[]) {
     while (re_window_next_event(&game.window, &event)) {
       eg_imgui_process_event(&event);
       eg_inspector_process_event(&game.inspector, &event);
+
+      if (event.type == RE_EVENT_FRAMEBUFFER_RESIZED) {
+        re_canvas_resize(
+            &game.scene_canvas,
+            (uint32_t)event.size.width,
+            (uint32_t)event.size.height);
+      }
     }
 
     uint32_t width, height;
-    re_window_get_size(&game.window, &width, &height);
+    re_window_size(&game.window, &width, &height);
 
     const eg_cmd_info_t cmd_info = {
         .frame_index = game.window.current_frame,
@@ -194,8 +224,7 @@ int main(int argc, const char *argv[]) {
         (float)width,
         (float)height);
 
-    // Begin window renderpass
-    re_window_begin_render_pass(&game.window);
+    re_canvas_begin(&game.scene_canvas, cmd_info.cmd_buffer);
 
     eg_camera_bind(
         &game.world.camera, &cmd_info, &skybox_pipeline->pipeline, 0);
@@ -209,6 +238,16 @@ int main(int argc, const char *argv[]) {
     eg_inspector_draw_gizmos(&game.inspector, &cmd_info);
 
     eg_inspector_update(&game.inspector);
+
+    re_canvas_end(&game.scene_canvas, cmd_info.cmd_buffer);
+
+    // Begin window renderpass
+    re_window_begin_render_pass(&game.window);
+
+    re_canvas_draw(
+        &game.scene_canvas,
+        cmd_info.cmd_buffer,
+        &fullscreen_pipeline->pipeline);
 
     eg_imgui_draw(&cmd_info);
 

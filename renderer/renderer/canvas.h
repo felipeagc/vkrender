@@ -16,16 +16,22 @@ typedef struct re_canvas_t {
   VkFormat depth_format;
   VkFormat color_format;
 
+  VkSampler sampler;
+
   // @NOTE: we could have multiple of these resources per frame-in-flight,
   // but from initial testing there's no real performance gain
   struct re_canvas_resource_t {
     struct {
       VkImage image;
       VmaAllocation allocation;
-      // @TODO: no need for multiple samplers
-      VkSampler sampler;
       VkImageView image_view;
     } color;
+
+    struct {
+      VkImage image;
+      VmaAllocation allocation;
+      VkImageView image_view;
+    } resolve;
 
     struct {
       VkImage image;
@@ -40,11 +46,15 @@ typedef struct re_canvas_t {
   } resources[1];
 } re_canvas_t;
 
-void re_canvas_init(
-    re_canvas_t *canvas,
-    const uint32_t width,
-    const uint32_t height,
-    const VkFormat color_format);
+typedef struct re_canvas_options_t {
+  uint32_t width;
+  uint32_t height;
+  VkFormat color_format;
+  VkSampleCountFlags sample_count;
+  VkClearColorValue clear_color;
+} re_canvas_options_t;
+
+void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options);
 
 void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer);
 
