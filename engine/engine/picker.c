@@ -94,7 +94,7 @@ void eg_picker_end(eg_picker_t *picker) {
 
 uint32_t eg_picker_get(eg_picker_t *picker, uint32_t x, uint32_t y) {
   re_image_transfer_to_buffer(
-      picker->canvas.resources[0].color.image,
+      picker->canvas.color.image,
       &picker->pixel_buffer,
       g_ctx.transient_command_pool,
       x,

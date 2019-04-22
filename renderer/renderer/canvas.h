@@ -18,32 +18,28 @@ typedef struct re_canvas_t {
 
   VkSampler sampler;
 
-  // @NOTE: we could have multiple of these resources per frame-in-flight,
-  // but from initial testing there's no real performance gain
-  struct re_canvas_resource_t {
-    struct {
-      VkImage image;
-      VmaAllocation allocation;
-      VkImageView image_view;
-    } color;
+  struct {
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView image_view;
+  } color;
 
-    struct {
-      VkImage image;
-      VmaAllocation allocation;
-      VkImageView image_view;
-    } resolve;
+  struct {
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView image_view;
+  } resolve;
 
-    struct {
-      VkImage image;
-      VmaAllocation allocation;
-      VkImageView image_view;
-    } depth;
+  struct {
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView image_view;
+  } depth;
 
-    VkFramebuffer framebuffer;
+  VkFramebuffer framebuffer;
 
-    // For rendering this render target's image to another render target
-    VkDescriptorSet descriptor_set;
-  } resources[1];
+  // For rendering this render target's image to another render target
+  VkDescriptorSet descriptor_set;
 } re_canvas_t;
 
 typedef struct re_canvas_options_t {

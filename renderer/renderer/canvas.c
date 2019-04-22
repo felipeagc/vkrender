@@ -75,58 +75,45 @@ static inline void create_image(
 
 static inline void destroy_images(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
-    if (resource->color.image_view != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource->color.image_view, NULL);
-    }
-
-    if (resource->color.image != VK_NULL_HANDLE) {
-      vmaDestroyImage(
-          g_ctx.gpu_allocator,
-          resource->color.image,
-          resource->color.allocation);
-    }
-
-    if (resource->resolve.image_view != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource->resolve.image_view, NULL);
-    }
-
-    if (resource->resolve.image != VK_NULL_HANDLE) {
-      vmaDestroyImage(
-          g_ctx.gpu_allocator,
-          resource->resolve.image,
-          resource->resolve.allocation);
-    }
-
-    if (resource->depth.image != VK_NULL_HANDLE) {
-      vmaDestroyImage(
-          g_ctx.gpu_allocator,
-          resource->depth.image,
-          resource->depth.allocation);
-    }
-
-    if (resource->depth.image_view != VK_NULL_HANDLE) {
-      vkDestroyImageView(g_ctx.device, resource->depth.image_view, NULL);
-    }
-
-    resource->color.image = VK_NULL_HANDLE;
-    resource->color.allocation = VK_NULL_HANDLE;
-    resource->color.image_view = VK_NULL_HANDLE;
-
-    resource->resolve.image = VK_NULL_HANDLE;
-    resource->resolve.allocation = VK_NULL_HANDLE;
-    resource->resolve.image_view = VK_NULL_HANDLE;
-
-    resource->depth.image = VK_NULL_HANDLE;
-    resource->depth.allocation = VK_NULL_HANDLE;
-    resource->depth.image_view = VK_NULL_HANDLE;
+  if (canvas->color.image_view != VK_NULL_HANDLE) {
+    vkDestroyImageView(g_ctx.device, canvas->color.image_view, NULL);
   }
 
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
+  if (canvas->color.image != VK_NULL_HANDLE) {
+    vmaDestroyImage(
+        g_ctx.gpu_allocator, canvas->color.image, canvas->color.allocation);
   }
+
+  if (canvas->resolve.image_view != VK_NULL_HANDLE) {
+    vkDestroyImageView(g_ctx.device, canvas->resolve.image_view, NULL);
+  }
+
+  if (canvas->resolve.image != VK_NULL_HANDLE) {
+    vmaDestroyImage(
+        g_ctx.gpu_allocator, canvas->resolve.image, canvas->resolve.allocation);
+  }
+
+  if (canvas->depth.image != VK_NULL_HANDLE) {
+    vmaDestroyImage(
+        g_ctx.gpu_allocator, canvas->depth.image, canvas->depth.allocation);
+  }
+
+  if (canvas->depth.image_view != VK_NULL_HANDLE) {
+    vkDestroyImageView(g_ctx.device, canvas->depth.image_view, NULL);
+  }
+
+  canvas->color.image = VK_NULL_HANDLE;
+  canvas->color.allocation = VK_NULL_HANDLE;
+  canvas->color.image_view = VK_NULL_HANDLE;
+
+  canvas->resolve.image = VK_NULL_HANDLE;
+  canvas->resolve.allocation = VK_NULL_HANDLE;
+  canvas->resolve.image_view = VK_NULL_HANDLE;
+
+  canvas->depth.image = VK_NULL_HANDLE;
+  canvas->depth.allocation = VK_NULL_HANDLE;
+  canvas->depth.image_view = VK_NULL_HANDLE;
 }
 
 static inline void create_sampler(VkSampler *sampler) {
@@ -161,175 +148,147 @@ static inline void destroy_sampler(re_canvas_t *canvas) {
 }
 
 static inline void create_depth_target(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
 
-    VkImageCreateInfo image_create_info = {
-        VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-        NULL,                                // pNext
-        0,                                   // flags
-        VK_IMAGE_TYPE_2D,                    // imageType
-        canvas->depth_format,                // format
-        {
-            canvas->render_target.width,    // width
-            canvas->render_target.height,   // height
-            1,                              // depth
-        },                                  // extent
-        1,                                  // mipLevels
-        1,                                  // arrayLayers
-        canvas->render_target.sample_count, // samples
-        VK_IMAGE_TILING_OPTIMAL,            // tiling
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
-            VK_IMAGE_USAGE_SAMPLED_BIT, // usage
-        VK_SHARING_MODE_EXCLUSIVE,      // sharingMode
-        0,                              // queueFamiylIndexCount
-        NULL,                           // pQueueFamilyIndices
-        VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
-    };
+  VkImageCreateInfo image_create_info = {
+      VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
+      NULL,                                // pNext
+      0,                                   // flags
+      VK_IMAGE_TYPE_2D,                    // imageType
+      canvas->depth_format,                // format
+      {
+          canvas->render_target.width,    // width
+          canvas->render_target.height,   // height
+          1,                              // depth
+      },                                  // extent
+      1,                                  // mipLevels
+      1,                                  // arrayLayers
+      canvas->render_target.sample_count, // samples
+      VK_IMAGE_TILING_OPTIMAL,            // tiling
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+          VK_IMAGE_USAGE_SAMPLED_BIT, // usage
+      VK_SHARING_MODE_EXCLUSIVE,      // sharingMode
+      0,                              // queueFamiylIndexCount
+      NULL,                           // pQueueFamilyIndices
+      VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
+  };
 
-    VmaAllocationCreateInfo alloc_info = {0};
-    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  VmaAllocationCreateInfo alloc_info = {0};
+  alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    VK_CHECK(vmaCreateImage(
-        g_ctx.gpu_allocator,
-        &image_create_info,
-        &alloc_info,
-        &resource->depth.image,
-        &resource->depth.allocation,
-        NULL));
+  VK_CHECK(vmaCreateImage(
+      g_ctx.gpu_allocator,
+      &image_create_info,
+      &alloc_info,
+      &canvas->depth.image,
+      &canvas->depth.allocation,
+      NULL));
 
-    VkImageViewCreateInfo image_view_create_info = {
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        NULL,                                     // pNext
-        0,                                        // flags
-        resource->depth.image,                    // image
-        VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-        canvas->depth_format,                     // format
-        {
-            VK_COMPONENT_SWIZZLE_IDENTITY, // r
-            VK_COMPONENT_SWIZZLE_IDENTITY, // g
-            VK_COMPONENT_SWIZZLE_IDENTITY, // b
-            VK_COMPONENT_SWIZZLE_IDENTITY, // a
-        },                                 // components
-        {
-            VK_IMAGE_ASPECT_DEPTH_BIT |
-                VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
-            0,                               // baseMipLevel
-            1,                               // levelCount
-            0,                               // baseArrayLayer
-            1,                               // layerCount
-        },                                   // subresourceRange
-    };
+  VkImageViewCreateInfo image_view_create_info = {
+      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+      NULL,                                     // pNext
+      0,                                        // flags
+      canvas->depth.image,                      // image
+      VK_IMAGE_VIEW_TYPE_2D,                    // viewType
+      canvas->depth_format,                     // format
+      {
+          VK_COMPONENT_SWIZZLE_IDENTITY, // r
+          VK_COMPONENT_SWIZZLE_IDENTITY, // g
+          VK_COMPONENT_SWIZZLE_IDENTITY, // b
+          VK_COMPONENT_SWIZZLE_IDENTITY, // a
+      },                                 // components
+      {
+          VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
+          0, // baseMipLevel
+          1, // levelCount
+          0, // baseArrayLayer
+          1, // layerCount
+      },     // subresourceRange
+  };
 
-    VK_CHECK(vkCreateImageView(
-        g_ctx.device,
-        &image_view_create_info,
-        NULL,
-        &resource->depth.image_view));
-  }
+  VK_CHECK(vkCreateImageView(
+      g_ctx.device, &image_view_create_info, NULL, &canvas->depth.image_view));
 }
 
 static inline void create_descriptor_sets(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    {
-      VK_CHECK(vkAllocateDescriptorSets(
-          g_ctx.device,
-          &(VkDescriptorSetAllocateInfo){
-              .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-              .descriptorPool = g_ctx.descriptor_pool,
-              .descriptorSetCount = 1,
-              .pSetLayouts = &g_ctx.canvas_descriptor_set_layout,
-          },
-          &canvas->resources[i].descriptor_set));
-    }
+  VK_CHECK(vkAllocateDescriptorSets(
+      g_ctx.device,
+      &(VkDescriptorSetAllocateInfo){
+          .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+          .descriptorPool = g_ctx.descriptor_pool,
+          .descriptorSetCount = 1,
+          .pSetLayouts = &g_ctx.canvas_descriptor_set_layout,
+      },
+      &canvas->descriptor_set));
 
-    VkDescriptorImageInfo descriptor = {
-        .sampler = canvas->sampler,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    };
+  VkDescriptorImageInfo descriptor = {
+      .sampler = canvas->sampler,
+      .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+  };
 
-    if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
-      descriptor.imageView = canvas->resources[i].color.image_view;
-    } else {
-      descriptor.imageView = canvas->resources[i].resolve.image_view;
-    }
-
-    VkWriteDescriptorSet descriptor_writes[] = {
-        (VkWriteDescriptorSet){
-            VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            NULL,
-            canvas->resources[i].descriptor_set,       // dstSet
-            0,                                         // dstBinding
-            0,                                         // dstArrayElement
-            1,                                         // descriptorCount
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-            &descriptor,                               // pImageInfo
-            NULL,                                      // pBufferInfo
-            NULL,                                      // pTexelBufferView
-        },
-    };
-
-    vkUpdateDescriptorSets(
-        g_ctx.device,
-        ARRAY_SIZE(descriptor_writes),
-        descriptor_writes,
-        0,
-        NULL);
+  if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
+    descriptor.imageView = canvas->color.image_view;
+  } else {
+    descriptor.imageView = canvas->resolve.image_view;
   }
+
+  VkWriteDescriptorSet descriptor_writes[] = {
+      (VkWriteDescriptorSet){
+          VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          NULL,
+          canvas->descriptor_set,                    // dstSet
+          0,                                         // dstBinding
+          0,                                         // dstArrayElement
+          1,                                         // descriptorCount
+          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
+          &descriptor,                               // pImageInfo
+          NULL,                                      // pBufferInfo
+          NULL,                                      // pTexelBufferView
+      },
+  };
+
+  vkUpdateDescriptorSets(
+      g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
 }
 
 static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    vkFreeDescriptorSets(
-        g_ctx.device,
-        g_ctx.descriptor_pool,
-        1,
-        &canvas->resources[i].descriptor_set);
-  }
+  vkFreeDescriptorSets(
+      g_ctx.device, g_ctx.descriptor_pool, 1, &canvas->descriptor_set);
 }
 
 static inline void create_framebuffers(re_canvas_t *canvas) {
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
+  VkImageView attachments[] = {
+      canvas->color.image_view,
+      canvas->depth.image_view,
+      canvas->resolve.image_view,
+  };
 
-    VkImageView attachments[] = {
-        resource->color.image_view,
-        resource->depth.image_view,
-        resource->resolve.image_view,
-    };
+  VkFramebufferCreateInfo create_info = {
+      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
+      NULL,                                      // pNext
+      0,                                         // flags
+      canvas->render_target.render_pass,         // renderPass
+      (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
+      attachments,                               // pAttachments
+      canvas->render_target.width,               // width
+      canvas->render_target.height,              // height
+      1,                                         // layers
+  };
 
-    VkFramebufferCreateInfo create_info = {
-        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
-        NULL,                                      // pNext
-        0,                                         // flags
-        canvas->render_target.render_pass,         // renderPass
-        (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
-        attachments,                               // pAttachments
-        canvas->render_target.width,               // width
-        canvas->render_target.height,              // height
-        1,                                         // layers
-    };
-
-    if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
-      create_info.attachmentCount -= 1;
-    }
-
-    VK_CHECK(vkCreateFramebuffer(
-        g_ctx.device, &create_info, NULL, &resource->framebuffer));
+  if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
+    create_info.attachmentCount -= 1;
   }
+
+  VK_CHECK(vkCreateFramebuffer(
+      g_ctx.device, &create_info, NULL, &canvas->framebuffer));
 }
 
 static inline void destroy_framebuffers(re_canvas_t *canvas) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
-
-    if (resource->framebuffer != VK_NULL_HANDLE) {
-      vkDestroyFramebuffer(g_ctx.device, resource->framebuffer, NULL);
-    }
+  if (canvas->framebuffer != VK_NULL_HANDLE) {
+    vkDestroyFramebuffer(g_ctx.device, canvas->framebuffer, NULL);
   }
 }
 
@@ -481,27 +440,23 @@ void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options) {
   bool res = re_context_get_supported_depth_format(&canvas->depth_format);
   assert(res);
 
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
+  create_image(
+      &canvas->color.image,
+      &canvas->color.allocation,
+      &canvas->color.image_view,
+      canvas->render_target.width,
+      canvas->render_target.height,
+      canvas->color_format,
+      canvas->render_target.sample_count);
 
-    create_image(
-        &resource->color.image,
-        &resource->color.allocation,
-        &resource->color.image_view,
-        canvas->render_target.width,
-        canvas->render_target.height,
-        canvas->color_format,
-        canvas->render_target.sample_count);
-
-    create_image(
-        &resource->resolve.image,
-        &resource->resolve.allocation,
-        &resource->resolve.image_view,
-        canvas->render_target.width,
-        canvas->render_target.height,
-        canvas->color_format,
-        VK_SAMPLE_COUNT_1_BIT);
-  }
+  create_image(
+      &canvas->resolve.image,
+      &canvas->resolve.allocation,
+      &canvas->resolve.image_view,
+      canvas->render_target.width,
+      canvas->render_target.height,
+      canvas->color_format,
+      VK_SAMPLE_COUNT_1_BIT);
 
   create_sampler(&canvas->sampler);
   create_depth_target(canvas);
@@ -511,8 +466,6 @@ void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options) {
 }
 
 void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
-  struct re_canvas_resource_t *resource = &canvas->resources[0];
-
   // @TODO: make this customizable
   VkClearValue clear_values[] = {
       {.color = canvas->clear_color},
@@ -524,7 +477,7 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, // sType
       NULL,                                     // pNext
       canvas->render_target.render_pass,        // renderPass
-      resource->framebuffer,                    // framebuffer
+      canvas->framebuffer,                      // framebuffer
       {{0, 0},
        {canvas->render_target.width,
         canvas->render_target.height}}, // renderArea
@@ -564,8 +517,6 @@ void re_canvas_draw(
     re_canvas_t *canvas,
     re_cmd_buffer_t command_buffer,
     re_pipeline_t *pipeline) {
-  struct re_canvas_resource_t *resource = &canvas->resources[0];
-
   vkCmdBindPipeline(
       command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
 
@@ -575,7 +526,7 @@ void re_canvas_draw(
       pipeline->layout.layout,
       0, // firstSet
       1,
-      &resource->descriptor_set,
+      &canvas->descriptor_set,
       0,
       NULL);
 
@@ -593,27 +544,23 @@ void re_canvas_resize(
   destroy_images(canvas);
   destroy_descriptor_sets(canvas);
 
-  for (size_t i = 0; i < ARRAY_SIZE(canvas->resources); i++) {
-    struct re_canvas_resource_t *resource = &canvas->resources[i];
+  create_image(
+      &canvas->color.image,
+      &canvas->color.allocation,
+      &canvas->color.image_view,
+      canvas->render_target.width,
+      canvas->render_target.height,
+      canvas->color_format,
+      canvas->render_target.sample_count);
 
-    create_image(
-        &resource->color.image,
-        &resource->color.allocation,
-        &resource->color.image_view,
-        canvas->render_target.width,
-        canvas->render_target.height,
-        canvas->color_format,
-        canvas->render_target.sample_count);
-
-    create_image(
-        &resource->resolve.image,
-        &resource->resolve.allocation,
-        &resource->resolve.image_view,
-        canvas->render_target.width,
-        canvas->render_target.height,
-        canvas->color_format,
-        VK_SAMPLE_COUNT_1_BIT);
-  }
+  create_image(
+      &canvas->resolve.image,
+      &canvas->resolve.allocation,
+      &canvas->resolve.image_view,
+      canvas->render_target.width,
+      canvas->render_target.height,
+      canvas->color_format,
+      VK_SAMPLE_COUNT_1_BIT);
 
   create_depth_target(canvas);
   create_descriptor_sets(canvas);
