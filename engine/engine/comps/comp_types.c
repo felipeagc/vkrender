@@ -1,7 +1,7 @@
-#include "component_types.h"
-#include "gltf_model_component.h"
-#include "mesh_component.h"
-#include "transform_component.h"
+#include "comp_types.h"
+#include "gltf_model_comp.h"
+#include "mesh_comp.h"
+#include "transform_comp.h"
 
 #define E(t, destructor, name) sizeof(t),
 const size_t EG_COMP_SIZES[] = {EG__COMPS};
@@ -11,8 +11,8 @@ const size_t EG_COMP_SIZES[] = {EG__COMPS};
 const char *EG_COMP_NAMES[] = {EG__COMPS};
 #undef E
 
-#define E(t, destructor, name) ((eg_component_destructor_t)destructor),
-const eg_component_destructor_t EG_COMP_DESTRUCTORS[] = {EG__COMPS};
+#define E(t, destructor, name) ((eg_comp_destructor_t)destructor),
+const eg_comp_destructor_t EG_COMP_DESTRUCTORS[] = {EG__COMPS};
 #undef E
 
 #define E(enum_name, name) name,

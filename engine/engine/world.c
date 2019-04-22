@@ -59,8 +59,8 @@ bool eg_world_exists(eg_world_t *world, eg_entity_t entity) {
   return fstd_bitset_at(&world->existence, entity);
 }
 
-void *eg_world_add_comp(
-    eg_world_t *world, eg_component_type_t comp, eg_entity_t entity) {
+void *
+eg_world_add_comp(eg_world_t *world, eg_comp_type_t comp, eg_entity_t entity) {
   fstd_bitset_set(&world->comp_masks[comp], entity, true);
   memset(
       &world->pools[comp].data[entity * EG_COMP_SIZES[comp]],
@@ -71,7 +71,7 @@ void *eg_world_add_comp(
 }
 
 void eg_world_remove_comp(
-    eg_world_t *world, eg_component_type_t comp, eg_entity_t entity) {
+    eg_world_t *world, eg_comp_type_t comp, eg_entity_t entity) {
   if (!EG__HAS_COMP(world, entity, comp)) {
     return;
   }
@@ -95,7 +95,7 @@ void eg_world_remove_comp(
 void eg_world_destroy(eg_world_t *world) {
   for (uint32_t e = 0; e < world->entity_max; e++) {
     for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
-      eg_world_remove_comp(world, (eg_component_type_t)c, e);
+      eg_world_remove_comp(world, (eg_comp_type_t)c, e);
     }
   }
 

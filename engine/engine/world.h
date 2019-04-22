@@ -2,7 +2,7 @@
 
 #include "assets/environment_asset.h"
 #include "camera.h"
-#include "components/component_types.h"
+#include "comps/comp_types.h"
 #include "environment.h"
 #include <fstd_bitset.h>
 
@@ -50,9 +50,9 @@ typedef uint32_t eg_entity_t;
 
 typedef FSTD_BITSET(EG_MAX_ENTITIES) eg_entity_mask_t;
 
-typedef struct eg_component_pool_t {
+typedef struct eg_comp_pool_t {
   uint8_t *data;
-} eg_component_pool_t;
+} eg_comp_pool_t;
 
 typedef struct eg_world_t {
   eg_camera_t camera;
@@ -60,7 +60,7 @@ typedef struct eg_world_t {
 
   eg_entity_t entity_max;
 
-  eg_component_pool_t pools[EG_COMP_TYPE_MAX];
+  eg_comp_pool_t pools[EG_COMP_TYPE_MAX];
   eg_entity_mask_t comp_masks[EG_COMP_TYPE_MAX];
   eg_entity_mask_t existence;
   uint64_t tags[EG_MAX_ENTITIES];
@@ -75,10 +75,10 @@ void eg_world_remove(eg_world_t *world, eg_entity_t entity);
 
 bool eg_world_exists(eg_world_t *world, eg_entity_t entity);
 
-void *eg_world_add_comp(
-    eg_world_t *world, eg_component_type_t comp, eg_entity_t entity);
+void *
+eg_world_add_comp(eg_world_t *world, eg_comp_type_t comp, eg_entity_t entity);
 
 void eg_world_remove_comp(
-    eg_world_t *world, eg_component_type_t comp, eg_entity_t entity);
+    eg_world_t *world, eg_comp_type_t comp, eg_entity_t entity);
 
 void eg_world_destroy(eg_world_t *world);

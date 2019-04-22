@@ -1,4 +1,4 @@
-#include "gltf_model_component.h"
+#include "gltf_model_comp.h"
 #include "../assets/gltf_model_asset.h"
 #include "../pipelines.h"
 #include <fstd_util.h>
@@ -9,7 +9,7 @@
 #include <string.h>
 
 static void draw_node(
-    eg_gltf_model_component_t *model,
+    eg_gltf_model_comp_t *model,
     eg_gltf_model_asset_node_t *node,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline) {
@@ -55,7 +55,7 @@ static void draw_node(
 }
 
 static void draw_node_no_mat(
-    eg_gltf_model_component_t *model,
+    eg_gltf_model_comp_t *model,
     eg_gltf_model_asset_node_t *node,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline) {
@@ -90,8 +90,8 @@ static void draw_node_no_mat(
   }
 }
 
-void eg_gltf_model_component_init(
-    eg_gltf_model_component_t *model, eg_gltf_model_asset_t *asset) {
+void eg_gltf_model_comp_init(
+    eg_gltf_model_comp_t *model, eg_gltf_model_asset_t *asset) {
   model->asset = asset;
 
   model->ubo.matrix = mat4_identity();
@@ -139,8 +139,8 @@ void eg_gltf_model_component_init(
   }
 }
 
-void eg_gltf_model_component_draw(
-    eg_gltf_model_component_t *model,
+void eg_gltf_model_comp_draw(
+    eg_gltf_model_comp_t *model,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     mat4_t transform) {
@@ -180,8 +180,8 @@ void eg_gltf_model_component_draw(
   }
 }
 
-void eg_gltf_model_component_draw_no_mat(
-    eg_gltf_model_component_t *model,
+void eg_gltf_model_comp_draw_no_mat(
+    eg_gltf_model_comp_t *model,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     mat4_t transform) {
@@ -221,7 +221,7 @@ void eg_gltf_model_component_draw_no_mat(
   }
 }
 
-void eg_gltf_model_component_destroy(eg_gltf_model_component_t *model) {
+void eg_gltf_model_comp_destroy(eg_gltf_model_comp_t *model) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_unmap_memory(&model->uniform_buffers[i]);

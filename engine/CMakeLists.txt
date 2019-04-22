@@ -29,14 +29,14 @@ add_library(
 	engine/environment.c
 	engine/environment.h
 
-	engine/components/component_types.c
-	engine/components/component_types.h
-	engine/components/mesh_component.c
-	engine/components/mesh_component.h
-	engine/components/transform_component.c
-	engine/components/transform_component.h
-	engine/components/gltf_model_component.c
-	engine/components/gltf_model_component.h
+	engine/comps/comp_types.c
+	engine/comps/comp_types.h
+	engine/comps/mesh_comp.c
+	engine/comps/mesh_comp.h
+	engine/comps/transform_comp.c
+	engine/comps/transform_comp.h
+	engine/comps/gltf_model_comp.c
+	engine/comps/gltf_model_comp.h
 
 	engine/systems/rendering_system.c
 	engine/systems/rendering_system.h

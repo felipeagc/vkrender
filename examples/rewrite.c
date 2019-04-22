@@ -4,9 +4,9 @@
 #include <engine/assets/mesh_asset.h>
 #include <engine/assets/pipeline_asset.h>
 #include <engine/camera.h>
-#include <engine/components/gltf_model_component.h>
-#include <engine/components/mesh_component.h>
-#include <engine/components/transform_component.h>
+#include <engine/comps/gltf_model_comp.h>
+#include <engine/comps/mesh_comp.h>
+#include <engine/comps/transform_comp.h>
 #include <engine/filesystem.h>
 #include <engine/imgui.h>
 #include <engine/inspector.h>
@@ -137,13 +137,13 @@ int main(int argc, const char *argv[]) {
 
     eg_entity_t ent = eg_world_add(&game.world);
 
-    eg_transform_component_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
-    eg_transform_component_init(transform_comp);
+    eg_transform_comp_t *transform_comp =
+        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
+    eg_transform_comp_init(transform_comp);
 
-    eg_gltf_model_component_t *model_comp =
-        EG_ADD_COMP(&game.world, eg_gltf_model_component_t, ent);
-    eg_gltf_model_component_init(model_comp, model_asset);
+    eg_gltf_model_comp_t *model_comp =
+        EG_ADD_COMP(&game.world, eg_gltf_model_comp_t, ent);
+    eg_gltf_model_comp_init(model_comp, model_asset);
   }
 
   {
@@ -153,15 +153,15 @@ int main(int argc, const char *argv[]) {
 
     eg_entity_t ent = eg_world_add(&game.world);
 
-    eg_transform_component_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
-    eg_transform_component_init(transform_comp);
+    eg_transform_comp_t *transform_comp =
+        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
+    eg_transform_comp_init(transform_comp);
     transform_comp->position = (vec3_t){2.0, 0.0, 0.0};
     transform_comp->scale = (vec3_t){10.0, 10.0, 10.0};
 
-    eg_gltf_model_component_t *model_comp =
-        EG_ADD_COMP(&game.world, eg_gltf_model_component_t, ent);
-    eg_gltf_model_component_init(model_comp, model_asset);
+    eg_gltf_model_comp_t *model_comp =
+        EG_ADD_COMP(&game.world, eg_gltf_model_comp_t, ent);
+    eg_gltf_model_comp_init(model_comp, model_asset);
   }
 
   {
@@ -171,15 +171,15 @@ int main(int argc, const char *argv[]) {
 
     eg_entity_t ent = eg_world_add(&game.world);
 
-    eg_transform_component_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_component_t, ent);
-    eg_transform_component_init(transform_comp);
+    eg_transform_comp_t *transform_comp =
+        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
+    eg_transform_comp_init(transform_comp);
     transform_comp->position = (vec3_t){-2.0, 0.0, 0.0};
     transform_comp->scale = (vec3_t){100.0, 100.0, 100.0};
 
-    eg_gltf_model_component_t *model_comp =
-        EG_ADD_COMP(&game.world, eg_gltf_model_component_t, ent);
-    eg_gltf_model_component_init(model_comp, model_asset);
+    eg_gltf_model_comp_t *model_comp =
+        EG_ADD_COMP(&game.world, eg_gltf_model_comp_t, ent);
+    eg_gltf_model_comp_init(model_comp, model_asset);
   }
 
   while (!re_window_should_close(&game.window)) {
@@ -226,17 +226,22 @@ int main(int argc, const char *argv[]) {
 
     re_canvas_begin(&game.scene_canvas, cmd_info.cmd_buffer);
 
+    // Draw the skybox
     eg_camera_bind(
         &game.world.camera, &cmd_info, &skybox_pipeline->pipeline, 0);
     eg_environment_draw_skybox(
         &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
 
+    // Draw the entities
     eg_rendering_system_render(&game.world, &cmd_info, &pbr_pipeline->pipeline);
 
+    // Draw the selected entity
     eg_inspector_draw_selected_outline(&game.inspector, &cmd_info);
 
+    // Draw the gizmos
     eg_inspector_draw_gizmos(&game.inspector, &cmd_info);
 
+    // Update the selected entity's position based on gizmo movement
     eg_inspector_update(&game.inspector);
 
     re_canvas_end(&game.scene_canvas, cmd_info.cmd_buffer);
@@ -244,11 +249,13 @@ int main(int argc, const char *argv[]) {
     // Begin window renderpass
     re_window_begin_render_pass(&game.window);
 
+    // Draw the scene canvas
     re_canvas_draw(
         &game.scene_canvas,
         cmd_info.cmd_buffer,
         &fullscreen_pipeline->pipeline);
 
+    // Draw imgui
     eg_imgui_draw(&cmd_info);
 
     // End window renderpass

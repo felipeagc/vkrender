@@ -4,9 +4,9 @@
 #include "assets/gltf_model_asset.h"
 #include "assets/mesh_asset.h"
 #include "assets/pbr_material_asset.h"
-#include "components/gltf_model_component.h"
-#include "components/mesh_component.h"
-#include "components/transform_component.h"
+#include "comps/gltf_model_comp.h"
+#include "comps/mesh_comp.h"
+#include "comps/transform_comp.h"
 #include "imgui.h"
 #include "pipelines.h"
 #include "world.h"
@@ -181,9 +181,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
   }
 
   if (!EG_HAS_COMP(
-          inspector->world,
-          eg_transform_component_t,
-          inspector->selected_entity)) {
+          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
     return;
   }
 
@@ -226,10 +224,10 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
     uint32_t index;
   } push_constant;
 
-  eg_transform_component_t *transform = EG_COMP(
-      inspector->world, eg_transform_component_t, inspector->selected_entity);
+  eg_transform_comp_t *transform = EG_COMP(
+      inspector->world, eg_transform_comp_t, inspector->selected_entity);
 
-  mat4_t object_mat = eg_transform_component_to_mat4(transform);
+  mat4_t object_mat = eg_transform_comp_mat4(transform);
 
   uint32_t color_indices[] = {
       EG_DRAG_DIRECTION_X, EG_DRAG_DIRECTION_Y, EG_DRAG_DIRECTION_Z};
@@ -273,14 +271,14 @@ static void mouse_pressed(eg_inspector_t *inspector) {
   eg_camera_bind(
       &inspector->world->camera, &cmd_info, &inspector->picking_pipeline, 0);
 
-  eg_transform_component_t *transforms =
-      EG_COMP_ARRAY(inspector->world, eg_transform_component_t);
-  eg_gltf_model_component_t *gltf_models =
-      EG_COMP_ARRAY(inspector->world, eg_gltf_model_component_t);
+  eg_transform_comp_t *transforms =
+      EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
+  eg_gltf_model_comp_t *gltf_models =
+      EG_COMP_ARRAY(inspector->world, eg_gltf_model_comp_t);
 
   for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
-    if (EG_HAS_COMP(inspector->world, eg_gltf_model_component_t, e) &&
-        EG_HAS_COMP(inspector->world, eg_transform_component_t, e)) {
+    if (EG_HAS_COMP(inspector->world, eg_gltf_model_comp_t, e) &&
+        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
       vkCmdPushConstants(
           cmd_info.cmd_buffer,
           inspector->picking_pipeline.layout.layout,
@@ -289,11 +287,11 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           sizeof(uint32_t),
           &e);
 
-      eg_gltf_model_component_draw_no_mat(
+      eg_gltf_model_comp_draw_no_mat(
           &gltf_models[e],
           &cmd_info,
           &inspector->picking_pipeline,
-          eg_transform_component_to_mat4(&transforms[e]));
+          eg_transform_comp_mat4(&transforms[e]));
     }
   }
 
@@ -322,11 +320,9 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
       EG_HAS_COMP(
-          inspector->world,
-          eg_transform_component_t,
-          inspector->selected_entity)) {
-    eg_transform_component_t *transform = EG_COMP(
-        inspector->world, eg_transform_component_t, inspector->selected_entity);
+          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+    eg_transform_comp_t *transform = EG_COMP(
+        inspector->world, eg_transform_comp_t, inspector->selected_entity);
     vec3_t transform_ndc =
         eg_camera_world_to_ndc(&inspector->world->camera, transform->position);
 
@@ -375,14 +371,12 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   if (inspector->drag_direction == EG_DRAG_DIRECTION_NONE ||
       inspector->selected_entity >= EG_MAX_ENTITIES ||
       !EG_HAS_COMP(
-          inspector->world,
-          eg_transform_component_t,
-          inspector->selected_entity)) {
+          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
     return;
   }
 
-  eg_transform_component_t *transform = EG_COMP(
-      inspector->world, eg_transform_component_t, inspector->selected_entity);
+  eg_transform_comp_t *transform = EG_COMP(
+      inspector->world, eg_transform_comp_t, inspector->selected_entity);
   vec3_t transform_ndc =
       eg_camera_world_to_ndc(&inspector->world->camera, transform->position);
 
@@ -424,9 +418,7 @@ void eg_inspector_draw_gizmos(
   }
 
   if (!EG_HAS_COMP(
-          inspector->world,
-          eg_transform_component_t,
-          inspector->selected_entity)) {
+          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
     return;
   }
 
@@ -469,10 +461,10 @@ void eg_inspector_draw_gizmos(
     vec4_t color;
   } push_constant;
 
-  eg_transform_component_t *transform = EG_COMP(
-      inspector->world, eg_transform_component_t, inspector->selected_entity);
+  eg_transform_comp_t *transform = EG_COMP(
+      inspector->world, eg_transform_comp_t, inspector->selected_entity);
 
-  mat4_t object_mat = eg_transform_component_to_mat4(transform);
+  mat4_t object_mat = eg_transform_comp_mat4(transform);
 
   vec4_t colors[] = {{1.0f, 0.0f, 0.0f, 0.5f},
                      {0.0f, 1.0f, 0.0f, 0.5f},
@@ -521,25 +513,19 @@ void eg_inspector_draw_selected_outline(
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
       EG_HAS_COMP(
-          inspector->world,
-          eg_gltf_model_component_t,
-          inspector->selected_entity) &&
+          inspector->world, eg_gltf_model_comp_t, inspector->selected_entity) &&
       EG_HAS_COMP(
-          inspector->world,
-          eg_transform_component_t,
-          inspector->selected_entity)) {
-    eg_gltf_model_component_t *model = EG_COMP(
-        inspector->world,
-        eg_gltf_model_component_t,
-        inspector->selected_entity);
-    eg_transform_component_t *transform = EG_COMP(
-        inspector->world, eg_transform_component_t, inspector->selected_entity);
+          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+    eg_gltf_model_comp_t *model = EG_COMP(
+        inspector->world, eg_gltf_model_comp_t, inspector->selected_entity);
+    eg_transform_comp_t *transform = EG_COMP(
+        inspector->world, eg_transform_comp_t, inspector->selected_entity);
 
-    eg_gltf_model_component_draw_no_mat(
+    eg_gltf_model_comp_draw_no_mat(
         model,
         cmd_info,
         &inspector->outline_pipeline,
-        eg_transform_component_to_mat4(transform));
+        eg_transform_comp_mat4(transform));
   }
 }
 
@@ -640,9 +626,8 @@ static void inspect_gltf_model_asset(eg_asset_t *asset) {
   }
 }
 
-static void inspect_transform_component(eg_world_t *world, eg_entity_t entity) {
-  eg_transform_component_t *transform =
-      EG_COMP(world, eg_transform_component_t, entity);
+static void inspect_transform_comp(eg_world_t *world, eg_entity_t entity) {
+  eg_transform_comp_t *transform = EG_COMP(world, eg_transform_comp_t, entity);
 
   igDragFloat3(
       "Position", &transform->position.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
@@ -651,10 +636,9 @@ static void inspect_transform_component(eg_world_t *world, eg_entity_t entity) {
   igDragFloat("Angle", &transform->angle, 0.01f, 0.0f, 0.0f, "%.3f rad", 1.0f);
 }
 
-static void
-inspect_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
-  eg_gltf_model_component_t *gltf_model =
-      EG_COMP(world, eg_gltf_model_component_t, entity);
+static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
+  eg_gltf_model_comp_t *gltf_model =
+      EG_COMP(world, eg_gltf_model_comp_t, entity);
 
   igText("Asset: %s", gltf_model->asset->asset.name);
   igSameLine(0.0f, -1.0f);
@@ -668,7 +652,7 @@ inspect_gltf_model_component(eg_world_t *world, eg_entity_t entity) {
   }
 }
 
-static void inspect_mesh_component(eg_world_t *world, eg_entity_t entity) {}
+static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}
 
 void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   static char str[256] = "";
@@ -693,19 +677,19 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
         }
       }
 
-      if (EG_HAS_COMP(world, eg_transform_component_t, entity) &&
+      if (EG_HAS_COMP(world, eg_transform_comp_t, entity) &&
           igCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_transform_component(world, entity);
+        inspect_transform_comp(world, entity);
       }
 
-      if (EG_HAS_COMP(world, eg_mesh_component_t, entity) &&
+      if (EG_HAS_COMP(world, eg_mesh_comp_t, entity) &&
           igCollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_mesh_component(world, entity);
+        inspect_mesh_comp(world, entity);
       }
 
-      if (EG_HAS_COMP(world, eg_gltf_model_component_t, entity) &&
+      if (EG_HAS_COMP(world, eg_gltf_model_comp_t, entity) &&
           igCollapsingHeader("GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_gltf_model_component(world, entity);
+        inspect_gltf_model_comp(world, entity);
       }
     }
     igEnd();
