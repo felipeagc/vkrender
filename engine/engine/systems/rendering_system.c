@@ -7,7 +7,7 @@
 #include <renderer/pipeline.h>
 #include <renderer/window.h>
 
-void eg_rendering_system_render(
+void eg_rendering_system(
     eg_world_t *world, const eg_cmd_info_t *cmd_info, re_pipeline_t *pipeline) {
   re_cmd_bind_graphics_pipeline(cmd_info->cmd_buffer, pipeline);
   eg_camera_bind(&world->camera, cmd_info, pipeline, 0);

@@ -6,6 +6,7 @@
 #include <engine/camera.h>
 #include <engine/comps/gltf_model_comp.h>
 #include <engine/comps/mesh_comp.h>
+#include <engine/comps/point_light_comp.h>
 #include <engine/comps/transform_comp.h>
 #include <engine/filesystem.h>
 #include <engine/imgui.h>
@@ -13,6 +14,7 @@
 #include <engine/pbr.h>
 #include <engine/pipelines.h>
 #include <engine/systems/fps_camera_system.h>
+#include <engine/systems/light_system.h>
 #include <engine/systems/rendering_system.h>
 #include <engine/util.h>
 #include <engine/world.h>
@@ -182,6 +184,19 @@ int main(int argc, const char *argv[]) {
     eg_gltf_model_comp_init(model_comp, model_asset);
   }
 
+  {
+    eg_entity_t ent = eg_world_add(&game.world);
+
+    eg_transform_comp_t *transform_comp =
+        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
+    eg_transform_comp_init(transform_comp);
+    transform_comp->position = (vec3_t){0.0, 0.0, 0.0};
+
+    eg_point_light_comp_t *light_comp =
+        EG_ADD_COMP(&game.world, eg_point_light_comp_t, ent);
+    eg_point_light_comp_init(light_comp, (vec4_t){1.0, 0.0, 0.0, 1.0});
+  }
+
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);
 
@@ -226,6 +241,8 @@ int main(int argc, const char *argv[]) {
         (float)width,
         (float)height);
 
+    eg_light_system(&game.world);
+
     re_canvas_begin(&game.scene_canvas, cmd_info.cmd_buffer);
 
     // Draw the skybox
@@ -235,7 +252,7 @@ int main(int argc, const char *argv[]) {
         &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
 
     // Draw the entities
-    eg_rendering_system_render(&game.world, &cmd_info, &pbr_pipeline->pipeline);
+    eg_rendering_system(&game.world, &cmd_info, &pbr_pipeline->pipeline);
 
     // Draw the selected entity
     eg_inspector_draw_selected_outline(&game.inspector, &cmd_info);

@@ -25,22 +25,20 @@ void eg_environment_init(
   VkDescriptorUpdateTemplate update_template =
       g_default_pipeline_layouts.skybox.update_templates[1];
 
-  {
-    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(environment->descriptor_sets)];
-    for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
-      set_layouts[i] = set_layout;
-    }
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device,
-        &(VkDescriptorSetAllocateInfo){
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = g_ctx.descriptor_pool,
-            .descriptorSetCount = ARRAY_SIZE(environment->descriptor_sets),
-            .pSetLayouts = set_layouts,
-        },
-        environment->descriptor_sets));
+  VkDescriptorSetLayout set_layouts[ARRAY_SIZE(environment->descriptor_sets)];
+  for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
+    set_layouts[i] = set_layout;
   }
+
+  VK_CHECK(vkAllocateDescriptorSets(
+      g_ctx.device,
+      &(VkDescriptorSetAllocateInfo){
+          .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+          .descriptorPool = g_ctx.descriptor_pool,
+          .descriptorSetCount = ARRAY_SIZE(environment->descriptor_sets),
+          .pSetLayouts = set_layouts,
+      },
+      environment->descriptor_sets));
 
   // Update descriptor sets
   for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
@@ -121,16 +119,13 @@ void eg_environment_draw_skybox(
 }
 
 bool eg_environment_add_point_light(
-    eg_environment_t *environment, const vec3_t pos, const vec3_t color) {
+    eg_environment_t *environment, const vec3_t pos, const vec4_t color) {
   if (environment->uniform.point_light_count + 1 == EG_MAX_POINT_LIGHTS) {
     return false;
   }
 
   environment->uniform.point_lights[environment->uniform.point_light_count] =
-      (eg_point_light_t){
-          (vec4_t){pos.x, pos.y, pos.z, 1.0},
-          (vec4_t){color.x, color.y, color.z, 1.0},
-      };
+      (eg_point_light_t){(vec4_t){pos.x, pos.y, pos.z, 1.0}, color};
   environment->uniform.point_light_count++;
   return true;
 }

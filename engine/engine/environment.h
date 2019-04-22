@@ -52,7 +52,7 @@ void eg_environment_draw_skybox(
     re_pipeline_t *pipeline);
 
 bool eg_environment_add_point_light(
-    eg_environment_t *environment, const vec3_t pos, const vec3_t color);
+    eg_environment_t *environment, const vec3_t pos, const vec4_t color);
 
 void eg_environment_reset_point_lights(eg_environment_t *environment);
 

@@ -31,10 +31,12 @@ add_library(
 
 	engine/comps/comp_types.c
 	engine/comps/comp_types.h
-	engine/comps/mesh_comp.c
-	engine/comps/mesh_comp.h
 	engine/comps/transform_comp.c
 	engine/comps/transform_comp.h
+	engine/comps/point_light_comp.c
+	engine/comps/point_light_comp.h
+	engine/comps/mesh_comp.c
+	engine/comps/mesh_comp.h
 	engine/comps/gltf_model_comp.c
 	engine/comps/gltf_model_comp.h
 
@@ -42,6 +44,8 @@ add_library(
 	engine/systems/rendering_system.h
 	engine/systems/fps_camera_system.c
 	engine/systems/fps_camera_system.h
+	engine/systems/light_system.c
+	engine/systems/light_system.h
 
 	engine/assets/env_file.h
 	engine/assets/asset_types.c

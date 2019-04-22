@@ -1,6 +1,7 @@
 #include "comp_types.h"
 #include "gltf_model_comp.h"
 #include "mesh_comp.h"
+#include "point_light_comp.h"
 #include "transform_comp.h"
 
 #define E(t, destructor, name) sizeof(t),
