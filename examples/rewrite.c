@@ -206,6 +206,8 @@ int main(int argc, const char *argv[]) {
         .cmd_buffer = re_window_get_current_command_buffer(&game.window),
     };
 
+    eg_world_update(&game.world);
+
     eg_imgui_begin();
     eg_inspector_draw_ui(&game.inspector);
     eg_imgui_end();

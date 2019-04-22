@@ -4,6 +4,9 @@
 #define EG__HAS_COMP(world, entity, comp_type)                                 \
   fstd_bitset_at(&world->comp_masks[comp_type], entity)
 
+static eg_entity_t to_remove[EG_MAX_ENTITIES] = {0};
+static size_t to_remove_count = 0;
+
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset) {
   eg_camera_init(&world->camera);
@@ -26,11 +29,44 @@ void eg_world_init(
   }
 }
 
+void eg_world_update(eg_world_t *world) {
+  for (uint32_t i = 0; i < to_remove_count; i++) {
+    eg_entity_t entity = to_remove[i];
+
+    if (eg_world_exists(world, entity)) {
+      fstd_bitset_set(&world->existence, entity, false);
+
+      if (world->entity_max == entity + 1) {
+        uint32_t new_max = 0;
+        // @TODO: this is pretty expensive
+        for (eg_entity_t e = 0; e < world->entity_max; e++) {
+          if (eg_world_exists(world, e) && e != entity) {
+            new_max = e + 1;
+          }
+        }
+        world->entity_max = new_max;
+      }
+
+      for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
+        if (EG__HAS_COMP(world, entity, c)) {
+          EG_COMP_DESTRUCTORS[c](
+              &world->pools[c].data[entity * EG_COMP_SIZES[c]]);
+          fstd_bitset_set(&world->comp_masks[c], entity, false);
+        }
+      }
+    }
+  }
+
+  to_remove_count = 0;
+}
+
 eg_entity_t eg_world_add(eg_world_t *world) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     if (!eg_world_exists(world, e)) {
       fstd_bitset_set(&world->existence, e, true);
-      world->entity_max = e + 1;
+      if (world->entity_max <= e) {
+        world->entity_max = e + 1;
+      }
       return e;
     }
   }
@@ -40,22 +76,14 @@ eg_entity_t eg_world_add(eg_world_t *world) {
 
 void eg_world_remove(eg_world_t *world, eg_entity_t entity) {
   if (eg_world_exists(world, entity)) {
-    fstd_bitset_set(&world->existence, entity, false);
-    for (uint32_t e = entity - 1; e >= 0; e--) {
-      if (eg_world_exists(world, e)) {
-        world->entity_max = e + 1;
-        break;
-      }
-    }
-
-    for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
-      EG_COMP_DESTRUCTORS[c](&world->pools[c].data[entity * EG_COMP_SIZES[c]]);
-      fstd_bitset_set(&world->comp_masks[c], entity, false);
-    }
+    to_remove[to_remove_count++] = entity;
   }
 }
 
 bool eg_world_exists(eg_world_t *world, eg_entity_t entity) {
+  if (entity >= EG_MAX_ENTITIES) {
+    return false;
+  }
   return fstd_bitset_at(&world->existence, entity);
 }
 

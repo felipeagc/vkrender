@@ -654,18 +654,21 @@ static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
 
 static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}
 
-void eg_inspector_draw_ui(eg_inspector_t *inspector) {
-  static char str[256] = "";
-
-  re_window_t *window = inspector->window;
+static inline void selected_entity_ui(eg_inspector_t *inspector) {
   eg_world_t *world = inspector->world;
-  eg_asset_manager_t *asset_manager = inspector->asset_manager;
 
-  if (inspector->selected_entity < EG_MAX_ENTITIES) {
+  if (eg_world_exists(world, inspector->selected_entity)) {
     if (igBegin("Selected entity", NULL, 0)) {
       eg_entity_t entity = inspector->selected_entity;
 
       igText("Entity #%u", inspector->selected_entity);
+      igSameLine(0.0f, -1.0f);
+      if (igSmallButton("Remove")) {
+        eg_world_remove(world, inspector->selected_entity);
+        set_selected(inspector, UINT32_MAX);
+        igEnd();
+        return;
+      }
 
       if (igCollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
         for (eg_tag_t tag = 0; tag < EG_TAG_MAX; tag++) {
@@ -694,6 +697,16 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
     }
     igEnd();
   }
+}
+
+void eg_inspector_draw_ui(eg_inspector_t *inspector) {
+  static char str[256] = "";
+
+  re_window_t *window = inspector->window;
+  eg_world_t *world = inspector->world;
+  eg_asset_manager_t *asset_manager = inspector->asset_manager;
+
+  selected_entity_ui(inspector);
 
   if (igBegin("Inspector", NULL, 0)) {
     if (igBeginTabBar("Inspector", 0)) {

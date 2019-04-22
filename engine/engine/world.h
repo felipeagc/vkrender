@@ -69,6 +69,8 @@ typedef struct eg_world_t {
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset);
 
+void eg_world_update(eg_world_t *world);
+
 eg_entity_t eg_world_add(eg_world_t *world);
 
 void eg_world_remove(eg_world_t *world, eg_entity_t entity);
