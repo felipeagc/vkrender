@@ -6,6 +6,7 @@
 #include "assets/pbr_material_asset.h"
 #include "comps/gltf_model_comp.h"
 #include "comps/mesh_comp.h"
+#include "comps/point_light_comp.h"
 #include "comps/transform_comp.h"
 #include "imgui.h"
 #include "pipelines.h"
@@ -636,6 +637,14 @@ static void inspect_transform_comp(eg_world_t *world, eg_entity_t entity) {
   igDragFloat("Angle", &transform->angle, 0.01f, 0.0f, 0.0f, "%.3f rad", 1.0f);
 }
 
+static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
+  eg_point_light_comp_t *point_light =
+      EG_COMP(world, eg_point_light_comp_t, entity);
+  igColorEdit4("Color", &point_light->color.r, 0);
+}
+
+static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}
+
 static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
   eg_gltf_model_comp_t *gltf_model =
       EG_COMP(world, eg_gltf_model_comp_t, entity);
@@ -651,8 +660,6 @@ static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
     igEndPopup();
   }
 }
-
-static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}
 
 static inline void selected_entity_ui(eg_inspector_t *inspector) {
   eg_world_t *world = inspector->world;
@@ -681,17 +688,29 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
       }
 
       if (EG_HAS_COMP(world, eg_transform_comp_t, entity) &&
-          igCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+          igCollapsingHeader(
+              EG_COMP_NAME(eg_transform_comp_t),
+              ImGuiTreeNodeFlags_DefaultOpen)) {
         inspect_transform_comp(world, entity);
       }
 
+      if (EG_HAS_COMP(world, eg_point_light_comp_t, entity) &&
+          igCollapsingHeader(
+              EG_COMP_NAME(eg_point_light_comp_t),
+              ImGuiTreeNodeFlags_DefaultOpen)) {
+        inspect_point_light_comp(world, entity);
+      }
+
       if (EG_HAS_COMP(world, eg_mesh_comp_t, entity) &&
-          igCollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
+          igCollapsingHeader(
+              EG_COMP_NAME(eg_mesh_comp_t), ImGuiTreeNodeFlags_DefaultOpen)) {
         inspect_mesh_comp(world, entity);
       }
 
       if (EG_HAS_COMP(world, eg_gltf_model_comp_t, entity) &&
-          igCollapsingHeader("GLTF Model", ImGuiTreeNodeFlags_DefaultOpen)) {
+          igCollapsingHeader(
+              EG_COMP_NAME(eg_gltf_model_comp_t),
+              ImGuiTreeNodeFlags_DefaultOpen)) {
         inspect_gltf_model_comp(world, entity);
       }
     }

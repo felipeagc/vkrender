@@ -10,9 +10,11 @@ typedef void (*eg_comp_destructor_t)(void *);
 
 #define EG_COMP_TYPE(comp) EG_COMP_TYPE_##comp
 
+#define EG_COMP_NAME(comp) EG_COMP_NAMES[EG_COMP_TYPE(comp)]
+
 #define EG__COMPS                                                              \
   E(eg_transform_comp_t, eg_transform_comp_destroy, "Transform")               \
-  E(eg_point_light_comp_t, eg_point_light_comp_destroy, "Point Light")                           \
+  E(eg_point_light_comp_t, eg_point_light_comp_destroy, "Point Light")         \
   E(eg_mesh_comp_t, eg_mesh_comp_destroy, "Mesh")                              \
   E(eg_gltf_model_comp_t, eg_gltf_model_comp_destroy, "GLTF Model")
 
