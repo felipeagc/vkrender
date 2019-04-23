@@ -24,6 +24,9 @@ typedef struct eg_inspector_t {
   eg_world_t *world;
   eg_asset_manager_t *asset_manager;
 
+  re_image_t light_billboard_image;
+  VkDescriptorSet light_billboard_descriptor_set;
+
   eg_picker_t picker;
 
   re_render_target_t *drawing_render_target;
@@ -32,6 +35,9 @@ typedef struct eg_inspector_t {
 
   re_pipeline_t gizmo_pipeline;
   re_pipeline_t gizmo_picking_pipeline;
+
+  re_pipeline_t billboard_pipeline;
+  re_pipeline_t billboard_picking_pipeline;
 
   re_pipeline_t outline_pipeline;
 

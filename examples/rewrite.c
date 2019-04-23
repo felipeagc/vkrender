@@ -190,11 +190,24 @@ int main(int argc, const char *argv[]) {
     eg_transform_comp_t *transform_comp =
         EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
     eg_transform_comp_init(transform_comp);
-    transform_comp->position = (vec3_t){0.0, 0.0, 0.0};
+    transform_comp->position = (vec3_t){3.0, 3.0, 3.0};
 
     eg_point_light_comp_t *light_comp =
         EG_ADD_COMP(&game.world, eg_point_light_comp_t, ent);
     eg_point_light_comp_init(light_comp, (vec4_t){1.0, 0.0, 0.0, 1.0});
+  }
+
+  {
+    eg_entity_t ent = eg_world_add(&game.world);
+
+    eg_transform_comp_t *transform_comp =
+        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
+    eg_transform_comp_init(transform_comp);
+    transform_comp->position = (vec3_t){-3.0, 3.0, -3.0};
+
+    eg_point_light_comp_t *light_comp =
+        EG_ADD_COMP(&game.world, eg_point_light_comp_t, ent);
+    eg_point_light_comp_init(light_comp, (vec4_t){0.0, 1.0, 0.0, 1.0});
   }
 
   while (!re_window_should_close(&game.window)) {

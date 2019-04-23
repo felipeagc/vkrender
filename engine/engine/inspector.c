@@ -8,11 +8,13 @@
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
 #include "comps/transform_comp.h"
+#include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
 #include "world.h"
 #include <renderer/context.h>
 #include <renderer/window.h>
+#include <stb_image.h>
 #include <stdio.h>
 
 #define INDENT_LEVEL 8.0f
@@ -98,13 +100,6 @@ void eg_inspector_init(
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
-      &inspector->outline_pipeline,
-      inspector->drawing_render_target,
-      "/shaders/outline.vert.spv",
-      "/shaders/outline.frag.spv",
-      eg_outline_pipeline_parameters());
-
-  eg_init_pipeline_spv(
       &inspector->gizmo_picking_pipeline,
       &inspector->picker.canvas.render_target,
       "/shaders/gizmo_picking.vert.spv",
@@ -112,11 +107,78 @@ void eg_inspector_init(
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
+      &inspector->billboard_pipeline,
+      inspector->drawing_render_target,
+      "/shaders/billboard.vert.spv",
+      "/shaders/billboard.frag.spv",
+      eg_billboard_pipeline_parameters());
+
+  eg_init_pipeline_spv(
+      &inspector->billboard_picking_pipeline,
+      &inspector->picker.canvas.render_target,
+      "/shaders/billboard_picking.vert.spv",
+      "/shaders/billboard_picking.frag.spv",
+      eg_billboard_pipeline_parameters());
+
+  eg_init_pipeline_spv(
+      &inspector->outline_pipeline,
+      inspector->drawing_render_target,
+      "/shaders/outline.vert.spv",
+      "/shaders/outline.frag.spv",
+      eg_outline_pipeline_parameters());
+
+  eg_init_pipeline_spv(
       &inspector->picking_pipeline,
       &inspector->picker.canvas.render_target,
       "/shaders/picking.vert.spv",
       "/shaders/picking.frag.spv",
       eg_picking_pipeline_parameters());
+
+  {
+    eg_file_t *image_file = eg_file_open_read("/assets/light.png");
+    assert(image_file);
+    size_t image_file_size = eg_file_size(image_file);
+    unsigned char *image_file_data = calloc(1, image_file_size);
+    eg_file_read_bytes(image_file, image_file_data, image_file_size);
+    eg_file_close(image_file);
+
+    int width, height, channels;
+    unsigned char *image_data = stbi_load_from_memory(
+        image_file_data, (int)image_file_size, &width, &height, &channels, 4);
+
+    free(image_file_data);
+
+    re_image_init(
+        &inspector->light_billboard_image,
+        g_ctx.transient_command_pool,
+        &(re_image_options_t){
+            .data = image_data,
+            .width = (uint32_t)width,
+            .height = (uint32_t)height,
+        });
+
+    free(image_data);
+  }
+
+  {
+    VK_CHECK(vkAllocateDescriptorSets(
+        g_ctx.device,
+        &(VkDescriptorSetAllocateInfo){
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_ctx.descriptor_pool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &inspector->billboard_pipeline.layout.set_layouts[1],
+        },
+        &inspector->light_billboard_descriptor_set));
+
+    vkUpdateDescriptorSetWithTemplate(
+        g_ctx.device,
+        inspector->light_billboard_descriptor_set,
+        inspector->billboard_pipeline.layout.update_templates[1],
+        (re_descriptor_update_info_t[]){
+            {.image_info = inspector->light_billboard_image.descriptor},
+        });
+  }
 
   inspector->drag_direction = EG_DRAG_DIRECTION_NONE;
   inspector->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
@@ -169,14 +231,75 @@ void eg_inspector_destroy(eg_inspector_t *inspector) {
 
   re_pipeline_destroy(&inspector->gizmo_pipeline);
   re_pipeline_destroy(&inspector->gizmo_picking_pipeline);
+  re_pipeline_destroy(&inspector->billboard_pipeline);
+  re_pipeline_destroy(&inspector->billboard_picking_pipeline);
   re_pipeline_destroy(&inspector->picking_pipeline);
   re_pipeline_destroy(&inspector->outline_pipeline);
+
+  vkFreeDescriptorSets(
+      g_ctx.device,
+      g_ctx.descriptor_pool,
+      1,
+      &inspector->light_billboard_descriptor_set);
+
+  re_image_destroy(&inspector->light_billboard_image);
 
   eg_picker_destroy(&inspector->picker);
 }
 
 static void
 draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
+  re_cmd_bind_graphics_pipeline(
+      cmd_info->cmd_buffer, &inspector->billboard_picking_pipeline);
+
+  eg_camera_bind(
+      &inspector->world->camera,
+      cmd_info,
+      &inspector->billboard_picking_pipeline,
+      0);
+  vkCmdBindDescriptorSets(
+      cmd_info->cmd_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      inspector->billboard_picking_pipeline.layout.layout,
+      1,
+      1,
+      &inspector->light_billboard_descriptor_set,
+      0,
+      NULL);
+
+  eg_transform_comp_t *transforms =
+      EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
+  eg_point_light_comp_t *point_lights =
+      EG_COMP_ARRAY(inspector->world, eg_point_light_comp_t);
+
+  for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
+    if (EG_HAS_TAG(inspector->world, e, EG_TAG_HIDDEN)) {
+      continue;
+    }
+
+    if (EG_HAS_COMP(inspector->world, eg_point_light_comp_t, e) &&
+        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+      struct {
+        mat4_t model;
+        uint32_t index;
+      } push_constant;
+
+      push_constant.model = eg_transform_comp_mat4(&transforms[e]);
+      push_constant.index = e;
+
+      vkCmdPushConstants(
+          cmd_info->cmd_buffer,
+          inspector->billboard_picking_pipeline.layout.layout,
+          inspector->billboard_picking_pipeline.layout.push_constants[0]
+              .stageFlags,
+          inspector->billboard_picking_pipeline.layout.push_constants[0].offset,
+          sizeof(push_constant),
+          &push_constant);
+
+      vkCmdDraw(cmd_info->cmd_buffer, 6, 1, 0, 0);
+    }
+  }
+
   if (inspector->selected_entity >= EG_MAX_ENTITIES) {
     return;
   }
@@ -414,6 +537,54 @@ void eg_inspector_update(eg_inspector_t *inspector) {
 
 void eg_inspector_draw_gizmos(
     eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
+
+  re_cmd_bind_graphics_pipeline(
+      cmd_info->cmd_buffer, &inspector->billboard_pipeline);
+
+  eg_camera_bind(
+      &inspector->world->camera, cmd_info, &inspector->billboard_pipeline, 0);
+  vkCmdBindDescriptorSets(
+      cmd_info->cmd_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      inspector->billboard_pipeline.layout.layout,
+      1,
+      1,
+      &inspector->light_billboard_descriptor_set,
+      0,
+      NULL);
+
+  eg_transform_comp_t *transforms =
+      EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
+  eg_point_light_comp_t *point_lights =
+      EG_COMP_ARRAY(inspector->world, eg_point_light_comp_t);
+
+  for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
+    if (EG_HAS_TAG(inspector->world, e, EG_TAG_HIDDEN)) {
+      continue;
+    }
+
+    if (EG_HAS_COMP(inspector->world, eg_point_light_comp_t, e) &&
+        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+      struct {
+        mat4_t model;
+        vec4_t color;
+      } push_constant;
+
+      push_constant.model = eg_transform_comp_mat4(&transforms[e]);
+      push_constant.color = point_lights[e].color;
+
+      vkCmdPushConstants(
+          cmd_info->cmd_buffer,
+          inspector->billboard_pipeline.layout.layout,
+          inspector->billboard_pipeline.layout.push_constants[0].stageFlags,
+          inspector->billboard_pipeline.layout.push_constants[0].offset,
+          sizeof(push_constant),
+          &push_constant);
+
+      vkCmdDraw(cmd_info->cmd_buffer, 6, 1, 0, 0);
+    }
+  }
+
   if (inspector->selected_entity >= EG_MAX_ENTITIES) {
     return;
   }

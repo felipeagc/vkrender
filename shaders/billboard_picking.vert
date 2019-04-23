@@ -44,7 +44,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 
 layout (push_constant) uniform BillboardUniform {
   mat4 model;
-  vec4 color;
+  uint index;
 } billboard;
 
 layout (location = 0) out vec2 tex_coords0;
