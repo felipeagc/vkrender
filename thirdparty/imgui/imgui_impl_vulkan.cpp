@@ -42,6 +42,7 @@ static uint32_t                     g_QueueFamily = (uint32_t)-1;
 static VkQueue                      g_Queue = VK_NULL_HANDLE;
 static VkPipelineCache              g_PipelineCache = VK_NULL_HANDLE;
 static VkDescriptorPool             g_DescriptorPool = VK_NULL_HANDLE;
+static VkSampleCountFlagBits        g_SampleCount = VK_SAMPLE_COUNT_1_BIT;
 static VkRenderPass                 g_RenderPass = VK_NULL_HANDLE;
 static void                         (*g_CheckVkResultFn)(VkResult err) = NULL;
 
@@ -625,7 +626,7 @@ bool ImGui_ImplVulkan_CreateDeviceObjects()
 
     VkPipelineMultisampleStateCreateInfo ms_info = {};
     ms_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    ms_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    ms_info.rasterizationSamples = g_SampleCount;
 
     VkPipelineColorBlendAttachmentState color_attachment[1] = {};
     color_attachment[0].blendEnable = VK_TRUE;
@@ -731,6 +732,7 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass rend
     g_RenderPass = render_pass;
     g_PipelineCache = info->PipelineCache;
     g_DescriptorPool = info->DescriptorPool;
+    g_SampleCount = info->SampleCount;
     g_Allocator = info->Allocator;
     g_CheckVkResultFn = info->CheckVkResultFn;
 

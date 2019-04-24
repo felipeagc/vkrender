@@ -27,6 +27,7 @@ typedef struct ImGui_ImplVulkan_InitInfo
     VkQueue                         Queue;
     VkPipelineCache                 PipelineCache;
     VkDescriptorPool                DescriptorPool;
+    VkSampleCountFlagBits           SampleCount;
     const VkAllocationCallbacks*    Allocator;
     void                            (*CheckVkResultFn)(VkResult err);
 } ImGui_ImplVulkan_InitInfo;

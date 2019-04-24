@@ -43,6 +43,12 @@ typedef struct re_window_t {
     VkImageView view;
   } depth_stencil;
 
+  struct {
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView view;
+  } multisampled_color;
+
   re_frame_resources_t frame_resources[RE_MAX_FRAMES_IN_FLIGHT];
 
   // Current frame (capped by MAX_FRAMES_IN_FLIGHT)
@@ -59,8 +65,14 @@ typedef struct re_window_t {
   VkImageView *swapchain_image_views;
 } re_window_t;
 
-bool re_window_init(
-    re_window_t *window, const char *title, uint32_t width, uint32_t height);
+typedef struct re_window_options_t {
+  const char *title;
+  uint32_t width;
+  uint32_t height;
+  VkSampleCountFlags sample_count;
+} re_window_options_t;
+
+bool re_window_init(re_window_t *window, re_window_options_t *options);
 
 void re_window_poll_events(re_window_t *window);
 

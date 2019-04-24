@@ -346,7 +346,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 }
 
 // Populates the depthStencil member struct
-static inline void create_depth_stencil_resources(re_window_t *window) {
+static inline void create_depth_stencil_image(re_window_t *window) {
   bool res = re_context_get_supported_depth_format(&window->depth_format);
   assert(res);
 
@@ -361,7 +361,7 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
                  1},
       .mipLevels = 1,
       .arrayLayers = 1,
-      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .samples = window->render_target.sample_count,
       .tiling = VK_IMAGE_TILING_OPTIMAL,
       .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
                VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -417,9 +417,71 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
       &window->depth_stencil.view));
 }
 
-static inline void create_render_pass(re_window_t *window) {
-  window->render_target.sample_count = VK_SAMPLE_COUNT_1_BIT;
+static inline void create_multisampled_color_image(re_window_t *window) {
+  VkImageCreateInfo image_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = window->swapchain_image_format,
+      .extent = {window->swapchain_extent.width,
+                 window->swapchain_extent.height,
+                 1},
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = window->render_target.sample_count,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = NULL,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+  };
 
+  VmaAllocationCreateInfo alloc_info = {0};
+  alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+
+  VK_CHECK(vmaCreateImage(
+      g_ctx.gpu_allocator,
+      &image_create_info,
+      &alloc_info,
+      &window->multisampled_color.image,
+      &window->multisampled_color.allocation,
+      NULL));
+
+  VkImageViewCreateInfo image_view_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .image = window->multisampled_color.image,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = window->swapchain_image_format,
+      .components =
+          {
+              .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+          },
+      .subresourceRange = {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .baseMipLevel = 0,
+          .levelCount = 1,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+      }};
+
+  VK_CHECK(vkCreateImageView(
+      g_ctx.device,
+      &image_view_create_info,
+      NULL,
+      &window->multisampled_color.view));
+}
+
+static inline void create_render_pass(re_window_t *window) {
   VkAttachmentDescription attachment_descriptions[] = {
       // Resolved color attachment
       (VkAttachmentDescription){
@@ -434,17 +496,30 @@ static inline void create_render_pass(re_window_t *window) {
           VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,  // finalLayout
       },
 
-      // Resolved depth attachment
+      // Multisampled depth attachment
       (VkAttachmentDescription){
           0,                                                // flags
           window->depth_format,                             // format
-          VK_SAMPLE_COUNT_1_BIT,                            // samples
+          window->render_target.sample_count,               // samples
           VK_ATTACHMENT_LOAD_OP_CLEAR,                      // loadOp
           VK_ATTACHMENT_STORE_OP_STORE,                     // storeOp
           VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
           VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // stencilStoreOp
           VK_IMAGE_LAYOUT_UNDEFINED,                        // initialLayout
           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // finalLayout
+      },
+
+      // Multisampled color attachment
+      (VkAttachmentDescription){
+          0,                                  // flags
+          window->swapchain_image_format,     // format
+          window->render_target.sample_count, // samples
+          VK_ATTACHMENT_LOAD_OP_CLEAR,        // loadOp
+          VK_ATTACHMENT_STORE_OP_STORE,       // storeOp
+          VK_ATTACHMENT_LOAD_OP_DONT_CARE,    // stencilLoadOp
+          VK_ATTACHMENT_STORE_OP_DONT_CARE,   // stencilStoreOp
+          VK_IMAGE_LAYOUT_UNDEFINED,          // initialLayout
+          VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,    // finalLayout
       },
   };
 
@@ -456,6 +531,11 @@ static inline void create_render_pass(re_window_t *window) {
   VkAttachmentReference depth_attachment_reference = {
       1,                                                // attachment
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // layout
+  };
+
+  VkAttachmentReference multisampled_color_attachment_reference = {
+      2,                                        // attachment
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
   };
 
   VkSubpassDescription subpass_description = {
@@ -470,6 +550,12 @@ static inline void create_render_pass(re_window_t *window) {
       0,                               // preserveAttachmentCount
       NULL,                            // pPreserveAttachments
   };
+
+  if (window->render_target.sample_count != VK_SAMPLE_COUNT_1_BIT) {
+    subpass_description.pColorAttachments =
+        &multisampled_color_attachment_reference;
+    subpass_description.pResolveAttachments = &color_attachment_reference;
+  }
 
   VkSubpassDependency dependencies[] = {
       (VkSubpassDependency){
@@ -506,6 +592,10 @@ static inline void create_render_pass(re_window_t *window) {
       dependencies,                                  // pDependencies
   };
 
+  if (window->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
+    render_pass_create_info.attachmentCount -= 1;
+  }
+
   VK_CHECK(vkCreateRenderPass(
       g_ctx.device,
       &render_pass_create_info,
@@ -522,6 +612,7 @@ static inline void regen_framebuffer(
   VkImageView attachments[] = {
       *swapchain_image_view,
       window->depth_stencil.view,
+      window->multisampled_color.view,
   };
 
   VkFramebufferCreateInfo create_info = {
@@ -535,6 +626,10 @@ static inline void regen_framebuffer(
       window->swapchain_extent.height,           // height
       1,                                         // layers
   };
+
+  if (window->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
+    create_info.attachmentCount -= 1;
+  }
 
   VK_CHECK(vkCreateFramebuffer(g_ctx.device, &create_info, NULL, framebuffer));
 }
@@ -558,6 +653,18 @@ static inline void destroy_resizables(re_window_t *window) {
         window->depth_stencil.allocation);
     window->depth_stencil.image = VK_NULL_HANDLE;
     window->depth_stencil.allocation = VK_NULL_HANDLE;
+    window->depth_stencil.view = VK_NULL_HANDLE;
+  }
+
+  if (window->multisampled_color.image) {
+    vkDestroyImageView(g_ctx.device, window->multisampled_color.view, NULL);
+    vmaDestroyImage(
+        g_ctx.gpu_allocator,
+        window->multisampled_color.image,
+        window->multisampled_color.allocation);
+    window->multisampled_color.image = VK_NULL_HANDLE;
+    window->multisampled_color.allocation = VK_NULL_HANDLE;
+    window->multisampled_color.view = VK_NULL_HANDLE;
   }
 
   vkDestroyRenderPass(g_ctx.device, window->render_target.render_pass, NULL);
@@ -571,7 +678,8 @@ static inline void update_size(re_window_t *window) {
   re_window_size(window, &width, &height);
   create_swapchain(window, width, height);
   create_swapchain_image_views(window);
-  create_depth_stencil_resources(window);
+  create_depth_stencil_image(window);
+  create_multisampled_color_image(window);
   create_render_pass(window);
   allocate_graphics_command_buffers(window);
 }
@@ -773,8 +881,7 @@ static void re_window_content_scale_callback(
  *
  */
 
-bool re_window_init(
-    re_window_t *window, const char *title, uint32_t width, uint32_t height) {
+bool re_window_init(re_window_t *window, re_window_options_t *options) {
   window->clear_color = (vec4_t){0.0, 0.0, 0.0, 1.0};
   window->delta_time = 0.0f;
   window->time_before = 0.0f;
@@ -789,13 +896,19 @@ bool re_window_init(
   // Index of the current swapchain image
   window->current_image_index = 0;
 
+  if (options->sample_count == 0) {
+    options->sample_count = VK_SAMPLE_COUNT_1_BIT;
+  }
+  window->render_target.sample_count = options->sample_count;
+
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     window->frame_resources[i].framebuffer = VK_NULL_HANDLE;
     window->frame_resources[i].command_buffer = VK_NULL_HANDLE;
   }
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  window->glfw_window = glfwCreateWindow(width, height, title, NULL, NULL);
+  window->glfw_window = glfwCreateWindow(
+      options->width, options->height, options->title, NULL, NULL);
 
   assert(window->glfw_window != NULL);
 
@@ -844,12 +957,13 @@ bool re_window_init(
 
   create_sync_objects(window);
 
-  create_swapchain(window, width, height);
+  create_swapchain(window, options->width, options->height);
   create_swapchain_image_views(window);
 
   allocate_graphics_command_buffers(window);
 
-  create_depth_stencil_resources(window);
+  create_depth_stencil_image(window);
+  create_multisampled_color_image(window);
 
   create_render_pass(window);
 
@@ -1087,14 +1201,17 @@ void re_window_begin_render_pass(re_window_t *window) {
   VkCommandBuffer command_buffer =
       window->frame_resources[window->current_frame].command_buffer;
 
-  VkClearValue clear_values[2] = {0};
-  clear_values[0].color = (VkClearColorValue){{
-      window->clear_color.x,
-      window->clear_color.y,
-      window->clear_color.z,
-      window->clear_color.w,
-  }};
-  clear_values[1].depthStencil = (VkClearDepthStencilValue){1.0f, 0};
+  VkClearValue clear_values[] = {
+      {.color = {window->clear_color.x,
+                 window->clear_color.y,
+                 window->clear_color.z,
+                 window->clear_color.w}},
+      {.depthStencil = {1.0f, 0}},
+      {.color = {window->clear_color.x,
+                 window->clear_color.y,
+                 window->clear_color.z,
+                 window->clear_color.w}},
+  };
 
   VkRenderPassBeginInfo render_pass_begin_info = {
       VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,                   // sType

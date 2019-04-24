@@ -32,16 +32,21 @@ typedef struct game_t {
   eg_asset_manager_t asset_manager;
   eg_world_t world;
 
-  re_canvas_t scene_canvas;
-
   eg_fps_camera_system_t fps_system;
   eg_inspector_t inspector;
 } game_t;
 
 static void game_init(game_t *game, int argc, const char *argv[]) {
   re_context_init();
-  re_window_init(&game->window, "Re-write", 1600, 900);
-  eg_imgui_init(&game->window);
+  re_window_init(
+      &game->window,
+      &(re_window_options_t){
+          .title = "Re-write",
+          .width = 1600,
+          .height = 900,
+          .sample_count = VK_SAMPLE_COUNT_1_BIT,
+      });
+  eg_imgui_init(&game->window, &game->window.render_target);
 
   eg_fs_init(argv[0]);
   eg_fs_mount("./assets", "/assets");
@@ -54,16 +59,6 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   eg_default_pipeline_layouts_init();
 
   game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
-
-  uint32_t width, height;
-  re_window_size(&game->window, &width, &height);
-  re_canvas_init(
-      &game->scene_canvas,
-      &(re_canvas_options_t){
-          .width = width,
-          .height = height,
-          .sample_count = VK_SAMPLE_COUNT_2_BIT,
-      });
 
   eg_asset_manager_init(&game->asset_manager);
 
@@ -78,7 +73,7 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
   eg_inspector_init(
       &game->inspector,
       &game->window,
-      &game->scene_canvas.render_target,
+      &game->window.render_target,
       &game->world,
       &game->asset_manager);
   eg_fps_camera_system_init(&game->fps_system);
@@ -89,8 +84,6 @@ static void game_destroy(game_t *game) {
 
   eg_world_destroy(&game->world);
   eg_asset_manager_destroy(&game->asset_manager);
-
-  re_canvas_destroy(&game->scene_canvas);
 
   eg_default_pipeline_layouts_destroy();
 
@@ -109,7 +102,7 @@ int main(int argc, const char *argv[]) {
       eg_asset_alloc(&game.asset_manager, "PBR pipeline", eg_pipeline_asset_t);
   eg_pipeline_asset_init(
       pbr_pipeline,
-      &game.scene_canvas.render_target,
+      &game.window.render_target,
       "/shaders/pbr.vert.spv",
       "/shaders/pbr.frag.spv",
       eg_pbr_pipeline_parameters());
@@ -118,19 +111,10 @@ int main(int argc, const char *argv[]) {
       &game.asset_manager, "Skybox pipeline", eg_pipeline_asset_t);
   eg_pipeline_asset_init(
       skybox_pipeline,
-      &game.scene_canvas.render_target,
+      &game.window.render_target,
       "/shaders/skybox.vert.spv",
       "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
-
-  eg_pipeline_asset_t *fullscreen_pipeline = eg_asset_alloc(
-      &game.asset_manager, "Fullscreen pipeline", eg_pipeline_asset_t);
-  eg_pipeline_asset_init(
-      fullscreen_pipeline,
-      &game.window.render_target,
-      "/shaders/fullscreen.vert.spv",
-      "/shaders/fullscreen.frag.spv",
-      eg_fullscreen_pipeline_parameters());
 
   {
     eg_gltf_model_asset_t *model_asset =
@@ -217,13 +201,6 @@ int main(int argc, const char *argv[]) {
     while (re_window_next_event(&game.window, &event)) {
       eg_imgui_process_event(&event);
       eg_inspector_process_event(&game.inspector, &event);
-
-      if (event.type == RE_EVENT_FRAMEBUFFER_RESIZED) {
-        re_canvas_resize(
-            &game.scene_canvas,
-            (uint32_t)event.size.width,
-            (uint32_t)event.size.height);
-      }
     }
 
     uint32_t width, height;
@@ -256,7 +233,8 @@ int main(int argc, const char *argv[]) {
 
     eg_light_system(&game.world);
 
-    re_canvas_begin(&game.scene_canvas, cmd_info.cmd_buffer);
+    // Begin window renderpass
+    re_window_begin_render_pass(&game.window);
 
     // Draw the skybox
     eg_camera_bind(
@@ -275,17 +253,6 @@ int main(int argc, const char *argv[]) {
 
     // Update the selected entity's position based on gizmo movement
     eg_inspector_update(&game.inspector);
-
-    re_canvas_end(&game.scene_canvas, cmd_info.cmd_buffer);
-
-    // Begin window renderpass
-    re_window_begin_render_pass(&game.window);
-
-    // Draw the scene canvas
-    re_canvas_draw(
-        &game.scene_canvas,
-        cmd_info.cmd_buffer,
-        &fullscreen_pipeline->pipeline);
 
     // Draw imgui
     eg_imgui_draw(&cmd_info);

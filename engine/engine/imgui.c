@@ -14,7 +14,7 @@ static void check_vk_result_fn(VkResult result) {
   }
 }
 
-void eg_imgui_init(re_window_t *window) {
+void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
   igCreateContext(NULL);
   igGetIO();
 
@@ -29,9 +29,10 @@ void eg_imgui_init(re_window_t *window) {
   init_info.Queue = g_ctx.graphics_queue;
   init_info.PipelineCache = VK_NULL_HANDLE;
   init_info.DescriptorPool = g_ctx.descriptor_pool;
+  init_info.SampleCount = render_target->sample_count;
   init_info.Allocator = NULL;
   init_info.CheckVkResultFn = check_vk_result_fn;
-  ImGui_ImplVulkan_Init(&init_info, window->render_target.render_pass);
+  ImGui_ImplVulkan_Init(&init_info, render_target->render_pass);
 
   // Setup style
   igStyleColorsDark(NULL);
