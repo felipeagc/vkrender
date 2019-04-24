@@ -10,7 +10,7 @@
 - [x] General purpose global allocator
 - [x] Decide on how to handle entities
 - [x] Basic shape rendering
-- [ ] Light billboard rendering
+- [x] Light billboard rendering
 - [x] Gltf models with cgltf
 
 ### Shaders

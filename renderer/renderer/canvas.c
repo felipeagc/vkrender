@@ -13,61 +13,58 @@ static inline void create_image(
     VkFormat format,
     VkSampleCountFlags sample_count) {
   VkImageCreateInfo image_create_info = {
-      VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      NULL,
-      0,                // flags
-      VK_IMAGE_TYPE_2D, // imageType
-      format,           // format
-      {
-          width,               // width
-          height,              // height
-          1,                   // depth
-      },                       // extent
-      1,                       // mipLevels
-      1,                       // arrayLayers
-      sample_count,            // samples
-      VK_IMAGE_TILING_OPTIMAL, // tiling
-      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-          VK_IMAGE_USAGE_SAMPLED_BIT |
-          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // usage
-      VK_SHARING_MODE_EXCLUSIVE,               // sharingMode
-      0,                                       // queueFamilyIndexCount
-      NULL,                                    // pQueueFamilyIndices
-      VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = format,
+      .extent = {width, height, 1},
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = sample_count,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = NULL,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
   };
 
-  VmaAllocationCreateInfo image_alloc_create_info = {0};
-  image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  VmaAllocationCreateInfo alloc_info = {0};
+  alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
   VK_CHECK(vmaCreateImage(
       g_ctx.gpu_allocator,
       &image_create_info,
-      &image_alloc_create_info,
+      &alloc_info,
       image,
       image_allocation,
       NULL));
 
   VkImageViewCreateInfo image_view_create_info = {
-      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      NULL,
-      0,                     // flags
-      *image,                // image
-      VK_IMAGE_VIEW_TYPE_2D, // viewType
-      format,                // format
-      {
-          VK_COMPONENT_SWIZZLE_IDENTITY, // r
-          VK_COMPONENT_SWIZZLE_IDENTITY, // g
-          VK_COMPONENT_SWIZZLE_IDENTITY, // b
-          VK_COMPONENT_SWIZZLE_IDENTITY, // a
-      },                                 // components
-      {
-          VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
-          0,                         // baseMipLevel
-          1,                         // levelCount
-          0,                         // baseArrayLayer
-          1,                         // layerCount
-      },                             // subresourceRange
-  };
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .image = *image,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = format,
+      .components =
+          {
+              .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+          },
+      .subresourceRange = {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .baseMipLevel = 0,
+          .levelCount = 1,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+      }};
 
   VK_CHECK(vkCreateImageView(
       g_ctx.device, &image_view_create_info, NULL, image_view));
@@ -118,24 +115,24 @@ static inline void destroy_images(re_canvas_t *canvas) {
 
 static inline void create_sampler(VkSampler *sampler) {
   VkSamplerCreateInfo sampler_create_info = {
-      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      NULL,
-      0,                                       // flags
-      VK_FILTER_LINEAR,                        // magFilter
-      VK_FILTER_LINEAR,                        // minFilter
-      VK_SAMPLER_MIPMAP_MODE_LINEAR,           // mipmapMode
-      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeU
-      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeV
-      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeW
-      0.0f,                                    // mipLodBias
-      VK_FALSE,                                // anisotropyEnable
-      1.0f,                                    // maxAnisotropy
-      VK_FALSE,                                // compareEnable
-      VK_COMPARE_OP_NEVER,                     // compareOp
-      0.0f,                                    // minLod
-      0.0f,                                    // maxLod
-      VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, // borderColor
-      VK_FALSE,                                // unnormalizedCoordinates
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .magFilter = VK_FILTER_LINEAR,
+      .minFilter = VK_FILTER_LINEAR,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+      .mipLodBias = 0.0f,
+      .anisotropyEnable = VK_FALSE,
+      .maxAnisotropy = 1.0f,
+      .compareEnable = VK_FALSE,
+      .compareOp = VK_COMPARE_OP_NEVER,
+      .minLod = 0.0f,
+      .maxLod = 0.0f,
+      .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+      .unnormalizedCoordinates = VK_FALSE,
   };
 
   VK_CHECK(vkCreateSampler(g_ctx.device, &sampler_create_info, NULL, sampler));
@@ -148,31 +145,27 @@ static inline void destroy_sampler(re_canvas_t *canvas) {
 }
 
 static inline void create_depth_target(re_canvas_t *canvas) {
-
   VkImageCreateInfo image_create_info = {
-      VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-      NULL,                                // pNext
-      0,                                   // flags
-      VK_IMAGE_TYPE_2D,                    // imageType
-      canvas->depth_format,                // format
-      {
-          canvas->render_target.width,    // width
-          canvas->render_target.height,   // height
-          1,                              // depth
-      },                                  // extent
-      1,                                  // mipLevels
-      1,                                  // arrayLayers
-      canvas->render_target.sample_count, // samples
-      VK_IMAGE_TILING_OPTIMAL,            // tiling
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
-          VK_IMAGE_USAGE_SAMPLED_BIT, // usage
-      VK_SHARING_MODE_EXCLUSIVE,      // sharingMode
-      0,                              // queueFamiylIndexCount
-      NULL,                           // pQueueFamilyIndices
-      VK_IMAGE_LAYOUT_UNDEFINED,      // initialLayout
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = canvas->depth_format,
+      .extent = {canvas->render_target.width, canvas->render_target.height, 1},
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = canvas->render_target.sample_count,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+               VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = NULL,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
   };
 
   VmaAllocationCreateInfo alloc_info = {0};
+  alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
   alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
@@ -184,26 +177,31 @@ static inline void create_depth_target(re_canvas_t *canvas) {
       NULL));
 
   VkImageViewCreateInfo image_view_create_info = {
-      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-      NULL,                                     // pNext
-      0,                                        // flags
-      canvas->depth.image,                      // image
-      VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-      canvas->depth_format,                     // format
-      {
-          VK_COMPONENT_SWIZZLE_IDENTITY, // r
-          VK_COMPONENT_SWIZZLE_IDENTITY, // g
-          VK_COMPONENT_SWIZZLE_IDENTITY, // b
-          VK_COMPONENT_SWIZZLE_IDENTITY, // a
-      },                                 // components
-      {
-          VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
-          0, // baseMipLevel
-          1, // levelCount
-          0, // baseArrayLayer
-          1, // layerCount
-      },     // subresourceRange
-  };
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .image = canvas->depth.image,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = canvas->depth_format,
+      .components =
+          {
+              .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+          },
+      .subresourceRange = {
+          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .baseMipLevel = 0,
+          .levelCount = 1,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+      }};
+
+  if (canvas->depth_format >= VK_FORMAT_D16_UNORM_S8_UINT) {
+    image_view_create_info.subresourceRange.aspectMask |=
+        VK_IMAGE_ASPECT_STENCIL_BIT;
+  }
 
   VK_CHECK(vkCreateImageView(
       g_ctx.device, &image_view_create_info, NULL, &canvas->depth.image_view));
@@ -307,7 +305,7 @@ static inline void create_render_pass(re_canvas_t *canvas) {
           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, // finalLayout
       },
 
-      // Resolved depth attachment
+      // Multisampled depth attachment
       (VkAttachmentDescription){
           0,                                                // flags
           canvas->depth_format,                             // format

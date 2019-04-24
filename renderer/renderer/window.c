@@ -328,12 +328,13 @@ static inline void create_swapchain_image_views(re_window_t *window) {
 }
 
 static inline void allocate_graphics_command_buffers(re_window_t *window) {
-  VkCommandBufferAllocateInfo allocate_info = {0};
-  allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocate_info.pNext = NULL;
-  allocate_info.commandPool = g_ctx.graphics_command_pool;
-  allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocate_info.commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT;
+  VkCommandBufferAllocateInfo allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .pNext = NULL,
+      .commandPool = g_ctx.graphics_command_pool,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT,
+  };
 
   VkCommandBuffer command_buffers[RE_MAX_FRAMES_IN_FLIGHT];
 
@@ -350,28 +351,28 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
   assert(res);
 
   VkImageCreateInfo image_create_info = {
-      VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // sType
-      NULL,                                // pNext
-      0,                                   // flags
-      VK_IMAGE_TYPE_2D,
-      window->depth_format,
-      {
-          window->swapchain_extent.width,
-          window->swapchain_extent.height,
-          1,
-      },
-      1,
-      1,
-      VK_SAMPLE_COUNT_1_BIT,
-      VK_IMAGE_TILING_OPTIMAL,
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-      VK_SHARING_MODE_EXCLUSIVE,
-      0,
-      NULL,
-      VK_IMAGE_LAYOUT_UNDEFINED,
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = window->depth_format,
+      .extent = {window->swapchain_extent.width,
+                 window->swapchain_extent.height,
+                 1},
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+               VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = NULL,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
   };
 
   VmaAllocationCreateInfo alloc_info = {0};
+  alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
   alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
@@ -383,26 +384,31 @@ static inline void create_depth_stencil_resources(re_window_t *window) {
       NULL));
 
   VkImageViewCreateInfo image_view_create_info = {
-      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-      NULL,                                     // pNext
-      0,                                        // flags
-      window->depth_stencil.image,
-      VK_IMAGE_VIEW_TYPE_2D,
-      window->depth_format,
-      {
-          VK_COMPONENT_SWIZZLE_IDENTITY, // r
-          VK_COMPONENT_SWIZZLE_IDENTITY, // g
-          VK_COMPONENT_SWIZZLE_IDENTITY, // b
-          VK_COMPONENT_SWIZZLE_IDENTITY, // a
-      },                                 // components
-      {
-          VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, // aspectMask
-          0, // baseMipLevel
-          1, // levelCount
-          0, // baseArrayLayer
-          1, // layerCount
-      },     // subresourceRange
-  };
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+      .pNext = NULL,                                     // pNext
+      .flags = 0,                                        // flags
+      .image = window->depth_stencil.image,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = window->depth_format,
+      .components =
+          {
+              .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+              .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+          },
+      .subresourceRange = {
+          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .baseMipLevel = 0,
+          .levelCount = 1,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+      }};
+
+  if (window->depth_format >= VK_FORMAT_D16_UNORM_S8_UINT) {
+    image_view_create_info.subresourceRange.aspectMask |=
+        VK_IMAGE_ASPECT_STENCIL_BIT;
+  }
 
   VK_CHECK(vkCreateImageView(
       g_ctx.device,
