@@ -35,9 +35,6 @@ typedef struct re_context_t {
 
   VkDescriptorPool descriptor_pool;
   VkDescriptorSetLayout canvas_descriptor_set_layout;
-
-  re_image_t white_texture;
-  re_image_t black_texture;
 } re_context_t;
 
 extern re_context_t g_ctx;

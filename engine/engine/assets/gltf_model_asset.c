@@ -1,4 +1,5 @@
 #include "gltf_model_asset.h"
+#include "../engine.h"
 #include "../filesystem.h"
 #include "../pipelines.h"
 #include <assert.h>
@@ -45,24 +46,24 @@ static void material_init(
   }
 
   if (albedo_texture == NULL) {
-    albedo_texture = &g_ctx.white_texture;
+    albedo_texture = &g_eng.white_texture;
   }
 
   if (normal_texture == NULL) {
     material->uniform.has_normal_texture = 0.0f;
-    normal_texture = &g_ctx.white_texture;
+    normal_texture = &g_eng.white_texture;
   }
 
   if (metallic_roughness_texture == NULL) {
-    metallic_roughness_texture = &g_ctx.white_texture;
+    metallic_roughness_texture = &g_eng.white_texture;
   }
 
   if (occlusion_texture == NULL) {
-    occlusion_texture = &g_ctx.white_texture;
+    occlusion_texture = &g_eng.white_texture;
   }
 
   if (emissive_texture == NULL) {
-    emissive_texture = &g_ctx.black_texture;
+    emissive_texture = &g_eng.black_texture;
   }
 
   VkDescriptorSetLayout set_layout =

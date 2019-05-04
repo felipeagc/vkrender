@@ -1,9 +1,13 @@
 add_library(
 	engine
 
+	engine/all.h
+
 	engine/util.h
 	engine/cmd_info.h
 
+	engine/engine.c
+	engine/engine.h
 	engine/world.c
 	engine/world.h
 	engine/asset_manager.c

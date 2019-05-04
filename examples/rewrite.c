@@ -1,26 +1,6 @@
-#include <engine/asset_manager.h>
-#include <engine/assets/environment_asset.h>
-#include <engine/assets/gltf_model_asset.h>
-#include <engine/assets/mesh_asset.h>
-#include <engine/assets/pipeline_asset.h>
-#include <engine/camera.h>
-#include <engine/comps/gltf_model_comp.h>
-#include <engine/comps/mesh_comp.h>
-#include <engine/comps/point_light_comp.h>
-#include <engine/comps/transform_comp.h>
-#include <engine/filesystem.h>
-#include <engine/imgui.h>
-#include <engine/inspector.h>
-#include <engine/pbr.h>
-#include <engine/pipelines.h>
-#include <engine/systems/fps_camera_system.h>
-#include <engine/systems/light_system.h>
-#include <engine/systems/rendering_system.h>
-#include <engine/util.h>
-#include <engine/world.h>
+#include <engine/all.h>
 #include <fstd_util.h>
 #include <renderer/renderer.h>
-#include <string.h>
 
 #ifdef _MSC_VER
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
@@ -36,17 +16,20 @@ typedef struct game_t {
   eg_inspector_t inspector;
 } game_t;
 
-static void game_init(game_t *game, int argc, const char *argv[]) {
+int main(int argc, const char *argv[]) {
+  game_t game;
+
   re_context_init();
+  eg_engine_init();
   re_window_init(
-      &game->window,
+      &game.window,
       &(re_window_options_t){
           .title = "Re-write",
           .width = 1600,
           .height = 900,
           .sample_count = VK_SAMPLE_COUNT_1_BIT,
       });
-  eg_imgui_init(&game->window, &game->window.render_target);
+  eg_imgui_init(&game.window, &game.window.render_target);
 
   eg_fs_init(argv[0]);
   eg_fs_mount("./assets", "/assets");
@@ -58,45 +41,25 @@ static void game_init(game_t *game, int argc, const char *argv[]) {
 
   eg_default_pipeline_layouts_init();
 
-  game->window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
 
-  eg_asset_manager_init(&game->asset_manager);
+  eg_asset_manager_init(&game.asset_manager);
 
   eg_environment_asset_t *environment_asset = eg_asset_alloc(
-      &game->asset_manager, "Environment", eg_environment_asset_t);
+      &game.asset_manager, "Environment", eg_environment_asset_t);
   eg_environment_asset_init(
       environment_asset, "/assets/ice_lake.env", "/assets/brdf_lut.png");
 
-  eg_world_init(&game->world, environment_asset);
+  eg_world_init(&game.world, environment_asset);
 
   // Systems
   eg_inspector_init(
-      &game->inspector,
-      &game->window,
-      &game->window.render_target,
-      &game->world,
-      &game->asset_manager);
-  eg_fps_camera_system_init(&game->fps_system);
-}
-
-static void game_destroy(game_t *game) {
-  eg_inspector_destroy(&game->inspector);
-
-  eg_world_destroy(&game->world);
-  eg_asset_manager_destroy(&game->asset_manager);
-
-  eg_default_pipeline_layouts_destroy();
-
-  eg_fs_destroy();
-
-  eg_imgui_destroy();
-  re_window_destroy(&game->window);
-  re_context_destroy();
-}
-
-int main(int argc, const char *argv[]) {
-  game_t game;
-  game_init(&game, argc, argv);
+      &game.inspector,
+      &game.window,
+      &game.window.render_target,
+      &game.world,
+      &game.asset_manager);
+  eg_fps_camera_system_init(&game.fps_system);
 
   eg_pipeline_asset_t *pbr_pipeline =
       eg_asset_alloc(&game.asset_manager, "PBR pipeline", eg_pipeline_asset_t);
@@ -264,7 +227,19 @@ int main(int argc, const char *argv[]) {
     re_window_end_frame(&game.window);
   }
 
-  game_destroy(&game);
+  eg_inspector_destroy(&game.inspector);
+
+  eg_world_destroy(&game.world);
+  eg_asset_manager_destroy(&game.asset_manager);
+
+  eg_default_pipeline_layouts_destroy();
+
+  eg_fs_destroy();
+
+  eg_imgui_destroy();
+  re_window_destroy(&game.window);
+  eg_engine_destroy();
+  re_context_destroy();
 
   return 0;
 }

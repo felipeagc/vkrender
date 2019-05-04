@@ -1,4 +1,5 @@
 #include "pbr_material_asset.h"
+#include "../engine.h"
 #include "../pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
@@ -22,24 +23,24 @@ void eg_pbr_material_asset_init(
   material->uniform.has_normal_texture = 1.0f;
 
   if (albedo_texture == NULL) {
-    albedo_texture = &g_ctx.white_texture;
+    albedo_texture = &g_eng.white_texture;
   }
 
   if (normal_texture == NULL) {
     material->uniform.has_normal_texture = 0.0f;
-    normal_texture = &g_ctx.white_texture;
+    normal_texture = &g_eng.white_texture;
   }
 
   if (metallic_roughness_texture == NULL) {
-    metallic_roughness_texture = &g_ctx.white_texture;
+    metallic_roughness_texture = &g_eng.white_texture;
   }
 
   if (occlusion_texture == NULL) {
-    occlusion_texture = &g_ctx.white_texture;
+    occlusion_texture = &g_eng.white_texture;
   }
 
   if (emissive_texture == NULL) {
-    emissive_texture = &g_ctx.black_texture;
+    emissive_texture = &g_eng.black_texture;
   }
 
   VkDescriptorSetLayout set_layout =

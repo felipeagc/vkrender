@@ -575,28 +575,6 @@ void re_context_init() {
     vkCreateDescriptorSetLayout(
         g_ctx.device, &create_info, NULL, &g_ctx.canvas_descriptor_set_layout);
   }
-
-  uint8_t white[] = {255, 255, 255, 255};
-  uint8_t black[] = {0, 0, 0, 255};
-  re_image_init(
-      &g_ctx.white_texture,
-      g_ctx.transient_command_pool,
-      &(re_image_options_t){
-          .data = white,
-          .width = 1,
-          .height = 1,
-          .format = VK_FORMAT_R8G8B8A8_UNORM,
-      });
-
-  re_image_init(
-      &g_ctx.black_texture,
-      g_ctx.transient_command_pool,
-      &(re_image_options_t){
-          .data = black,
-          .width = 1,
-          .height = 1,
-          .format = VK_FORMAT_R8G8B8A8_UNORM,
-      });
 }
 
 VkSampleCountFlagBits re_context_get_max_sample_count() {
@@ -666,9 +644,6 @@ void re_context_destroy() {
   RE_LOG_DEBUG("Vulkan context shutting down...");
 
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  re_image_destroy(&g_ctx.white_texture);
-  re_image_destroy(&g_ctx.black_texture);
 
   vkDestroyDescriptorPool(g_ctx.device, g_ctx.descriptor_pool, NULL);
 
