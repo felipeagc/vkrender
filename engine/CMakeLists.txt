@@ -29,6 +29,9 @@ add_library(
 	engine/environment.c
 	engine/environment.h
 
+	engine/task_scheduler.c
+	engine/task_scheduler.h
+
 	engine/comps/comp_types.c
 	engine/comps/comp_types.h
 	engine/comps/transform_comp.c

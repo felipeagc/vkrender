@@ -8,6 +8,5 @@
 #include "pipeline.h"
 #include "render_target.h"
 #include "shader.h"
-#include "task_scheduler.h"
 #include "util.h"
 #include "window.h"

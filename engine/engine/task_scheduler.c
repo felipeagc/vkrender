@@ -1,31 +1,31 @@
 #include "task_scheduler.h"
 #include <stdlib.h>
 
-_Thread_local uint32_t re_worker_id = 0;
+_Thread_local uint32_t eg_worker_id = 0;
 
 static inline void
-task_init(re_task_t *task, thrd_start_t routine, void *args) {
+task_init(eg_task_t *task, thrd_start_t routine, void *args) {
   task->routine = routine;
   task->args = args;
   task->next = NULL;
 }
 
 static inline void
-task_append(re_task_t *task, thrd_start_t routine, void *args) {
+task_append(eg_task_t *task, thrd_start_t routine, void *args) {
   if (task->next != NULL) {
     task_append(task->next, routine, args);
   } else {
-    task->next = (re_task_t *)malloc(sizeof(re_task_t));
+    task->next = (eg_task_t *)malloc(sizeof(eg_task_t));
     task_init(task->next, routine, args);
   }
 }
 
 int worker_routine(void *args) {
-  re_worker_t *worker = (re_worker_t *)args;
+  eg_worker_t *worker = (eg_worker_t *)args;
 
-  re_worker_id = worker->id;
+  eg_worker_id = worker->id;
 
-  re_task_t *curr_task = NULL;
+  eg_task_t *curr_task = NULL;
 
   while (1) {
     while (!worker->scheduler->stop && worker->scheduler->task == NULL) {
@@ -56,7 +56,7 @@ int worker_routine(void *args) {
 }
 
 static inline void worker_init(
-    re_worker_t *worker, re_task_scheduler_t *scheduler, uint32_t id) {
+    eg_worker_t *worker, eg_task_scheduler_t *scheduler, uint32_t id) {
   worker->id = id;
   worker->scheduler = scheduler;
   worker->working = false;
@@ -64,18 +64,18 @@ static inline void worker_init(
   mtx_init(&worker->mutex, mtx_plain);
 }
 
-static inline void worker_wait(re_worker_t *worker) {
+static inline void worker_wait(eg_worker_t *worker) {
   thrd_join(worker->thread, NULL);
 }
 
-static inline void worker_destroy(re_worker_t *worker) {
+static inline void worker_destroy(eg_worker_t *worker) {
   mtx_destroy(&worker->mutex);
 }
 
-void re_scheduler_init(re_task_scheduler_t *scheduler, uint32_t num_workers) {
+void eg_scheduler_init(eg_task_scheduler_t *scheduler, uint32_t num_workers) {
   scheduler->num_workers = num_workers;
   scheduler->workers =
-      (re_worker_t *)malloc(sizeof(re_worker_t) * scheduler->num_workers);
+      (eg_worker_t *)malloc(sizeof(eg_worker_t) * scheduler->num_workers);
   scheduler->task = NULL;
   scheduler->stop = false;
   cnd_init(&scheduler->wait_cond);
@@ -86,11 +86,11 @@ void re_scheduler_init(re_task_scheduler_t *scheduler, uint32_t num_workers) {
   }
 }
 
-void re_scheduler_add_task(
-    re_task_scheduler_t *scheduler, thrd_start_t routine, void *args) {
+void eg_scheduler_add_task(
+    eg_task_scheduler_t *scheduler, thrd_start_t routine, void *args) {
   mtx_lock(&scheduler->mutex);
   if (scheduler->task == NULL) {
-    scheduler->task = (re_task_t *)malloc(sizeof(re_task_t));
+    scheduler->task = (eg_task_t *)malloc(sizeof(eg_task_t));
     task_init(scheduler->task, routine, args);
   } else {
     task_append(scheduler->task, routine, args);
@@ -100,7 +100,7 @@ void re_scheduler_add_task(
   cnd_signal(&scheduler->wait_cond);
 }
 
-void re_scheduler_destroy(re_task_scheduler_t *scheduler) {
+void eg_scheduler_destroy(eg_task_scheduler_t *scheduler) {
   while (1) {
     cnd_wait(&scheduler->done_cond, &scheduler->mutex);
     if (scheduler->task == NULL) {

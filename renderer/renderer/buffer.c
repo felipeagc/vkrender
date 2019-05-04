@@ -1,6 +1,5 @@
 #include "buffer.h"
 #include "context.h"
-#include "task_scheduler.h"
 #include "util.h"
 
 static inline re_cmd_buffer_t

@@ -33,9 +33,6 @@ add_library(
 	renderer/shader.c
 	renderer/shader.h
 
-	renderer/task_scheduler.c
-	renderer/task_scheduler.h
-
 	renderer/util.c
 	renderer/util.h
 	)
