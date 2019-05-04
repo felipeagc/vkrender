@@ -535,6 +535,10 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   }
 }
 
+static inline int light_cmp(const void *e1, const void *e2, void *context) {
+  return 0;
+}
+
 void eg_inspector_draw_gizmos(
     eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
 
@@ -558,6 +562,9 @@ void eg_inspector_draw_gizmos(
   eg_point_light_comp_t *point_lights =
       EG_COMP_ARRAY(inspector->world, eg_point_light_comp_t);
 
+  static eg_entity_t light_entities[EG_MAX_POINT_LIGHTS];
+  uint32_t light_count = 0;
+
   for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
     if (EG_HAS_TAG(inspector->world, e, EG_TAG_HIDDEN)) {
       continue;
@@ -565,24 +572,45 @@ void eg_inspector_draw_gizmos(
 
     if (EG_HAS_COMP(inspector->world, eg_point_light_comp_t, e) &&
         EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
-      struct {
-        mat4_t model;
-        vec4_t color;
-      } push_constant;
-
-      push_constant.model = eg_transform_comp_mat4(&transforms[e]);
-      push_constant.color = point_lights[e].color;
-
-      vkCmdPushConstants(
-          cmd_info->cmd_buffer,
-          inspector->billboard_pipeline.layout.layout,
-          inspector->billboard_pipeline.layout.push_constants[0].stageFlags,
-          inspector->billboard_pipeline.layout.push_constants[0].offset,
-          sizeof(push_constant),
-          &push_constant);
-
-      vkCmdDraw(cmd_info->cmd_buffer, 6, 1, 0, 0);
+      light_entities[light_count++] = e;
     }
+  }
+
+  // Draw call sorting
+  for (uint32_t i = 0; i < light_count; i++) {
+    for (uint32_t j = 0; j < light_count - i; j++) {
+      if (vec3_distance(
+              transforms[light_entities[i]].position,
+              inspector->world->camera.uniform.pos.xyz) >
+          vec3_distance(
+              transforms[light_entities[j]].position,
+              inspector->world->camera.uniform.pos.xyz)) {
+        eg_entity_t t = light_entities[i];
+        light_entities[i] = light_entities[j];
+        light_entities[j] = t;
+      }
+    }
+  }
+
+  for (uint32_t i = 0; i < light_count; i++) {
+    struct {
+      mat4_t model;
+      vec4_t color;
+    } push_constant;
+
+    push_constant.model =
+        eg_transform_comp_mat4(&transforms[light_entities[i]]);
+    push_constant.color = point_lights[light_entities[i]].color;
+
+    vkCmdPushConstants(
+        cmd_info->cmd_buffer,
+        inspector->billboard_pipeline.layout.layout,
+        inspector->billboard_pipeline.layout.push_constants[0].stageFlags,
+        inspector->billboard_pipeline.layout.push_constants[0].offset,
+        sizeof(push_constant),
+        &push_constant);
+
+    vkCmdDraw(cmd_info->cmd_buffer, 6, 1, 0, 0);
   }
 
   if (inspector->selected_entity >= EG_MAX_ENTITIES) {
