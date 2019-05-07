@@ -24,6 +24,15 @@ void eg_mesh_comp_draw(
   eg_mesh_asset_draw(mesh->asset, cmd_info);
 }
 
+void eg_mesh_comp_draw_no_mat(
+    eg_mesh_comp_t *mesh,
+    const eg_cmd_info_t *cmd_info,
+    struct re_pipeline_t *pipeline) {
+  eg_pbr_model_bind(&mesh->local_model, cmd_info, pipeline, 1);
+  eg_pbr_model_bind(&mesh->model, cmd_info, pipeline, 2);
+  eg_mesh_asset_draw(mesh->asset, cmd_info);
+}
+
 void eg_mesh_comp_destroy(eg_mesh_comp_t *mesh) {
   eg_pbr_model_destroy(&mesh->model);
   eg_pbr_model_destroy(&mesh->local_model);

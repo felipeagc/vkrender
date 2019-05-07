@@ -21,4 +21,9 @@ void eg_mesh_comp_draw(
     const eg_cmd_info_t *cmd_info,
     struct re_pipeline_t *pipeline);
 
+void eg_mesh_comp_draw_no_mat(
+    eg_mesh_comp_t *mesh,
+    const eg_cmd_info_t *cmd_info,
+    struct re_pipeline_t *pipeline);
+
 void eg_mesh_comp_destroy(eg_mesh_comp_t *mesh);

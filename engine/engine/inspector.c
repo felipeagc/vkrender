@@ -392,6 +392,9 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   const eg_cmd_info_t cmd_info = eg_picker_begin(&inspector->picker);
 
+  re_cmd_bind_graphics_pipeline(
+      cmd_info.cmd_buffer, &inspector->picking_pipeline);
+
   eg_camera_bind(
       &inspector->world->camera, &cmd_info, &inspector->picking_pipeline, 0);
 
@@ -399,17 +402,31 @@ static void mouse_pressed(eg_inspector_t *inspector) {
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
   eg_gltf_model_comp_t *gltf_models =
       EG_COMP_ARRAY(inspector->world, eg_gltf_model_comp_t);
+  eg_mesh_comp_t *meshes = EG_COMP_ARRAY(inspector->world, eg_mesh_comp_t);
+
+#define PUSH_CONSTANT()                                                        \
+  vkCmdPushConstants(                                                          \
+      cmd_info.cmd_buffer,                                                     \
+      inspector->picking_pipeline.layout.layout,                               \
+      inspector->picking_pipeline.layout.push_constants[0].stageFlags,         \
+      inspector->picking_pipeline.layout.push_constants[0].offset,             \
+      sizeof(uint32_t),                                                        \
+      &e)
 
   for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
+    if (EG_HAS_COMP(inspector->world, eg_mesh_comp_t, e) &&
+        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+      PUSH_CONSTANT();
+
+      meshes[e].model.uniform.transform =
+          eg_transform_comp_mat4(&transforms[e]);
+      eg_mesh_comp_draw_no_mat(
+          &meshes[e], &cmd_info, &inspector->picking_pipeline);
+    }
+
     if (EG_HAS_COMP(inspector->world, eg_gltf_model_comp_t, e) &&
         EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
-      vkCmdPushConstants(
-          cmd_info.cmd_buffer,
-          inspector->picking_pipeline.layout.layout,
-          inspector->picking_pipeline.layout.push_constants[0].stageFlags,
-          inspector->picking_pipeline.layout.push_constants[0].offset,
-          sizeof(uint32_t),
-          &e);
+      PUSH_CONSTANT();
 
       eg_gltf_model_comp_draw_no_mat(
           &gltf_models[e],
@@ -698,6 +715,9 @@ void eg_inspector_draw_gizmos(
 
 void eg_inspector_draw_selected_outline(
     eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
+  re_cmd_bind_graphics_pipeline(
+      cmd_info->cmd_buffer, &inspector->outline_pipeline);
+
   eg_camera_bind(
       &inspector->world->camera, cmd_info, &inspector->outline_pipeline, 0);
 
@@ -726,6 +746,20 @@ void eg_inspector_draw_selected_outline(
         cmd_info,
         &inspector->outline_pipeline,
         eg_transform_comp_mat4(transform));
+  }
+
+  if (inspector->selected_entity < EG_MAX_ENTITIES &&
+      EG_HAS_COMP(
+          inspector->world, eg_mesh_comp_t, inspector->selected_entity) &&
+      EG_HAS_COMP(
+          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+    eg_mesh_comp_t *mesh =
+        EG_COMP(inspector->world, eg_mesh_comp_t, inspector->selected_entity);
+    eg_transform_comp_t *transform = EG_COMP(
+        inspector->world, eg_transform_comp_t, inspector->selected_entity);
+
+    mesh->model.uniform.transform = eg_transform_comp_mat4(transform);
+    eg_mesh_comp_draw_no_mat(mesh, cmd_info, &inspector->outline_pipeline);
   }
 }
 

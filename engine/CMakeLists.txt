@@ -42,6 +42,8 @@ add_library(
 	engine/comps/transform_comp.h
 	engine/comps/point_light_comp.c
 	engine/comps/point_light_comp.h
+	engine/comps/renderable_comp.c
+	engine/comps/renderable_comp.h
 	engine/comps/mesh_comp.c
 	engine/comps/mesh_comp.h
 	engine/comps/gltf_model_comp.c

@@ -16,6 +16,136 @@ typedef struct game_t {
   eg_inspector_t inspector;
 } game_t;
 
+static eg_entity_t add_gltf(
+    game_t *game,
+    const char *name,
+    const char *path,
+    eg_pipeline_asset_t *pipeline_asset,
+    vec3_t position,
+    vec3_t scale,
+    bool flip_uvs) {
+  eg_gltf_model_asset_t *model_asset =
+      eg_asset_alloc(&game->asset_manager, name, eg_gltf_model_asset_t);
+  eg_gltf_model_asset_init(model_asset, path, flip_uvs);
+
+  eg_entity_t ent = eg_world_add(&game->world);
+
+  eg_transform_comp_t *transform =
+      EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
+  eg_transform_comp_init(transform);
+  transform->position = position;
+  transform->scale = scale;
+
+  eg_gltf_model_comp_t *model =
+      EG_ADD_COMP(&game->world, eg_gltf_model_comp_t, ent);
+  eg_gltf_model_comp_init(model, model_asset);
+
+  eg_renderable_comp_t *renderable =
+      EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
+  eg_renderable_comp_init(renderable, pipeline_asset);
+
+  return ent;
+}
+
+static eg_entity_t add_light(game_t *game, vec3_t position, vec3_t color) {
+  eg_entity_t ent = eg_world_add(&game->world);
+
+  eg_transform_comp_t *transform_comp =
+      EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
+  eg_transform_comp_init(transform_comp);
+  transform_comp->position = position;
+
+  eg_point_light_comp_t *light_comp =
+      EG_ADD_COMP(&game->world, eg_point_light_comp_t, ent);
+  eg_point_light_comp_init(light_comp, (vec4_t){.xyz = color, .w = 1.0f});
+
+  return ent;
+}
+
+static eg_entity_t add_heightmap(
+    game_t *game,
+    const char *name,
+    uint32_t dim,
+    eg_pipeline_asset_t *pipeline_asset) {
+  eg_mesh_asset_t *mesh_asset =
+      eg_asset_alloc(&game->asset_manager, name, eg_mesh_asset_t);
+
+  const float terrain_scale = 0.02f;
+
+  re_vertex_t vertices[dim * dim];
+
+  srand(time(0));
+
+  for (uint32_t i = 0; i < dim; i++) {
+    for (uint32_t j = 0; j < dim; j++) {
+      float x = ((float)i - (float)dim / 2.0f) * terrain_scale;
+      float z = ((float)j - (float)dim / 2.0f) * terrain_scale;
+      float y = ((float)rand() / (float)(RAND_MAX)) * 2.0f - 1.0f;
+      vertices[i * dim + j] = (re_vertex_t){
+          .pos = {x, y, z},
+          .normal = {0.0f, 1.0f, 0.0f},
+      };
+    }
+  }
+
+  for (uint32_t i = 1; i < dim - 1; i++) {
+    for (uint32_t j = 1; j < dim - 1; j++) {
+      re_vertex_t left = vertices[(i - 1) * dim + j];
+      re_vertex_t right = vertices[(i + 1) * dim + j];
+      re_vertex_t bottom = vertices[i * dim + (j + 1)];
+      re_vertex_t top = vertices[i * dim + (j - 1)];
+
+      vertices[i * dim + j].normal = vec3_normalize((vec3_t){
+          (left.pos.y - right.pos.y),
+          terrain_scale * 2.0f,
+          (top.pos.y - bottom.pos.y),
+      });
+
+      vec3_t normal = vertices[i * dim + j].normal;
+    }
+  }
+
+  uint32_t indices[(dim - 1) * (dim - 1) * 6];
+  uint32_t current_index = 0;
+
+  for (uint32_t i = 0; i < dim - 1; i++) {
+    for (uint32_t j = 0; j < dim - 1; j++) {
+      indices[current_index++] = i * dim + j;
+      indices[current_index++] = i * dim + (j + 1);
+      indices[current_index++] = (i + 1) * dim + j;
+
+      indices[current_index++] = (i + 1) * dim + j;
+      indices[current_index++] = i * dim + (j + 1);
+      indices[current_index++] = (i + 1) * dim + (j + 1);
+    }
+  }
+
+  eg_mesh_asset_init(
+      mesh_asset, vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
+
+  eg_pbr_material_asset_t *mat_asset = eg_asset_alloc(
+      &game->asset_manager, "Terrain material", eg_pbr_material_asset_t);
+  eg_pbr_material_asset_init(mat_asset, NULL, NULL, NULL, NULL, NULL);
+  mat_asset->uniform.base_color_factor = (vec4_t){0.0f, 0.228f, 0.456f, 1.0f};
+
+  eg_entity_t ent = eg_world_add(&game->world);
+
+  eg_transform_comp_t *transform =
+      EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
+  eg_transform_comp_init(transform);
+  transform->scale = (vec3_t){100.0f, 1.0f, 100.0f};
+  transform->position = (vec3_t){0.0f, -2.0f, 0.0f};
+
+  eg_mesh_comp_t *mesh = EG_ADD_COMP(&game->world, eg_mesh_comp_t, ent);
+  eg_mesh_comp_init(mesh, mesh_asset, mat_asset);
+
+  eg_renderable_comp_t *renderable =
+      EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
+  eg_renderable_comp_init(renderable, pipeline_asset);
+
+  return ent;
+}
+
 int main(int argc, const char *argv[]) {
   game_t game;
 
@@ -79,83 +209,39 @@ int main(int argc, const char *argv[]) {
       "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
 
-  {
-    eg_gltf_model_asset_t *model_asset =
-        eg_asset_alloc(&game.asset_manager, "Helmet", eg_gltf_model_asset_t);
-    eg_gltf_model_asset_init(model_asset, "/assets/DamagedHelmet.glb", true);
+  game.world.environment.uniform.sun_direction = (vec3_t){-1.0f, -0.3f, 1.0f};
 
-    eg_entity_t ent = eg_world_add(&game.world);
+  add_gltf(
+      &game,
+      "Helmet",
+      "/assets/DamagedHelmet.glb",
+      pbr_pipeline,
+      (vec3_t){0.0, 0.0, 0.0},
+      (vec3_t){1.0, 1.0, 1.0},
+      true);
 
-    eg_transform_comp_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
-    eg_transform_comp_init(transform_comp);
+  add_gltf(
+      &game,
+      "Water bottle",
+      "/assets/WaterBottle.glb",
+      pbr_pipeline,
+      (vec3_t){2.0, 0.0, 0.0},
+      (vec3_t){10.0, 10.0, 10.0},
+      false);
 
-    eg_gltf_model_comp_t *model_comp =
-        EG_ADD_COMP(&game.world, eg_gltf_model_comp_t, ent);
-    eg_gltf_model_comp_init(model_comp, model_asset);
-  }
+  add_gltf(
+      &game,
+      "Boom box",
+      "/assets/BoomBox.glb",
+      pbr_pipeline,
+      (vec3_t){-2.0, 0.0, 0.0},
+      (vec3_t){100.0, 100.0, 100.0},
+      false);
 
-  {
-    eg_gltf_model_asset_t *model_asset = eg_asset_alloc(
-        &game.asset_manager, "Water bottle", eg_gltf_model_asset_t);
-    eg_gltf_model_asset_init(model_asset, "/assets/WaterBottle.glb", false);
+  add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0});
+  add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0});
 
-    eg_entity_t ent = eg_world_add(&game.world);
-
-    eg_transform_comp_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
-    eg_transform_comp_init(transform_comp);
-    transform_comp->position = (vec3_t){2.0, 0.0, 0.0};
-    transform_comp->scale = (vec3_t){10.0, 10.0, 10.0};
-
-    eg_gltf_model_comp_t *model_comp =
-        EG_ADD_COMP(&game.world, eg_gltf_model_comp_t, ent);
-    eg_gltf_model_comp_init(model_comp, model_asset);
-  }
-
-  {
-    eg_gltf_model_asset_t *model_asset =
-        eg_asset_alloc(&game.asset_manager, "Boom box", eg_gltf_model_asset_t);
-    eg_gltf_model_asset_init(model_asset, "/assets/BoomBox.glb", false);
-
-    eg_entity_t ent = eg_world_add(&game.world);
-
-    eg_transform_comp_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
-    eg_transform_comp_init(transform_comp);
-    transform_comp->position = (vec3_t){-2.0, 0.0, 0.0};
-    transform_comp->scale = (vec3_t){100.0, 100.0, 100.0};
-
-    eg_gltf_model_comp_t *model_comp =
-        EG_ADD_COMP(&game.world, eg_gltf_model_comp_t, ent);
-    eg_gltf_model_comp_init(model_comp, model_asset);
-  }
-
-  {
-    eg_entity_t ent = eg_world_add(&game.world);
-
-    eg_transform_comp_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
-    eg_transform_comp_init(transform_comp);
-    transform_comp->position = (vec3_t){3.0, 3.0, 3.0};
-
-    eg_point_light_comp_t *light_comp =
-        EG_ADD_COMP(&game.world, eg_point_light_comp_t, ent);
-    eg_point_light_comp_init(light_comp, (vec4_t){1.0, 0.0, 0.0, 1.0});
-  }
-
-  {
-    eg_entity_t ent = eg_world_add(&game.world);
-
-    eg_transform_comp_t *transform_comp =
-        EG_ADD_COMP(&game.world, eg_transform_comp_t, ent);
-    eg_transform_comp_init(transform_comp);
-    transform_comp->position = (vec3_t){-3.0, 3.0, -3.0};
-
-    eg_point_light_comp_t *light_comp =
-        EG_ADD_COMP(&game.world, eg_point_light_comp_t, ent);
-    eg_point_light_comp_init(light_comp, (vec4_t){0.0, 1.0, 0.0, 1.0});
-  }
+  add_heightmap(&game, "Terrain", 50, pbr_pipeline);
 
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);
@@ -206,7 +292,7 @@ int main(int argc, const char *argv[]) {
         &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
 
     // Draw the entities
-    eg_rendering_system(&game.world, &cmd_info, &pbr_pipeline->pipeline);
+    eg_rendering_system(&game.world, &cmd_info);
 
     // Draw the selected entity
     eg_inspector_draw_selected_outline(&game.inspector, &cmd_info);

@@ -191,11 +191,6 @@ void eg_gltf_model_comp_draw_no_mat(
 
   eg_gltf_model_asset_update(model->asset, cmd_info);
 
-  vkCmdBindPipeline(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->pipeline);
-
   VkDeviceSize offset = 0;
   VkBuffer vertex_buffer = model->asset->vertex_buffer.buffer;
   vkCmdBindVertexBuffers(cmd_info->cmd_buffer, 0, 1, &vertex_buffer, &offset);

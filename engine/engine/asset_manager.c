@@ -41,7 +41,7 @@ eg_asset_t *eg_asset_manager_get_by_index(
 
 eg_asset_t *eg_asset_manager_alloc(
     eg_asset_manager_t *asset_manager,
-    char *name,
+    const char *name,
     eg_asset_type_t type,
     size_t size) {
   mtx_lock(&asset_manager->allocator_mutex);

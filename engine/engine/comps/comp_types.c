@@ -3,6 +3,7 @@
 #include "mesh_comp.h"
 #include "point_light_comp.h"
 #include "transform_comp.h"
+#include "renderable_comp.h"
 
 #define E(t, destructor, name) sizeof(t),
 const size_t EG_COMP_SIZES[] = {EG__COMPS};
