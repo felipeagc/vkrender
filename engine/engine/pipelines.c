@@ -94,7 +94,7 @@ void eg_init_pipeline_spv(
   re_shader_destroy(&vertex_shader);
 }
 
-re_pipeline_parameters_t eg_pbr_pipeline_parameters() {
+re_pipeline_parameters_t eg_standard_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;

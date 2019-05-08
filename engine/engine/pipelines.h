@@ -20,7 +20,7 @@ void eg_default_pipeline_layouts_init();
 
 void eg_default_pipeline_layouts_destroy();
 
-re_pipeline_parameters_t eg_pbr_pipeline_parameters();
+re_pipeline_parameters_t eg_standard_pipeline_parameters();
 
 re_pipeline_parameters_t eg_picking_pipeline_parameters();
 
