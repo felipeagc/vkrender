@@ -48,7 +48,7 @@ float distribution_ggx(vec3 N, vec3 H, float roughness) {
 }
 
 float geometry_schlick_smith_ggx(float NdotL, float NdotV, float roughness) {
-  float r = (roughness + 1.0);
+  float r = roughness + 1.0;
   float k = (r*r) / 8.0;
   float GL = NdotL / (NdotL * (1.0 - k) + k);
   float GV = NdotV / (NdotV * (1.0 - k) + k);

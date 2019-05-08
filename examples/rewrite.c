@@ -47,7 +47,8 @@ static eg_entity_t add_gltf(
   return ent;
 }
 
-static eg_entity_t add_light(game_t *game, vec3_t position, vec3_t color) {
+static eg_entity_t
+add_light(game_t *game, vec3_t position, vec3_t color, float intensity) {
   eg_entity_t ent = eg_world_add(&game->world);
 
   eg_transform_comp_t *transform_comp =
@@ -57,19 +58,17 @@ static eg_entity_t add_light(game_t *game, vec3_t position, vec3_t color) {
 
   eg_point_light_comp_t *light_comp =
       EG_ADD_COMP(&game->world, eg_point_light_comp_t, ent);
-  eg_point_light_comp_init(light_comp, (vec4_t){.xyz = color, .w = 1.0f});
+  eg_point_light_comp_init(
+      light_comp, (vec4_t){.xyz = color, .w = 1.0f}, intensity);
 
   return ent;
 }
 
-static eg_entity_t add_heightmap(
+static eg_entity_t add_terrain(
     game_t *game,
     const char *name,
     uint32_t dim,
     eg_pipeline_asset_t *pipeline_asset) {
-  eg_mesh_asset_t *mesh_asset =
-      eg_asset_alloc(&game->asset_manager, name, eg_mesh_asset_t);
-
   const float terrain_scale = 0.02f;
 
   re_vertex_t vertices[dim * dim];
@@ -92,16 +91,14 @@ static eg_entity_t add_heightmap(
     for (uint32_t j = 1; j < dim - 1; j++) {
       re_vertex_t left = vertices[(i - 1) * dim + j];
       re_vertex_t right = vertices[(i + 1) * dim + j];
-      re_vertex_t bottom = vertices[i * dim + (j + 1)];
       re_vertex_t top = vertices[i * dim + (j - 1)];
+      re_vertex_t bottom = vertices[i * dim + (j + 1)];
 
       vertices[i * dim + j].normal = vec3_normalize((vec3_t){
           (left.pos.y - right.pos.y),
-          terrain_scale * 2.0f,
+          1.0f,
           (top.pos.y - bottom.pos.y),
       });
-
-      vec3_t normal = vertices[i * dim + j].normal;
     }
   }
 
@@ -120,6 +117,8 @@ static eg_entity_t add_heightmap(
     }
   }
 
+  eg_mesh_asset_t *mesh_asset =
+      eg_asset_alloc(&game->asset_manager, name, eg_mesh_asset_t);
   eg_mesh_asset_init(
       mesh_asset, vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
 
@@ -198,7 +197,16 @@ int main(int argc, const char *argv[]) {
       &game.window.render_target,
       "/shaders/pbr.vert.spv",
       "/shaders/pbr.frag.spv",
-      eg_pbr_pipeline_parameters());
+      eg_standard_pipeline_parameters());
+
+  eg_pipeline_asset_t *terrain_pipeline = eg_asset_alloc(
+      &game.asset_manager, "Terrain pipeline", eg_pipeline_asset_t);
+  eg_pipeline_asset_init(
+      terrain_pipeline,
+      &game.window.render_target,
+      "/shaders/terrain.vert.spv",
+      "/shaders/terrain.frag.spv",
+      eg_standard_pipeline_parameters());
 
   eg_pipeline_asset_t *skybox_pipeline = eg_asset_alloc(
       &game.asset_manager, "Skybox pipeline", eg_pipeline_asset_t);
@@ -238,10 +246,10 @@ int main(int argc, const char *argv[]) {
       (vec3_t){100.0, 100.0, 100.0},
       false);
 
-  add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0});
-  add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0});
+  add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
+  add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);
 
-  add_heightmap(&game, "Terrain", 50, pbr_pipeline);
+  add_terrain(&game, "Terrain", 50, pbr_pipeline);
 
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);

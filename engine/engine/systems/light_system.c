@@ -19,7 +19,9 @@ void eg_light_system(eg_world_t *world) {
     if (EG_HAS_COMP(world, eg_point_light_comp_t, e) &&
         EG_HAS_COMP(world, eg_transform_comp_t, e)) {
       eg_environment_add_point_light(
-          &world->environment, transforms[e].position, point_lights[e].color);
+          &world->environment,
+          transforms[e].position,
+          vec4_muls(point_lights[e].color, point_lights[e].intensity));
     }
   }
 }
