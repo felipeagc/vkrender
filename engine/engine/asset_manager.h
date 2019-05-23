@@ -12,8 +12,8 @@
       asset_manager, name, EG_ASSET_TYPE(type), sizeof(type)))
 
 typedef struct eg_asset_manager_t {
+  mtx_t mutex;
   fstd_allocator_t allocator;
-  mtx_t allocator_mutex;
   fstd_map_t map;
 } eg_asset_manager_t;
 

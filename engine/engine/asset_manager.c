@@ -11,7 +11,7 @@
  */
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
-  mtx_init(&asset_manager->allocator_mutex, mtx_plain);
+  mtx_init(&asset_manager->mutex, mtx_plain);
 
   // Allocator with 16k blocks
   fstd_allocator_init(&asset_manager->allocator, 2 << 13);
@@ -44,12 +44,9 @@ eg_asset_t *eg_asset_manager_alloc(
     const char *name,
     eg_asset_type_t type,
     size_t size) {
-  /* mtx_lock(&asset_manager->allocator_mutex); */
+  mtx_lock(&asset_manager->mutex);
 
-  // TODO: Memory alignment issues with fstd_alloc.
-  /* eg_asset_t *asset = fstd_alloc(&asset_manager->allocator, (uint32_t)size);
-   */
-  eg_asset_t *asset = calloc(1, (uint32_t)size);
+  eg_asset_t *asset = fstd_alloc(&asset_manager->allocator, (uint32_t)size);
 
   // TODO: allow replacing map entries
   assert(fstd_map_get(&asset_manager->map, name) == NULL);
@@ -58,7 +55,7 @@ eg_asset_t *eg_asset_manager_alloc(
   asset->type = type;
   asset->name = fstd_map_get_key(&asset_manager->map, asset_entry);
 
-  /* mtx_unlock(&asset_manager->allocator_mutex); */
+  mtx_unlock(&asset_manager->mutex);
 
   return asset;
 }
@@ -73,10 +70,9 @@ void eg_asset_manager_free(
 
   eg_asset_destructors[asset->type](asset);
 
-  /* mtx_lock(&asset_manager->allocator_mutex); */
-  /* fstd_free(&asset_manager->allocator, asset); */
-  /* mtx_unlock(&asset_manager->allocator_mutex); */
-  free(asset);
+  mtx_lock(&asset_manager->mutex);
+  fstd_free(&asset_manager->allocator, asset);
+  mtx_unlock(&asset_manager->mutex);
 }
 
 void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
@@ -91,8 +87,10 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
 
   fstd_map_destroy(&asset_manager->map);
 
+  mtx_lock(&asset_manager->mutex);
   fstd_allocator_destroy(&asset_manager->allocator);
+  mtx_unlock(&asset_manager->mutex);
 
-  mtx_destroy(&asset_manager->allocator_mutex);
+  mtx_destroy(&asset_manager->mutex);
 }
 
