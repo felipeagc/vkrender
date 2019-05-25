@@ -20,7 +20,7 @@
 #include "engine/task_scheduler.h"
 
 #include "engine/comps/comp_types.h"
-#include "engine/comps/gltf_model_comp.h"
+#include "engine/comps/gltf_comp.h"
 #include "engine/comps/mesh_comp.h"
 #include "engine/comps/point_light_comp.h"
 #include "engine/comps/renderable_comp.h"
@@ -32,7 +32,7 @@
 
 #include "engine/assets/asset_types.h"
 #include "engine/assets/environment_asset.h"
-#include "engine/assets/gltf_model_asset.h"
+#include "engine/assets/gltf_asset.h"
 #include "engine/assets/mesh_asset.h"
 #include "engine/assets/pbr_material_asset.h"
 #include "engine/assets/pipeline_asset.h"

@@ -24,9 +24,9 @@ static eg_entity_t add_gltf(
     vec3_t position,
     vec3_t scale,
     bool flip_uvs) {
-  eg_gltf_model_asset_t *model_asset =
-      eg_asset_alloc(&game->asset_manager, name, eg_gltf_model_asset_t);
-  eg_gltf_model_asset_init(model_asset, path, flip_uvs);
+  eg_gltf_asset_t *model_asset =
+      eg_asset_alloc(&game->asset_manager, name, eg_gltf_asset_t);
+  eg_gltf_asset_init(model_asset, path, flip_uvs);
 
   eg_entity_t ent = eg_world_add(&game->world);
 
@@ -36,9 +36,9 @@ static eg_entity_t add_gltf(
   transform->position = position;
   transform->scale = scale;
 
-  eg_gltf_model_comp_t *model =
-      EG_ADD_COMP(&game->world, eg_gltf_model_comp_t, ent);
-  eg_gltf_model_comp_init(model, model_asset);
+  eg_gltf_comp_t *model =
+      EG_ADD_COMP(&game->world, eg_gltf_comp_t, ent);
+  eg_gltf_comp_init(model, model_asset);
 
   eg_renderable_comp_t *renderable =
       EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);

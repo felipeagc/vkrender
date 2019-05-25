@@ -1,5 +1,5 @@
 #include "comp_types.h"
-#include "gltf_model_comp.h"
+#include "gltf_comp.h"
 #include "mesh_comp.h"
 #include "point_light_comp.h"
 #include "transform_comp.h"

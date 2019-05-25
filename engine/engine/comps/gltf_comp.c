@@ -1,5 +1,5 @@
-#include "gltf_model_comp.h"
-#include "../assets/gltf_model_asset.h"
+#include "gltf_comp.h"
+#include "../assets/gltf_asset.h"
 #include "../pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
@@ -9,8 +9,8 @@
 #include <string.h>
 
 static void draw_node(
-    eg_gltf_model_comp_t *model,
-    eg_gltf_model_asset_node_t *node,
+    eg_gltf_comp_t *model,
+    eg_gltf_asset_node_t *node,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline) {
   if (node->mesh != NULL) {
@@ -25,7 +25,7 @@ static void draw_node(
         NULL);
 
     for (uint32_t j = 0; j < node->mesh->primitive_count; j++) {
-      eg_gltf_model_asset_primitive_t *primitive = &node->mesh->primitives[j];
+      eg_gltf_asset_primitive_t *primitive = &node->mesh->primitives[j];
 
       if (primitive->material != NULL) {
         vkCmdBindDescriptorSets(
@@ -55,8 +55,8 @@ static void draw_node(
 }
 
 static void draw_node_no_mat(
-    eg_gltf_model_comp_t *model,
-    eg_gltf_model_asset_node_t *node,
+    eg_gltf_comp_t *model,
+    eg_gltf_asset_node_t *node,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline) {
   if (node->mesh != NULL) {
@@ -71,7 +71,7 @@ static void draw_node_no_mat(
         NULL);
 
     for (uint32_t j = 0; j < node->mesh->primitive_count; j++) {
-      eg_gltf_model_asset_primitive_t *primitive = &node->mesh->primitives[j];
+      eg_gltf_asset_primitive_t *primitive = &node->mesh->primitives[j];
 
       if (primitive->material != NULL) {
         vkCmdDrawIndexed(
@@ -90,8 +90,8 @@ static void draw_node_no_mat(
   }
 }
 
-void eg_gltf_model_comp_init(
-    eg_gltf_model_comp_t *model, eg_gltf_model_asset_t *asset) {
+void eg_gltf_comp_init(
+    eg_gltf_comp_t *model, eg_gltf_asset_t *asset) {
   model->asset = asset;
 
   model->ubo.matrix = mat4_identity();
@@ -139,8 +139,8 @@ void eg_gltf_model_comp_init(
   }
 }
 
-void eg_gltf_model_comp_draw(
-    eg_gltf_model_comp_t *model,
+void eg_gltf_comp_draw(
+    eg_gltf_comp_t *model,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     mat4_t transform) {
@@ -148,7 +148,7 @@ void eg_gltf_model_comp_draw(
   memcpy(
       model->mappings[cmd_info->frame_index], &model->ubo, sizeof(model->ubo));
 
-  eg_gltf_model_asset_update(model->asset, cmd_info);
+  eg_gltf_asset_update(model->asset, cmd_info);
 
   vkCmdBindPipeline(
       cmd_info->cmd_buffer,
@@ -180,8 +180,8 @@ void eg_gltf_model_comp_draw(
   }
 }
 
-void eg_gltf_model_comp_draw_no_mat(
-    eg_gltf_model_comp_t *model,
+void eg_gltf_comp_draw_no_mat(
+    eg_gltf_comp_t *model,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline,
     mat4_t transform) {
@@ -189,7 +189,7 @@ void eg_gltf_model_comp_draw_no_mat(
   memcpy(
       model->mappings[cmd_info->frame_index], &model->ubo, sizeof(model->ubo));
 
-  eg_gltf_model_asset_update(model->asset, cmd_info);
+  eg_gltf_asset_update(model->asset, cmd_info);
 
   VkDeviceSize offset = 0;
   VkBuffer vertex_buffer = model->asset->vertex_buffer.buffer;
@@ -216,7 +216,7 @@ void eg_gltf_model_comp_draw_no_mat(
   }
 }
 
-void eg_gltf_model_comp_destroy(eg_gltf_model_comp_t *model) {
+void eg_gltf_comp_destroy(eg_gltf_comp_t *model) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_unmap_memory(&model->uniform_buffers[i]);

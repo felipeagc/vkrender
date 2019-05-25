@@ -1,4 +1,4 @@
-#include "gltf_model_asset.h"
+#include "gltf_asset.h"
 #include "../engine.h"
 #include "../filesystem.h"
 #include "../pipelines.h"
@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void dimensions_init(eg_gltf_model_asset_dimensions_t *dimensions) {
+static void dimensions_init(eg_gltf_asset_dimensions_t *dimensions) {
   dimensions->min = (vec3_t){FLT_MAX, FLT_MAX, FLT_MAX};
   dimensions->max = (vec3_t){-FLT_MAX, -FLT_MAX, -FLT_MAX};
   dimensions->size = (vec3_t){0, 0, 0};
@@ -22,7 +22,7 @@ static void dimensions_init(eg_gltf_model_asset_dimensions_t *dimensions) {
 }
 
 static void material_init(
-    eg_gltf_model_asset_material_t *material,
+    eg_gltf_asset_material_t *material,
     re_image_t *albedo_texture,
     re_image_t *normal_texture,
     re_image_t *metallic_roughness_texture,
@@ -106,7 +106,7 @@ static void material_init(
   }
 }
 
-static void material_destroy(eg_gltf_model_asset_material_t *material) {
+static void material_destroy(eg_gltf_asset_material_t *material) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (uint32_t j = 0; j < ARRAY_SIZE(material->descriptor_sets); j++) {
@@ -125,10 +125,10 @@ static void material_destroy(eg_gltf_model_asset_material_t *material) {
 }
 
 static void primitive_init(
-    eg_gltf_model_asset_primitive_t *primitive,
+    eg_gltf_asset_primitive_t *primitive,
     uint32_t first_index,
     uint32_t index_count,
-    eg_gltf_model_asset_material_t *material) {
+    eg_gltf_asset_material_t *material) {
   primitive->first_index = first_index;
   primitive->index_count = index_count;
   primitive->material = material;
@@ -136,7 +136,7 @@ static void primitive_init(
 }
 
 static void primitive_set_dimensions(
-    eg_gltf_model_asset_primitive_t *primitive, vec3_t min, vec3_t max) {
+    eg_gltf_asset_primitive_t *primitive, vec3_t min, vec3_t max) {
   primitive->dimensions.min = min;
   primitive->dimensions.max = max;
   primitive->dimensions.size = vec3_sub(max, min);
@@ -144,7 +144,7 @@ static void primitive_set_dimensions(
   primitive->dimensions.radius = vec3_distance(min, max) / 2.0f;
 }
 
-static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
+static void mesh_init(eg_gltf_asset_mesh_t *mesh, mat4_t matrix) {
   mesh->primitives = NULL;
   mesh->primitive_count = 0;
 
@@ -192,7 +192,7 @@ static void mesh_init(eg_gltf_model_asset_mesh_t *mesh, mat4_t matrix) {
   }
 }
 
-static void mesh_destroy(eg_gltf_model_asset_mesh_t *mesh) {
+static void mesh_destroy(eg_gltf_asset_mesh_t *mesh) {
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
     re_buffer_unmap_memory(&mesh->uniform_buffers[i]);
     re_buffer_destroy(&mesh->uniform_buffers[i]);
@@ -208,7 +208,7 @@ static void mesh_destroy(eg_gltf_model_asset_mesh_t *mesh) {
   }
 }
 
-static void node_init(eg_gltf_model_asset_node_t *node) {
+static void node_init(eg_gltf_asset_node_t *node) {
   node->parent = NULL;
   node->children = NULL;
   node->children_count = 0;
@@ -220,7 +220,7 @@ static void node_init(eg_gltf_model_asset_node_t *node) {
   node->rotation = quat_from_axis_angle((vec3_t){1.0, 0.0, 0.0}, 0.0);
 }
 
-static mat4_t node_local_matrix(eg_gltf_model_asset_node_t *node) {
+static mat4_t node_local_matrix(eg_gltf_asset_node_t *node) {
   return mat4_mul(
       mat4_mul(
           mat4_mul(
@@ -230,9 +230,9 @@ static mat4_t node_local_matrix(eg_gltf_model_asset_node_t *node) {
       node->matrix);
 }
 
-static mat4_t node_get_matrix(eg_gltf_model_asset_node_t *node) {
+static mat4_t node_get_matrix(eg_gltf_asset_node_t *node) {
   mat4_t m = node_local_matrix(node);
-  eg_gltf_model_asset_node_t *parent = node->parent;
+  eg_gltf_asset_node_t *parent = node->parent;
   while (parent != NULL) {
     m = mat4_mul(node_local_matrix(parent), m);
     parent = parent->parent;
@@ -241,8 +241,8 @@ static mat4_t node_get_matrix(eg_gltf_model_asset_node_t *node) {
 }
 
 static void node_update(
-    eg_gltf_model_asset_node_t *node,
-    eg_gltf_model_asset_t *model,
+    eg_gltf_asset_node_t *node,
+    eg_gltf_asset_t *model,
     uint32_t frame_index) {
   if (node->mesh != NULL) {
     node->mesh->ubo.matrix = node_get_matrix(node);
@@ -259,7 +259,7 @@ static void node_update(
   }
 }
 
-static void node_destroy(eg_gltf_model_asset_node_t *node) {
+static void node_destroy(eg_gltf_asset_node_t *node) {
   if (node->children != NULL) {
     free(node->children);
   }
@@ -270,7 +270,7 @@ static void node_destroy(eg_gltf_model_asset_node_t *node) {
 }
 
 static void load_node(
-    eg_gltf_model_asset_t *model,
+    eg_gltf_asset_t *model,
     cgltf_node *parent,
     cgltf_node *node,
     cgltf_data *data,
@@ -279,7 +279,7 @@ static void load_node(
     uint32_t **indices,
     uint32_t *index_count,
     bool flip_uvs) {
-  eg_gltf_model_asset_node_t *new_node = &model->nodes[node - data->nodes];
+  eg_gltf_asset_node_t *new_node = &model->nodes[node - data->nodes];
   node_init(new_node);
   if (parent != NULL) {
     new_node->parent = &model->nodes[parent - data->nodes];
@@ -324,7 +324,7 @@ static void load_node(
 
   if (node->mesh != NULL) {
     cgltf_mesh *mesh = node->mesh;
-    eg_gltf_model_asset_mesh_t *new_mesh =
+    eg_gltf_asset_mesh_t *new_mesh =
         &model->meshes[node->mesh - data->meshes];
     mesh_init(new_mesh, new_node->matrix);
 
@@ -485,7 +485,7 @@ static void load_node(
         }
         }
 
-        eg_gltf_model_asset_primitive_t new_primitive;
+        eg_gltf_asset_primitive_t new_primitive;
         primitive_init(
             &new_primitive,
             index_start,
@@ -503,10 +503,10 @@ static void load_node(
 }
 
 static void get_node_dimensions(
-    eg_gltf_model_asset_node_t *node, vec3_t *min, vec3_t *max) {
+    eg_gltf_asset_node_t *node, vec3_t *min, vec3_t *max) {
   if (node->mesh != NULL) {
     for (uint32_t i = 0; i < node->mesh->primitive_count; i++) {
-      eg_gltf_model_asset_primitive_t *primitive = &node->mesh->primitives[i];
+      eg_gltf_asset_primitive_t *primitive = &node->mesh->primitives[i];
       vec4_t loc_min = mat4_mulv(
           node_get_matrix(node),
           (vec4_t){.xyz = primitive->dimensions.min, .w = 1.0f});
@@ -540,7 +540,7 @@ static void get_node_dimensions(
   }
 }
 
-static void get_scene_dimensions(eg_gltf_model_asset_t *model) {
+static void get_scene_dimensions(eg_gltf_asset_t *model) {
   model->dimensions.min = (vec3_t){FLT_MAX, FLT_MAX, FLT_MAX};
   model->dimensions.max = (vec3_t){-FLT_MAX, -FLT_MAX, -FLT_MAX};
   for (uint32_t i = 0; i < model->node_count; i++) {
@@ -555,8 +555,8 @@ static void get_scene_dimensions(eg_gltf_model_asset_t *model) {
       vec3_distance(model->dimensions.min, model->dimensions.max) / 2.0f;
 }
 
-void eg_gltf_model_asset_init(
-    eg_gltf_model_asset_t *model, const char *path, bool flip_uvs) {
+void eg_gltf_asset_init(
+    eg_gltf_asset_t *model, const char *path, bool flip_uvs) {
   model->vertex_buffer = (re_buffer_t){0};
   model->index_buffer = (re_buffer_t){0};
 
@@ -786,10 +786,10 @@ void eg_gltf_model_asset_init(
   }
 }
 
-void eg_gltf_model_asset_update(
-    eg_gltf_model_asset_t *model, const eg_cmd_info_t *cmd_info) {
+void eg_gltf_asset_update(
+    eg_gltf_asset_t *model, const eg_cmd_info_t *cmd_info) {
   for (uint32_t i = 0; i < model->material_count; i++) {
-    eg_gltf_model_asset_material_t *mat = &model->materials[i];
+    eg_gltf_asset_material_t *mat = &model->materials[i];
 
     memcpy(
         mat->mappings[cmd_info->frame_index],
@@ -798,7 +798,7 @@ void eg_gltf_model_asset_update(
   }
 }
 
-void eg_gltf_model_asset_destroy(eg_gltf_model_asset_t *model) {
+void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {
   re_buffer_destroy(&model->vertex_buffer);
   re_buffer_destroy(&model->index_buffer);
 

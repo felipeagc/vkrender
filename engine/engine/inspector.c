@@ -1,10 +1,10 @@
 #include "inspector.h"
 #include "asset_manager.h"
 #include "assets/environment_asset.h"
-#include "assets/gltf_model_asset.h"
+#include "assets/gltf_asset.h"
 #include "assets/mesh_asset.h"
 #include "assets/pbr_material_asset.h"
-#include "comps/gltf_model_comp.h"
+#include "comps/gltf_comp.h"
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
 #include "comps/transform_comp.h"
@@ -407,8 +407,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   eg_transform_comp_t *transforms =
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
-  eg_gltf_model_comp_t *gltf_models =
-      EG_COMP_ARRAY(inspector->world, eg_gltf_model_comp_t);
+  eg_gltf_comp_t *gltf_models = EG_COMP_ARRAY(inspector->world, eg_gltf_comp_t);
   eg_mesh_comp_t *meshes = EG_COMP_ARRAY(inspector->world, eg_mesh_comp_t);
 
 #define PUSH_CONSTANT()                                                        \
@@ -431,11 +430,11 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           &meshes[e], &cmd_info, &inspector->picking_pipeline);
     }
 
-    if (EG_HAS_COMP(inspector->world, eg_gltf_model_comp_t, e) &&
+    if (EG_HAS_COMP(inspector->world, eg_gltf_comp_t, e) &&
         EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
       PUSH_CONSTANT();
 
-      eg_gltf_model_comp_draw_no_mat(
+      eg_gltf_comp_draw_no_mat(
           &gltf_models[e],
           &cmd_info,
           &inspector->picking_pipeline,
@@ -510,8 +509,7 @@ void eg_inspector_process_event(
     }
     break;
   }
-  default:
-    break;
+  default: break;
   }
 }
 
@@ -740,15 +738,15 @@ void eg_inspector_draw_selected_outline(
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
       EG_HAS_COMP(
-          inspector->world, eg_gltf_model_comp_t, inspector->selected_entity) &&
+          inspector->world, eg_gltf_comp_t, inspector->selected_entity) &&
       EG_HAS_COMP(
           inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
-    eg_gltf_model_comp_t *model = EG_COMP(
-        inspector->world, eg_gltf_model_comp_t, inspector->selected_entity);
+    eg_gltf_comp_t *model =
+        EG_COMP(inspector->world, eg_gltf_comp_t, inspector->selected_entity);
     eg_transform_comp_t *transform = EG_COMP(
         inspector->world, eg_transform_comp_t, inspector->selected_entity);
 
-    eg_gltf_model_comp_draw_no_mat(
+    eg_gltf_comp_draw_no_mat(
         model,
         cmd_info,
         &inspector->outline_pipeline,
@@ -832,7 +830,7 @@ static void inspect_pbr_material_asset(eg_asset_t *asset) {
 }
 
 static void inspect_gltf_model_asset(eg_asset_t *asset) {
-  eg_gltf_model_asset_t *gltf_asset = (eg_gltf_model_asset_t *)asset;
+  eg_gltf_asset_t *gltf_asset = (eg_gltf_asset_t *)asset;
 
   igText("Vertex count: %u", gltf_asset->vertex_count);
   igText("Index count: %u", gltf_asset->index_count);
@@ -841,7 +839,7 @@ static void inspect_gltf_model_asset(eg_asset_t *asset) {
 
   for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
     igPushIDInt(j);
-    eg_gltf_model_asset_material_t *material = &gltf_asset->materials[j];
+    eg_gltf_asset_material_t *material = &gltf_asset->materials[j];
 
     if (igCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
       igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
@@ -888,8 +886,7 @@ static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
 static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}
 
 static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_gltf_model_comp_t *gltf_model =
-      EG_COMP(world, eg_gltf_model_comp_t, entity);
+  eg_gltf_comp_t *gltf_model = EG_COMP(world, eg_gltf_comp_t, entity);
 
   igText("Asset: %s", gltf_model->asset->asset.name);
   igSameLine(0.0f, -1.0f);
@@ -949,10 +946,9 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
         inspect_mesh_comp(world, entity);
       }
 
-      if (EG_HAS_COMP(world, eg_gltf_model_comp_t, entity) &&
+      if (EG_HAS_COMP(world, eg_gltf_comp_t, entity) &&
           igCollapsingHeader(
-              EG_COMP_NAME(eg_gltf_model_comp_t),
-              ImGuiTreeNodeFlags_DefaultOpen)) {
+              EG_COMP_NAME(eg_gltf_comp_t), ImGuiTreeNodeFlags_DefaultOpen)) {
         inspect_gltf_model_comp(world, entity);
       }
     }
@@ -1041,14 +1037,13 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
             ASSET_HEADER("Pipeline: %s", asset->name) {}
             break;
           }
-          case EG_GLTF_MODEL_ASSET_TYPE: {
+          case EG_GLTF_ASSET_TYPE: {
             ASSET_HEADER("GLTF model: %s", asset->name) {
               inspect_gltf_model_asset(asset);
             }
             break;
           }
-          default:
-            break;
+          default: break;
           }
 
           igPopID();

@@ -48,8 +48,8 @@ add_library(
 	engine/comps/renderable_comp.h
 	engine/comps/mesh_comp.c
 	engine/comps/mesh_comp.h
-	engine/comps/gltf_model_comp.c
-	engine/comps/gltf_model_comp.h
+	engine/comps/gltf_comp.c
+	engine/comps/gltf_comp.h
 
 	engine/systems/rendering_system.c
 	engine/systems/rendering_system.h
@@ -66,8 +66,8 @@ add_library(
 	engine/assets/environment_asset.h
 	engine/assets/mesh_asset.c
 	engine/assets/mesh_asset.h
-	engine/assets/gltf_model_asset.c
-	engine/assets/gltf_model_asset.h
+	engine/assets/gltf_asset.c
+	engine/assets/gltf_asset.h
 	engine/assets/pbr_material_asset.c
 	engine/assets/pbr_material_asset.h)
 
