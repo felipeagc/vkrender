@@ -69,8 +69,14 @@ vec3 get_normal() {
   vec3 b = normalize(cross(ng, t));
   mat3 tbn = mat3(t, b, ng);
 
-  vec3 n = texture(normal_texture, tex_coords).rgb;
-  n = normalize(tbn * (2.0 * n - 1.0));
+  // If material does not have normal texture
+  vec3 n = normalize(tbn[2].xyz);
+
+  if (material.has_normal_texture != 0.0f) {
+    // If material has normal texture
+    n = texture(normal_texture, tex_coords).rgb;
+    n = normalize(tbn * (2.0 * n - 1.0));
+  }
 
   return n;
 }
