@@ -55,8 +55,28 @@ float geometry_schlick_smith_ggx(float NdotL, float NdotV, float roughness) {
   return GL * GV;
 }
 
+vec3 get_normal() {
+  // Retrieve the tangent space matrix
+  vec3 pos_dx = dFdx(world_pos);
+  vec3 pos_dy = dFdy(world_pos);
+  vec3 tex_dx = dFdx(vec3(tex_coords, 0.0));
+  vec3 tex_dy = dFdy(vec3(tex_coords, 0.0));
+  vec3 t = (tex_dy.t * pos_dx - tex_dx.t * pos_dy) / (tex_dx.s * tex_dy.t - tex_dy.s * tex_dx.t);
+
+  vec3 ng = normalize(normal);
+
+  t = normalize(t - ng * dot(ng, t));
+  vec3 b = normalize(cross(ng, t));
+  mat3 tbn = mat3(t, b, ng);
+
+  vec3 n = texture(normal_texture, tex_coords).rgb;
+  n = normalize(tbn * (2.0 * n - 1.0));
+
+  return n;
+}
+
 void main() {
-  vec3 N = normalize(normal);
+  vec3 N = get_normal();
   vec3 V = normalize(camera_pos - world_pos);
   vec3 R = -normalize(reflect(V, N));
 
