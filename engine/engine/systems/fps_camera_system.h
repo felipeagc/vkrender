@@ -8,6 +8,8 @@ typedef struct re_window_t re_window_t;
 typedef struct eg_camera_t eg_camera_t;
 
 typedef struct eg_fps_camera_system_t {
+  eg_camera_t *camera;
+
   vec3_t cam_target;
 
   vec3_t cam_up;
@@ -22,8 +24,6 @@ typedef struct eg_fps_camera_system_t {
   double prev_disabled_cursor_x;
   double prev_disabled_cursor_y;
 
-  bool first_frame;
-  bool transitioning_fov;
   bool prev_right_pressed;
 
   float sensitivity;
@@ -31,12 +31,12 @@ typedef struct eg_fps_camera_system_t {
   float time;
 } eg_fps_camera_system_t;
 
-void eg_fps_camera_system_init(eg_fps_camera_system_t *system);
+void eg_fps_camera_system_init(
+    eg_fps_camera_system_t *system, eg_camera_t *camera);
 
 void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
-    eg_camera_t *camera,
     const eg_cmd_info_t *cmd_info,
     float width,
     float height);

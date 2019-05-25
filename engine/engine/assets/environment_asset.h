@@ -15,7 +15,9 @@ typedef struct eg_environment_asset_t {
 
 void eg_environment_asset_init(
     eg_environment_asset_t *environment,
-    const char *path,
+    const char *skybox_path,
+    const char *irradiance_path,
+    const char *radiance_path,
     const char *brdf_lut_path);
 
 void eg_environment_asset_destroy(eg_environment_asset_t *environment);

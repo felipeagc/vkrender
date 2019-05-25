@@ -105,39 +105,7 @@ static inline void create_image(
   VK_CHECK(vkCreateSampler(g_ctx.device, &sampler_create_info, NULL, sampler));
 }
 
-static inline void upload_data_to_image(
-    re_image_t *image,
-    re_cmd_pool_t pool,
-    uint8_t *data,
-    uint32_t width,
-    uint32_t height,
-    uint32_t layer,
-    uint32_t level) {
-  // Upload data to image
-  size_t img_size =
-      (size_t)width * (size_t)height * re_format_pixel_size(image->format);
-
-  re_buffer_t staging_buffer;
-  re_buffer_init(
-      &staging_buffer,
-      &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_TRANSFER,
-          .size = img_size,
-      });
-
-  void *staging_memory_pointer;
-  re_buffer_map_memory(&staging_buffer, &staging_memory_pointer);
-  memcpy(staging_memory_pointer, data, img_size);
-
-  re_buffer_transfer_to_image(
-      &staging_buffer, image->image, pool, width, height, layer, level);
-
-  re_buffer_unmap_memory(&staging_buffer);
-  re_buffer_destroy(&staging_buffer);
-}
-
-void re_image_init(
-    re_image_t *image, re_cmd_pool_t pool, re_image_options_t *options) {
+void re_image_init(re_image_t *image, re_image_options_t *options) {
   if (options->layer_count == 0) {
     options->layer_count = 1;
   }
@@ -172,29 +140,45 @@ void re_image_init(
       image->layer_count,
       image->mip_level_count);
 
-  size_t current_pos = 0;
-
-  for (uint32_t level = 0; level < image->mip_level_count; level++) {
-    for (uint32_t layer = 0; layer < image->layer_count; layer++) {
-      upload_data_to_image(
-          image,
-          pool,
-          &options->data[current_pos],
-          image->width / (uint32_t)pow(2, level),
-          image->height / (uint32_t)pow(2, level),
-          layer,
-          level);
-      current_pos += (image->width / (uint32_t)pow(2, level)) *
-                     (image->width / (uint32_t)pow(2, level)) *
-                     re_format_pixel_size(image->format);
-    }
-  }
-
   image->descriptor = (VkDescriptorImageInfo){
       image->sampler,
       image->image_view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
   };
+}
+
+void re_image_upload(
+    re_image_t *image,
+    re_cmd_pool_t pool,
+    uint8_t *data,
+    uint32_t width,
+    uint32_t height,
+    uint32_t level,
+    uint32_t layer) {
+  assert(
+      re_format_pixel_size(image->format) && "I don't know this format's size");
+
+  // Upload data to image
+  size_t img_size =
+      (size_t)width * (size_t)height * re_format_pixel_size(image->format);
+
+  re_buffer_t staging_buffer;
+  re_buffer_init(
+      &staging_buffer,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_TRANSFER,
+          .size = img_size,
+      });
+
+  void *staging_memory_pointer;
+  re_buffer_map_memory(&staging_buffer, &staging_memory_pointer);
+  memcpy(staging_memory_pointer, data, img_size);
+
+  re_buffer_transfer_to_image(
+      &staging_buffer, image->image, pool, width, height, layer, level);
+
+  re_buffer_unmap_memory(&staging_buffer);
+  re_buffer_destroy(&staging_buffer);
 }
 
 void re_image_destroy(re_image_t *image) {

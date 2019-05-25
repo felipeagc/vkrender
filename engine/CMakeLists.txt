@@ -36,6 +36,8 @@ add_library(
 	engine/task_scheduler.c
 	engine/task_scheduler.h
 
+	engine/util/tinyktx.c
+
 	engine/comps/comp_types.c
 	engine/comps/comp_types.h
 	engine/comps/transform_comp.c
@@ -56,7 +58,6 @@ add_library(
 	engine/systems/light_system.c
 	engine/systems/light_system.h
 
-	engine/assets/env_file.h
 	engine/assets/asset_types.c
 	engine/assets/asset_types.h
 	engine/assets/pipeline_asset.c

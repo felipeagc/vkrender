@@ -610,16 +610,23 @@ void eg_gltf_model_asset_init(
     assert(image_data != NULL);
 
     re_image_options_t image_options = {
-        .data = image_data,
-        .width = width,
-        .height = height,
+        .width = (uint32_t)width,
+        .height = (uint32_t)height,
         .layer_count = 1,
         .mip_level_count = 1,
         .format = VK_FORMAT_R8G8B8A8_UNORM,
     };
 
-    re_image_init(
-        &model->images[i], g_ctx.transient_command_pool, &image_options);
+    re_image_init(&model->images[i], &image_options);
+
+    re_image_upload(
+        &model->images[i],
+        g_ctx.transient_command_pool,
+        image_data,
+        (uint32_t)width,
+        (uint32_t)height,
+        0,
+        0);
 
     free(image_data);
   }

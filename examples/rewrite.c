@@ -156,7 +156,7 @@ int main(int argc, const char *argv[]) {
           .title = "Re-write",
           .width = 1600,
           .height = 900,
-          .sample_count = VK_SAMPLE_COUNT_1_BIT,
+          .sample_count = VK_SAMPLE_COUNT_2_BIT,
       });
   eg_imgui_init(&game.window, &game.window.render_target);
 
@@ -177,7 +177,11 @@ int main(int argc, const char *argv[]) {
   eg_environment_asset_t *environment_asset = eg_asset_alloc(
       &game.asset_manager, "Environment", eg_environment_asset_t);
   eg_environment_asset_init(
-      environment_asset, "/assets/ice_lake.env", "/assets/brdf_lut.png");
+      environment_asset,
+      "/assets/environments/bridge_skybox.ktx",
+      "/assets/environments/bridge_irradiance.ktx",
+      "/assets/environments/bridge_radiance.ktx",
+      "/assets/brdf_lut.png");
 
   eg_world_init(&game.world, environment_asset);
 
@@ -188,7 +192,7 @@ int main(int argc, const char *argv[]) {
       &game.window.render_target,
       &game.world,
       &game.asset_manager);
-  eg_fps_camera_system_init(&game.fps_system);
+  eg_fps_camera_system_init(&game.fps_system, &game.world.camera);
 
   eg_pipeline_asset_t *pbr_pipeline =
       eg_asset_alloc(&game.asset_manager, "PBR pipeline", eg_pipeline_asset_t);
@@ -222,7 +226,7 @@ int main(int argc, const char *argv[]) {
   add_gltf(
       &game,
       "Helmet",
-      "/assets/DamagedHelmet.glb",
+      "/assets/models/DamagedHelmet.glb",
       pbr_pipeline,
       (vec3_t){0.0, 0.0, 0.0},
       (vec3_t){1.0, 1.0, 1.0},
@@ -231,7 +235,7 @@ int main(int argc, const char *argv[]) {
   add_gltf(
       &game,
       "Water bottle",
-      "/assets/WaterBottle.glb",
+      "/assets/models/WaterBottle.glb",
       pbr_pipeline,
       (vec3_t){2.0, 0.0, 0.0},
       (vec3_t){10.0, 10.0, 10.0},
@@ -240,7 +244,7 @@ int main(int argc, const char *argv[]) {
   add_gltf(
       &game,
       "Boom box",
-      "/assets/BoomBox.glb",
+      "/assets/models/BoomBox.glb",
       pbr_pipeline,
       (vec3_t){-2.0, 0.0, 0.0},
       (vec3_t){100.0, 100.0, 100.0},
@@ -281,12 +285,7 @@ int main(int argc, const char *argv[]) {
     re_window_begin_frame(&game.window);
 
     eg_fps_camera_system_update(
-        &game.fps_system,
-        &game.window,
-        &game.world.camera,
-        &cmd_info,
-        (float)width,
-        (float)height);
+        &game.fps_system, &game.window, &cmd_info, (float)width, (float)height);
 
     eg_light_system(&game.world);
 

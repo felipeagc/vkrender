@@ -150,12 +150,19 @@ void eg_inspector_init(
 
     re_image_init(
         &inspector->light_billboard_image,
-        g_ctx.transient_command_pool,
         &(re_image_options_t){
-            .data = image_data,
             .width = (uint32_t)width,
             .height = (uint32_t)height,
         });
+
+    re_image_upload(
+        &inspector->light_billboard_image,
+        g_ctx.transient_command_pool,
+        image_data,
+        (uint32_t)width,
+        (uint32_t)height,
+        0,
+        0);
 
     free(image_data);
   }
@@ -874,7 +881,8 @@ static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
   eg_point_light_comp_t *point_light =
       EG_COMP(world, eg_point_light_comp_t, entity);
   igColorEdit4("Color", &point_light->color.r, 0);
-  igDragFloat("Intensity", &point_light->intensity, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
+  igDragFloat(
+      "Intensity", &point_light->intensity, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
 }
 
 static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}

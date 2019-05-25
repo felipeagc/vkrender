@@ -1,11 +1,8 @@
 #include "fps_camera_system.h"
 #include "../camera.h"
 #include "../imgui.h"
+#include <float.h>
 #include <renderer/window.h>
-
-#define INITIAL_FOV to_radians(160)
-#define GOAL_FOV to_radians(70)
-#define TRANSITION_TIME 1.0f
 
 float out_expo(float t, float b, float c, float d) {
   if (t == d)
@@ -13,8 +10,11 @@ float out_expo(float t, float b, float c, float d) {
   return c * 1.001f * (-powf(2, -10 * t / d) + 1) + b;
 }
 
-void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
-  system->cam_target = (vec3_t){0};
+void eg_fps_camera_system_init(
+    eg_fps_camera_system_t *system, eg_camera_t *camera) {
+  system->camera = camera;
+
+  system->cam_target = system->camera->position;
 
   system->cam_up = (vec3_t){0};
   system->cam_front = (vec3_t){0.0, 0.0, 1.0};
@@ -31,18 +31,14 @@ void eg_fps_camera_system_init(eg_fps_camera_system_t *system) {
 
   system->prev_right_pressed = false;
 
-  system->first_frame = true;
-
   system->sensitivity = 0.07f;
 
   system->time = 0.0f;
-  system->transitioning_fov = true;
 }
 
 void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
-    eg_camera_t *camera,
     const eg_cmd_info_t *cmd_info,
     float width,
     float height) {
@@ -91,12 +87,6 @@ void eg_fps_camera_system_update(
 
   system->time += (float)window->delta_time;
 
-  if (system->first_frame) {
-    system->first_frame = false;
-    system->cam_target = camera->position;
-    camera->fov = INITIAL_FOV;
-  }
-
   system->cam_front.x = cosf(system->cam_yaw) * cosf(system->cam_pitch);
   system->cam_front.y = sinf(system->cam_pitch);
   system->cam_front.z = sinf(system->cam_yaw) * cosf(system->cam_pitch);
@@ -127,30 +117,26 @@ void eg_fps_camera_system_update(
 
   system->cam_target = vec3_add(system->cam_target, movement);
 
-  camera->position = vec3_lerp(
-      camera->position, system->cam_target, (float)window->delta_time * 10.0f);
+  vec3_t lerp = vec3_lerp(
+      system->camera->position,
+      system->cam_target,
+      (float)window->delta_time * 10.0f);
 
-  camera->rotation =
-      quat_conjugate(quat_look_at(system->cam_front, system->cam_up));
-
-  camera->uniform.view =
-      mat4_translate(mat4_identity(), vec3_muls(camera->position, -1.0f));
-  camera->uniform.view =
-      mat4_mul(camera->uniform.view, quat_to_mat4(camera->rotation));
-
-  if (system->transitioning_fov) {
-    float progress =
-        system->time <= TRANSITION_TIME ? system->time : TRANSITION_TIME;
-    progress = remap(progress, 0.0f, TRANSITION_TIME, 0.0, 0.05f);
-
-    camera->fov =
-        out_expo(progress, camera->fov, GOAL_FOV - camera->fov, GOAL_FOV);
-
-    if (camera->fov <= GOAL_FOV + 0.001f) {
-      system->transitioning_fov = false;
-      camera->fov = GOAL_FOV;
-    }
+  // If the lerp is large enough or the camera is actively moving
+  if (vec3_mag(vec3_sub(lerp, system->camera->position)) >=
+          0.02f * (float)window->delta_time ||
+      vec3_mag(movement) >= FLT_EPSILON) {
+    // Then actually apply the lerp
+    system->camera->position = lerp;
   }
 
-  eg_camera_update(camera, cmd_info, width, height);
+  system->camera->rotation =
+      quat_conjugate(quat_look_at(system->cam_front, system->cam_up));
+
+  system->camera->uniform.view = mat4_translate(
+      mat4_identity(), vec3_muls(system->camera->position, -1.0f));
+  system->camera->uniform.view = mat4_mul(
+      system->camera->uniform.view, quat_to_mat4(system->camera->rotation));
+
+  eg_camera_update(system->camera, cmd_info, width, height);
 }

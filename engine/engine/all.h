@@ -31,7 +31,6 @@
 #include "engine/systems/rendering_system.h"
 
 #include "engine/assets/asset_types.h"
-#include "engine/assets/env_file.h"
 #include "engine/assets/environment_asset.h"
 #include "engine/assets/gltf_model_asset.h"
 #include "engine/assets/mesh_asset.h"

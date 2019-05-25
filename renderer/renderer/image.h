@@ -24,7 +24,6 @@ typedef struct re_image_t {
  * or uint8_t* layers[level_count * layer_count]
  */
 typedef struct re_image_options_t {
-  uint8_t *data;
   uint32_t width;
   uint32_t height;
   uint32_t layer_count;
@@ -32,8 +31,16 @@ typedef struct re_image_options_t {
   VkFormat format;
 } re_image_options_t;
 
-void re_image_init(
-    re_image_t *image, re_cmd_pool_t pool, re_image_options_t *options);
+void re_image_init(re_image_t *image, re_image_options_t *options);
+
+void re_image_upload(
+    re_image_t *image,
+    re_cmd_pool_t pool,
+    uint8_t *data,
+    uint32_t width,
+    uint32_t height,
+    uint32_t level,
+    uint32_t layer);
 
 void re_image_destroy(re_image_t *image);
 
