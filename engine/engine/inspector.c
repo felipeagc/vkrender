@@ -772,6 +772,12 @@ static void inspect_camera(eg_camera_t *camera) {
   float deg = to_degrees(camera->fov);
   igDragFloat("FOV", &deg, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
   camera->fov = to_radians(deg);
+
+  igDragFloat3(
+      "Position", &camera->position.x, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
+
+  igDragFloat4(
+      "Rotation", &camera->rotation.x, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
 }
 
 static void inspect_environment(eg_environment_t *environment) {
@@ -803,6 +809,18 @@ static void inspect_environment(eg_environment_t *environment) {
       0.0f,
       "%.3f",
       1.0f);
+
+  static int current_item = 0;
+  const char *const items[] = {"Default", "Irradiance"};
+
+  if (igListBoxStr_arr(
+          "Skybox type",
+          &current_item,
+          items,
+          ARRAY_SIZE(items),
+          ARRAY_SIZE(items))) {
+    eg_environment_set_skybox(environment, (eg_skybox_type_t)current_item);
+  }
 }
 
 static void inspect_statistics(re_window_t *window) {
@@ -883,7 +901,20 @@ static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
       "Intensity", &point_light->intensity, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
 }
 
-static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {}
+static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {
+  eg_mesh_comp_t *mesh = EG_COMP(world, eg_mesh_comp_t, entity);
+
+  igText("Material: %s", mesh->material->asset.name);
+  igSameLine(0.0f, -1.0f);
+  if (igSmallButton("Inspect")) {
+    igOpenPopup("meshmaterialpopup");
+  }
+
+  if (igBeginPopup("meshmaterialpopup", 0)) {
+    inspect_pbr_material_asset((eg_asset_t *)mesh->material);
+    igEndPopup();
+  }
+}
 
 static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
   eg_gltf_comp_t *gltf_model = EG_COMP(world, eg_gltf_comp_t, entity);
@@ -995,7 +1026,11 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
           }
 
           snprintf(str, sizeof(str), "Entity #%d", entity);
-          if (igSelectable(str, false, 0, (ImVec2){0.0f, 0.0f})) {
+          if (igSelectable(
+                  str,
+                  inspector->selected_entity == entity,
+                  0,
+                  (ImVec2){0.0f, 0.0f})) {
             set_selected(inspector, entity);
           }
         }

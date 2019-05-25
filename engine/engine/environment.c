@@ -8,8 +8,13 @@
 #include <renderer/window.h>
 #include <string.h>
 
+// For skybox pipeline
+#define ENVIRONMENT_SET_INDEX 1
+
 void eg_environment_init(
     eg_environment_t *environment, eg_environment_asset_t *asset) {
+  environment->asset = asset;
+
   environment->uniform.sun_direction = (vec3_t){0.0, -1.0, 0.0};
   environment->uniform.exposure = 8.0f;
   environment->uniform.sun_color = (vec3_t){1.0f, 1.0f, 1.0f};
@@ -18,12 +23,12 @@ void eg_environment_init(
   environment->uniform.point_light_count = 0;
 
   environment->uniform.radiance_mip_levels =
-      (float)asset->radiance_cubemap.mip_level_count;
+      (float)environment->asset->radiance_cubemap.mip_level_count;
 
   VkDescriptorSetLayout set_layout =
-      g_default_pipeline_layouts.skybox.set_layouts[1];
+      g_default_pipeline_layouts.skybox.set_layouts[ENVIRONMENT_SET_INDEX];
   VkDescriptorUpdateTemplate update_template =
-      g_default_pipeline_layouts.skybox.update_templates[1];
+      g_default_pipeline_layouts.skybox.update_templates[ENVIRONMENT_SET_INDEX];
 
   VkDescriptorSetLayout set_layouts[ARRAY_SIZE(environment->descriptor_sets)];
   for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
@@ -59,10 +64,10 @@ void eg_environment_init(
             {.buffer_info = {.buffer = environment->uniform_buffers[i].buffer,
                              .offset = 0,
                              .range = sizeof(eg_environment_uniform_t)}},
-            {.image_info = asset->skybox_cubemap.descriptor},
-            {.image_info = asset->irradiance_cubemap.descriptor},
-            {.image_info = asset->radiance_cubemap.descriptor},
-            {.image_info = asset->brdf_lut.descriptor},
+            {.image_info = environment->asset->skybox_cubemap.descriptor},
+            {.image_info = environment->asset->irradiance_cubemap.descriptor},
+            {.image_info = environment->asset->radiance_cubemap.descriptor},
+            {.image_info = environment->asset->brdf_lut.descriptor},
         });
   }
 }
@@ -116,6 +121,40 @@ void eg_environment_draw_skybox(
       NULL);
 
   vkCmdDraw(cmd_info->cmd_buffer, 36, 1, 0, 0);
+}
+
+void eg_environment_set_skybox(
+    eg_environment_t *environment, eg_skybox_type_t type) {
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  VkDescriptorImageInfo skybox_descriptor;
+  switch (type) {
+  case EG_SKYBOX_DEFAULT:
+    skybox_descriptor = environment->asset->skybox_cubemap.descriptor;
+    break;
+  case EG_SKYBOX_IRRADIANCE:
+    skybox_descriptor = environment->asset->irradiance_cubemap.descriptor;
+    break;
+  }
+
+  VkDescriptorUpdateTemplate update_template =
+      g_default_pipeline_layouts.skybox.update_templates[ENVIRONMENT_SET_INDEX];
+
+  for (size_t i = 0; i < ARRAY_SIZE(environment->descriptor_sets); i++) {
+    vkUpdateDescriptorSetWithTemplate(
+        g_ctx.device,
+        environment->descriptor_sets[i],
+        update_template,
+        (re_descriptor_update_info_t[]){
+            {.buffer_info = {.buffer = environment->uniform_buffers[i].buffer,
+                             .offset = 0,
+                             .range = sizeof(eg_environment_uniform_t)}},
+            {.image_info = skybox_descriptor},
+            {.image_info = environment->asset->irradiance_cubemap.descriptor},
+            {.image_info = environment->asset->radiance_cubemap.descriptor},
+            {.image_info = environment->asset->brdf_lut.descriptor},
+        });
+  }
 }
 
 bool eg_environment_add_point_light(

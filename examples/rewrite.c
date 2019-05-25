@@ -156,7 +156,7 @@ int main(int argc, const char *argv[]) {
           .title = "Re-write",
           .width = 1600,
           .height = 900,
-          .sample_count = VK_SAMPLE_COUNT_2_BIT,
+          .sample_count = VK_SAMPLE_COUNT_4_BIT,
       });
   eg_imgui_init(&game.window, &game.window.render_target);
 
@@ -221,7 +221,7 @@ int main(int argc, const char *argv[]) {
       "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
 
-  game.world.environment.uniform.sun_direction = (vec3_t){-1.0f, -0.3f, 1.0f};
+  game.world.environment.uniform.sun_direction = (vec3_t){1.0f, 0.5f, 1.0f};
 
   add_gltf(
       &game,

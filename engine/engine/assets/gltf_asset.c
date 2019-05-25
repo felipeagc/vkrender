@@ -241,9 +241,7 @@ static mat4_t node_get_matrix(eg_gltf_asset_node_t *node) {
 }
 
 static void node_update(
-    eg_gltf_asset_node_t *node,
-    eg_gltf_asset_t *model,
-    uint32_t frame_index) {
+    eg_gltf_asset_node_t *node, eg_gltf_asset_t *model, uint32_t frame_index) {
   if (node->mesh != NULL) {
     node->mesh->ubo.matrix = node_get_matrix(node);
     memcpy(
@@ -324,8 +322,7 @@ static void load_node(
 
   if (node->mesh != NULL) {
     cgltf_mesh *mesh = node->mesh;
-    eg_gltf_asset_mesh_t *new_mesh =
-        &model->meshes[node->mesh - data->meshes];
+    eg_gltf_asset_mesh_t *new_mesh = &model->meshes[node->mesh - data->meshes];
     mesh_init(new_mesh, new_node->matrix);
 
     new_mesh->primitive_count = (uint32_t)mesh->primitives_count;
@@ -358,12 +355,12 @@ static void load_node(
         for (uint32_t j = 0; j < primitive->attributes_count; j++) {
           if (primitive->attributes[j].type == cgltf_attribute_type_position) {
             pos_accessor = primitive->attributes[j].data;
-          } else if (
-              primitive->attributes[j].type == cgltf_attribute_type_normal) {
-            normal_accessor = primitive->attributes[j].data;
-          } else if (
-              primitive->attributes[j].type == cgltf_attribute_type_texcoord) {
+          }
+          if (primitive->attributes[j].type == cgltf_attribute_type_texcoord) {
             texcoord_accessor = primitive->attributes[j].data;
+          }
+          if (primitive->attributes[j].type == cgltf_attribute_type_normal) {
+            normal_accessor = primitive->attributes[j].data;
           }
         }
 
@@ -502,8 +499,8 @@ static void load_node(
   }
 }
 
-static void get_node_dimensions(
-    eg_gltf_asset_node_t *node, vec3_t *min, vec3_t *max) {
+static void
+get_node_dimensions(eg_gltf_asset_node_t *node, vec3_t *min, vec3_t *max) {
   if (node->mesh != NULL) {
     for (uint32_t i = 0; i < node->mesh->primitive_count; i++) {
       eg_gltf_asset_primitive_t *primitive = &node->mesh->primitives[i];

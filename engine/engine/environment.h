@@ -11,6 +11,11 @@
 typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_environment_asset_t eg_environment_asset_t;
 
+typedef enum eg_skybox_type_t {
+  EG_SKYBOX_DEFAULT,
+  EG_SKYBOX_IRRADIANCE,
+} eg_skybox_type_t;
+
 typedef struct eg_point_light_t {
   vec4_t pos;
   vec4_t color;
@@ -27,6 +32,8 @@ typedef struct eg_environment_uniform_t {
 } eg_environment_uniform_t;
 
 typedef struct eg_environment_t {
+  eg_environment_asset_t *asset;
+
   eg_environment_uniform_t uniform;
 
   re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
@@ -50,6 +57,9 @@ void eg_environment_draw_skybox(
     eg_environment_t *environment,
     const eg_cmd_info_t *cmd_info,
     re_pipeline_t *pipeline);
+
+void eg_environment_set_skybox(
+    eg_environment_t *environment, eg_skybox_type_t type);
 
 bool eg_environment_add_point_light(
     eg_environment_t *environment, const vec3_t pos, const vec4_t color);
