@@ -25,7 +25,8 @@
 
 #define EG_TAGS(world, entity) ((world)->tags[entity])
 
-#define EG_HAS_TAG(world, entity, tag) ((world)->tags[entity] & (1UL << tag))
+#define EG_HAS_TAG(world, entity, tag)                                         \
+  ((world)->tags[entity] & (1UL << (unsigned long)tag))
 
 #define EG_ADD_TAG(world, entity, tag)                                         \
   do {                                                                         \

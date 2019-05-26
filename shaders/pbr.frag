@@ -56,6 +56,9 @@ float geometry_schlick_smith_ggx(float NdotL, float NdotV, float roughness) {
 }
 
 vec3 get_normal() {
+  if (material.has_normal_texture != 0.0f) {
+    return normalize(normal);
+  }
   // Retrieve the tangent space matrix
   vec3 pos_dx = dFdx(world_pos);
   vec3 pos_dy = dFdy(world_pos);
@@ -69,14 +72,9 @@ vec3 get_normal() {
   vec3 b = normalize(cross(ng, t));
   mat3 tbn = mat3(t, b, ng);
 
-  // If material does not have normal texture
-  vec3 n = normalize(tbn[2].xyz);
-
-  if (material.has_normal_texture != 0.0f) {
-    // If material has normal texture
-    n = texture(normal_texture, tex_coords).rgb;
-    n = normalize(tbn * (2.0 * n - 1.0));
-  }
+  // If material has normal texture
+  vec3 n = texture(normal_texture, tex_coords).rgb;
+  n = normalize(tbn * (2.0 * n - 1.0));
 
   return n;
 }

@@ -36,8 +36,7 @@ static eg_entity_t add_gltf(
   transform->position = position;
   transform->scale = scale;
 
-  eg_gltf_comp_t *model =
-      EG_ADD_COMP(&game->world, eg_gltf_comp_t, ent);
+  eg_gltf_comp_t *model = EG_ADD_COMP(&game->world, eg_gltf_comp_t, ent);
   eg_gltf_comp_init(model, model_asset);
 
   eg_renderable_comp_t *renderable =
@@ -71,9 +70,10 @@ static eg_entity_t add_terrain(
     eg_pipeline_asset_t *pipeline_asset) {
   const float terrain_scale = 0.02f;
 
-  re_vertex_t vertices[dim * dim];
+  uint32_t vertex_count = dim * dim;
+  re_vertex_t *vertices = calloc(vertex_count, sizeof(re_vertex_t));
 
-  srand(time(0));
+  srand((unsigned int)time(0));
 
   for (uint32_t i = 0; i < dim; i++) {
     for (uint32_t j = 0; j < dim; j++) {
@@ -102,7 +102,8 @@ static eg_entity_t add_terrain(
     }
   }
 
-  uint32_t indices[(dim - 1) * (dim - 1) * 6];
+  uint32_t index_count = (dim - 1) * (dim - 1) * 6;
+  uint32_t *indices = calloc(index_count, sizeof(uint32_t));
   uint32_t current_index = 0;
 
   for (uint32_t i = 0; i < dim - 1; i++) {
@@ -119,8 +120,7 @@ static eg_entity_t add_terrain(
 
   eg_mesh_asset_t *mesh_asset =
       eg_asset_alloc(&game->asset_manager, name, eg_mesh_asset_t);
-  eg_mesh_asset_init(
-      mesh_asset, vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
+  eg_mesh_asset_init(mesh_asset, vertices, vertex_count, indices, index_count);
 
   eg_pbr_material_asset_t *mat_asset = eg_asset_alloc(
       &game->asset_manager, "Terrain material", eg_pbr_material_asset_t);
@@ -141,6 +141,9 @@ static eg_entity_t add_terrain(
   eg_renderable_comp_t *renderable =
       EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
   eg_renderable_comp_init(renderable, pipeline_asset);
+
+  free(indices);
+  free(vertices);
 
   return ent;
 }
