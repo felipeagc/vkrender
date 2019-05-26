@@ -84,7 +84,7 @@ void main() {
   vec3 V = normalize(camera_pos - world_pos);
   vec3 R = -normalize(reflect(V, N));
 
-  vec4 albedo_color = texture(albedo_texture, tex_coords);
+  vec4 albedo_color = texture(albedo_texture, tex_coords) * material.base_color;
 
   vec3 albedo = pow(albedo_color.rgb, vec3(2.2));
   vec4 metallic_roughness = texture(metallic_roughness_texture, tex_coords);
@@ -176,5 +176,5 @@ void main() {
 
   color += emissive * material.emissive.xyz;
 
-  out_color = vec4(color, albedo_color.a) * material.base_color;
+  out_color = vec4(color, albedo_color.a);
 }
