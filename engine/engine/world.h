@@ -25,26 +25,25 @@
 
 #define EG_TAGS(world, entity) ((world)->tags[entity])
 
-#define EG_HAS_TAG(world, entity, tag)                                         \
-  ((world)->tags[entity] & (1UL << (unsigned long)tag))
+#define EG_HAS_TAG(world, entity, tag) ((world)->tags[entity] & (1ULL << tag))
 
 #define EG_ADD_TAG(world, entity, tag)                                         \
   do {                                                                         \
     assert(entity < EG_MAX_ENTITIES);                                          \
-    ((world)->tags[entity] |= (1UL << tag));                                   \
+    ((world)->tags[entity] |= (1ULL << tag));                                  \
   } while (0)
 
 #define EG_REMOVE_TAG(world, entity, tag)                                      \
   do {                                                                         \
     assert(entity < EG_MAX_ENTITIES);                                          \
-    ((world)->tags[entity] &= ~(1UL << tag));                                  \
+    ((world)->tags[entity] &= ~(1ULL << tag));                                 \
   } while (0)
 
 #define EG_SET_TAG(world, entity, tag, value)                                  \
   do {                                                                         \
     assert(entity < EG_MAX_ENTITIES);                                          \
     ((world)->tags[entity] ^=                                                  \
-     (-(uint64_t)value ^ (world)->tags[entity]) & (1UL << tag));               \
+     (-(uint64_t)value ^ (world)->tags[entity]) & (1ULL << tag));              \
   } while (0)
 
 typedef uint32_t eg_entity_t;

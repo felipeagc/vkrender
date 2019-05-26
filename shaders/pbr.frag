@@ -56,7 +56,7 @@ float geometry_schlick_smith_ggx(float NdotL, float NdotV, float roughness) {
 }
 
 vec3 get_normal() {
-  if (material.has_normal_texture != 0.0f) {
+  if (material.has_normal_texture == 0.0f) {
     return normalize(normal);
   }
   // Retrieve the tangent space matrix
