@@ -24,6 +24,7 @@
 #include "engine/comps/mesh_comp.h"
 #include "engine/comps/point_light_comp.h"
 #include "engine/comps/renderable_comp.h"
+#include "engine/comps/terrain_comp.h"
 #include "engine/comps/transform_comp.h"
 
 #include "engine/systems/fps_camera_system.h"

@@ -79,26 +79,10 @@ static eg_entity_t add_terrain(
     for (uint32_t j = 0; j < dim; j++) {
       float x = ((float)i - (float)dim / 2.0f) * terrain_scale;
       float z = ((float)j - (float)dim / 2.0f) * terrain_scale;
-      float y = ((float)rand() / (float)(RAND_MAX)) * 2.0f - 1.0f;
       vertices[i * dim + j] = (re_vertex_t){
-          .pos = {x, y, z},
+          .pos = {x, 0.0f, z},
           .normal = {0.0f, 1.0f, 0.0f},
       };
-    }
-  }
-
-  for (uint32_t i = 1; i < dim - 1; i++) {
-    for (uint32_t j = 1; j < dim - 1; j++) {
-      re_vertex_t left = vertices[(i - 1) * dim + j];
-      re_vertex_t right = vertices[(i + 1) * dim + j];
-      re_vertex_t top = vertices[i * dim + (j - 1)];
-      re_vertex_t bottom = vertices[i * dim + (j + 1)];
-
-      vertices[i * dim + j].normal = vec3_normalize((vec3_t){
-          (left.pos.y - right.pos.y),
-          1.0f,
-          (top.pos.y - bottom.pos.y),
-      });
     }
   }
 
@@ -132,11 +116,15 @@ static eg_entity_t add_terrain(
   eg_transform_comp_t *transform =
       EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
   eg_transform_comp_init(transform);
-  transform->scale = (vec3_t){100.0f, 1.0f, 100.0f};
+  transform->scale = (vec3_t){50.0f, 1.0f, 50.0f};
   transform->position = (vec3_t){0.0f, -2.0f, 0.0f};
 
   eg_mesh_comp_t *mesh = EG_ADD_COMP(&game->world, eg_mesh_comp_t, ent);
   eg_mesh_comp_init(mesh, mesh_asset, mat_asset);
+
+  eg_terrain_comp_t *terrain =
+      EG_ADD_COMP(&game->world, eg_terrain_comp_t, ent);
+  eg_terrain_comp_init(terrain, dim, dim);
 
   eg_renderable_comp_t *renderable =
       EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
@@ -224,7 +212,7 @@ int main(int argc, const char *argv[]) {
       "/shaders/skybox.frag.spv",
       eg_skybox_pipeline_parameters());
 
-  game.world.environment.uniform.sun_direction = (vec3_t){1.0f, 0.5f, 1.0f};
+  game.world.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
 
   add_gltf(
       &game,
@@ -256,7 +244,7 @@ int main(int argc, const char *argv[]) {
   add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
   add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);
 
-  add_terrain(&game, "Terrain", 50, pbr_pipeline);
+  add_terrain(&game, "Terrain", 100, terrain_pipeline);
 
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);

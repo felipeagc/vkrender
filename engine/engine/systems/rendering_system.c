@@ -25,8 +25,7 @@ void eg_rendering_system(eg_world_t *world, const eg_cmd_info_t *cmd_info) {
   eg_renderable_comp_t *renderables =
       EG_COMP_ARRAY(world, eg_renderable_comp_t);
   eg_mesh_comp_t *meshes = EG_COMP_ARRAY(world, eg_mesh_comp_t);
-  eg_gltf_comp_t *gltf_models =
-      EG_COMP_ARRAY(world, eg_gltf_comp_t);
+  eg_gltf_comp_t *gltf_models = EG_COMP_ARRAY(world, eg_gltf_comp_t);
 
   // Draw all meshes
   for (eg_entity_t e = 0; e < world->entity_max; e++) {
@@ -51,6 +50,23 @@ void eg_rendering_system(eg_world_t *world, const eg_cmd_info_t *cmd_info) {
     // Render mesh
     if (EG_HAS_COMP(world, eg_mesh_comp_t, e) &&
         EG_HAS_COMP(world, eg_transform_comp_t, e)) {
+
+      if (EG_HAS_COMP(world, eg_terrain_comp_t, e)) {
+        struct {
+          float time;
+        } pc;
+
+        pc.time = (float)glfwGetTime();
+
+        vkCmdPushConstants(
+            cmd_info->cmd_buffer,
+            pipeline->layout.layout,
+            pipeline->layout.push_constants[0].stageFlags,
+            pipeline->layout.push_constants[0].offset,
+            sizeof(pc),
+            &pc);
+      }
+
       meshes[e].model.uniform.transform =
           eg_transform_comp_mat4(&transforms[e]);
       eg_mesh_comp_draw(&meshes[e], cmd_info, pipeline);

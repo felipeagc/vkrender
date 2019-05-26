@@ -50,6 +50,8 @@ add_library(
 	engine/comps/mesh_comp.h
 	engine/comps/gltf_comp.c
 	engine/comps/gltf_comp.h
+	engine/comps/terrain_comp.c
+	engine/comps/terrain_comp.h
 
 	engine/systems/rendering_system.c
 	engine/systems/rendering_system.h
