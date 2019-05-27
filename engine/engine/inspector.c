@@ -8,6 +8,7 @@
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
 #include "comps/transform_comp.h"
+#include "comps/renderable_comp.h"
 #include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
@@ -901,6 +902,12 @@ static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
       "Intensity", &point_light->intensity, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
 }
 
+static void inspect_renderable_comp(eg_world_t *world, eg_entity_t entity) {
+  eg_renderable_comp_t *renderable = EG_COMP(world, eg_renderable_comp_t, entity);
+
+  igText("Pipeline asset: %s", renderable->pipeline->asset.name);
+}
+
 static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {
   eg_mesh_comp_t *mesh = EG_COMP(world, eg_mesh_comp_t, entity);
 
@@ -969,6 +976,12 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
               EG_COMP_NAME(eg_point_light_comp_t),
               ImGuiTreeNodeFlags_DefaultOpen)) {
         inspect_point_light_comp(world, entity);
+      }
+
+      if (EG_HAS_COMP(world, eg_renderable_comp_t, entity) &&
+          igCollapsingHeader(
+              EG_COMP_NAME(eg_renderable_comp_t), ImGuiTreeNodeFlags_DefaultOpen)) {
+        inspect_renderable_comp(world, entity);
       }
 
       if (EG_HAS_COMP(world, eg_mesh_comp_t, entity) &&
