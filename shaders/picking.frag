@@ -1,5 +1,7 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive : require
+
 layout (push_constant) uniform PickingPushConstant {
   uint index;
 } picking;

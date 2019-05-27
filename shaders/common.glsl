@@ -1,3 +1,6 @@
+#ifndef COMMON_GLSL
+#define COMMON_GLSL
+
 #define MAX_LIGHTS 20
 
 const float PI = 3.14159265359;
@@ -40,3 +43,5 @@ struct Material {
 struct Model {
   mat4 matrix;
 };
+
+#endif

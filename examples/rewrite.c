@@ -68,17 +68,13 @@ static eg_entity_t add_terrain(
     const char *name,
     uint32_t dim,
     eg_pipeline_asset_t *pipeline_asset) {
-  const float terrain_scale = 0.02f;
-
   uint32_t vertex_count = dim * dim;
   re_vertex_t *vertices = calloc(vertex_count, sizeof(re_vertex_t));
 
-  srand((unsigned int)time(0));
-
   for (uint32_t i = 0; i < dim; i++) {
     for (uint32_t j = 0; j < dim; j++) {
-      float x = ((float)i - (float)dim / 2.0f) * terrain_scale;
-      float z = ((float)j - (float)dim / 2.0f) * terrain_scale;
+      float x = ((float)i - (float)dim / 2.0f);
+      float z = ((float)j - (float)dim / 2.0f);
       vertices[i * dim + j] = (re_vertex_t){
           .pos = {x, 0.0f, z},
           .normal = {0.0f, 1.0f, 0.0f},
@@ -106,6 +102,9 @@ static eg_entity_t add_terrain(
       eg_asset_alloc(&game->asset_manager, name, eg_mesh_asset_t);
   eg_mesh_asset_init(mesh_asset, vertices, vertex_count, indices, index_count);
 
+  free(indices);
+  free(vertices);
+
   eg_pbr_material_asset_t *mat_asset = eg_asset_alloc(
       &game->asset_manager, "Terrain material", eg_pbr_material_asset_t);
   eg_pbr_material_asset_init(mat_asset, NULL, NULL, NULL, NULL, NULL);
@@ -116,7 +115,6 @@ static eg_entity_t add_terrain(
   eg_transform_comp_t *transform =
       EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
   eg_transform_comp_init(transform);
-  transform->scale = (vec3_t){50.0f, 1.0f, 50.0f};
   transform->position = (vec3_t){0.0f, -2.0f, 0.0f};
 
   eg_mesh_comp_t *mesh = EG_ADD_COMP(&game->world, eg_mesh_comp_t, ent);
@@ -129,9 +127,6 @@ static eg_entity_t add_terrain(
   eg_renderable_comp_t *renderable =
       EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
   eg_renderable_comp_init(renderable, pipeline_asset);
-
-  free(indices);
-  free(vertices);
 
   return ent;
 }
@@ -147,7 +142,7 @@ int main(int argc, const char *argv[]) {
           .title = "Re-write",
           .width = 1600,
           .height = 900,
-          .sample_count = VK_SAMPLE_COUNT_4_BIT,
+          .sample_count = VK_SAMPLE_COUNT_1_BIT,
       });
   eg_imgui_init(&game.window, &game.window.render_target);
 
@@ -244,7 +239,7 @@ int main(int argc, const char *argv[]) {
   add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
   add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);
 
-  add_terrain(&game, "Terrain", 100, terrain_pipeline);
+  add_terrain(&game, "Terrain", 256, terrain_pipeline);
 
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);
