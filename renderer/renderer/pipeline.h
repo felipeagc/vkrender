@@ -1,13 +1,11 @@
 #pragma once
 
+#include "descriptor_set.h"
+#include "limits.h"
 #include "render_target.h"
 #include "shader.h"
 #include <gmath.h>
 #include <vulkan/vulkan.h>
-
-#define RE_MAX_DESCRIPTOR_SETS 8
-#define RE_MAX_DESCRIPTOR_SET_BINDINGS 8
-#define RE_MAX_PUSH_CONSTANT_RANGES 4
 
 typedef struct re_window_t re_window_t;
 
@@ -29,13 +27,10 @@ typedef struct re_vertex_t {
   vec2_t uv;
 } re_vertex_t;
 
-typedef union re_descriptor_update_info_t {
-  VkDescriptorImageInfo image_info;
-  VkDescriptorBufferInfo buffer_info;
-} re_descriptor_update_info_t;
-
 typedef struct re_pipeline_layout_t {
   VkPipelineLayout layout;
+  re_descriptor_set_allocator_t
+      *descriptor_set_allocators[RE_MAX_DESCRIPTOR_SETS];
 
   VkDescriptorUpdateTemplate update_templates[RE_MAX_DESCRIPTOR_SETS];
   VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS];

@@ -134,7 +134,7 @@ static eg_entity_t add_terrain(
 int main(int argc, const char *argv[]) {
   game_t game;
 
-  re_context_init();
+  re_ctx_init();
   eg_engine_init();
   re_window_init(
       &game.window,
@@ -218,23 +218,23 @@ int main(int argc, const char *argv[]) {
       (vec3_t){1.0, 1.0, 1.0},
       true);
 
-  add_gltf(
-      &game,
-      "Water bottle",
-      "/assets/models/WaterBottle.glb",
-      pbr_pipeline,
-      (vec3_t){2.0, 0.0, 0.0},
-      (vec3_t){10.0, 10.0, 10.0},
-      false);
+  /* add_gltf( */
+  /*     &game, */
+  /*     "Water bottle", */
+  /*     "/assets/models/WaterBottle.glb", */
+  /*     pbr_pipeline, */
+  /*     (vec3_t){2.0, 0.0, 0.0}, */
+  /*     (vec3_t){10.0, 10.0, 10.0}, */
+  /*     false); */
 
-  add_gltf(
-      &game,
-      "Boom box",
-      "/assets/models/BoomBox.glb",
-      pbr_pipeline,
-      (vec3_t){-2.0, 0.0, 0.0},
-      (vec3_t){100.0, 100.0, 100.0},
-      false);
+  /* add_gltf( */
+  /*     &game, */
+  /*     "Boom box", */
+  /*     "/assets/models/BoomBox.glb", */
+  /*     pbr_pipeline, */
+  /*     (vec3_t){-2.0, 0.0, 0.0}, */
+  /*     (vec3_t){100.0, 100.0, 100.0}, */
+  /*     false); */
 
   add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
   add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);
@@ -268,6 +268,7 @@ int main(int argc, const char *argv[]) {
     eg_environment_update(&game.world.environment, &cmd_info);
 
     // Begin command buffer recording
+    re_ctx_begin_frame();
     re_window_begin_frame(&game.window);
 
     eg_fps_camera_system_update(
@@ -318,7 +319,7 @@ int main(int argc, const char *argv[]) {
   eg_imgui_destroy();
   re_window_destroy(&game.window);
   eg_engine_destroy();
-  re_context_destroy();
+  re_ctx_destroy();
 
   return 0;
 }

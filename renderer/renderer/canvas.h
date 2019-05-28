@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cmd_buffer.h"
-#include "common.h"
 #include "pipeline.h"
 #include "render_target.h"
 #include <gmath.h>

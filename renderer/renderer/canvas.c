@@ -435,7 +435,7 @@ void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options) {
 
   canvas->clear_color = options->clear_color;
 
-  bool res = re_context_get_supported_depth_format(&canvas->depth_format);
+  bool res = re_ctx_get_supported_depth_format(&canvas->depth_format);
   assert(res);
 
   create_image(

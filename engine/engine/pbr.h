@@ -3,7 +3,6 @@
 #include "cmd_info.h"
 #include <gmath.h>
 #include <renderer/buffer.h>
-#include <renderer/common.h>
 
 typedef struct re_pipeline_t re_pipeline_t;
 

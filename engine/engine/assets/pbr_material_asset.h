@@ -4,7 +4,6 @@
 #include "asset_types.h"
 #include <gmath.h>
 #include <renderer/buffer.h>
-#include <renderer/common.h>
 #include <vulkan/vulkan.h>
 
 typedef struct re_image_t re_image_t;

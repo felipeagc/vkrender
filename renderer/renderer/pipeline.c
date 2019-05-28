@@ -237,6 +237,8 @@ void re_pipeline_layout_init(
   VkDescriptorUpdateTemplateEntry entries[RE_MAX_DESCRIPTOR_SETS]
                                          [RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
 
+  re_descriptor_set_layout_t alloc_layouts[RE_MAX_DESCRIPTOR_SETS] = {0};
+
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
 
@@ -259,15 +261,37 @@ void re_pipeline_layout_init(
 
         entries[set->set][binding->binding].dstBinding = binding->binding;
         entries[set->set][binding->binding].dstArrayElement = 0;
-        entries[set->set][binding->binding].descriptorCount = 1;
+        entries[set->set][binding->binding].descriptorCount =
+            bindings[set->set][binding->binding].descriptorCount;
         entries[set->set][binding->binding].descriptorType =
             (VkDescriptorType)binding->descriptor_type;
         entries[set->set][binding->binding].offset =
             sizeof(re_descriptor_update_info_t) * binding->binding;
         entries[set->set][binding->binding].stride =
             sizeof(re_descriptor_update_info_t);
+
+        alloc_layouts[set->set].array_size[binding->binding] =
+            bindings[set->set][binding->binding].descriptorCount;
+        alloc_layouts[set->set].stage_flags[binding->binding] |=
+            mod->shader_stage;
+
+        if (binding->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+          alloc_layouts[set->set].uniform_buffer_mask |= 1u << binding->binding;
+        }
+
+        if (binding->descriptor_type ==
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+          alloc_layouts[set->set].combined_image_sampler_mask |=
+              1u << binding->binding;
+        }
       }
     }
+  }
+
+  // Request the allocator
+  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
+    layout->descriptor_set_allocators[i] =
+        rx_ctx_request_descriptor_set_allocator(alloc_layouts[i]);
   }
 
   for (uint32_t i = 0; i < layout->set_layout_count; i++) {
@@ -319,9 +343,6 @@ void re_pipeline_layout_init(
             .pDescriptorUpdateEntries = entries[i],
             .templateType = VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET,
             .descriptorSetLayout = layout->set_layouts[i],
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .pipelineLayout = layout->layout,
-            .set = i,
         },
         NULL,
         &layout->update_templates[i]));
@@ -333,6 +354,8 @@ void re_pipeline_layout_init(
 }
 
 void re_pipeline_layout_destroy(re_pipeline_layout_t *layout) {
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
   for (uint32_t i = 0; i < layout->set_layout_count; i++) {
     if (layout->set_layouts[i] != VK_NULL_HANDLE) {
       vkDestroyDescriptorSetLayout(g_ctx.device, layout->set_layouts[i], NULL);

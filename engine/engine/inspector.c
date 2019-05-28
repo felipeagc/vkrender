@@ -7,8 +7,8 @@
 #include "comps/gltf_comp.h"
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
-#include "comps/transform_comp.h"
 #include "comps/renderable_comp.h"
+#include "comps/transform_comp.h"
 #include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
@@ -820,13 +820,27 @@ static void inspect_environment(eg_environment_t *environment) {
           items,
           ARRAY_SIZE(items),
           ARRAY_SIZE(items))) {
-    eg_environment_set_skybox(environment, (eg_skybox_type_t)current_item);
+    environment->skybox_type = (eg_skybox_type_t)current_item;
   }
 }
 
 static void inspect_statistics(re_window_t *window) {
   igText("Delta time: %.4fms", window->delta_time);
   igText("FPS: %.2f", 1.0f / window->delta_time);
+
+  igText(
+      "Descriptor set allocator count: %u",
+      g_ctx.descriptor_set_allocator_count);
+  for (uint32_t i = 0; i < g_ctx.descriptor_set_allocator_count; i++) {
+    uint32_t node_count = 0;
+    re_descriptor_set_allocator_node_t *node =
+        &g_ctx.descriptor_set_allocators[i].base_node;
+    while (node != NULL) {
+      node_count++;
+      node = node->next;
+    }
+    igText("Allocator #%d: %u nodes", i, node_count);
+  }
 }
 
 static void inspect_environment_asset(eg_asset_t *asset) {}
@@ -903,7 +917,8 @@ static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
 }
 
 static void inspect_renderable_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_renderable_comp_t *renderable = EG_COMP(world, eg_renderable_comp_t, entity);
+  eg_renderable_comp_t *renderable =
+      EG_COMP(world, eg_renderable_comp_t, entity);
 
   igText("Pipeline asset: %s", renderable->pipeline->asset.name);
 }
@@ -980,7 +995,8 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
 
       if (EG_HAS_COMP(world, eg_renderable_comp_t, entity) &&
           igCollapsingHeader(
-              EG_COMP_NAME(eg_renderable_comp_t), ImGuiTreeNodeFlags_DefaultOpen)) {
+              EG_COMP_NAME(eg_renderable_comp_t),
+              ImGuiTreeNodeFlags_DefaultOpen)) {
         inspect_renderable_comp(world, entity);
       }
 

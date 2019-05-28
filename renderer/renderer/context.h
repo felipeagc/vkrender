@@ -35,14 +35,26 @@ typedef struct re_context_t {
 
   VkDescriptorPool descriptor_pool;
   VkDescriptorSetLayout canvas_descriptor_set_layout;
+
+  // TODO: we'll have to GC these (maybe store them in a hash table)
+  uint32_t descriptor_set_allocator_count;
+  re_descriptor_set_allocator_t *descriptor_set_allocators;
 } re_context_t;
 
 extern re_context_t g_ctx;
 
-void re_context_init();
+void re_ctx_init();
 
-VkSampleCountFlagBits re_context_get_max_sample_count();
+void re_ctx_destroy();
 
-bool re_context_get_supported_depth_format(VkFormat *depth_format);
+void re_ctx_begin_frame();
 
-void re_context_destroy();
+re_descriptor_set_allocator_t *
+rx_ctx_request_descriptor_set_allocator(re_descriptor_set_layout_t layout);
+
+// TODO: new function
+// void re_ctx_gc();
+
+VkSampleCountFlagBits re_ctx_get_max_sample_count();
+
+bool re_ctx_get_supported_depth_format(VkFormat *depth_format);

@@ -486,7 +486,7 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
       ctx->device, &create_info, NULL, &ctx->transient_command_pool));
 }
 
-void re_context_init() {
+void re_ctx_init() {
   glfwInit();
   glfwSetErrorCallback(glfw_error_callback);
 
@@ -507,6 +507,9 @@ void re_context_init() {
   g_ctx.transient_command_pool = VK_NULL_HANDLE;
 
   g_ctx.descriptor_pool = VK_NULL_HANDLE;
+
+  g_ctx.descriptor_set_allocator_count = 0;
+  g_ctx.descriptor_set_allocators = NULL;
 
   mtx_init(&g_ctx.queue_mutex, mtx_plain);
 
@@ -577,7 +580,77 @@ void re_context_init() {
   }
 }
 
-VkSampleCountFlagBits re_context_get_max_sample_count() {
+void re_ctx_destroy() {
+  RE_LOG_DEBUG("Vulkan context shutting down...");
+
+  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+  for (uint32_t i = 0; i < g_ctx.descriptor_set_allocator_count; i++) {
+    re_descriptor_set_allocator_destroy(&g_ctx.descriptor_set_allocators[i]);
+  }
+
+  if (g_ctx.descriptor_set_allocators != NULL) {
+    free(g_ctx.descriptor_set_allocators);
+  }
+
+  vkDestroyDescriptorPool(g_ctx.device, g_ctx.descriptor_pool, NULL);
+
+  vkDestroyDescriptorSetLayout(
+      g_ctx.device, g_ctx.canvas_descriptor_set_layout, NULL);
+
+  vkDestroyCommandPool(g_ctx.device, g_ctx.transient_command_pool, NULL);
+
+  vkDestroyCommandPool(g_ctx.device, g_ctx.graphics_command_pool, NULL);
+
+  vmaDestroyAllocator(g_ctx.gpu_allocator);
+
+  vkDestroyDevice(g_ctx.device, NULL);
+
+#ifdef RE_ENABLE_VALIDATION
+  DestroyDebugReportCallbackEXT(g_ctx.instance, g_ctx.debug_callback, NULL);
+#endif
+
+  vkDestroyInstance(g_ctx.instance, NULL);
+
+  mtx_destroy(&g_ctx.queue_mutex);
+
+  glfwTerminate();
+}
+
+void re_ctx_begin_frame() {
+  for (uint32_t i = 0; i < g_ctx.descriptor_set_allocator_count; i++) {
+    re_descriptor_set_allocator_begin_frame(
+        &g_ctx.descriptor_set_allocators[i]);
+  }
+}
+
+re_descriptor_set_allocator_t *
+rx_ctx_request_descriptor_set_allocator(re_descriptor_set_layout_t layout) {
+  for (uint32_t i = 0; i < g_ctx.descriptor_set_allocator_count; i++) {
+    if (memcmp(
+            &g_ctx.descriptor_set_allocators[i].layout,
+            &layout,
+            sizeof(layout)) == 0) {
+      return &g_ctx.descriptor_set_allocators[i];
+    }
+  }
+
+  g_ctx.descriptor_set_allocator_count++;
+  g_ctx.descriptor_set_allocators = realloc(
+      g_ctx.descriptor_set_allocators,
+      sizeof(re_descriptor_set_allocator_t) *
+          g_ctx.descriptor_set_allocator_count);
+
+  re_descriptor_set_allocator_init(
+      &g_ctx
+           .descriptor_set_allocators[g_ctx.descriptor_set_allocator_count - 1],
+      layout);
+
+  return &g_ctx.descriptor_set_allocators
+              [g_ctx.descriptor_set_allocator_count - 1];
+}
+
+VkSampleCountFlagBits re_ctx_get_max_sample_count() {
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(g_ctx.physical_device, &properties);
 
@@ -619,7 +692,7 @@ VkSampleCountFlagBits re_context_get_max_sample_count() {
   return VK_SAMPLE_COUNT_1_BIT;
 }
 
-bool re_context_get_supported_depth_format(VkFormat *depth_format) {
+bool re_ctx_get_supported_depth_format(VkFormat *depth_format) {
   VkFormat depth_formats[] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
                               VK_FORMAT_D32_SFLOAT,
                               VK_FORMAT_D24_UNORM_S8_UINT,
@@ -638,33 +711,4 @@ bool re_context_get_supported_depth_format(VkFormat *depth_format) {
     }
   }
   return false;
-}
-
-void re_context_destroy() {
-  RE_LOG_DEBUG("Vulkan context shutting down...");
-
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  vkDestroyDescriptorPool(g_ctx.device, g_ctx.descriptor_pool, NULL);
-
-  vkDestroyDescriptorSetLayout(
-      g_ctx.device, g_ctx.canvas_descriptor_set_layout, NULL);
-
-  vkDestroyCommandPool(g_ctx.device, g_ctx.transient_command_pool, NULL);
-
-  vkDestroyCommandPool(g_ctx.device, g_ctx.graphics_command_pool, NULL);
-
-  vmaDestroyAllocator(g_ctx.gpu_allocator);
-
-  vkDestroyDevice(g_ctx.device, NULL);
-
-#ifdef RE_ENABLE_VALIDATION
-  DestroyDebugReportCallbackEXT(g_ctx.instance, g_ctx.debug_callback, NULL);
-#endif
-
-  vkDestroyInstance(g_ctx.instance, NULL);
-
-  mtx_destroy(&g_ctx.queue_mutex);
-
-  glfwTerminate();
 }

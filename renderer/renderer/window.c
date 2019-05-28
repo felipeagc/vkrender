@@ -347,7 +347,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
 // Populates the depthStencil member struct
 static inline void create_depth_stencil_image(re_window_t *window) {
-  bool res = re_context_get_supported_depth_format(&window->depth_format);
+  bool res = re_ctx_get_supported_depth_format(&window->depth_format);
   assert(res);
 
   VkImageCreateInfo image_create_info = {
@@ -953,8 +953,6 @@ bool re_window_init(re_window_t *window, re_window_options_t *options) {
     return false;
   }
 
-  window->max_samples = re_context_get_max_sample_count();
-
   create_sync_objects(window);
 
   create_swapchain(window, options->width, options->height);
@@ -1018,8 +1016,7 @@ bool re_window_next_event(re_window_t *window, re_event_t *event) {
     update_size(window);
     break;
   }
-  default:
-    break;
+  default: break;
   }
 
   return event->type != RE_EVENT_NONE;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "common.h"
 #include "render_target.h"
 #define GLFW_INCLUDE_VULKAN
 #include "cmd_buffer.h"
@@ -31,8 +30,6 @@ typedef struct re_window_t {
   double time_before;
 
   VkSurfaceKHR surface;
-
-  VkSampleCountFlagBits max_samples;
 
   VkFormat depth_format;
 

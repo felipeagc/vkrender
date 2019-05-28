@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cmd_info.h"
-#include <renderer/common.h>
 #include <renderer/event.h>
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>

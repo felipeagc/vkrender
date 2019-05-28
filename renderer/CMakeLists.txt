@@ -33,6 +33,9 @@ add_library(
 	renderer/shader.c
 	renderer/shader.h
 
+	renderer/descriptor_set.c
+	renderer/descriptor_set.h
+
 	renderer/util.c
 	renderer/util.h
 	)

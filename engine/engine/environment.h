@@ -4,7 +4,6 @@
 #include <fstd_util.h>
 #include <gmath.h>
 #include <renderer/buffer.h>
-#include <renderer/common.h>
 
 #define EG_MAX_POINT_LIGHTS 20
 
@@ -35,10 +34,10 @@ typedef struct eg_environment_t {
   eg_environment_asset_t *asset;
 
   eg_environment_uniform_t uniform;
+  eg_skybox_type_t skybox_type;
 
   re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
   void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
 } eg_environment_t;
 
 void eg_environment_init(
