@@ -79,15 +79,15 @@ void eg_pbr_material_asset_init(
         g_ctx.device,
         material->descriptor_sets[i],
         update_template,
-        (re_descriptor_update_info_t[]){
-            {.image_info = albedo_texture->descriptor},
-            {.image_info = normal_texture->descriptor},
-            {.image_info = metallic_roughness_texture->descriptor},
-            {.image_info = occlusion_texture->descriptor},
-            {.image_info = emissive_texture->descriptor},
-            {.buffer_info = {.buffer = material->uniform_buffers[i].buffer,
-                             .offset = 0,
-                             .range = sizeof(material->uniform)}},
+        (re_descriptor_info_t[]){
+            {.image = albedo_texture->descriptor},
+            {.image = normal_texture->descriptor},
+            {.image = metallic_roughness_texture->descriptor},
+            {.image = occlusion_texture->descriptor},
+            {.image = emissive_texture->descriptor},
+            {.buffer = {.buffer = material->uniform_buffers[i].buffer,
+                        .offset = 0,
+                        .range = sizeof(material->uniform)}},
         });
   }
 }

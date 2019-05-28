@@ -183,8 +183,8 @@ void eg_inspector_init(
         g_ctx.device,
         inspector->light_billboard_descriptor_set,
         inspector->billboard_pipeline.layout.update_templates[1],
-        (re_descriptor_update_info_t[]){
-            {.image_info = inspector->light_billboard_image.descriptor},
+        (re_descriptor_info_t[]){
+            {.image = inspector->light_billboard_image.descriptor},
         });
   }
 

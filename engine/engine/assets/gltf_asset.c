@@ -93,15 +93,15 @@ static void material_init(
         g_ctx.device,
         material->descriptor_sets[i],
         update_template,
-        (re_descriptor_update_info_t[]){
-            {.image_info = albedo_texture->descriptor},
-            {.image_info = normal_texture->descriptor},
-            {.image_info = metallic_roughness_texture->descriptor},
-            {.image_info = occlusion_texture->descriptor},
-            {.image_info = emissive_texture->descriptor},
-            {.buffer_info = {.buffer = material->uniform_buffers[i].buffer,
-                             .offset = 0,
-                             .range = sizeof(material->uniform)}},
+        (re_descriptor_info_t[]){
+            {.image = albedo_texture->descriptor},
+            {.image = normal_texture->descriptor},
+            {.image = metallic_roughness_texture->descriptor},
+            {.image = occlusion_texture->descriptor},
+            {.image = emissive_texture->descriptor},
+            {.buffer = {.buffer = material->uniform_buffers[i].buffer,
+                        .offset = 0,
+                        .range = sizeof(material->uniform)}},
         });
   }
 }
@@ -184,10 +184,10 @@ static void mesh_init(eg_gltf_asset_mesh_t *mesh, mat4_t matrix) {
         g_ctx.device,
         mesh->descriptor_sets[i],
         update_template,
-        (re_descriptor_update_info_t[]){
-            {.buffer_info = {.buffer = mesh->uniform_buffers[i].buffer,
-                             .offset = 0,
-                             .range = sizeof(mesh->ubo)}},
+        (re_descriptor_info_t[]){
+            {.buffer = {.buffer = mesh->uniform_buffers[i].buffer,
+                        .offset = 0,
+                        .range = sizeof(mesh->ubo)}},
         });
   }
 }

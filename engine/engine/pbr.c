@@ -45,10 +45,10 @@ void eg_pbr_model_init(eg_pbr_model_t *model, mat4_t transform) {
         g_ctx.device,
         model->descriptor_sets[i],
         update_template,
-        (re_descriptor_update_info_t[]){
-            {.buffer_info = {.buffer = model->buffers[i].buffer,
-                             .offset = 0,
-                             .range = sizeof(model->uniform)}},
+        (re_descriptor_info_t[]){
+            {.buffer = {.buffer = model->buffers[i].buffer,
+                        .offset = 0,
+                        .range = sizeof(model->uniform)}},
         });
   }
 }

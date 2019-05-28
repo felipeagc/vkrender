@@ -90,8 +90,7 @@ static void draw_node_no_mat(
   }
 }
 
-void eg_gltf_comp_init(
-    eg_gltf_comp_t *model, eg_gltf_asset_t *asset) {
+void eg_gltf_comp_init(eg_gltf_comp_t *model, eg_gltf_asset_t *asset) {
   model->asset = asset;
 
   model->ubo.matrix = mat4_identity();
@@ -131,10 +130,10 @@ void eg_gltf_comp_init(
         g_ctx.device,
         model->descriptor_sets[i],
         update_template,
-        (re_descriptor_update_info_t[]){
-            {.buffer_info = {.buffer = model->uniform_buffers[i].buffer,
-                             .offset = 0,
-                             .range = sizeof(model->ubo)}},
+        (re_descriptor_info_t[]){
+            {.buffer = {.buffer = model->uniform_buffers[i].buffer,
+                        .offset = 0,
+                        .range = sizeof(model->ubo)}},
         });
   }
 }

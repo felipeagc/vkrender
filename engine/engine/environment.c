@@ -65,14 +65,14 @@ void eg_environment_bind(
 
   VkDescriptorSet set = re_descriptor_set_allocator_alloc(
       allocator,
-      (re_descriptor_update_info_t[]){
-          {.buffer_info = {.buffer = environment->uniform_buffers[i].buffer,
-                           .offset = 0,
-                           .range = sizeof(eg_environment_uniform_t)}},
-          {.image_info = environment->asset->skybox_cubemap.descriptor},
-          {.image_info = environment->asset->irradiance_cubemap.descriptor},
-          {.image_info = environment->asset->radiance_cubemap.descriptor},
-          {.image_info = environment->asset->brdf_lut.descriptor},
+      (re_descriptor_info_t[]){
+          {.buffer = {.buffer = environment->uniform_buffers[i].buffer,
+                      .offset = 0,
+                      .range = sizeof(eg_environment_uniform_t)}},
+          {.image = environment->asset->skybox_cubemap.descriptor},
+          {.image = environment->asset->irradiance_cubemap.descriptor},
+          {.image = environment->asset->radiance_cubemap.descriptor},
+          {.image = environment->asset->brdf_lut.descriptor},
       });
 
   vkCmdBindDescriptorSets(
@@ -114,14 +114,14 @@ void eg_environment_draw_skybox(
 
   VkDescriptorSet set = re_descriptor_set_allocator_alloc(
       allocator,
-      (re_descriptor_update_info_t[]){
-          {.buffer_info = {.buffer = environment->uniform_buffers[i].buffer,
-                           .offset = 0,
-                           .range = sizeof(eg_environment_uniform_t)}},
-          {.image_info = skybox_descriptor},
-          {.image_info = environment->asset->irradiance_cubemap.descriptor},
-          {.image_info = environment->asset->radiance_cubemap.descriptor},
-          {.image_info = environment->asset->brdf_lut.descriptor},
+      (re_descriptor_info_t[]){
+          {.buffer = {.buffer = environment->uniform_buffers[i].buffer,
+                      .offset = 0,
+                      .range = sizeof(eg_environment_uniform_t)}},
+          {.image = skybox_descriptor},
+          {.image = environment->asset->irradiance_cubemap.descriptor},
+          {.image = environment->asset->radiance_cubemap.descriptor},
+          {.image = environment->asset->brdf_lut.descriptor},
       });
 
   vkCmdBindDescriptorSets(

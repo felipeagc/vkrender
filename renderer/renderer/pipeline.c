@@ -266,9 +266,9 @@ void re_pipeline_layout_init(
         entries[set->set][binding->binding].descriptorType =
             (VkDescriptorType)binding->descriptor_type;
         entries[set->set][binding->binding].offset =
-            sizeof(re_descriptor_update_info_t) * binding->binding;
+            sizeof(re_descriptor_info_t) * binding->binding;
         entries[set->set][binding->binding].stride =
-            sizeof(re_descriptor_update_info_t);
+            sizeof(re_descriptor_info_t);
 
         alloc_layouts[set->set].array_size[binding->binding] =
             bindings[set->set][binding->binding].descriptorCount;

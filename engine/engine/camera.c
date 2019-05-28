@@ -52,10 +52,10 @@ void eg_camera_init(eg_camera_t *camera) {
         g_ctx.device,
         camera->descriptor_sets[i],
         update_template,
-        (re_descriptor_update_info_t[]){
-            {.buffer_info = {.buffer = camera->uniform_buffers[i].buffer,
-                             .offset = 0,
-                             .range = sizeof(eg_camera_uniform_t)}}});
+        (re_descriptor_info_t[]){
+            {.buffer = {.buffer = camera->uniform_buffers[i].buffer,
+                        .offset = 0,
+                        .range = sizeof(eg_camera_uniform_t)}}});
   }
 }
 

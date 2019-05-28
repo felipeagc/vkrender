@@ -6,6 +6,7 @@
 
 // TODO: hashing
 // TODO: create descriptor pools for the allocator
+// TODO: make this usable from multiple threads
 
 static void node_init(
     re_descriptor_set_allocator_t *allocator,
@@ -50,8 +51,8 @@ void re_descriptor_set_allocator_init(
     entries[i].dstBinding = i;
     entries[i].dstArrayElement = 0;
     entries[i].descriptorCount = bindings[i].descriptorCount;
-    entries[i].offset = sizeof(re_descriptor_update_info_t) * i;
-    entries[i].stride = sizeof(re_descriptor_update_info_t);
+    entries[i].offset = sizeof(re_descriptor_info_t) * i;
+    entries[i].stride = sizeof(re_descriptor_info_t);
 
     if (layout.uniform_buffer_mask & (1u << i)) {
       assert(bindings[i].descriptorCount > 0);
@@ -118,7 +119,7 @@ void re_descriptor_set_allocator_begin_frame(
 
 VkDescriptorSet re_descriptor_set_allocator_alloc(
     re_descriptor_set_allocator_t *allocator,
-    re_descriptor_update_info_t *descriptors) {
+    re_descriptor_info_t *descriptors) {
   re_descriptor_set_allocator_node_t *node = &allocator->base_node;
 
   while (1) {
@@ -129,9 +130,8 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
 
       if (memcmp(
               descriptors,
-              &node->data[i].update_infos,
-              sizeof(re_descriptor_update_info_t) * allocator->binding_count) ==
-          0) {
+              &node->data[i].descriptor_infos,
+              sizeof(re_descriptor_info_t) * allocator->binding_count) == 0) {
         // If we DO *NOT* NEED to update the descriptor (hashes are equal)
 
         node->data[i].in_use = true;
@@ -147,9 +147,8 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
 
       if (memcmp(
               descriptors,
-              &node->data[i].update_infos,
-              sizeof(re_descriptor_update_info_t) * allocator->binding_count) !=
-          0) {
+              &node->data[i].descriptor_infos,
+              sizeof(re_descriptor_info_t) * allocator->binding_count) != 0) {
         // If we DO NEED to update the descriptor (in the case of a hash
         // mismatch)
 
