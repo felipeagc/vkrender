@@ -207,54 +207,6 @@ static inline void create_depth_target(re_canvas_t *canvas) {
       g_ctx.device, &image_view_create_info, NULL, &canvas->depth.image_view));
 }
 
-static inline void create_descriptor_sets(re_canvas_t *canvas) {
-  VK_CHECK(vkAllocateDescriptorSets(
-      g_ctx.device,
-      &(VkDescriptorSetAllocateInfo){
-          .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-          .descriptorPool = g_ctx.descriptor_pool,
-          .descriptorSetCount = 1,
-          .pSetLayouts = &g_ctx.canvas_descriptor_set_layout,
-      },
-      &canvas->descriptor_set));
-
-  VkDescriptorImageInfo descriptor = {
-      .sampler = canvas->sampler,
-      .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-  };
-
-  if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
-    descriptor.imageView = canvas->color.image_view;
-  } else {
-    descriptor.imageView = canvas->resolve.image_view;
-  }
-
-  VkWriteDescriptorSet descriptor_writes[] = {
-      (VkWriteDescriptorSet){
-          VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          NULL,
-          canvas->descriptor_set,                    // dstSet
-          0,                                         // dstBinding
-          0,                                         // dstArrayElement
-          1,                                         // descriptorCount
-          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, // descriptorType
-          &descriptor,                               // pImageInfo
-          NULL,                                      // pBufferInfo
-          NULL,                                      // pTexelBufferView
-      },
-  };
-
-  vkUpdateDescriptorSets(
-      g_ctx.device, ARRAY_SIZE(descriptor_writes), descriptor_writes, 0, NULL);
-}
-
-static inline void destroy_descriptor_sets(re_canvas_t *canvas) {
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  vkFreeDescriptorSets(
-      g_ctx.device, g_ctx.descriptor_pool, 1, &canvas->descriptor_set);
-}
-
 static inline void create_framebuffers(re_canvas_t *canvas) {
   VkImageView attachments[] = {
       canvas->color.image_view,
@@ -458,7 +410,6 @@ void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options) {
 
   create_sampler(&canvas->sampler);
   create_depth_target(canvas);
-  create_descriptor_sets(canvas);
   create_render_pass(canvas);
   create_framebuffers(canvas);
 }
@@ -517,15 +468,21 @@ void re_canvas_draw(
     re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline) {
   re_cmd_bind_pipeline(cmd_buffer, pipeline);
 
-  vkCmdBindDescriptorSets(
-      cmd_buffer->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout.layout,
-      0, // firstSet
-      1,
-      &canvas->descriptor_set,
-      0,
-      NULL);
+  VkDescriptorImageInfo descriptor = {
+      .sampler = canvas->sampler,
+      .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+  };
+
+  if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
+    descriptor.imageView = canvas->color.image_view;
+  } else {
+    descriptor.imageView = canvas->resolve.image_view;
+  }
+
+  re_cmd_bind_descriptor(
+      cmd_buffer, 0, (re_descriptor_info_t){.image = descriptor});
+
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 0);
 
   re_cmd_draw(cmd_buffer, 3, 1, 0, 0);
 }
@@ -539,7 +496,6 @@ void re_canvas_resize(
   destroy_framebuffers(canvas);
   destroy_render_pass(canvas);
   destroy_images(canvas);
-  destroy_descriptor_sets(canvas);
 
   create_image(
       &canvas->color.image,
@@ -560,7 +516,6 @@ void re_canvas_resize(
       VK_SAMPLE_COUNT_1_BIT);
 
   create_depth_target(canvas);
-  create_descriptor_sets(canvas);
   create_render_pass(canvas);
   create_framebuffers(canvas);
 }
@@ -569,6 +524,5 @@ void re_canvas_destroy(re_canvas_t *canvas) {
   destroy_framebuffers(canvas);
   destroy_render_pass(canvas);
   destroy_images(canvas);
-  destroy_descriptor_sets(canvas);
   destroy_sampler(canvas);
 }

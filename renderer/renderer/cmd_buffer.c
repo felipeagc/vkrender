@@ -90,6 +90,14 @@ void re_cmd_bind_descriptor_set(
       NULL);
 }
 
+void re_cmd_bind_descriptor(
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t binding,
+    re_descriptor_info_t descriptor) {
+  assert(binding < RE_MAX_DESCRIPTOR_SET_BINDINGS);
+  cmd_buffer->bindings[binding] = descriptor;
+}
+
 void re_cmd_bind_image(
     re_cmd_buffer_t *cmd_buffer, uint32_t binding, re_image_t *image) {
   assert(binding < RE_MAX_DESCRIPTOR_SET_BINDINGS);

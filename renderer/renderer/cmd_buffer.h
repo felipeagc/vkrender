@@ -58,11 +58,26 @@ void re_cmd_bind_pipeline(re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline);
 void re_cmd_bind_descriptor_set(
     re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline, uint32_t set_index);
 
+void re_cmd_bind_descriptor(
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t binding,
+    re_descriptor_info_t descriptor);
+
 void re_cmd_bind_image(
     re_cmd_buffer_t *cmd_buffer, uint32_t binding, re_image_t *image);
 
 void *
 re_cmd_bind_uniform(re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size);
+
+// TODO: push constants
+
+// TODO: render pass
+
+// TODO: copy buffer, etc
+
+// TODO: clear attachments
+
+// TODO: viewport, scissor
 
 void re_cmd_draw(
     re_cmd_buffer_t *cmd_buffer,
@@ -91,3 +106,4 @@ void re_cmd_bind_index_buffer(
     re_buffer_t *buffer,
     size_t offset,
     re_index_type_t index_type);
+

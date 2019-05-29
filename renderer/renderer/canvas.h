@@ -36,9 +36,6 @@ typedef struct re_canvas_t {
   } depth;
 
   VkFramebuffer framebuffer;
-
-  // For rendering this render target's image to another render target
-  VkDescriptorSet descriptor_set;
 } re_canvas_t;
 
 typedef struct re_canvas_options_t {

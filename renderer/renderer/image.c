@@ -42,6 +42,8 @@ static inline void create_image(
   }
 
   VmaAllocationCreateInfo image_alloc_create_info = {0};
+  // TODO: maybe this flag is not needed:
+  image_alloc_create_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
   image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   VK_CHECK(vmaCreateImage(
