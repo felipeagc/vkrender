@@ -202,44 +202,20 @@ void re_pipeline_layout_init(
       fragment_shader->code_size, fragment_shader->code, &modules[1]);
   assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
-  VkDescriptorSetLayoutCreateInfo set_layout_cis[RE_MAX_DESCRIPTOR_SETS] = {0};
-  VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SETS]
-                                       [RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
-
-  uint32_t set_layout_count = 0;
-  VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS] = {0};
+  uint32_t set_count = 0;
 
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
 
     for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
       SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
-      set_layout_count = MAX(set_layout_count, set->set + 1);
+      set_count = MAX(set_count, set->set + 1);
     }
   }
 
-  assert(set_layout_count <= RE_MAX_DESCRIPTOR_SETS);
-
-  for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
-    SpvReflectShaderModule *mod = &modules[i];
-
-    for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
-      SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
-
-      assert(set->set < ARRAY_SIZE(set_layout_cis));
-      set_layout_cis[set->set].sType =
-          VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-
-      set_layout_cis[set->set].bindingCount =
-          MAX(set_layout_cis[set->set].bindingCount, set->binding_count);
-      set_layout_cis[set->set].pBindings = bindings[set->set];
-    }
-  }
+  assert(set_count <= RE_MAX_DESCRIPTOR_SETS);
 
   uint32_t binding_counts[RE_MAX_DESCRIPTOR_SETS] = {0};
-
-  VkDescriptorUpdateTemplateEntry entries[RE_MAX_DESCRIPTOR_SETS]
-                                         [RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
 
   re_descriptor_set_layout_t alloc_layouts[RE_MAX_DESCRIPTOR_SETS] = {0};
 
@@ -259,26 +235,9 @@ void re_pipeline_layout_init(
           desc_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
         }
 
-        bindings[set->set][binding->binding].binding = binding->binding;
-        bindings[set->set][binding->binding].descriptorType = desc_type;
-        bindings[set->set][binding->binding].descriptorCount =
-            MAX(bindings[set->set][binding->binding].descriptorCount,
-                binding->count);
-
-        bindings[set->set][binding->binding].stageFlags |= mod->shader_stage;
-
-        entries[set->set][binding->binding].dstBinding = binding->binding;
-        entries[set->set][binding->binding].dstArrayElement = 0;
-        entries[set->set][binding->binding].descriptorCount =
-            bindings[set->set][binding->binding].descriptorCount;
-        entries[set->set][binding->binding].descriptorType = desc_type;
-        entries[set->set][binding->binding].offset =
-            sizeof(re_descriptor_info_t) * binding->binding;
-        entries[set->set][binding->binding].stride =
-            sizeof(re_descriptor_info_t);
-
         alloc_layouts[set->set].array_size[binding->binding] =
-            bindings[set->set][binding->binding].descriptorCount;
+            MAX(alloc_layouts[set->set].array_size[binding->binding],
+                binding->count);
         alloc_layouts[set->set].stage_flags[binding->binding] |=
             mod->shader_stage;
 
@@ -300,15 +259,13 @@ void re_pipeline_layout_init(
     }
   }
 
+  VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS] = {0};
+
   // Request the allocator
-  for (uint32_t i = 0; i < set_layout_count; i++) {
+  for (uint32_t i = 0; i < set_count; i++) {
     layout->descriptor_set_allocators[i] =
         rx_ctx_request_descriptor_set_allocator(alloc_layouts[i]);
-  }
-
-  for (uint32_t i = 0; i < set_layout_count; i++) {
-    VK_CHECK(vkCreateDescriptorSetLayout(
-        g_ctx.device, &set_layout_cis[i], NULL, &set_layouts[i]));
+    set_layouts[i] = layout->descriptor_set_allocators[i]->set_layout;
   }
 
   memset(layout->push_constants, 0, sizeof(layout->push_constants));
@@ -336,17 +293,13 @@ void re_pipeline_layout_init(
           .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
           .pNext = NULL,
           .flags = 0,
-          .setLayoutCount = set_layout_count,
+          .setLayoutCount = set_count,
           .pSetLayouts = set_layouts,
           .pushConstantRangeCount = layout->push_constant_count,
           .pPushConstantRanges = layout->push_constants,
       },
       NULL,
       &layout->layout));
-
-  for (uint32_t i = 0; i < set_layout_count; i++) {
-    vkDestroyDescriptorSetLayout(g_ctx.device, set_layouts[i], NULL);
-  }
 
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     spvReflectDestroyShaderModule(&modules[i]);
