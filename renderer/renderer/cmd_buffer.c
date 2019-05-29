@@ -84,6 +84,11 @@ void re_cmd_bind_descriptor_set(
     dynamic_offset_count = 1;
   }
 
+  assert(
+      cmd_buffer->dynamic_offset %
+          g_ctx.physical_limits.minUniformBufferOffsetAlignment ==
+      0);
+
   vkCmdBindDescriptorSets(
       cmd_buffer->cmd_buffer,
       pipeline->bind_point,

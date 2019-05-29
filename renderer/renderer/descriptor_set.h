@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
-static const uint32_t RE_DESCRIPTOR_RING_SIZE = 8;
+#define RE_DESCRIPTOR_RING_SIZE 8
 
 typedef VkDescriptorSet re_descriptor_set_t;
 

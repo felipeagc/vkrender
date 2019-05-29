@@ -592,7 +592,7 @@ void re_ctx_init() {
       &g_ctx.ubo_pool,
       &(re_buffer_options_t){
           .type = RE_BUFFER_TYPE_UNIFORM,
-          .size = 1 << 14, // 16k blocks
+          .size = 1 << 16, // 65k blocks
       });
 
   g_ctx.descriptor_set_allocators = calloc(

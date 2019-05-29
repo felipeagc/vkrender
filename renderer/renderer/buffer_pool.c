@@ -28,7 +28,7 @@ void re_buffer_pool_init(
   buffer_pool->buffer_options = *options;
   buffer_pool->current_frame = 0;
   buffer_pool->part_size =
-      g_ctx.physical_limits.minUniformBufferOffsetAlignment;
+      (uint32_t)g_ctx.physical_limits.minUniformBufferOffsetAlignment;
   buffer_pool->buffer_parts = options->size / buffer_pool->part_size;
   assert(buffer_pool->buffer_parts > 1);
 
@@ -56,7 +56,7 @@ void *re_buffer_pool_alloc(
     re_descriptor_info_t *out_descriptor,
     uint32_t *out_offset) {
   uint32_t required_parts =
-      (size + buffer_pool->part_size - 1) / buffer_pool->part_size;
+      ((uint32_t)size + buffer_pool->part_size - 1) / buffer_pool->part_size;
 
   re_buffer_pool_node_t *node =
       &buffer_pool->base_nodes[buffer_pool->current_frame];
@@ -77,7 +77,8 @@ void *re_buffer_pool_alloc(
         *out_descriptor = (re_descriptor_info_t){
             .buffer = {.buffer = node->buffer.buffer,
                        .offset = 0,
-                       .range = required_parts * buffer_pool->part_size}};
+                       .range = VK_WHOLE_SIZE},
+        };
         *out_offset = i * buffer_pool->part_size;
         return ((uint8_t *)node->mapping) + i * buffer_pool->part_size;
       }
