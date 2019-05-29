@@ -79,6 +79,11 @@ void re_cmd_bind_descriptor_set(
       re_descriptor_set_allocator_alloc(allocator, cmd_buffer->bindings);
   assert(set != VK_NULL_HANDLE);
 
+  uint32_t dynamic_offset_count = 0;
+  if (allocator->layout.uniform_buffer_dynamic_mask != 0) {
+    dynamic_offset_count = 1;
+  }
+
   vkCmdBindDescriptorSets(
       cmd_buffer->cmd_buffer,
       pipeline->bind_point,
@@ -86,8 +91,8 @@ void re_cmd_bind_descriptor_set(
       set_index, // firstSet
       1,
       &set,
-      0,
-      NULL);
+      dynamic_offset_count,
+      &cmd_buffer->dynamic_offset);
 }
 
 void re_cmd_bind_descriptor(
@@ -108,7 +113,10 @@ void *re_cmd_bind_uniform(
     re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size) {
   assert(binding < RE_MAX_DESCRIPTOR_SET_BINDINGS);
   return re_buffer_pool_alloc(
-      &g_ctx.ubo_pool, size, &cmd_buffer->bindings[binding]);
+      &g_ctx.ubo_pool,
+      size,
+      &cmd_buffer->bindings[binding],
+      &cmd_buffer->dynamic_offset);
 }
 
 void re_cmd_draw(

@@ -11,6 +11,7 @@ typedef VkCommandPool re_cmd_pool_t;
 typedef struct re_cmd_buffer_t {
   VkCommandBuffer cmd_buffer;
   re_descriptor_info_t bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS];
+  uint32_t dynamic_offset;
 } re_cmd_buffer_t;
 
 typedef enum re_cmd_buffer_usage_t {

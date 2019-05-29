@@ -29,6 +29,7 @@ void re_buffer_pool_begin_frame(re_buffer_pool_t *buffer_pool);
 void *re_buffer_pool_alloc(
     re_buffer_pool_t *buffer_pool,
     size_t size,
-    re_descriptor_info_t *out_descriptor);
+    re_descriptor_info_t *out_descriptor,
+    uint32_t *out_offset);
 
 void re_buffer_pool_destroy(re_buffer_pool_t *buffer_pool);

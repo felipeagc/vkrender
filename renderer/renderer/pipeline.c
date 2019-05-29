@@ -253,10 +253,14 @@ void re_pipeline_layout_init(
 
       for (uint32_t b = 0; b < set->binding_count; b++) {
         SpvReflectDescriptorBinding *binding = set->bindings[b];
+        VkDescriptorType desc_type = (VkDescriptorType)binding->descriptor_type;
+
+        if (desc_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+          desc_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        }
 
         bindings[set->set][binding->binding].binding = binding->binding;
-        bindings[set->set][binding->binding].descriptorType =
-            (VkDescriptorType)binding->descriptor_type;
+        bindings[set->set][binding->binding].descriptorType = desc_type;
         bindings[set->set][binding->binding].descriptorCount =
             MAX(bindings[set->set][binding->binding].descriptorCount,
                 binding->count);
@@ -267,8 +271,7 @@ void re_pipeline_layout_init(
         entries[set->set][binding->binding].dstArrayElement = 0;
         entries[set->set][binding->binding].descriptorCount =
             bindings[set->set][binding->binding].descriptorCount;
-        entries[set->set][binding->binding].descriptorType =
-            (VkDescriptorType)binding->descriptor_type;
+        entries[set->set][binding->binding].descriptorType = desc_type;
         entries[set->set][binding->binding].offset =
             sizeof(re_descriptor_info_t) * binding->binding;
         entries[set->set][binding->binding].stride =
@@ -279,8 +282,13 @@ void re_pipeline_layout_init(
         alloc_layouts[set->set].stage_flags[binding->binding] |=
             mod->shader_stage;
 
-        if (binding->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+        if (desc_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
           alloc_layouts[set->set].uniform_buffer_mask |= 1u << binding->binding;
+        }
+
+        if (desc_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
+          alloc_layouts[set->set].uniform_buffer_dynamic_mask |=
+              1u << binding->binding;
         }
 
         if (binding->descriptor_type ==

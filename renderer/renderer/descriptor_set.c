@@ -64,6 +64,14 @@ void re_descriptor_set_allocator_init(
       continue;
     }
 
+    if (layout.uniform_buffer_dynamic_mask & (1u << i)) {
+      assert(bindings[i].descriptorCount > 0);
+      bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+      entries[i].descriptorType = bindings[i].descriptorType;
+      allocator->binding_count++;
+      continue;
+    }
+
     if (layout.combined_image_sampler_mask & (1u << i)) {
       assert(bindings[i].descriptorCount > 0);
       bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
