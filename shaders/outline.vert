@@ -14,11 +14,8 @@ layout (set = 0, binding = 0) uniform CameraUniform {
   Camera camera;
 };
 
-layout (set = 1, binding = 0) uniform LocalModelUniform {
+layout (set = 1, binding = 0) uniform MeshUniform {
   Model local_model;
-};
-
-layout (set = 2, binding = 0) uniform ModelUniform {
   Model model;
 };
 

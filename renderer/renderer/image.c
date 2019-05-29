@@ -140,11 +140,12 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
       image->layer_count,
       image->mip_level_count);
 
-  image->descriptor = (VkDescriptorImageInfo){
-      image->sampler,
-      image->image_view,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-  };
+  image->descriptor =
+      (re_descriptor_info_t){.image = {
+                                 image->sampler,
+                                 image->image_view,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                             }};
 }
 
 void re_image_upload(

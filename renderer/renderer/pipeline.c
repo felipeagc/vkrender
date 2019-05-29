@@ -175,7 +175,7 @@ static inline VkPipelineDynamicStateCreateInfo default_dynamic_state() {
 }
 
 re_pipeline_parameters_t re_default_pipeline_parameters() {
-  re_pipeline_parameters_t params;
+  re_pipeline_parameters_t params = {0};
   params.vertex_input_state = default_vertex_input_state();
   params.input_assembly_state = default_input_assembly_state();
   params.viewport_state = default_viewport_state();
@@ -190,7 +190,9 @@ void re_pipeline_layout_init(
     re_pipeline_layout_t *layout,
     const re_shader_t *vertex_shader,
     const re_shader_t *fragment_shader) {
-  SpvReflectShaderModule modules[2];
+  memset(layout, 0, sizeof(*layout));
+
+  SpvReflectShaderModule modules[2] = {0};
 
   SpvReflectResult result;
   result = spvReflectCreateShaderModule(
@@ -204,17 +206,19 @@ void re_pipeline_layout_init(
   VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SETS]
                                        [RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
 
-  layout->set_layout_count = 0;
+  uint32_t set_layout_count = 0;
+  VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS] = {0};
+
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
 
     for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
       SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
-      layout->set_layout_count = MAX(layout->set_layout_count, set->set + 1);
+      set_layout_count = MAX(set_layout_count, set->set + 1);
     }
   }
 
-  assert(layout->set_layout_count <= RE_MAX_DESCRIPTOR_SETS);
+  assert(set_layout_count <= RE_MAX_DESCRIPTOR_SETS);
 
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
     SpvReflectShaderModule *mod = &modules[i];
@@ -289,14 +293,14 @@ void re_pipeline_layout_init(
   }
 
   // Request the allocator
-  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
+  for (uint32_t i = 0; i < set_layout_count; i++) {
     layout->descriptor_set_allocators[i] =
         rx_ctx_request_descriptor_set_allocator(alloc_layouts[i]);
   }
 
-  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
+  for (uint32_t i = 0; i < set_layout_count; i++) {
     VK_CHECK(vkCreateDescriptorSetLayout(
-        g_ctx.device, &set_layout_cis[i], NULL, &layout->set_layouts[i]));
+        g_ctx.device, &set_layout_cis[i], NULL, &set_layouts[i]));
   }
 
   memset(layout->push_constants, 0, sizeof(layout->push_constants));
@@ -324,28 +328,16 @@ void re_pipeline_layout_init(
           .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
           .pNext = NULL,
           .flags = 0,
-          .setLayoutCount = layout->set_layout_count,
-          .pSetLayouts = layout->set_layouts,
+          .setLayoutCount = set_layout_count,
+          .pSetLayouts = set_layouts,
           .pushConstantRangeCount = layout->push_constant_count,
           .pPushConstantRanges = layout->push_constants,
       },
       NULL,
       &layout->layout));
 
-  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
-    VK_CHECK(vkCreateDescriptorUpdateTemplate(
-        g_ctx.device,
-        &(VkDescriptorUpdateTemplateCreateInfo){
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .descriptorUpdateEntryCount = binding_counts[i],
-            .pDescriptorUpdateEntries = entries[i],
-            .templateType = VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET,
-            .descriptorSetLayout = layout->set_layouts[i],
-        },
-        NULL,
-        &layout->update_templates[i]));
+  for (uint32_t i = 0; i < set_layout_count; i++) {
+    vkDestroyDescriptorSetLayout(g_ctx.device, set_layouts[i], NULL);
   }
 
   for (uint32_t i = 0; i < ARRAY_SIZE(modules); i++) {
@@ -355,17 +347,6 @@ void re_pipeline_layout_init(
 
 void re_pipeline_layout_destroy(re_pipeline_layout_t *layout) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  for (uint32_t i = 0; i < layout->set_layout_count; i++) {
-    if (layout->set_layouts[i] != VK_NULL_HANDLE) {
-      vkDestroyDescriptorSetLayout(g_ctx.device, layout->set_layouts[i], NULL);
-    }
-
-    if (layout->update_templates[i] != VK_NULL_HANDLE) {
-      vkDestroyDescriptorUpdateTemplate(
-          g_ctx.device, layout->update_templates[i], NULL);
-    }
-  }
 
   if (layout->layout != VK_NULL_HANDLE) {
     vkDestroyPipelineLayout(g_ctx.device, layout->layout, NULL);
@@ -378,6 +359,8 @@ void re_pipeline_init_graphics(
     const re_shader_t *vertex_shader,
     const re_shader_t *fragment_shader,
     const re_pipeline_parameters_t parameters) {
+  pipeline->bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
   re_pipeline_layout_init(&pipeline->layout, vertex_shader, fragment_shader);
 
   VkPipelineShaderStageCreateInfo pipeline_stages[] = {

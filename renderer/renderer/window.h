@@ -17,7 +17,7 @@ typedef struct re_frame_resources_t {
 
   VkFramebuffer framebuffer;
 
-  VkCommandBuffer command_buffer;
+  re_cmd_buffer_t command_buffer;
 } re_frame_resources_t;
 
 typedef struct re_window_t {
@@ -97,6 +97,7 @@ bool re_window_is_mouse_right_pressed(const re_window_t *window);
 
 bool re_window_is_key_pressed(const re_window_t *window, int key);
 
-re_cmd_buffer_t re_window_get_current_command_buffer(const re_window_t *window);
+// TODO: rename command to cmd
+re_cmd_buffer_t *re_window_get_current_command_buffer(re_window_t *window);
 
 void re_window_destroy(re_window_t *window);

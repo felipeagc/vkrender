@@ -1,6 +1,5 @@
 #pragma once
 
-#include "cmd_info.h"
 #include <gmath.h>
 #include <renderer/buffer.h>
 
@@ -13,10 +12,6 @@ typedef struct eg_camera_uniform_t {
 } eg_camera_uniform_t;
 
 typedef struct eg_camera_t {
-  re_buffer_t uniform_buffers[RE_MAX_FRAMES_IN_FLIGHT];
-  void *mappings[RE_MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorSet descriptor_sets[RE_MAX_FRAMES_IN_FLIGHT];
-
   float near_clip;
   float far_clip;
 
@@ -31,13 +26,13 @@ void eg_camera_init(eg_camera_t *camera);
 
 void eg_camera_update(
     eg_camera_t *camera,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     float width,
     float height);
 
 void eg_camera_bind(
     eg_camera_t *camera,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline,
     uint32_t set_index);
 

@@ -34,93 +34,30 @@ static void material_init(
   material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(material->uniform_buffers); i++) {
-    re_buffer_init(
-        &material->uniform_buffers[i],
-        &(re_buffer_options_t){
-            .type = RE_BUFFER_TYPE_UNIFORM,
-            .size = sizeof(material->uniform),
-        });
-
-    re_buffer_map_memory(&material->uniform_buffers[i], &material->mappings[i]);
+  material->albedo_texture = albedo_texture;
+  if (material->albedo_texture == NULL) {
+    material->albedo_texture = &g_eng.white_texture;
   }
 
-  if (albedo_texture == NULL) {
-    albedo_texture = &g_eng.white_texture;
-  }
-
-  if (normal_texture == NULL) {
+  material->normal_texture = normal_texture;
+  if (material->normal_texture == NULL) {
     material->uniform.has_normal_texture = 0.0f;
-    normal_texture = &g_eng.white_texture;
+    material->normal_texture = &g_eng.white_texture;
   }
 
-  if (metallic_roughness_texture == NULL) {
-    metallic_roughness_texture = &g_eng.white_texture;
+  material->metallic_roughness_texture = metallic_roughness_texture;
+  if (material->metallic_roughness_texture == NULL) {
+    material->metallic_roughness_texture = &g_eng.white_texture;
   }
 
-  if (occlusion_texture == NULL) {
-    occlusion_texture = &g_eng.white_texture;
+  material->occlusion_texture = occlusion_texture;
+  if (material->occlusion_texture == NULL) {
+    material->occlusion_texture = &g_eng.white_texture;
   }
 
-  if (emissive_texture == NULL) {
-    emissive_texture = &g_eng.black_texture;
-  }
-
-  VkDescriptorSetLayout set_layout =
-      g_default_pipeline_layouts.pbr.set_layouts[4];
-  VkDescriptorUpdateTemplate update_template =
-      g_default_pipeline_layouts.pbr.update_templates[4];
-
-  {
-    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(material->descriptor_sets)];
-    for (size_t i = 0; i < ARRAY_SIZE(material->descriptor_sets); i++) {
-      set_layouts[i] = set_layout;
-    }
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device,
-        &(VkDescriptorSetAllocateInfo){
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = g_ctx.descriptor_pool,
-            .descriptorSetCount = ARRAY_SIZE(material->descriptor_sets),
-            .pSetLayouts = set_layouts,
-        },
-        material->descriptor_sets));
-  }
-
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    vkUpdateDescriptorSetWithTemplate(
-        g_ctx.device,
-        material->descriptor_sets[i],
-        update_template,
-        (re_descriptor_info_t[]){
-            {.image = albedo_texture->descriptor},
-            {.image = normal_texture->descriptor},
-            {.image = metallic_roughness_texture->descriptor},
-            {.image = occlusion_texture->descriptor},
-            {.image = emissive_texture->descriptor},
-            {.buffer = {.buffer = material->uniform_buffers[i].buffer,
-                        .offset = 0,
-                        .range = sizeof(material->uniform)}},
-        });
-  }
-}
-
-static void material_destroy(eg_gltf_asset_material_t *material) {
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  for (uint32_t j = 0; j < ARRAY_SIZE(material->descriptor_sets); j++) {
-    if (material->uniform_buffers[j].buffer != VK_NULL_HANDLE) {
-      re_buffer_unmap_memory(&material->uniform_buffers[j]);
-      re_buffer_destroy(&material->uniform_buffers[j]);
-    }
-    if (material->descriptor_sets[j] != VK_NULL_HANDLE) {
-      vkFreeDescriptorSets(
-          g_ctx.device,
-          g_ctx.descriptor_pool,
-          1,
-          &material->descriptor_sets[j]);
-    }
+  material->emissive_texture = emissive_texture;
+  if (material->emissive_texture == NULL) {
+    material->emissive_texture = &g_eng.black_texture;
   }
 }
 
@@ -148,61 +85,10 @@ static void mesh_init(eg_gltf_asset_mesh_t *mesh, mat4_t matrix) {
   mesh->primitives = NULL;
   mesh->primitive_count = 0;
 
-  mesh->ubo.matrix = mat4_identity();
-
-  VkDescriptorSetLayout set_layout =
-      g_default_pipeline_layouts.pbr.set_layouts[2];
-  VkDescriptorUpdateTemplate update_template =
-      g_default_pipeline_layouts.pbr.update_templates[2];
-
-  VkDescriptorSetLayout set_layouts[ARRAY_SIZE(mesh->descriptor_sets)];
-  for (size_t i = 0; i < ARRAY_SIZE(mesh->descriptor_sets); i++) {
-    set_layouts[i] = set_layout;
-  }
-
-  VK_CHECK(vkAllocateDescriptorSets(
-      g_ctx.device,
-      &(VkDescriptorSetAllocateInfo){
-          .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-          .descriptorPool = g_ctx.descriptor_pool,
-          .descriptorSetCount = ARRAY_SIZE(mesh->descriptor_sets),
-          .pSetLayouts = set_layouts,
-      },
-      mesh->descriptor_sets));
-
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_buffer_init(
-        &mesh->uniform_buffers[i],
-        &(re_buffer_options_t){
-            .type = RE_BUFFER_TYPE_UNIFORM,
-            .size = sizeof(mesh->ubo),
-        });
-
-    re_buffer_map_memory(&mesh->uniform_buffers[i], &mesh->mappings[i]);
-
-    vkUpdateDescriptorSetWithTemplate(
-        g_ctx.device,
-        mesh->descriptor_sets[i],
-        update_template,
-        (re_descriptor_info_t[]){
-            {.buffer = {.buffer = mesh->uniform_buffers[i].buffer,
-                        .offset = 0,
-                        .range = sizeof(mesh->ubo)}},
-        });
-  }
+  mesh->matrix = mat4_identity();
 }
 
 static void mesh_destroy(eg_gltf_asset_mesh_t *mesh) {
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_buffer_unmap_memory(&mesh->uniform_buffers[i]);
-    re_buffer_destroy(&mesh->uniform_buffers[i]);
-  }
-
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    vkFreeDescriptorSets(
-        g_ctx.device, g_ctx.descriptor_pool, 1, &mesh->descriptor_sets[i]);
-  }
-
   if (mesh->primitives != NULL) {
     free(mesh->primitives);
   }
@@ -243,11 +129,7 @@ static mat4_t node_get_matrix(eg_gltf_asset_node_t *node) {
 static void node_update(
     eg_gltf_asset_node_t *node, eg_gltf_asset_t *model, uint32_t frame_index) {
   if (node->mesh != NULL) {
-    node->mesh->ubo.matrix = node_get_matrix(node);
-    memcpy(
-        node->mesh->mappings[frame_index],
-        &node->mesh->ubo,
-        sizeof(node->mesh->ubo));
+    node->mesh->matrix = node_get_matrix(node);
   }
 
   for (uint32_t i = 0; i < node->children_count; i++) {
@@ -675,11 +557,6 @@ void eg_gltf_asset_init(
                [material->emissive_texture.texture->image - data->images];
     }
 
-    for (uint32_t j = 0; j < ARRAY_SIZE(model->materials[i].descriptor_sets);
-         j++) {
-      model->materials[i].descriptor_sets[j] = VK_NULL_HANDLE;
-    }
-
     material_init(
         &model->materials[i],
         albedo_image,
@@ -783,18 +660,6 @@ void eg_gltf_asset_init(
   }
 }
 
-void eg_gltf_asset_update(
-    eg_gltf_asset_t *model, const eg_cmd_info_t *cmd_info) {
-  for (uint32_t i = 0; i < model->material_count; i++) {
-    eg_gltf_asset_material_t *mat = &model->materials[i];
-
-    memcpy(
-        mat->mappings[cmd_info->frame_index],
-        &mat->uniform,
-        sizeof(mat->uniform));
-  }
-}
-
 void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {
   re_buffer_destroy(&model->vertex_buffer);
   re_buffer_destroy(&model->index_buffer);
@@ -814,8 +679,5 @@ void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {
   }
   free(model->images);
 
-  for (uint32_t i = 0; i < model->material_count; i++) {
-    material_destroy(&model->materials[i]);
-  }
   free(model->materials);
 }

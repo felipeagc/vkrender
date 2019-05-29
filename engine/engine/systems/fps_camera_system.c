@@ -39,7 +39,7 @@ void eg_fps_camera_system_init(
 void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     float width,
     float height) {
   // Camera control toggle
@@ -138,5 +138,5 @@ void eg_fps_camera_system_update(
   system->camera->uniform.view = mat4_mul(
       system->camera->uniform.view, quat_to_mat4(system->camera->rotation));
 
-  eg_camera_update(system->camera, cmd_info, width, height);
+  eg_camera_update(system->camera, cmd_buffer, width, height);
 }

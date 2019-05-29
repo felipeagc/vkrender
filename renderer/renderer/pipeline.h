@@ -9,6 +9,11 @@
 
 typedef struct re_window_t re_window_t;
 
+typedef enum re_index_type_t {
+  RE_INDEX_TYPE_UINT16 = VK_INDEX_TYPE_UINT16,
+  RE_INDEX_TYPE_UINT32 = VK_INDEX_TYPE_UINT32,
+} re_index_type_t;
+
 typedef struct re_pipeline_parameters_t {
   VkPipelineVertexInputStateCreateInfo vertex_input_state;
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
@@ -32,10 +37,6 @@ typedef struct re_pipeline_layout_t {
   re_descriptor_set_allocator_t
       *descriptor_set_allocators[RE_MAX_DESCRIPTOR_SETS];
 
-  VkDescriptorUpdateTemplate update_templates[RE_MAX_DESCRIPTOR_SETS];
-  VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS];
-  uint32_t set_layout_count;
-
   VkPushConstantRange push_constants[RE_MAX_PUSH_CONSTANT_RANGES];
   uint32_t push_constant_count;
 } re_pipeline_layout_t;
@@ -43,6 +44,7 @@ typedef struct re_pipeline_layout_t {
 typedef struct re_pipeline_t {
   VkPipeline pipeline;
   re_pipeline_layout_t layout;
+  VkPipelineBindPoint bind_point;
 } re_pipeline_t;
 
 void re_pipeline_layout_init(

@@ -328,20 +328,18 @@ static inline void create_swapchain_image_views(re_window_t *window) {
 }
 
 static inline void allocate_graphics_command_buffers(re_window_t *window) {
-  VkCommandBufferAllocateInfo allocate_info = {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .pNext = NULL,
-      .commandPool = g_ctx.graphics_command_pool,
-      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-      .commandBufferCount = RE_MAX_FRAMES_IN_FLIGHT,
-  };
+  re_cmd_buffer_t cmd_buffers[RE_MAX_FRAMES_IN_FLIGHT];
 
-  VkCommandBuffer command_buffers[RE_MAX_FRAMES_IN_FLIGHT];
-
-  vkAllocateCommandBuffers(g_ctx.device, &allocate_info, command_buffers);
+  re_allocate_cmd_buffers(
+      &(re_cmd_buffer_alloc_info_t){
+          .pool = g_ctx.graphics_command_pool,
+          .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
+          .count = RE_MAX_FRAMES_IN_FLIGHT,
+      },
+      cmd_buffers);
 
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
-    window->frame_resources[i].command_buffer = command_buffers[i];
+    window->frame_resources[i].command_buffer = cmd_buffers[i];
   }
 }
 
@@ -638,8 +636,7 @@ static inline void destroy_resizables(re_window_t *window) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
-    vkFreeCommandBuffers(
-        g_ctx.device,
+    re_free_cmd_buffers(
         g_ctx.graphics_command_pool,
         1,
         &window->frame_resources[i].command_buffer);
@@ -882,6 +879,7 @@ static void re_window_content_scale_callback(
  */
 
 bool re_window_init(re_window_t *window, re_window_options_t *options) {
+  memset(window, 0, sizeof(*window));
   window->clear_color = (vec4_t){0.0, 0.0, 0.0, 1.0};
   window->delta_time = 0.0f;
   window->time_before = 0.0f;
@@ -903,7 +901,6 @@ bool re_window_init(re_window_t *window, re_window_options_t *options) {
 
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     window->frame_resources[i].framebuffer = VK_NULL_HANDLE;
-    window->frame_resources[i].command_buffer = VK_NULL_HANDLE;
   }
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -1064,15 +1061,14 @@ void re_window_begin_frame(re_window_t *window) {
       &window->frame_resources[window->current_frame].framebuffer,
       &window->swapchain_image_views[window->current_image_index]);
 
-  VkCommandBufferBeginInfo begin_info = {0};
-  begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-  begin_info.pInheritanceInfo = NULL;
+  re_cmd_buffer_t *command_buffer =
+      &window->frame_resources[window->current_frame].command_buffer;
 
-  VkCommandBuffer command_buffer =
-      window->frame_resources[window->current_frame].command_buffer;
-
-  VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin_info));
+  re_begin_cmd_buffer(
+      command_buffer,
+      &(re_cmd_buffer_begin_info_t){
+          .usage = RE_CMD_BUFFER_SIMULTANEOUS_USE,
+      });
 
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrier_from_present_to_draw = {
@@ -1089,7 +1085,7 @@ void re_window_begin_frame(re_window_t *window) {
     };
 
     vkCmdPipelineBarrier(
-        command_buffer,
+        command_buffer->cmd_buffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         0,
@@ -1103,8 +1099,8 @@ void re_window_begin_frame(re_window_t *window) {
 }
 
 void re_window_end_frame(re_window_t *window) {
-  VkCommandBuffer command_buffer =
-      window->frame_resources[window->current_frame].command_buffer;
+  re_cmd_buffer_t *command_buffer =
+      &window->frame_resources[window->current_frame].command_buffer;
 
   VkImageSubresourceRange image_subresource_range = {
       VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
@@ -1129,7 +1125,7 @@ void re_window_end_frame(re_window_t *window) {
     };
 
     vkCmdPipelineBarrier(
-        command_buffer,
+        command_buffer->cmd_buffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         0,
@@ -1141,7 +1137,7 @@ void re_window_end_frame(re_window_t *window) {
         &barrierFromDrawToPresent);
   }
 
-  VK_CHECK(vkEndCommandBuffer(command_buffer));
+  re_end_cmd_buffer(command_buffer);
 
   // Present
   VkPipelineStageFlags wait_dst_stage_mask =
@@ -1155,7 +1151,7 @@ void re_window_end_frame(re_window_t *window) {
            .image_available_semaphore, // pWaitSemaphores
       &wait_dst_stage_mask,            // pWaitDstStageMask
       1,                               // commandBufferCount
-      &command_buffer,                 // pCommandBuffers
+      &command_buffer->cmd_buffer,     // pCommandBuffers
       1,                               // signalSemaphoreCount
       &window->frame_resources[window->current_frame]
            .rendering_finished_semaphore, // pSignalSemaphores
@@ -1195,8 +1191,8 @@ void re_window_end_frame(re_window_t *window) {
 }
 
 void re_window_begin_render_pass(re_window_t *window) {
-  VkCommandBuffer command_buffer =
-      window->frame_resources[window->current_frame].command_buffer;
+  re_cmd_buffer_t *command_buffer =
+      &window->frame_resources[window->current_frame].command_buffer;
 
   VkClearValue clear_values[] = {
       {.color = {window->clear_color.x,
@@ -1221,7 +1217,9 @@ void re_window_begin_render_pass(re_window_t *window) {
   };
 
   vkCmdBeginRenderPass(
-      command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+      command_buffer->cmd_buffer,
+      &render_pass_begin_info,
+      VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport = {
       0.0f,                                   // x
@@ -1232,19 +1230,19 @@ void re_window_begin_render_pass(re_window_t *window) {
       1.0f,                                   // maxDepth
   };
 
-  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+  vkCmdSetViewport(command_buffer->cmd_buffer, 0, 1, &viewport);
 
   VkRect2D scissor = {{0, 0}, window->swapchain_extent};
 
-  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+  vkCmdSetScissor(command_buffer->cmd_buffer, 0, 1, &scissor);
 }
 
 void re_window_end_render_pass(re_window_t *window) {
-  VkCommandBuffer command_buffer =
-      window->frame_resources[window->current_frame].command_buffer;
+  re_cmd_buffer_t *command_buffer =
+      &window->frame_resources[window->current_frame].command_buffer;
 
   // End
-  vkCmdEndRenderPass(command_buffer);
+  vkCmdEndRenderPass(command_buffer->cmd_buffer);
 }
 
 void re_window_set_input_mode(const re_window_t *window, int mode, int value) {
@@ -1283,7 +1281,6 @@ bool re_window_is_key_pressed(const re_window_t *window, int key) {
   return glfwGetKey(window->glfw_window, key) == GLFW_PRESS;
 }
 
-re_cmd_buffer_t
-re_window_get_current_command_buffer(const re_window_t *window) {
-  return window->frame_resources[window->current_frame].command_buffer;
+re_cmd_buffer_t *re_window_get_current_command_buffer(re_window_t *window) {
+  return &window->frame_resources[window->current_frame].command_buffer;
 }

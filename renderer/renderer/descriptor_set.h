@@ -8,6 +8,8 @@
 
 static const uint32_t RE_DESCRIPTOR_RING_SIZE = 8;
 
+typedef VkDescriptorSet re_descriptor_set_t;
+
 typedef union re_descriptor_info_t {
   VkDescriptorImageInfo image;
   VkDescriptorBufferInfo buffer;
@@ -35,7 +37,6 @@ typedef struct re_descriptor_set_layout_t {
 typedef struct re_descriptor_set_data_t {
   bool in_use;
   re_descriptor_info_t descriptor_infos[RE_MAX_DESCRIPTOR_SET_BINDINGS];
-  uint32_t frame;
 } re_descriptor_set_data_t;
 
 typedef struct re_descriptor_set_allocator_node_t {
@@ -52,9 +53,12 @@ typedef struct re_descriptor_set_allocator_t {
   VkDescriptorUpdateTemplate update_template;
   uint32_t binding_count;
 
-  re_descriptor_set_allocator_node_t base_node;
+  re_descriptor_set_allocator_node_t base_nodes[RE_MAX_FRAMES_IN_FLIGHT];
 
   uint32_t current_frame;
+
+  uint32_t writes[RE_MAX_FRAMES_IN_FLIGHT];
+  uint32_t matches[RE_MAX_FRAMES_IN_FLIGHT];
 } re_descriptor_set_allocator_t;
 
 void re_descriptor_set_allocator_init(

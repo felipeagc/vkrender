@@ -4,7 +4,6 @@ add_library(
 	engine/all.h
 
 	engine/util.h
-	engine/cmd_info.h
 
 	engine/engine.c
 	engine/engine.h
@@ -25,8 +24,6 @@ add_library(
 
 	engine/pipelines.c
 	engine/pipelines.h
-	engine/pbr.c
-	engine/pbr.h
 
 	engine/camera.c
 	engine/camera.h

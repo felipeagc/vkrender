@@ -4,7 +4,7 @@
 
 static inline re_cmd_buffer_t
 begin_single_time_command_buffer(re_cmd_pool_t pool) {
-  re_cmd_buffer_t cmd_buffer;
+  re_cmd_buffer_t cmd_buffer = {0};
 
   re_allocate_cmd_buffers(
       &(re_cmd_buffer_alloc_info_t){
@@ -15,7 +15,7 @@ begin_single_time_command_buffer(re_cmd_pool_t pool) {
       &cmd_buffer);
 
   re_begin_cmd_buffer(
-      cmd_buffer,
+      &cmd_buffer,
       &(re_cmd_buffer_begin_info_t){
           .usage = RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT,
       });
@@ -23,20 +23,20 @@ begin_single_time_command_buffer(re_cmd_pool_t pool) {
   return cmd_buffer;
 }
 
-static inline void
-end_single_time_command_buffer(re_cmd_pool_t pool, re_cmd_buffer_t cmd_buffer) {
+static inline void end_single_time_command_buffer(
+    re_cmd_pool_t pool, re_cmd_buffer_t *cmd_buffer) {
   re_end_cmd_buffer(cmd_buffer);
 
   VkSubmitInfo submit_info = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO,
       NULL,
-      0,           // waitSemaphoreCount
-      NULL,        // pWaitSemaphores
-      NULL,        // pWaitDstStageMask
-      1,           // commandBufferCount
-      &cmd_buffer, // pCommandBuffers
-      0,           // signalSemaphoreCount
-      NULL,        // pSignalSemaphores
+      0,                       // waitSemaphoreCount
+      NULL,                    // pWaitSemaphores
+      NULL,                    // pWaitDstStageMask
+      1,                       // commandBufferCount
+      &cmd_buffer->cmd_buffer, // pCommandBuffers
+      0,                       // signalSemaphoreCount
+      NULL,                    // pSignalSemaphores
   };
 
   mtx_lock(&g_ctx.queue_mutex);
@@ -46,7 +46,7 @@ end_single_time_command_buffer(re_cmd_pool_t pool, re_cmd_buffer_t cmd_buffer) {
   VK_CHECK(vkQueueWaitIdle(g_ctx.transfer_queue));
   mtx_unlock(&g_ctx.queue_mutex);
 
-  re_free_cmd_buffers(pool, 1, &cmd_buffer);
+  re_free_cmd_buffers(pool, 1, cmd_buffer);
 }
 
 static inline void create_buffer(
@@ -112,9 +112,7 @@ void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
     memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
-  default:
-    assert(0);
-    break;
+  default: assert(0); break;
   }
 
   create_buffer(
@@ -137,7 +135,7 @@ void re_buffer_unmap_memory(re_buffer_t *buffer) {
 
 void re_buffer_transfer_to_buffer(
     re_buffer_t *buffer, re_buffer_t *dest, re_cmd_pool_t pool, size_t size) {
-  re_cmd_buffer_t command_buffer = begin_single_time_command_buffer(pool);
+  re_cmd_buffer_t cmd_buffer = begin_single_time_command_buffer(pool);
 
   VkBufferCopy buffer_copy_info = {
       0,    // srcOffset
@@ -146,9 +144,13 @@ void re_buffer_transfer_to_buffer(
   };
 
   vkCmdCopyBuffer(
-      command_buffer, buffer->buffer, dest->buffer, 1, &buffer_copy_info);
+      cmd_buffer.cmd_buffer,
+      buffer->buffer,
+      dest->buffer,
+      1,
+      &buffer_copy_info);
 
-  end_single_time_command_buffer(pool, command_buffer);
+  end_single_time_command_buffer(pool, &cmd_buffer);
 }
 
 void re_buffer_transfer_to_image(
@@ -159,7 +161,7 @@ void re_buffer_transfer_to_image(
     uint32_t height,
     uint32_t layer,
     uint32_t level) {
-  re_cmd_buffer_t command_buffer = begin_single_time_command_buffer(pool);
+  re_cmd_buffer_t cmd_buffer = begin_single_time_command_buffer(pool);
 
   VkImageSubresourceRange subresource_range = {0};
   subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -169,7 +171,7 @@ void re_buffer_transfer_to_image(
   subresource_range.layerCount = 1;
 
   re_set_image_layout(
-      command_buffer,
+      &cmd_buffer,
       dest,
       VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -192,7 +194,7 @@ void re_buffer_transfer_to_image(
   };
 
   vkCmdCopyBufferToImage(
-      command_buffer,
+      cmd_buffer.cmd_buffer,
       buffer->buffer,
       dest,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -200,7 +202,7 @@ void re_buffer_transfer_to_image(
       &region);
 
   re_set_image_layout(
-      command_buffer,
+      &cmd_buffer,
       dest,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -208,7 +210,7 @@ void re_buffer_transfer_to_image(
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
-  end_single_time_command_buffer(pool, command_buffer);
+  end_single_time_command_buffer(pool, &cmd_buffer);
 }
 
 void re_image_transfer_to_buffer(
@@ -221,7 +223,7 @@ void re_image_transfer_to_buffer(
     uint32_t height,
     uint32_t layer,
     uint32_t level) {
-  VkCommandBuffer command_buffer = begin_single_time_command_buffer(pool);
+  re_cmd_buffer_t command_buffer = begin_single_time_command_buffer(pool);
 
   VkImageSubresourceRange subresource_range = {0};
   subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -231,7 +233,7 @@ void re_image_transfer_to_buffer(
   subresource_range.layerCount = 1;
 
   re_set_image_layout(
-      command_buffer,
+      &command_buffer,
       image,
       VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -254,7 +256,7 @@ void re_image_transfer_to_buffer(
   };
 
   vkCmdCopyImageToBuffer(
-      command_buffer,
+      command_buffer.cmd_buffer,
       image,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       buffer->buffer,
@@ -262,7 +264,7 @@ void re_image_transfer_to_buffer(
       &region);
 
   re_set_image_layout(
-      command_buffer,
+      &command_buffer,
       image,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -270,7 +272,7 @@ void re_image_transfer_to_buffer(
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
-  end_single_time_command_buffer(pool, command_buffer);
+  end_single_time_command_buffer(pool, &command_buffer);
 }
 
 void re_buffer_destroy(re_buffer_t *buffer) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cmd_buffer.h"
+#include "descriptor_set.h"
 #include <vulkan/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -10,7 +11,7 @@ typedef struct re_image_t {
   VkImageView image_view;
   VkSampler sampler;
 
-  VkDescriptorImageInfo descriptor;
+  re_descriptor_info_t descriptor;
 
   uint32_t width;
   uint32_t height;

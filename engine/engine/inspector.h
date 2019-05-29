@@ -25,7 +25,6 @@ typedef struct eg_inspector_t {
   eg_asset_manager_t *asset_manager;
 
   re_image_t light_billboard_image;
-  VkDescriptorSet light_billboard_descriptor_set;
 
   eg_picker_t picker;
 
@@ -65,10 +64,10 @@ void eg_inspector_process_event(
 void eg_inspector_update(eg_inspector_t *inspector);
 
 void eg_inspector_draw_gizmos(
-    eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info);
+    eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer);
 
 void eg_inspector_draw_selected_outline(
-    eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info);
+    eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer);
 
 void eg_inspector_draw_ui(eg_inspector_t *inspector);
 

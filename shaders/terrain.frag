@@ -14,17 +14,16 @@ layout (location = 4) in float vertex_height;
 layout (set = 1, binding = 0) uniform EnvironmentUniform {
   Environment environment;
 };
-layout (set = 1, binding = 1) uniform samplerCube env_map;
-layout (set = 1, binding = 2) uniform samplerCube irradiance_map;
-layout (set = 1, binding = 3) uniform samplerCube radiance_map;
-layout (set = 1, binding = 4) uniform sampler2D brdf_lut;
+layout (set = 1, binding = 1) uniform samplerCube irradiance_map;
+layout (set = 1, binding = 2) uniform samplerCube radiance_map;
+layout (set = 1, binding = 3) uniform sampler2D brdf_lut;
 
-layout (set = 4, binding = 0) uniform sampler2D albedo_texture;
-layout (set = 4, binding = 1) uniform sampler2D normal_texture;
-layout (set = 4, binding = 2) uniform sampler2D metallic_roughness_texture;
-layout (set = 4, binding = 3) uniform sampler2D occlusion_texture;
-layout (set = 4, binding = 4) uniform sampler2D emissive_texture;
-layout (set = 4, binding = 5) uniform MaterialUniform {
+layout (set = 3, binding = 0) uniform sampler2D albedo_texture;
+layout (set = 3, binding = 1) uniform sampler2D normal_texture;
+layout (set = 3, binding = 2) uniform sampler2D metallic_roughness_texture;
+layout (set = 3, binding = 3) uniform sampler2D occlusion_texture;
+layout (set = 3, binding = 4) uniform sampler2D emissive_texture;
+layout (set = 3, binding = 5) uniform MaterialUniform {
   Material material;
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cmd_info.h"
+#include <renderer/cmd_buffer.h>
 #include <renderer/event.h>
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
@@ -13,7 +13,7 @@ void eg_imgui_begin();
 
 void eg_imgui_end();
 
-void eg_imgui_draw(const eg_cmd_info_t *cmd_info);
+void eg_imgui_draw(re_cmd_buffer_t *cmd_buffer);
 
 void eg_imgui_process_event(const re_event_t *event);
 

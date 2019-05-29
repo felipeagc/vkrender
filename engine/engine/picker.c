@@ -54,29 +54,24 @@ void eg_picker_resize(eg_picker_t *picker, uint32_t width, uint32_t height) {
   re_canvas_resize(&picker->canvas, width, height);
 }
 
-eg_cmd_info_t eg_picker_begin(eg_picker_t *picker) {
+re_cmd_buffer_t *eg_picker_begin(eg_picker_t *picker) {
   vkResetFences(g_ctx.device, 1, &picker->fence);
 
   re_begin_cmd_buffer(
-      picker->cmd_buffer,
+      &picker->cmd_buffer,
       &(re_cmd_buffer_begin_info_t){
           .usage = RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT,
       });
 
-  eg_cmd_info_t cmd_info = {
-      .frame_index = picker->window->current_frame,
-      .cmd_buffer = picker->cmd_buffer,
-  };
+  re_canvas_begin(&picker->canvas, &picker->cmd_buffer);
 
-  re_canvas_begin(&picker->canvas, picker->cmd_buffer);
-
-  return cmd_info;
+  return &picker->cmd_buffer;
 }
 
 void eg_picker_end(eg_picker_t *picker) {
-  re_canvas_end(&picker->canvas, picker->cmd_buffer);
+  re_canvas_end(&picker->canvas, &picker->cmd_buffer);
 
-  re_end_cmd_buffer(picker->cmd_buffer);
+  re_end_cmd_buffer(&picker->cmd_buffer);
 
   VK_CHECK(vkQueueSubmit(
       g_ctx.graphics_queue,
@@ -84,7 +79,7 @@ void eg_picker_end(eg_picker_t *picker) {
       &(VkSubmitInfo){
           .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
           .commandBufferCount = 1,
-          .pCommandBuffers = &picker->cmd_buffer,
+          .pCommandBuffers = &picker->cmd_buffer.cmd_buffer,
       },
       picker->fence));
 

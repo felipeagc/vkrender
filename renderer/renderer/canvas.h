@@ -51,14 +51,12 @@ typedef struct re_canvas_options_t {
 
 void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options);
 
-void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer);
+void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer);
 
-void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t command_buffer);
+void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer);
 
 void re_canvas_draw(
-    re_canvas_t *canvas,
-    re_cmd_buffer_t command_buffer,
-    re_pipeline_t *pipeline);
+    re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline);
 
 void re_canvas_resize(
     re_canvas_t *canvas, const uint32_t width, const uint32_t height);

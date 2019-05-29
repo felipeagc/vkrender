@@ -1,4 +1,3 @@
-#include "engine/cmd_info.h"
 #include "engine/util.h"
 
 #include "engine/asset_manager.h"
@@ -11,7 +10,6 @@
 #include "engine/inspector.h"
 #include "engine/picker.h"
 
-#include "engine/pbr.h"
 #include "engine/pipelines.h"
 
 #include "engine/camera.h"

@@ -463,7 +463,7 @@ void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options) {
   create_framebuffers(canvas);
 }
 
-void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
+void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
   // @TODO: make this customizable
   VkClearValue clear_values[] = {
       {.color = canvas->clear_color},
@@ -488,7 +488,9 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
   }
 
   vkCmdBeginRenderPass(
-      command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+      cmd_buffer->cmd_buffer,
+      &render_pass_begin_info,
+      VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport = {
       0.0f,                                // x
@@ -499,27 +501,24 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
       1.0f,                                // maxDepth
   };
 
-  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+  vkCmdSetViewport(cmd_buffer->cmd_buffer, 0, 1, &viewport);
 
   VkRect2D scissor = {
       {0, 0}, {canvas->render_target.width, canvas->render_target.height}};
 
-  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+  vkCmdSetScissor(cmd_buffer->cmd_buffer, 0, 1, &scissor);
 }
 
-void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t command_buffer) {
-  vkCmdEndRenderPass(command_buffer);
+void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
+  vkCmdEndRenderPass(cmd_buffer->cmd_buffer);
 }
 
 void re_canvas_draw(
-    re_canvas_t *canvas,
-    re_cmd_buffer_t command_buffer,
-    re_pipeline_t *pipeline) {
-  vkCmdBindPipeline(
-      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+    re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline) {
+  re_cmd_bind_pipeline(cmd_buffer, pipeline);
 
   vkCmdBindDescriptorSets(
-      command_buffer,
+      cmd_buffer->cmd_buffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipeline->layout.layout,
       0, // firstSet
@@ -528,7 +527,7 @@ void re_canvas_draw(
       0,
       NULL);
 
-  vkCmdDraw(command_buffer, 3, 1, 0, 0);
+  re_cmd_draw(cmd_buffer, 3, 1, 0, 0);
 }
 
 void re_canvas_resize(

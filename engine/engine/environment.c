@@ -26,115 +26,48 @@ void eg_environment_init(
 
   environment->uniform.radiance_mip_levels =
       (float)environment->asset->radiance_cubemap.mip_level_count;
-
-  // Create uniform buffers
-  for (size_t i = 0; i < ARRAY_SIZE(environment->uniform_buffers); i++) {
-    re_buffer_init(
-        &environment->uniform_buffers[i],
-        &(re_buffer_options_t){
-            .type = RE_BUFFER_TYPE_UNIFORM,
-            .size = sizeof(eg_environment_uniform_t),
-        });
-    re_buffer_map_memory(
-        &environment->uniform_buffers[i], &environment->mappings[i]);
-  }
-}
-
-void eg_environment_update(
-    eg_environment_t *environment, const eg_cmd_info_t *cmd_info) {
-  memcpy(
-      environment->mappings[cmd_info->frame_index],
-      &environment->uniform,
-      sizeof(eg_environment_uniform_t));
 }
 
 void eg_environment_bind(
     eg_environment_t *environment,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline,
     uint32_t set_index) {
-  vkCmdBindPipeline(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->pipeline);
+  re_cmd_bind_pipeline(cmd_buffer, pipeline);
 
-  re_descriptor_set_allocator_t *allocator =
-      pipeline->layout.descriptor_set_allocators[set_index];
+  void *mapping =
+      re_cmd_bind_uniform(cmd_buffer, 0, sizeof(environment->uniform));
+  memcpy(mapping, &environment->uniform, sizeof(environment->uniform));
 
-  const uint32_t i = cmd_info->frame_index;
+  re_cmd_bind_image(cmd_buffer, 1, &environment->asset->irradiance_cubemap);
+  re_cmd_bind_image(cmd_buffer, 2, &environment->asset->radiance_cubemap);
+  re_cmd_bind_image(cmd_buffer, 3, &environment->asset->brdf_lut);
 
-  VkDescriptorSet set = re_descriptor_set_allocator_alloc(
-      allocator,
-      (re_descriptor_info_t[]){
-          {.buffer = {.buffer = environment->uniform_buffers[i].buffer,
-                      .offset = 0,
-                      .range = sizeof(eg_environment_uniform_t)}},
-          {.image = environment->asset->skybox_cubemap.descriptor},
-          {.image = environment->asset->irradiance_cubemap.descriptor},
-          {.image = environment->asset->radiance_cubemap.descriptor},
-          {.image = environment->asset->brdf_lut.descriptor},
-      });
-
-  vkCmdBindDescriptorSets(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout.layout,
-      set_index, // firstSet
-      1,
-      &set,
-      0,
-      NULL);
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set_index);
 }
 
 void eg_environment_draw_skybox(
     eg_environment_t *environment,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline) {
-  vkCmdBindPipeline(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->pipeline);
+  re_cmd_bind_pipeline(cmd_buffer, pipeline);
 
-  const uint32_t set_index = 1;
+  void *mapping =
+      re_cmd_bind_uniform(cmd_buffer, 0, sizeof(environment->uniform));
+  memcpy(mapping, &environment->uniform, sizeof(environment->uniform));
 
-  re_descriptor_set_allocator_t *allocator =
-      pipeline->layout.descriptor_set_allocators[set_index];
-
-  const uint32_t i = cmd_info->frame_index;
-
-  VkDescriptorImageInfo skybox_descriptor;
   switch (environment->skybox_type) {
   case EG_SKYBOX_DEFAULT:
-    skybox_descriptor = environment->asset->skybox_cubemap.descriptor;
+    re_cmd_bind_image(cmd_buffer, 1, &environment->asset->skybox_cubemap);
     break;
   case EG_SKYBOX_IRRADIANCE:
-    skybox_descriptor = environment->asset->irradiance_cubemap.descriptor;
+    re_cmd_bind_image(cmd_buffer, 1, &environment->asset->irradiance_cubemap);
     break;
   }
 
-  VkDescriptorSet set = re_descriptor_set_allocator_alloc(
-      allocator,
-      (re_descriptor_info_t[]){
-          {.buffer = {.buffer = environment->uniform_buffers[i].buffer,
-                      .offset = 0,
-                      .range = sizeof(eg_environment_uniform_t)}},
-          {.image = skybox_descriptor},
-          {.image = environment->asset->irradiance_cubemap.descriptor},
-          {.image = environment->asset->radiance_cubemap.descriptor},
-          {.image = environment->asset->brdf_lut.descriptor},
-      });
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 1);
 
-  vkCmdBindDescriptorSets(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout.layout,
-      set_index, // firstSet
-      1,
-      &set,
-      0,
-      NULL);
-
-  vkCmdDraw(cmd_info->cmd_buffer, 36, 1, 0, 0);
+  re_cmd_draw(cmd_buffer, 36, 1, 0, 0);
 }
 
 bool eg_environment_add_point_light(
@@ -153,11 +86,4 @@ void eg_environment_reset_point_lights(eg_environment_t *environment) {
   environment->uniform.point_light_count = 0;
 }
 
-void eg_environment_destroy(eg_environment_t *environment) {
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  for (size_t i = 0; i < ARRAY_SIZE(environment->uniform_buffers); i++) {
-    re_buffer_unmap_memory(&environment->uniform_buffers[i]);
-    re_buffer_destroy(&environment->uniform_buffers[i]);
-  }
-}
+void eg_environment_destroy(eg_environment_t *environment) {}

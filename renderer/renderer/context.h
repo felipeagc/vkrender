@@ -1,5 +1,6 @@
 #pragma once
 
+#include "buffer_pool.h"
 #include "image.h"
 #include <stdbool.h>
 #include <tinycthread.h>
@@ -36,9 +37,13 @@ typedef struct re_context_t {
   VkDescriptorPool descriptor_pool;
   VkDescriptorSetLayout canvas_descriptor_set_layout;
 
+  VkPhysicalDeviceLimits physical_limits;
+
   // TODO: we'll have to GC these (maybe store them in a hash table)
   uint32_t descriptor_set_allocator_count;
   re_descriptor_set_allocator_t *descriptor_set_allocators;
+
+  re_buffer_pool_t ubo_pool;
 } re_context_t;
 
 extern re_context_t g_ctx;

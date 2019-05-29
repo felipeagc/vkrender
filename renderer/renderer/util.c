@@ -1,7 +1,9 @@
 #include "util.h"
 
+#include "cmd_buffer.h"
+
 void re_set_image_layout(
-    VkCommandBuffer command_buffer,
+    re_cmd_buffer_t *command_buffer,
     VkImage image,
     VkImageLayout old_image_layout,
     VkImageLayout new_image_layout,
@@ -116,7 +118,7 @@ void re_set_image_layout(
   }
 
   vkCmdPipelineBarrier(
-      command_buffer,
+      command_buffer->cmd_buffer,
       src_stage_mask,
       dst_stage_mask,
       0,

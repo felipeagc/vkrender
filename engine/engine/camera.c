@@ -16,52 +16,11 @@ void eg_camera_init(eg_camera_t *camera) {
 
   camera->position = (vec3_t){0.0f, 0.0f, 0.0f};
   camera->rotation = (quat_t){0};
-
-  VkDescriptorSetLayout set_layout =
-      g_default_pipeline_layouts.pbr.set_layouts[0];
-  VkDescriptorUpdateTemplate update_template =
-      g_default_pipeline_layouts.pbr.update_templates[0];
-
-  {
-    VkDescriptorSetLayout set_layouts[ARRAY_SIZE(camera->descriptor_sets)];
-    for (size_t i = 0; i < ARRAY_SIZE(camera->descriptor_sets); i++) {
-      set_layouts[i] = set_layout;
-    }
-
-    VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device,
-        &(VkDescriptorSetAllocateInfo){
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = g_ctx.descriptor_pool,
-            .descriptorSetCount = ARRAY_SIZE(camera->descriptor_sets),
-            .pSetLayouts = set_layouts,
-        },
-        camera->descriptor_sets));
-  }
-
-  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {
-    re_buffer_init(
-        &camera->uniform_buffers[i],
-        &(re_buffer_options_t){
-            .type = RE_BUFFER_TYPE_UNIFORM,
-            .size = sizeof(eg_camera_uniform_t),
-        });
-    re_buffer_map_memory(&camera->uniform_buffers[i], &camera->mappings[i]);
-
-    vkUpdateDescriptorSetWithTemplate(
-        g_ctx.device,
-        camera->descriptor_sets[i],
-        update_template,
-        (re_descriptor_info_t[]){
-            {.buffer = {.buffer = camera->uniform_buffers[i].buffer,
-                        .offset = 0,
-                        .range = sizeof(eg_camera_uniform_t)}}});
-  }
 }
 
 void eg_camera_update(
     eg_camera_t *camera,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     float width,
     float height) {
   camera->uniform.proj = mat4_perspective(
@@ -80,43 +39,20 @@ void eg_camera_update(
 
   camera->uniform.pos =
       (vec4_t){camera->position.x, camera->position.y, camera->position.z, 1.0};
-
-  memcpy(
-      camera->mappings[cmd_info->frame_index],
-      &camera->uniform,
-      sizeof(eg_camera_uniform_t));
 }
 
 void eg_camera_bind(
     eg_camera_t *camera,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline,
     uint32_t set_index) {
-  vkCmdBindDescriptorSets(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipeline->layout.layout,
-      set_index,
-      1,
-      &camera->descriptor_sets[cmd_info->frame_index],
-      0,
-      NULL);
+  void *mapping = re_cmd_bind_uniform(cmd_buffer, 0, sizeof(camera->uniform));
+  memcpy(mapping, &camera->uniform, sizeof(camera->uniform));
+
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set_index);
 }
 
-void eg_camera_destroy(eg_camera_t *camera) {
-  VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-  vkFreeDescriptorSets(
-      g_ctx.device,
-      g_ctx.descriptor_pool,
-      ARRAY_SIZE(camera->descriptor_sets),
-      camera->descriptor_sets);
-
-  for (size_t i = 0; i < ARRAY_SIZE(camera->uniform_buffers); i++) {
-    re_buffer_unmap_memory(&camera->uniform_buffers[i]);
-    re_buffer_destroy(&camera->uniform_buffers[i]);
-  }
-}
+void eg_camera_destroy(eg_camera_t *camera) {}
 
 vec3_t eg_camera_ndc_to_world(eg_camera_t *camera, vec3_t ndc) {
   mat4_t inv_view = mat4_inverse(camera->uniform.view);

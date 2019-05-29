@@ -3,8 +3,15 @@
 #include "pipeline.h"
 #include "util.h"
 
+typedef struct re_buffer_t re_buffer_t;
+typedef struct re_image_t re_image_t;
+
 typedef VkCommandPool re_cmd_pool_t;
-typedef VkCommandBuffer re_cmd_buffer_t;
+
+typedef struct re_cmd_buffer_t {
+  VkCommandBuffer cmd_buffer;
+  re_descriptor_info_t bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS];
+} re_cmd_buffer_t;
 
 typedef enum re_cmd_buffer_usage_t {
   RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT =
@@ -36,9 +43,9 @@ void re_free_cmd_buffers(
     re_cmd_pool_t pool, uint32_t buffer_count, re_cmd_buffer_t *buffers);
 
 void re_begin_cmd_buffer(
-    re_cmd_buffer_t cmd_buffer, re_cmd_buffer_begin_info_t *begin_info);
+    re_cmd_buffer_t *cmd_buffer, re_cmd_buffer_begin_info_t *begin_info);
 
-void re_end_cmd_buffer(re_cmd_buffer_t cmd_buffer);
+void re_end_cmd_buffer(re_cmd_buffer_t *cmd_buffer);
 
 /*
  *
@@ -46,5 +53,41 @@ void re_end_cmd_buffer(re_cmd_buffer_t cmd_buffer);
  *
  */
 
-void re_cmd_bind_graphics_pipeline(
-    re_cmd_buffer_t cmd_buffer, re_pipeline_t *pipeline);
+void re_cmd_bind_pipeline(re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline);
+
+void re_cmd_bind_descriptor_set(
+    re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline, uint32_t set_index);
+
+void re_cmd_bind_image(
+    re_cmd_buffer_t *cmd_buffer, uint32_t binding, re_image_t *image);
+
+void *
+re_cmd_bind_uniform(re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size);
+
+void re_cmd_draw(
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t vertex_count,
+    uint32_t instance_count,
+    uint32_t first_vertex,
+    uint32_t first_instance);
+
+void re_cmd_draw_indexed(
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t index_count,
+    uint32_t instance_count,
+    uint32_t first_index,
+    int32_t vertex_offset,
+    uint32_t first_instance);
+
+void re_cmd_bind_vertex_buffers(
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t first_binding,
+    uint32_t binding_count,
+    re_buffer_t *buffers,
+    const size_t *offsets);
+
+void re_cmd_bind_index_buffer(
+    re_cmd_buffer_t *cmd_buffer,
+    re_buffer_t *buffer,
+    size_t offset,
+    re_index_type_t index_type);

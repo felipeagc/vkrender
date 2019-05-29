@@ -41,27 +41,23 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
   {
     // Use any command queue
     VkCommandPool command_pool = g_ctx.graphics_command_pool;
-    VkCommandBuffer command_buffer =
-        re_window_get_current_command_buffer(window);
+    re_cmd_buffer_t *cmd_buffer = re_window_get_current_command_buffer(window);
 
     VK_CHECK(vkResetCommandPool(g_ctx.device, command_pool, 0));
-    VkCommandBufferBeginInfo begin_info = {
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, // sType
-        NULL,                                        // pNext
-        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, // flags
-        NULL,                                        // pInheritanceInfo
-    };
 
-    VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin_info));
+    re_begin_cmd_buffer(
+        cmd_buffer,
+        &(re_cmd_buffer_begin_info_t){.usage =
+                                          RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT});
 
-    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+    ImGui_ImplVulkan_CreateFontsTexture(cmd_buffer->cmd_buffer);
 
     VkSubmitInfo end_info = {0};
     end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     end_info.commandBufferCount = 1;
-    end_info.pCommandBuffers = &command_buffer;
+    end_info.pCommandBuffers = &cmd_buffer->cmd_buffer;
 
-    VK_CHECK(vkEndCommandBuffer(command_buffer));
+    re_end_cmd_buffer(cmd_buffer);
 
     mtx_lock(&g_ctx.queue_mutex);
     VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &end_info, VK_NULL_HANDLE));
@@ -81,8 +77,8 @@ void eg_imgui_begin() {
 
 void eg_imgui_end() { igRender(); }
 
-void eg_imgui_draw(const eg_cmd_info_t *cmd_info) {
-  ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), cmd_info->cmd_buffer);
+void eg_imgui_draw(re_cmd_buffer_t *cmd_buffer) {
+  ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), cmd_buffer->cmd_buffer);
 }
 
 void eg_imgui_process_event(const re_event_t *event) {
@@ -139,8 +135,7 @@ void eg_imgui_process_event(const re_event_t *event) {
     ImGui_ImplGlfw_CharCallback(event->window->glfw_window, event->codepoint);
     break;
   }
-  default:
-    break;
+  default: break;
   }
 }
 

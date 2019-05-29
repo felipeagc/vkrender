@@ -9,16 +9,16 @@
 #include <renderer/window.h>
 
 static void bind_stuff(
-    eg_world_t *world, const eg_cmd_info_t *cmd_info, re_pipeline_t *pipeline) {
+    eg_world_t *world, re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline) {
   if (pipeline == NULL)
     return;
 
-  re_cmd_bind_graphics_pipeline(cmd_info->cmd_buffer, pipeline);
-  eg_camera_bind(&world->camera, cmd_info, pipeline, 0);
-  eg_environment_bind(&world->environment, cmd_info, pipeline, 1);
+  re_cmd_bind_pipeline(cmd_buffer, pipeline);
+  eg_camera_bind(&world->camera, cmd_buffer, pipeline, 0);
+  eg_environment_bind(&world->environment, cmd_buffer, pipeline, 1);
 }
 
-void eg_rendering_system(eg_world_t *world, const eg_cmd_info_t *cmd_info) {
+void eg_rendering_system(eg_world_t *world, re_cmd_buffer_t *cmd_buffer) {
   re_pipeline_t *pipeline = NULL;
 
   eg_transform_comp_t *transforms = EG_COMP_ARRAY(world, eg_transform_comp_t);
@@ -37,7 +37,7 @@ void eg_rendering_system(eg_world_t *world, const eg_cmd_info_t *cmd_info) {
     if (EG_HAS_COMP(world, eg_renderable_comp_t, e)) {
       if (&renderables[e].pipeline->pipeline != pipeline) {
         pipeline = &renderables[e].pipeline->pipeline;
-        bind_stuff(world, cmd_info, pipeline);
+        bind_stuff(world, cmd_buffer, pipeline);
       }
     } else {
       pipeline = NULL;
@@ -59,7 +59,7 @@ void eg_rendering_system(eg_world_t *world, const eg_cmd_info_t *cmd_info) {
         pc.time = (float)glfwGetTime();
 
         vkCmdPushConstants(
-            cmd_info->cmd_buffer,
+            cmd_buffer->cmd_buffer,
             pipeline->layout.layout,
             pipeline->layout.push_constants[0].stageFlags,
             pipeline->layout.push_constants[0].offset,
@@ -67,16 +67,15 @@ void eg_rendering_system(eg_world_t *world, const eg_cmd_info_t *cmd_info) {
             &pc);
       }
 
-      meshes[e].model.uniform.transform =
-          eg_transform_comp_mat4(&transforms[e]);
-      eg_mesh_comp_draw(&meshes[e], cmd_info, pipeline);
+      meshes[e].uniform.model = eg_transform_comp_mat4(&transforms[e]);
+      eg_mesh_comp_draw(&meshes[e], cmd_buffer, pipeline);
     }
 
     if (EG_HAS_COMP(world, eg_gltf_comp_t, e) &&
         EG_HAS_COMP(world, eg_transform_comp_t, e)) {
       eg_gltf_comp_draw(
           &gltf_models[e],
-          cmd_info,
+          cmd_buffer,
           pipeline,
           eg_transform_comp_mat4(&transforms[e]));
     }

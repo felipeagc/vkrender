@@ -168,26 +168,6 @@ void eg_inspector_init(
     free(image_data);
   }
 
-  {
-    VK_CHECK(vkAllocateDescriptorSets(
-        g_ctx.device,
-        &(VkDescriptorSetAllocateInfo){
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = g_ctx.descriptor_pool,
-            .descriptorSetCount = 1,
-            .pSetLayouts = &inspector->billboard_pipeline.layout.set_layouts[1],
-        },
-        &inspector->light_billboard_descriptor_set));
-
-    vkUpdateDescriptorSetWithTemplate(
-        g_ctx.device,
-        inspector->light_billboard_descriptor_set,
-        inspector->billboard_pipeline.layout.update_templates[1],
-        (re_descriptor_info_t[]){
-            {.image = inspector->light_billboard_image.descriptor},
-        });
-  }
-
   inspector->drag_direction = EG_DRAG_DIRECTION_NONE;
   inspector->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
 
@@ -244,36 +224,23 @@ void eg_inspector_destroy(eg_inspector_t *inspector) {
   re_pipeline_destroy(&inspector->picking_pipeline);
   re_pipeline_destroy(&inspector->outline_pipeline);
 
-  vkFreeDescriptorSets(
-      g_ctx.device,
-      g_ctx.descriptor_pool,
-      1,
-      &inspector->light_billboard_descriptor_set);
-
   re_image_destroy(&inspector->light_billboard_image);
 
   eg_picker_destroy(&inspector->picker);
 }
 
 static void
-draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
-  re_cmd_bind_graphics_pipeline(
-      cmd_info->cmd_buffer, &inspector->billboard_picking_pipeline);
+draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
+  re_cmd_bind_pipeline(cmd_buffer, &inspector->billboard_picking_pipeline);
 
   eg_camera_bind(
       &inspector->world->camera,
-      cmd_info,
+      cmd_buffer,
       &inspector->billboard_picking_pipeline,
       0);
-  vkCmdBindDescriptorSets(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      inspector->billboard_picking_pipeline.layout.layout,
-      1,
-      1,
-      &inspector->light_billboard_descriptor_set,
-      0,
-      NULL);
+
+  re_cmd_bind_image(cmd_buffer, 0, &inspector->light_billboard_image);
+  re_cmd_bind_descriptor_set(cmd_buffer, &inspector->billboard_pipeline, 1);
 
   eg_transform_comp_t *transforms =
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
@@ -296,7 +263,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
       push_constant.index = e;
 
       vkCmdPushConstants(
-          cmd_info->cmd_buffer,
+          cmd_buffer->cmd_buffer,
           inspector->billboard_picking_pipeline.layout.layout,
           inspector->billboard_picking_pipeline.layout.push_constants[0]
               .stageFlags,
@@ -304,7 +271,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
           sizeof(push_constant),
           &push_constant);
 
-      vkCmdDraw(cmd_info->cmd_buffer, 6, 1, 0, 0);
+      re_cmd_draw(cmd_buffer, 6, 1, 0, 0);
     }
   }
 
@@ -318,7 +285,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
   }
 
   vkCmdClearAttachments(
-      cmd_info->cmd_buffer,
+      cmd_buffer->cmd_buffer,
       1,
       &(VkClearAttachment){
           .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -335,21 +302,14 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
           .layerCount = 1,
       });
 
-  re_cmd_bind_graphics_pipeline(
-      cmd_info->cmd_buffer, &inspector->gizmo_picking_pipeline);
+  re_cmd_bind_pipeline(cmd_buffer, &inspector->gizmo_picking_pipeline);
 
-  vkCmdBindIndexBuffer(
-      cmd_info->cmd_buffer,
-      inspector->pos_gizmo_index_buffer.buffer,
-      0,
-      VK_INDEX_TYPE_UINT32);
-  VkDeviceSize offsets = 0;
-  vkCmdBindVertexBuffers(
-      cmd_info->cmd_buffer,
-      0,
-      1,
-      &inspector->pos_gizmo_vertex_buffer.buffer,
-      &offsets);
+  re_cmd_bind_index_buffer(
+      cmd_buffer, &inspector->pos_gizmo_index_buffer, 0, RE_INDEX_TYPE_UINT32);
+
+  size_t offsets = 0;
+  re_cmd_bind_vertex_buffers(
+      cmd_buffer, 0, 1, &inspector->pos_gizmo_vertex_buffer, &offsets);
 
   struct {
     mat4_t mvp;
@@ -378,15 +338,15 @@ draw_gizmos_picking(eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
     push_constant.index = color_indices[i];
 
     vkCmdPushConstants(
-        cmd_info->cmd_buffer,
+        cmd_buffer->cmd_buffer,
         inspector->gizmo_picking_pipeline.layout.layout,
         inspector->gizmo_picking_pipeline.layout.push_constants[0].stageFlags,
         inspector->gizmo_picking_pipeline.layout.push_constants[0].offset,
         sizeof(push_constant),
         &push_constant);
 
-    vkCmdDrawIndexed(
-        cmd_info->cmd_buffer, inspector->pos_gizmo_index_count, 1, 0, 0, 0);
+    re_cmd_draw_indexed(
+        cmd_buffer, inspector->pos_gizmo_index_count, 1, 0, 0, 0);
   }
 }
 
@@ -398,13 +358,12 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     return;
   }
 
-  const eg_cmd_info_t cmd_info = eg_picker_begin(&inspector->picker);
+  re_cmd_buffer_t *cmd_buffer = eg_picker_begin(&inspector->picker);
 
-  re_cmd_bind_graphics_pipeline(
-      cmd_info.cmd_buffer, &inspector->picking_pipeline);
+  re_cmd_bind_pipeline(cmd_buffer, &inspector->picking_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera, &cmd_info, &inspector->picking_pipeline, 0);
+      &inspector->world->camera, cmd_buffer, &inspector->picking_pipeline, 0);
 
   eg_transform_comp_t *transforms =
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
@@ -413,7 +372,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
 #define PUSH_CONSTANT()                                                        \
   vkCmdPushConstants(                                                          \
-      cmd_info.cmd_buffer,                                                     \
+      cmd_buffer->cmd_buffer,                                                  \
       inspector->picking_pipeline.layout.layout,                               \
       inspector->picking_pipeline.layout.push_constants[0].stageFlags,         \
       inspector->picking_pipeline.layout.push_constants[0].offset,             \
@@ -425,10 +384,9 @@ static void mouse_pressed(eg_inspector_t *inspector) {
         EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
       PUSH_CONSTANT();
 
-      meshes[e].model.uniform.transform =
-          eg_transform_comp_mat4(&transforms[e]);
+      meshes[e].uniform.model = eg_transform_comp_mat4(&transforms[e]);
       eg_mesh_comp_draw_no_mat(
-          &meshes[e], &cmd_info, &inspector->picking_pipeline);
+          &meshes[e], cmd_buffer, &inspector->picking_pipeline);
     }
 
     if (EG_HAS_COMP(inspector->world, eg_gltf_comp_t, e) &&
@@ -437,13 +395,13 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
       eg_gltf_comp_draw_no_mat(
           &gltf_models[e],
-          &cmd_info,
+          cmd_buffer,
           &inspector->picking_pipeline,
           eg_transform_comp_mat4(&transforms[e]));
     }
   }
 
-  draw_gizmos_picking(inspector, &cmd_info);
+  draw_gizmos_picking(inspector, cmd_buffer);
 
   eg_picker_end(&inspector->picker);
 
@@ -558,27 +516,16 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   }
 }
 
-static inline int light_cmp(const void *e1, const void *e2, void *context) {
-  return 0;
-}
-
 void eg_inspector_draw_gizmos(
-    eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
+    eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
 
-  re_cmd_bind_graphics_pipeline(
-      cmd_info->cmd_buffer, &inspector->billboard_pipeline);
+  re_cmd_bind_pipeline(cmd_buffer, &inspector->billboard_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera, cmd_info, &inspector->billboard_pipeline, 0);
-  vkCmdBindDescriptorSets(
-      cmd_info->cmd_buffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      inspector->billboard_pipeline.layout.layout,
-      1,
-      1,
-      &inspector->light_billboard_descriptor_set,
-      0,
-      NULL);
+      &inspector->world->camera, cmd_buffer, &inspector->billboard_pipeline, 0);
+
+  re_cmd_bind_image(cmd_buffer, 0, &inspector->light_billboard_image);
+  re_cmd_bind_descriptor_set(cmd_buffer, &inspector->billboard_pipeline, 1);
 
   eg_transform_comp_t *transforms =
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
@@ -626,14 +573,14 @@ void eg_inspector_draw_gizmos(
     push_constant.color = point_lights[light_entities[i]].color;
 
     vkCmdPushConstants(
-        cmd_info->cmd_buffer,
+        cmd_buffer->cmd_buffer,
         inspector->billboard_pipeline.layout.layout,
         inspector->billboard_pipeline.layout.push_constants[0].stageFlags,
         inspector->billboard_pipeline.layout.push_constants[0].offset,
         sizeof(push_constant),
         &push_constant);
 
-    vkCmdDraw(cmd_info->cmd_buffer, 6, 1, 0, 0);
+    re_cmd_draw(cmd_buffer, 6, 1, 0, 0);
   }
 
   if (inspector->selected_entity >= EG_MAX_ENTITIES) {
@@ -646,7 +593,7 @@ void eg_inspector_draw_gizmos(
   }
 
   vkCmdClearAttachments(
-      cmd_info->cmd_buffer,
+      cmd_buffer->cmd_buffer,
       1,
       &(VkClearAttachment){
           .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -663,21 +610,14 @@ void eg_inspector_draw_gizmos(
           .layerCount = 1,
       });
 
-  re_cmd_bind_graphics_pipeline(
-      cmd_info->cmd_buffer, &inspector->gizmo_pipeline);
+  re_cmd_bind_pipeline(cmd_buffer, &inspector->gizmo_pipeline);
 
-  vkCmdBindIndexBuffer(
-      cmd_info->cmd_buffer,
-      inspector->pos_gizmo_index_buffer.buffer,
-      0,
-      VK_INDEX_TYPE_UINT32);
-  VkDeviceSize offsets = 0;
-  vkCmdBindVertexBuffers(
-      cmd_info->cmd_buffer,
-      0,
-      1,
-      &inspector->pos_gizmo_vertex_buffer.buffer,
-      &offsets);
+  re_cmd_bind_index_buffer(
+      cmd_buffer, &inspector->pos_gizmo_index_buffer, 0, RE_INDEX_TYPE_UINT32);
+
+  size_t offsets = 0;
+  re_cmd_bind_vertex_buffers(
+      cmd_buffer, 0, 1, &inspector->pos_gizmo_vertex_buffer, &offsets);
 
   struct {
     mat4_t mvp;
@@ -707,30 +647,29 @@ void eg_inspector_draw_gizmos(
     push_constant.color = colors[i];
 
     vkCmdPushConstants(
-        cmd_info->cmd_buffer,
+        cmd_buffer->cmd_buffer,
         inspector->gizmo_pipeline.layout.layout,
         inspector->gizmo_pipeline.layout.push_constants[0].stageFlags,
         inspector->gizmo_pipeline.layout.push_constants[0].offset,
         sizeof(push_constant),
         &push_constant);
 
-    vkCmdDrawIndexed(
-        cmd_info->cmd_buffer, inspector->pos_gizmo_index_count, 1, 0, 0, 0);
+    re_cmd_draw_indexed(
+        cmd_buffer, inspector->pos_gizmo_index_count, 1, 0, 0, 0);
   }
 }
 
 void eg_inspector_draw_selected_outline(
-    eg_inspector_t *inspector, const eg_cmd_info_t *cmd_info) {
-  re_cmd_bind_graphics_pipeline(
-      cmd_info->cmd_buffer, &inspector->outline_pipeline);
+    eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
+  re_cmd_bind_pipeline(cmd_buffer, &inspector->outline_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera, cmd_info, &inspector->outline_pipeline, 0);
+      &inspector->world->camera, cmd_buffer, &inspector->outline_pipeline, 0);
 
   vec4_t color = {1.0f, 0.5f, 0.0f, 1.0f};
 
   vkCmdPushConstants(
-      cmd_info->cmd_buffer,
+      cmd_buffer->cmd_buffer,
       inspector->outline_pipeline.layout.layout,
       inspector->outline_pipeline.layout.push_constants[0].stageFlags,
       inspector->outline_pipeline.layout.push_constants[0].offset,
@@ -749,7 +688,7 @@ void eg_inspector_draw_selected_outline(
 
     eg_gltf_comp_draw_no_mat(
         model,
-        cmd_info,
+        cmd_buffer,
         &inspector->outline_pipeline,
         eg_transform_comp_mat4(transform));
   }
@@ -764,8 +703,8 @@ void eg_inspector_draw_selected_outline(
     eg_transform_comp_t *transform = EG_COMP(
         inspector->world, eg_transform_comp_t, inspector->selected_entity);
 
-    mesh->model.uniform.transform = eg_transform_comp_mat4(transform);
-    eg_mesh_comp_draw_no_mat(mesh, cmd_info, &inspector->outline_pipeline);
+    mesh->uniform.model = eg_transform_comp_mat4(transform);
+    eg_mesh_comp_draw_no_mat(mesh, cmd_buffer, &inspector->outline_pipeline);
   }
 }
 
@@ -827,19 +766,43 @@ static void inspect_environment(eg_environment_t *environment) {
 static void inspect_statistics(re_window_t *window) {
   igText("Delta time: %.4fms", window->delta_time);
   igText("FPS: %.2f", 1.0f / window->delta_time);
+  igText("");
 
   igText(
       "Descriptor set allocator count: %u",
       g_ctx.descriptor_set_allocator_count);
   for (uint32_t i = 0; i < g_ctx.descriptor_set_allocator_count; i++) {
+    re_descriptor_set_allocator_t *allocator =
+        &g_ctx.descriptor_set_allocators[i];
+
     uint32_t node_count = 0;
     re_descriptor_set_allocator_node_t *node =
-        &g_ctx.descriptor_set_allocators[i].base_node;
+        &allocator->base_nodes[allocator->current_frame];
     while (node != NULL) {
       node_count++;
       node = node->next;
     }
-    igText("Allocator #%d: %u nodes", i, node_count);
+
+    igText(
+        "Allocator #%d:\tnodes: %u\twrite rate: %u/%u",
+        i,
+        node_count,
+        allocator->writes[allocator->current_frame],
+        allocator->writes[allocator->current_frame] +
+            allocator->matches[allocator->current_frame]);
+  }
+
+  igText("");
+
+  {
+    uint32_t node_count = 0;
+    re_buffer_pool_node_t *node =
+        &g_ctx.ubo_pool.base_nodes[g_ctx.ubo_pool.current_frame];
+    while (node != NULL) {
+      node_count++;
+      node = node->next;
+    }
+    igText("UBO pool: %u nodes", node_count);
   }
 }
 
@@ -860,6 +823,11 @@ static void inspect_pbr_material_asset(eg_asset_t *asset) {
       "%.3f",
       1.0f);
   igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+}
+
+static void inspect_pipeline_asset(eg_asset_t *asset) {
+  eg_pipeline_asset_t *pipeline_asset = (eg_pipeline_asset_t *)asset;
+  igText("Pipeline: %#010x", (uint64_t)pipeline_asset->pipeline.pipeline);
 }
 
 static void inspect_gltf_model_asset(eg_asset_t *asset) {
@@ -1098,7 +1066,9 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
             break;
           }
           case EG_PIPELINE_ASSET_TYPE: {
-            ASSET_HEADER("Pipeline: %s", asset->name) {}
+            ASSET_HEADER("Pipeline: %s", asset->name) {
+              inspect_pipeline_asset(asset);
+            }
             break;
           }
           case EG_GLTF_ASSET_TYPE: {

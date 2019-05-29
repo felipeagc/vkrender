@@ -75,7 +75,7 @@ void glfw_error_callback(int error, const char *description) {
 
 #ifdef RE_ENABLE_VALIDATION
 static inline bool check_validation_layer_support() {
-  uint32_t count;
+  uint32_t count = 0;
   vkEnumerateInstanceLayerProperties(&count, NULL);
   VkLayerProperties *available_layers =
       (VkLayerProperties *)malloc(sizeof(VkLayerProperties) * count);
@@ -456,6 +456,13 @@ static inline void get_device_queues(re_context_t *ctx) {
       ctx->device, ctx->transfer_queue_family_index, 0, &ctx->transfer_queue);
 }
 
+static inline void get_device_limits(re_context_t *ctx) {
+  VkPhysicalDeviceProperties props;
+  vkGetPhysicalDeviceProperties(ctx->physical_device, &props);
+
+  ctx->physical_limits = props.limits;
+}
+
 static inline void setup_memory_allocator(re_context_t *ctx) {
   VmaAllocatorCreateInfo allocator_info = {0};
   allocator_info.physicalDevice = ctx->physical_device;
@@ -528,6 +535,8 @@ void re_ctx_init() {
 
   get_device_queues(&g_ctx);
 
+  get_device_limits(&g_ctx);
+
   setup_memory_allocator(&g_ctx);
 
   create_graphics_command_pool(&g_ctx);
@@ -578,6 +587,16 @@ void re_ctx_init() {
     vkCreateDescriptorSetLayout(
         g_ctx.device, &create_info, NULL, &g_ctx.canvas_descriptor_set_layout);
   }
+
+  re_buffer_pool_init(
+      &g_ctx.ubo_pool,
+      &(re_buffer_options_t){
+          .type = RE_BUFFER_TYPE_UNIFORM,
+          .size = 1 << 14, // 16k blocks
+      });
+
+  g_ctx.descriptor_set_allocators = calloc(
+      RE_MAX_DESCRIPTOR_SET_ALLOCATORS, sizeof(re_descriptor_set_allocator_t));
 }
 
 void re_ctx_destroy() {
@@ -592,6 +611,8 @@ void re_ctx_destroy() {
   if (g_ctx.descriptor_set_allocators != NULL) {
     free(g_ctx.descriptor_set_allocators);
   }
+
+  re_buffer_pool_destroy(&g_ctx.ubo_pool);
 
   vkDestroyDescriptorPool(g_ctx.device, g_ctx.descriptor_pool, NULL);
 
@@ -622,6 +643,8 @@ void re_ctx_begin_frame() {
     re_descriptor_set_allocator_begin_frame(
         &g_ctx.descriptor_set_allocators[i]);
   }
+
+  re_buffer_pool_begin_frame(&g_ctx.ubo_pool);
 }
 
 re_descriptor_set_allocator_t *
@@ -636,10 +659,9 @@ rx_ctx_request_descriptor_set_allocator(re_descriptor_set_layout_t layout) {
   }
 
   g_ctx.descriptor_set_allocator_count++;
-  g_ctx.descriptor_set_allocators = realloc(
-      g_ctx.descriptor_set_allocators,
-      sizeof(re_descriptor_set_allocator_t) *
-          g_ctx.descriptor_set_allocator_count);
+
+  assert(
+      g_ctx.descriptor_set_allocator_count <= RE_MAX_DESCRIPTOR_SET_ALLOCATORS);
 
   re_descriptor_set_allocator_init(
       &g_ctx

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <vulkan/vulkan.h>
 
+typedef struct re_cmd_buffer_t re_cmd_buffer_t;
+
 #define VK_CHECK(exp)                                                          \
   do {                                                                         \
     VkResult result = exp;                                                     \
@@ -28,7 +30,7 @@
 #define RE_LOG_FATAL(...) _RE_LOG_INTERNAL("[Renderer-fatal] ", __VA_ARGS__);
 
 void re_set_image_layout(
-    VkCommandBuffer command_buffer,
+    re_cmd_buffer_t *command_buffer,
     VkImage image,
     VkImageLayout old_image_layout,
     VkImageLayout new_image_layout,

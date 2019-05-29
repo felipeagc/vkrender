@@ -3,8 +3,6 @@ add_library(
 
 	renderer/renderer.h
 
-	renderer/common.h
-
 	renderer/window.c
 	renderer/window.h
 
@@ -35,6 +33,9 @@ add_library(
 
 	renderer/descriptor_set.c
 	renderer/descriptor_set.h
+
+	renderer/buffer_pool.c
+	renderer/buffer_pool.h
 
 	renderer/util.c
 	renderer/util.h

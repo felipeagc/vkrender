@@ -218,23 +218,23 @@ int main(int argc, const char *argv[]) {
       (vec3_t){1.0, 1.0, 1.0},
       true);
 
-  /* add_gltf( */
-  /*     &game, */
-  /*     "Water bottle", */
-  /*     "/assets/models/WaterBottle.glb", */
-  /*     pbr_pipeline, */
-  /*     (vec3_t){2.0, 0.0, 0.0}, */
-  /*     (vec3_t){10.0, 10.0, 10.0}, */
-  /*     false); */
+  add_gltf(
+      &game,
+      "Water bottle",
+      "/assets/models/WaterBottle.glb",
+      pbr_pipeline,
+      (vec3_t){2.0, 0.0, 0.0},
+      (vec3_t){10.0, 10.0, 10.0},
+      false);
 
-  /* add_gltf( */
-  /*     &game, */
-  /*     "Boom box", */
-  /*     "/assets/models/BoomBox.glb", */
-  /*     pbr_pipeline, */
-  /*     (vec3_t){-2.0, 0.0, 0.0}, */
-  /*     (vec3_t){100.0, 100.0, 100.0}, */
-  /*     false); */
+  add_gltf(
+      &game,
+      "Boom box",
+      "/assets/models/BoomBox.glb",
+      pbr_pipeline,
+      (vec3_t){-2.0, 0.0, 0.0},
+      (vec3_t){100.0, 100.0, 100.0},
+      false);
 
   add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
   add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);
@@ -253,10 +253,8 @@ int main(int argc, const char *argv[]) {
     uint32_t width, height;
     re_window_size(&game.window, &width, &height);
 
-    const eg_cmd_info_t cmd_info = {
-        .frame_index = game.window.current_frame,
-        .cmd_buffer = re_window_get_current_command_buffer(&game.window),
-    };
+    re_cmd_buffer_t *cmd_buffer =
+        re_window_get_current_command_buffer(&game.window);
 
     eg_world_update(&game.world);
 
@@ -264,15 +262,16 @@ int main(int argc, const char *argv[]) {
     eg_inspector_draw_ui(&game.inspector);
     eg_imgui_end();
 
-    // Per-frame updates
-    eg_environment_update(&game.world.environment, &cmd_info);
-
     // Begin command buffer recording
     re_ctx_begin_frame();
     re_window_begin_frame(&game.window);
 
     eg_fps_camera_system_update(
-        &game.fps_system, &game.window, &cmd_info, (float)width, (float)height);
+        &game.fps_system,
+        &game.window,
+        cmd_buffer,
+        (float)width,
+        (float)height);
 
     eg_light_system(&game.world);
 
@@ -281,24 +280,24 @@ int main(int argc, const char *argv[]) {
 
     // Draw the skybox
     eg_camera_bind(
-        &game.world.camera, &cmd_info, &skybox_pipeline->pipeline, 0);
+        &game.world.camera, cmd_buffer, &skybox_pipeline->pipeline, 0);
     eg_environment_draw_skybox(
-        &game.world.environment, &cmd_info, &skybox_pipeline->pipeline);
+        &game.world.environment, cmd_buffer, &skybox_pipeline->pipeline);
 
     // Draw the entities
-    eg_rendering_system(&game.world, &cmd_info);
+    eg_rendering_system(&game.world, cmd_buffer);
 
     // Draw the selected entity
-    eg_inspector_draw_selected_outline(&game.inspector, &cmd_info);
+    eg_inspector_draw_selected_outline(&game.inspector, cmd_buffer);
 
     // Draw the gizmos
-    eg_inspector_draw_gizmos(&game.inspector, &cmd_info);
+    eg_inspector_draw_gizmos(&game.inspector, cmd_buffer);
 
     // Update the selected entity's position based on gizmo movement
     eg_inspector_update(&game.inspector);
 
     // Draw imgui
-    eg_imgui_draw(&cmd_info);
+    eg_imgui_draw(cmd_buffer);
 
     // End window renderpass
     re_window_end_render_pass(&game.window);

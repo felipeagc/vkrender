@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../cmd_info.h"
 #include <gmath.h>
+#include <renderer/cmd_buffer.h>
 #include <stdbool.h>
 
 typedef struct re_window_t re_window_t;
@@ -37,6 +37,6 @@ void eg_fps_camera_system_init(
 void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
-    const eg_cmd_info_t *cmd_info,
+    re_cmd_buffer_t *cmd_buffer,
     float width,
     float height);

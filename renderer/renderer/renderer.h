@@ -1,6 +1,7 @@
 #pragma once
 
 #include "buffer.h"
+#include "buffer_pool.h"
 #include "canvas.h"
 #include "context.h"
 #include "descriptor_set.h"
