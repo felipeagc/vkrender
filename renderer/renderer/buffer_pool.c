@@ -77,7 +77,7 @@ void *re_buffer_pool_alloc(
         *out_descriptor = (re_descriptor_info_t){
             .buffer = {.buffer = node->buffer.buffer,
                        .offset = i * buffer_pool->part_size,
-                       .range = size}};
+                       .range = required_parts * buffer_pool->part_size}};
         return ((uint8_t *)node->mapping) + i * buffer_pool->part_size;
       }
     }
