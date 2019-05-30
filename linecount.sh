@@ -3,8 +3,8 @@
 wc -l \
 	./engine/**/*.h \
 	./engine/**/*.c \
-	./renderer/**/*.c \
-	./renderer/**/*.h \
+	./renderer/renderer/**/*.c \
+	./renderer/renderer/**/*.h \
 	./examples/*.c \
 	./thirdparty/gmath/**/*.h \
 	./thirdparty/fstd/**/*.h \
