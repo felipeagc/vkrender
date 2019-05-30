@@ -20,6 +20,14 @@ install:
 before_build:
   - cmake -G "Visual Studio 15 2017 Win64" .
 
+after_build:
+  - 7z a build.zip %APPVEYOR_BUILD_FOLDER%\*.exe
+  - 7z a build.zip %APPVEYOR_BUILD_FOLDER%\assets
+
+artifacts:
+  - path: build.zip
+    name: VKRender
+
 build:
   project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
 
