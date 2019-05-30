@@ -21,7 +21,8 @@ before_build:
   - cmake -G "Visual Studio 15 2017 Win64" .
 
 after_build:
-  - 7z a build.zip %APPVEYOR_BUILD_FOLDER%\*.exe
+  - 7z a build.zip %APPVEYOR_BUILD_FOLDER%\examples\Release\*.exe
+  - 7z a build.zip %APPVEYOR_BUILD_FOLDER%\examples\Debug\*.exe
   - 7z a build.zip %APPVEYOR_BUILD_FOLDER%\assets
 
 artifacts:
