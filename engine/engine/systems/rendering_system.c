@@ -58,13 +58,7 @@ void eg_rendering_system(eg_world_t *world, re_cmd_buffer_t *cmd_buffer) {
 
         pc.time = (float)glfwGetTime();
 
-        vkCmdPushConstants(
-            cmd_buffer->cmd_buffer,
-            pipeline->layout.layout,
-            pipeline->layout.push_constants[0].stageFlags,
-            pipeline->layout.push_constants[0].offset,
-            sizeof(pc),
-            &pc);
+        re_cmd_push_constants(cmd_buffer, pipeline, 0, sizeof(pc), &pc);
       }
 
       meshes[e].uniform.model = eg_transform_comp_mat4(&transforms[e]);

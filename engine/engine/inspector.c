@@ -262,12 +262,10 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
       push_constant.model = eg_transform_comp_mat4(&transforms[e]);
       push_constant.index = e;
 
-      vkCmdPushConstants(
-          cmd_buffer->cmd_buffer,
-          inspector->billboard_picking_pipeline.layout.layout,
-          inspector->billboard_picking_pipeline.layout.push_constants[0]
-              .stageFlags,
-          inspector->billboard_picking_pipeline.layout.push_constants[0].offset,
+      re_cmd_push_constants(
+          cmd_buffer,
+          &inspector->billboard_picking_pipeline,
+          0,
           sizeof(push_constant),
           &push_constant);
 
@@ -337,11 +335,10 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
             inspector->world->camera.uniform.proj));
     push_constant.index = color_indices[i];
 
-    vkCmdPushConstants(
-        cmd_buffer->cmd_buffer,
-        inspector->gizmo_picking_pipeline.layout.layout,
-        inspector->gizmo_picking_pipeline.layout.push_constants[0].stageFlags,
-        inspector->gizmo_picking_pipeline.layout.push_constants[0].offset,
+    re_cmd_push_constants(
+        cmd_buffer,
+        &inspector->gizmo_picking_pipeline,
+        0,
         sizeof(push_constant),
         &push_constant);
 
@@ -371,13 +368,8 @@ static void mouse_pressed(eg_inspector_t *inspector) {
   eg_mesh_comp_t *meshes = EG_COMP_ARRAY(inspector->world, eg_mesh_comp_t);
 
 #define PUSH_CONSTANT()                                                        \
-  vkCmdPushConstants(                                                          \
-      cmd_buffer->cmd_buffer,                                                  \
-      inspector->picking_pipeline.layout.layout,                               \
-      inspector->picking_pipeline.layout.push_constants[0].stageFlags,         \
-      inspector->picking_pipeline.layout.push_constants[0].offset,             \
-      sizeof(uint32_t),                                                        \
-      &e)
+  re_cmd_push_constants(                                                       \
+      cmd_buffer, &inspector->picking_pipeline, 0, sizeof(uint32_t), &e);
 
   for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
     if (EG_HAS_COMP(inspector->world, eg_mesh_comp_t, e) &&
@@ -572,11 +564,10 @@ void eg_inspector_draw_gizmos(
         eg_transform_comp_mat4(&transforms[light_entities[i]]);
     push_constant.color = point_lights[light_entities[i]].color;
 
-    vkCmdPushConstants(
-        cmd_buffer->cmd_buffer,
-        inspector->billboard_pipeline.layout.layout,
-        inspector->billboard_pipeline.layout.push_constants[0].stageFlags,
-        inspector->billboard_pipeline.layout.push_constants[0].offset,
+    re_cmd_push_constants(
+        cmd_buffer,
+        &inspector->billboard_pipeline,
+        0,
         sizeof(push_constant),
         &push_constant);
 
@@ -646,11 +637,10 @@ void eg_inspector_draw_gizmos(
             inspector->world->camera.uniform.proj));
     push_constant.color = colors[i];
 
-    vkCmdPushConstants(
-        cmd_buffer->cmd_buffer,
-        inspector->gizmo_pipeline.layout.layout,
-        inspector->gizmo_pipeline.layout.push_constants[0].stageFlags,
-        inspector->gizmo_pipeline.layout.push_constants[0].offset,
+    re_cmd_push_constants(
+        cmd_buffer,
+        &inspector->gizmo_pipeline,
+        0,
         sizeof(push_constant),
         &push_constant);
 
@@ -668,13 +658,8 @@ void eg_inspector_draw_selected_outline(
 
   vec4_t color = {1.0f, 0.5f, 0.0f, 1.0f};
 
-  vkCmdPushConstants(
-      cmd_buffer->cmd_buffer,
-      inspector->outline_pipeline.layout.layout,
-      inspector->outline_pipeline.layout.push_constants[0].stageFlags,
-      inspector->outline_pipeline.layout.push_constants[0].offset,
-      sizeof(color),
-      &color);
+  re_cmd_push_constants(
+      cmd_buffer, &inspector->outline_pipeline, 0, sizeof(color), &color);
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
       EG_HAS_COMP(

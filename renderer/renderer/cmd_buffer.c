@@ -124,6 +124,33 @@ void *re_cmd_bind_uniform(
       &cmd_buffer->dynamic_offset);
 }
 
+void re_cmd_push_constants(
+    re_cmd_buffer_t *cmd_buffer,
+    re_pipeline_t *pipeline,
+    uint32_t index,
+    uint32_t size,
+    const void *values) {
+  vkCmdPushConstants(
+      cmd_buffer->cmd_buffer,
+      pipeline->layout.layout,
+      pipeline->layout.push_constants[index].stageFlags,
+      pipeline->layout.push_constants[index].offset,
+      size,
+      values);
+}
+
+void re_cmd_set_viewport(re_cmd_buffer_t *cmd_buffer, re_viewport_t *viewport) {
+  memcpy(&cmd_buffer->viewport, viewport, sizeof(*viewport));
+  vkCmdSetViewport(
+      cmd_buffer->cmd_buffer, 0, 1, (VkViewport *)&cmd_buffer->viewport);
+}
+
+void re_cmd_set_scissor(re_cmd_buffer_t *cmd_buffer, re_rect_2d_t *rect) {
+  memcpy(&cmd_buffer->scissor, rect, sizeof(*rect));
+  vkCmdSetScissor(
+      cmd_buffer->cmd_buffer, 0, 1, (VkRect2D *)&cmd_buffer->scissor);
+}
+
 void re_cmd_draw(
     re_cmd_buffer_t *cmd_buffer,
     uint32_t vertex_count,

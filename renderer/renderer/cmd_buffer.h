@@ -11,7 +11,11 @@ typedef VkCommandPool re_cmd_pool_t;
 typedef struct re_cmd_buffer_t {
   VkCommandBuffer cmd_buffer;
   re_descriptor_info_t bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS];
+
   uint32_t dynamic_offset;
+
+  re_viewport_t viewport;
+  re_rect_2d_t scissor;
 } re_cmd_buffer_t;
 
 typedef enum re_cmd_buffer_usage_t {
@@ -71,6 +75,12 @@ void *
 re_cmd_bind_uniform(re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size);
 
 // TODO: push constants
+void re_cmd_push_constants(
+    re_cmd_buffer_t *cmd_buffer,
+    re_pipeline_t *pipeline,
+    uint32_t index,
+    uint32_t size,
+    const void *values);
 
 // TODO: render pass
 
@@ -78,7 +88,9 @@ re_cmd_bind_uniform(re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size);
 
 // TODO: clear attachments
 
-// TODO: viewport, scissor
+void re_cmd_set_viewport(re_cmd_buffer_t *cmd_buffer, re_viewport_t *viewport);
+
+void re_cmd_set_scissor(re_cmd_buffer_t *cmd_buffer, re_rect_2d_t *rect);
 
 void re_cmd_draw(
     re_cmd_buffer_t *cmd_buffer,

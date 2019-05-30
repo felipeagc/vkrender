@@ -14,6 +14,30 @@ typedef enum re_index_type_t {
   RE_INDEX_TYPE_UINT32 = VK_INDEX_TYPE_UINT32,
 } re_index_type_t;
 
+typedef struct re_viewport_t {
+  float x;
+  float y;
+  float width;
+  float height;
+  float min_depth;
+  float max_depth;
+} re_viewport_t;
+
+typedef struct re_offset_2d_t {
+  int32_t x;
+  int32_t y;
+} re_offset_2d_t;
+
+typedef struct re_extent_2d_t {
+  uint32_t width;
+  uint32_t height;
+} re_extent_2d_t;
+
+typedef struct re_rect_2d_t {
+  re_offset_2d_t offset;
+  re_extent_2d_t extent;
+} re_rect_2d_t;
+
 typedef struct re_pipeline_parameters_t {
   VkPipelineVertexInputStateCreateInfo vertex_input_state;
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state;

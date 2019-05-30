@@ -443,21 +443,23 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
       &render_pass_begin_info,
       VK_SUBPASS_CONTENTS_INLINE);
 
-  VkViewport viewport = {
-      0.0f,                                // x
-      0.0f,                                // y
-      (float)canvas->render_target.width,  // width
-      (float)canvas->render_target.height, // height
-      0.0f,                                // minDepth
-      1.0f,                                // maxDepth
-  };
+  re_cmd_set_viewport(
+      cmd_buffer,
+      &(re_viewport_t){
+          .x = 0.0f,
+          .y = 0.0f,
+          .width = (float)canvas->render_target.width,
+          .height = (float)canvas->render_target.height,
+          .min_depth = 0.0f,
+          .max_depth = 1.0f,
+      });
 
-  vkCmdSetViewport(cmd_buffer->cmd_buffer, 0, 1, &viewport);
-
-  VkRect2D scissor = {
-      {0, 0}, {canvas->render_target.width, canvas->render_target.height}};
-
-  vkCmdSetScissor(cmd_buffer->cmd_buffer, 0, 1, &scissor);
+  re_cmd_set_scissor(
+      cmd_buffer,
+      &(re_rect_2d_t){
+          .offset = {0, 0},
+          .extent = {canvas->render_target.width, canvas->render_target.height},
+      });
 }
 
 void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
