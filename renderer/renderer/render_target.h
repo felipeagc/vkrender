@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include "vulkan.h"
 
 typedef struct re_render_target_t {
   VkSampleCountFlags sample_count;

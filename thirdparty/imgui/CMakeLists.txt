@@ -20,14 +20,13 @@ add_library(
 target_link_libraries(
 	imgui
 	PUBLIC
-	${Vulkan_LIBRARIES} 
+	volk
 	glfw)
 
 target_include_directories(
 	imgui
 	PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${Vulkan_INCLUDE_DIRS})
+	${CMAKE_CURRENT_SOURCE_DIR})
 
 if(MSVC)
 	target_compile_options(imgui PRIVATE /wd4190)

@@ -3,7 +3,6 @@
 #include "asset_types.h"
 #include <gmath.h>
 #include <renderer/buffer.h>
-#include <vulkan/vulkan.h>
 
 typedef struct re_image_t re_image_t;
 typedef struct re_pipeline_t re_pipeline_t;

@@ -3,9 +3,9 @@
 #include "cmd_buffer.h"
 #include "pipeline.h"
 #include "render_target.h"
+#include "vulkan.h"
 #include <gmath.h>
-#include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 typedef struct re_canvas_t {
   re_render_target_t render_target;

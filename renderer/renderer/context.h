@@ -2,10 +2,10 @@
 
 #include "buffer_pool.h"
 #include "image.h"
+#include "vulkan.h"
 #include <stdbool.h>
 #include <tinycthread.h>
-#include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 typedef struct re_window_t re_window_t;
 

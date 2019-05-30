@@ -4,7 +4,7 @@
 #include "util.h"
 #include "window.h"
 #include <fstd_util.h>
-#include <spirv_reflect.h>
+#include <spirv_reflect/spirv_reflect.h>
 
 static inline VkPipelineVertexInputStateCreateInfo
 default_vertex_input_state() {

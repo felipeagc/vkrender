@@ -4,8 +4,8 @@
 #include "limits.h"
 #include "render_target.h"
 #include "shader.h"
+#include "vulkan.h"
 #include <gmath.h>
-#include <vulkan/vulkan.h>
 
 typedef struct re_window_t re_window_t;
 

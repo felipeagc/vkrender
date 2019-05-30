@@ -468,6 +468,26 @@ static inline void setup_memory_allocator(re_context_t *ctx) {
   allocator_info.physicalDevice = ctx->physical_device;
   allocator_info.device = ctx->device;
 
+  allocator_info.pVulkanFunctions = &(VmaVulkanFunctions) {
+    .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
+    .vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
+    .vkAllocateMemory = vkAllocateMemory, .vkFreeMemory = vkFreeMemory,
+    .vkMapMemory = vkMapMemory, .vkUnmapMemory = vkUnmapMemory,
+    .vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges,
+    .vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges,
+    .vkBindBufferMemory = vkBindBufferMemory,
+    .vkBindImageMemory = vkBindImageMemory,
+    .vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements,
+    .vkGetImageMemoryRequirements = vkGetImageMemoryRequirements,
+    .vkCreateBuffer = vkCreateBuffer, .vkDestroyBuffer = vkDestroyBuffer,
+    .vkCreateImage = vkCreateImage, .vkDestroyImage = vkDestroyImage,
+    .vkCmdCopyBuffer = vkCmdCopyBuffer,
+#if VMA_DEDICATED_ALLOCATION
+    .vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR,
+    .vkGetImageMemoryRequirements2KHR = vkGetImageMemoryRequirements2KHR,
+#endif
+  };
+
   VK_CHECK(vmaCreateAllocator(&allocator_info, &ctx->gpu_allocator));
 }
 
@@ -494,6 +514,8 @@ static inline void create_transient_command_pool(re_context_t *ctx) {
 }
 
 void re_ctx_init() {
+  VK_CHECK(volkInitialize());
+
   glfwInit();
   glfwSetErrorCallback(glfw_error_callback);
 
@@ -521,17 +543,15 @@ void re_ctx_init() {
   mtx_init(&g_ctx.queue_mutex, mtx_plain);
 
   create_instance(&g_ctx);
+  volkLoadInstance(g_ctx.instance);
 #ifdef RE_ENABLE_VALIDATION
   if (check_validation_layer_support()) {
     setup_debug_callback(&g_ctx);
   }
 #endif
 
-  if (g_ctx.device != VK_NULL_HANDLE) {
-    return;
-  }
-
   create_device(&g_ctx);
+  volkLoadDevice(g_ctx.device);
 
   get_device_queues(&g_ctx);
 

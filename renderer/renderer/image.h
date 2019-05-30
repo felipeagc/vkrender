@@ -2,8 +2,8 @@
 
 #include "cmd_buffer.h"
 #include "descriptor_set.h"
-#include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.h>
+#include "vulkan.h"
+#include <vma/vk_mem_alloc.h>
 
 typedef struct re_image_t {
   VkImage image;

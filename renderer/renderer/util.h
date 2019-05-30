@@ -1,8 +1,8 @@
 #pragma once
 
+#include "vulkan.h"
 #include <assert.h>
 #include <stdio.h>
-#include <vulkan/vulkan.h>
 
 typedef struct re_cmd_buffer_t re_cmd_buffer_t;
 

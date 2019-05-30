@@ -1,10 +1,10 @@
 #pragma once
 
 #include "limits.h"
+#include "vulkan.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <vulkan/vulkan.h>
 
 #define RE_DESCRIPTOR_RING_SIZE 8
 

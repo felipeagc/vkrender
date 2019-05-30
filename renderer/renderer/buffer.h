@@ -1,9 +1,9 @@
 #pragma once
 
 #include "cmd_buffer.h"
+#include "vulkan.h"
 #include <stdbool.h>
-#include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 typedef enum re_buffer_type_t {
   RE_BUFFER_TYPE_VERTEX,

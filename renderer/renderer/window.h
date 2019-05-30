@@ -1,14 +1,13 @@
 #pragma once
 
-#include "render_target.h"
-#define GLFW_INCLUDE_VULKAN
 #include "cmd_buffer.h"
 #include "event.h"
+#include "render_target.h"
+#include "vulkan.h"
 #include <GLFW/glfw3.h>
 #include <gmath.h>
 #include <stdbool.h>
-#include <vulkan/vk_mem_alloc.h>
-#include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 typedef struct re_frame_resources_t {
   VkSemaphore image_available_semaphore;

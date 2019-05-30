@@ -39,23 +39,27 @@ add_library(
 
 	renderer/util.c
 	renderer/util.h
+
+	vma/vk_mem_alloc.cpp
+	vma/vk_mem_alloc.h
+
+	spirv_reflect/spirv_reflect.c
+	spirv_reflect/spirv_reflect.h
+	spirv_reflect/spirv.h
 	)
 
 target_link_libraries(
 	renderer
 	PUBLIC
-	${Vulkan_LIBRARIES}
+	volk
 	glfw
 	imgui
 	fstd
 	gmath
 	stb_image
-	tinycthread
-	vma
-	spirv_reflect)
+	tinycthread)
 
 target_include_directories(
 	renderer
 	PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${Vulkan_INCLUDE_DIRS})
+	${CMAKE_CURRENT_SOURCE_DIR})
