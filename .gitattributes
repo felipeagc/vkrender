@@ -12,3 +12,6 @@
 *.env filter=lfs diff=lfs merge=lfs -text
 
 *.cmake linguist-detectable=false
+renderer/vma/* linguist-vendored
+renderer/volk/* linguist-vendored
+thirdparty/* linguist-vendored
