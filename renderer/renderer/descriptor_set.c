@@ -157,8 +157,7 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
   re_descriptor_set_allocator_node_t *node =
       &allocator->base_nodes[allocator->current_frame];
 
-  uint32_t iters = 0;
-  while (iters < 2) {
+  while (node != NULL) {
     for (uint32_t i = 0; i < RE_DESCRIPTOR_RING_SIZE; i++) {
       // Find a non-matching descriptor set that is not in use
 
@@ -189,7 +188,6 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
     }
 
     node = node->next;
-    iters++;
   }
 
   assert(0);
