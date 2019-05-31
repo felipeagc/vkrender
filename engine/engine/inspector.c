@@ -81,11 +81,15 @@ void eg_inspector_init(
     re_render_target_t *render_target,
     eg_world_t *world,
     eg_asset_manager_t *asset_manager) {
+  memset(inspector, 0, sizeof(*inspector));
+
   inspector->selected_entity = UINT32_MAX;
   inspector->window = window;
   inspector->world = world;
   inspector->asset_manager = asset_manager;
   inspector->drawing_render_target = render_target;
+  inspector->snapping = 0.1f;
+  inspector->snap = false;
 
   eg_picker_init(
       &inspector->picker,
@@ -489,17 +493,19 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   vec3_t cursor_world =
       eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
 
+#define SNAP(x) (inspector->snap ? (x - fmodf((x), inspector->snapping)) : (x))
+
   switch (inspector->drag_direction) {
   case EG_DRAG_DIRECTION_X: {
-    transform->position.x = cursor_world.x + inspector->pos_delta.x;
+    transform->position.x = SNAP(cursor_world.x) + SNAP(inspector->pos_delta.x);
     break;
   }
   case EG_DRAG_DIRECTION_Y: {
-    transform->position.y = cursor_world.y + inspector->pos_delta.y;
+    transform->position.y = SNAP(cursor_world.y) + SNAP(inspector->pos_delta.y);
     break;
   }
   case EG_DRAG_DIRECTION_Z: {
-    transform->position.z = cursor_world.z + inspector->pos_delta.z;
+    transform->position.z = SNAP(cursor_world.z) + SNAP(inspector->pos_delta.z);
     break;
   }
   default: {
@@ -906,6 +912,11 @@ static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
   }
 }
 
+static void inspect_settings(eg_inspector_t *inspector) {
+  igCheckbox("Snapping", &inspector->snap);
+  igDragFloat("Snap to", &inspector->snapping, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
+}
+
 static inline void selected_entity_ui(eg_inspector_t *inspector) {
   eg_world_t *world = inspector->world;
 
@@ -994,6 +1005,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
 
       if (igBeginTabItem("Statistics", NULL, 0)) {
         inspect_statistics(window);
+
         igEndTabItem();
       }
 
@@ -1068,6 +1080,12 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
           igPopID();
           igSeparator();
         }
+
+        igEndTabItem();
+      }
+
+      if (igBeginTabItem("Settings", NULL, 0)) {
+        inspect_settings(inspector);
 
         igEndTabItem();
       }

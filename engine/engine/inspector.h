@@ -47,6 +47,9 @@ typedef struct eg_inspector_t {
   eg_drag_direction_t drag_direction;
 
   vec3_t pos_delta;
+
+  float snapping;
+  bool snap;
 } eg_inspector_t;
 
 void eg_inspector_init(
