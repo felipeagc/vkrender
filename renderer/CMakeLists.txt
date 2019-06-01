@@ -40,6 +40,9 @@ add_library(
 	renderer/util.c
 	renderer/util.h
 
+	renderer/memory.c
+	renderer/memory.h
+
 	vma/vk_mem_alloc.cpp
 	vma/vk_mem_alloc.h
 

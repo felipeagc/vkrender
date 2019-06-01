@@ -51,10 +51,9 @@ static inline void end_single_time_command_buffer(
 
 static inline void create_buffer(
     VkBuffer *buffer,
-    VmaAllocation *allocation,
+    re_allocation_t *allocation,
     size_t size,
     VkBufferUsageFlags buffer_usage,
-    VmaMemoryUsage memory_usage,
     VkMemoryPropertyFlags memory_property) {
   VkBufferCreateInfo buffer_create_info = {
       VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -67,17 +66,11 @@ static inline void create_buffer(
       NULL                       // pQueueFamilyIndices
   };
 
-  VmaAllocationCreateInfo alloc_info = {0};
-  alloc_info.usage = memory_usage;
-  alloc_info.requiredFlags = memory_property;
+  re_alloc_info_t alloc_info = {0};
+  alloc_info.props = memory_property;
 
-  VK_CHECK(vmaCreateBuffer(
-      g_ctx.gpu_allocator,
-      &buffer_create_info,
-      &alloc_info,
-      buffer,
-      allocation,
-      NULL));
+  VK_CHECK(re_create_buffer(
+      &g_ctx.allocator, &buffer_create_info, &alloc_info, buffer, allocation));
 }
 
 void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
@@ -85,31 +78,26 @@ void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
   assert(options->type < RE_BUFFER_TYPE_MAX);
 
   VkBufferUsageFlags buffer_usage;
-  VmaMemoryUsage memory_usage;
   VkMemoryPropertyFlags memory_property;
 
   switch (options->type) {
   case RE_BUFFER_TYPE_VERTEX:
     buffer_usage =
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
     memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     break;
   case RE_BUFFER_TYPE_INDEX:
     buffer_usage =
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
     memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     break;
   case RE_BUFFER_TYPE_UNIFORM:
     buffer_usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
   case RE_BUFFER_TYPE_TRANSFER:
     buffer_usage =
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
   default: assert(0); break;
@@ -120,17 +108,16 @@ void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
       &buffer->allocation,
       options->size,
       buffer_usage,
-      memory_usage,
       memory_property);
 }
 
 bool re_buffer_map_memory(re_buffer_t *buffer, void **dest) {
-  return vmaMapMemory(g_ctx.gpu_allocator, buffer->allocation, dest) ==
+  return re_map_memory(&g_ctx.allocator, &buffer->allocation, dest) ==
          VK_SUCCESS;
 }
 
 void re_buffer_unmap_memory(re_buffer_t *buffer) {
-  vmaUnmapMemory(g_ctx.gpu_allocator, buffer->allocation);
+  re_unmap_memory(&g_ctx.allocator, &buffer->allocation);
 }
 
 void re_buffer_transfer_to_buffer(
@@ -278,11 +265,8 @@ void re_image_transfer_to_buffer(
 void re_buffer_destroy(re_buffer_t *buffer) {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  if (buffer->buffer != VK_NULL_HANDLE &&
-      buffer->allocation != VK_NULL_HANDLE) {
-    vmaDestroyBuffer(g_ctx.gpu_allocator, buffer->buffer, buffer->allocation);
+  if (buffer->buffer != VK_NULL_HANDLE) {
+    re_destroy_buffer(&g_ctx.allocator, buffer->buffer, &buffer->allocation);
+    buffer->buffer = VK_NULL_HANDLE;
   }
-
-  buffer->buffer = VK_NULL_HANDLE;
-  buffer->allocation = VK_NULL_HANDLE;
 }
