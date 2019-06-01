@@ -86,22 +86,22 @@ static inline void create_image(
   VkSamplerCreateInfo sampler_create_info = {
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
       NULL,
-      0,                                       // flags
-      VK_FILTER_LINEAR,                        // magFilter
-      VK_FILTER_LINEAR,                        // minFilter
-      VK_SAMPLER_MIPMAP_MODE_LINEAR,           // mipmapMode
-      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeU
-      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeV
-      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT, // addressModeW
-      0.0f,                                    // mipLodBias
-      VK_FALSE,                                // anisotropyEnable
-      1.0f,                                    // maxAnisotropy
-      VK_FALSE,                                // compareEnable
-      VK_COMPARE_OP_NEVER,                     // compareOp
-      0.0f,                                    // minLod
-      (float)levels,                           // maxLod
-      VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, // borderColor
-      VK_FALSE,                                // unnormalizedCoordinates
+      0,                                          // flags
+      VK_FILTER_LINEAR,                           // magFilter
+      VK_FILTER_LINEAR,                           // minFilter
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,              // mipmapMode
+      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,    // addressModeU
+      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,    // addressModeV
+      VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,    // addressModeW
+      0.0f,                                       // mipLodBias
+      VK_TRUE,                                    // anisotropyEnable
+      g_ctx.physical_limits.maxSamplerAnisotropy, // maxAnisotropy
+      VK_FALSE,                                   // compareEnable
+      VK_COMPARE_OP_NEVER,                        // compareOp
+      0.0f,                                       // minLod
+      (float)levels,                              // maxLod
+      VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,    // borderColor
+      VK_FALSE,                                   // unnormalizedCoordinates
   };
 
   VK_CHECK(vkCreateSampler(g_ctx.device, &sampler_create_info, NULL, sampler));
