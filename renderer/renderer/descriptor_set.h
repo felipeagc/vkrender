@@ -59,6 +59,11 @@ typedef struct re_descriptor_set_allocator_t {
 
   uint32_t writes[RE_MAX_FRAMES_IN_FLIGHT];
   uint32_t matches[RE_MAX_FRAMES_IN_FLIGHT];
+
+  re_descriptor_set_allocator_node_t *last_nodes[RE_MAX_FRAMES_IN_FLIGHT];
+  uint32_t last_sets[RE_MAX_FRAMES_IN_FLIGHT];
+
+  uint32_t max_iterations[RE_MAX_FRAMES_IN_FLIGHT];
 } re_descriptor_set_allocator_t;
 
 void re_descriptor_set_allocator_init(

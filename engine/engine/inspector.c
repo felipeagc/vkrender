@@ -780,12 +780,13 @@ static void inspect_statistics(re_window_t *window) {
     }
 
     igText(
-        "Allocator #%d:\tnodes: %u\twrite rate: %u/%u",
+        "Allocator #%d:\tnodes: %u\twrite rate: %u/%u\niters: %u",
         i,
         node_count,
         allocator->writes[allocator->current_frame],
         allocator->writes[allocator->current_frame] +
-            allocator->matches[allocator->current_frame]);
+            allocator->matches[allocator->current_frame],
+        allocator->max_iterations[allocator->current_frame]);
   }
 
   igText("");

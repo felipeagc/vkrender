@@ -34,11 +34,10 @@ static void node_init(
 void re_descriptor_set_allocator_init(
     re_descriptor_set_allocator_t *allocator,
     re_descriptor_set_layout_t layout) {
+  memset(allocator, 0, sizeof(*allocator));
+
   allocator->current_frame = 0;
   allocator->layout = layout;
-
-  memset(&allocator->writes, 0, sizeof(allocator->writes));
-  memset(&allocator->matches, 0, sizeof(allocator->matches));
 
   // Set up the bindings and entries
   VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
@@ -114,8 +113,14 @@ void re_descriptor_set_allocator_begin_frame(
     re_descriptor_set_allocator_t *allocator) {
   allocator->current_frame =
       (allocator->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
+
   allocator->writes[allocator->current_frame] = 0;
   allocator->matches[allocator->current_frame] = 0;
+  allocator->max_iterations[allocator->current_frame] = 0;
+
+  allocator->last_nodes[allocator->current_frame] =
+      &allocator->base_nodes[allocator->current_frame];
+  allocator->last_sets[allocator->current_frame] = 0;
 
   re_descriptor_set_allocator_node_t *node =
       &allocator->base_nodes[allocator->current_frame];
@@ -131,13 +136,18 @@ void re_descriptor_set_allocator_begin_frame(
 VkDescriptorSet re_descriptor_set_allocator_alloc(
     re_descriptor_set_allocator_t *allocator,
     re_descriptor_info_t *descriptors) {
-  for (re_descriptor_set_allocator_node_t *node =
-           &allocator->base_nodes[allocator->current_frame];
-       node != NULL;
-       node = node->next) {
-    for (uint32_t i = 0; i < RE_DESCRIPTOR_RING_SIZE; i++) {
-      // Find a matching descriptor set
+  uint32_t first_set = allocator->last_sets[allocator->current_frame];
 
+  uint32_t iters = 0;
+  re_descriptor_set_allocator_node_t *last_node =
+      allocator->last_nodes[allocator->current_frame];
+
+  for (re_descriptor_set_allocator_node_t *node = last_node; node != NULL;
+       node = node->next) {
+    for (uint32_t i = first_set; i < RE_DESCRIPTOR_RING_SIZE; i++) {
+      iters++;
+
+      // Find a matching descriptor set
       bool same_desc =
           memcmp(
               descriptors,
@@ -148,17 +158,26 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
         allocator->matches[allocator->current_frame]++;
         node->data[i].in_use = true;
 
+        allocator->last_sets[allocator->current_frame] = i;
+        allocator->last_nodes[allocator->current_frame] = node;
+
+        allocator->max_iterations[allocator->current_frame] =
+            MAX(allocator->max_iterations[allocator->current_frame], iters);
+
         assert(node->descriptor_sets[i] != VK_NULL_HANDLE);
         return node->descriptor_sets[i];
       }
     }
+
+    first_set = 0;
   }
 
   re_descriptor_set_allocator_node_t *node =
-      &allocator->base_nodes[allocator->current_frame];
+      allocator->last_nodes[allocator->current_frame];
 
   while (node != NULL) {
-    for (uint32_t i = 0; i < RE_DESCRIPTOR_RING_SIZE; i++) {
+    for (uint32_t i = first_set; i < RE_DESCRIPTOR_RING_SIZE; i++) {
+      iters++;
       // Find a non-matching descriptor set that is not in use
 
       if (!node->data[i].in_use) {
@@ -175,6 +194,12 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
             node->descriptor_sets[i],
             allocator->update_template,
             descriptors);
+
+        allocator->last_sets[allocator->current_frame] = i;
+        allocator->last_nodes[allocator->current_frame] = node;
+
+        allocator->max_iterations[allocator->current_frame] =
+            MAX(allocator->max_iterations[allocator->current_frame], iters);
 
         assert(node->descriptor_sets[i] != VK_NULL_HANDLE);
         return node->descriptor_sets[i];
