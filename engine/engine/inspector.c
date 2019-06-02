@@ -100,43 +100,48 @@ void eg_inspector_init(
   eg_init_pipeline_spv(
       &inspector->gizmo_pipeline,
       inspector->drawing_render_target,
-      "/shaders/gizmo.vert.spv",
-      "/shaders/gizmo.frag.spv",
+      (const char *[]){"/shaders/gizmo.vert.spv", "/shaders/gizmo.frag.spv"},
+      2,
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->gizmo_picking_pipeline,
       &inspector->picker.canvas.render_target,
-      "/shaders/gizmo_picking.vert.spv",
-      "/shaders/gizmo_picking.frag.spv",
+      (const char *[]){"/shaders/gizmo_picking.vert.spv",
+                       "/shaders/gizmo_picking.frag.spv"},
+      2,
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->billboard_pipeline,
       inspector->drawing_render_target,
-      "/shaders/billboard.vert.spv",
-      "/shaders/billboard.frag.spv",
+      (const char *[]){"/shaders/billboard.vert.spv",
+                       "/shaders/billboard.frag.spv"},
+      2,
       eg_billboard_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->billboard_picking_pipeline,
       &inspector->picker.canvas.render_target,
-      "/shaders/billboard_picking.vert.spv",
-      "/shaders/billboard_picking.frag.spv",
+      (const char *[]){"/shaders/billboard_picking.vert.spv",
+                       "/shaders/billboard_picking.frag.spv"},
+      2,
       eg_billboard_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->outline_pipeline,
       inspector->drawing_render_target,
-      "/shaders/outline.vert.spv",
-      "/shaders/outline.frag.spv",
+      (const char *[]){"/shaders/outline.vert.spv",
+                       "/shaders/outline.frag.spv"},
+      2,
       eg_outline_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->picking_pipeline,
       &inspector->picker.canvas.render_target,
-      "/shaders/picking.vert.spv",
-      "/shaders/picking.frag.spv",
+      (const char *[]){"/shaders/picking.vert.spv",
+                       "/shaders/picking.frag.spv"},
+      2,
       eg_picking_pipeline_parameters());
 
   {

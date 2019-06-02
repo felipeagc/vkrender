@@ -12,8 +12,8 @@ typedef struct eg_pipeline_asset_t {
 void eg_pipeline_asset_init(
     eg_pipeline_asset_t *pipeline_asset,
     const re_render_target_t *render_target,
-    const char *vertex_path,
-    const char *fragment_path,
+    const char *paths[],
+    uint32_t path_count,
     const re_pipeline_parameters_t params);
 
 void eg_pipeline_asset_destroy(eg_pipeline_asset_t *pipeline_asset);

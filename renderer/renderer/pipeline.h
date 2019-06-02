@@ -63,6 +63,8 @@ typedef struct re_pipeline_layout_t {
 
   VkPushConstantRange push_constants[RE_MAX_PUSH_CONSTANT_RANGES];
   uint32_t push_constant_count;
+
+  VkShaderStageFlagBits stage_flags[RE_MAX_SHADER_STAGES];
 } re_pipeline_layout_t;
 
 typedef struct re_pipeline_t {
@@ -73,16 +75,16 @@ typedef struct re_pipeline_t {
 
 void re_pipeline_layout_init(
     re_pipeline_layout_t *layout,
-    const re_shader_t *vertex_shader,
-    const re_shader_t *fragment_shader);
+    const re_shader_t *shaders,
+    uint32_t shader_count);
 
 void re_pipeline_layout_destroy(re_pipeline_layout_t *layout);
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
     const re_render_target_t *render_target,
-    const re_shader_t *vertex_shader,
-    const re_shader_t *fragment_shader,
+    const re_shader_t *shaders,
+    uint32_t shader_count,
     const re_pipeline_parameters_t parameters);
 
 void re_pipeline_destroy(re_pipeline_t *pipeline);

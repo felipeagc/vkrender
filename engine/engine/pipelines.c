@@ -4,94 +4,33 @@
 #include <renderer/util.h>
 #include <renderer/window.h>
 
-eg_default_pipeline_layouts_t g_default_pipeline_layouts;
-
-static void init_pipeline_layout_spv(
-    re_pipeline_layout_t *layout,
-    const char *vertex_path,
-    const char *fragment_path) {
-  eg_file_t *vertex_file = eg_file_open_read(vertex_path);
-  assert(vertex_file);
-  size_t vertex_size = eg_file_size(vertex_file);
-  unsigned char *vertex_code = calloc(1, vertex_size);
-  eg_file_read_bytes(vertex_file, vertex_code, vertex_size);
-  eg_file_close(vertex_file);
-
-  eg_file_t *fragment_file = eg_file_open_read(fragment_path);
-  assert(fragment_file);
-  size_t fragment_size = eg_file_size(fragment_file);
-  unsigned char *fragment_code = calloc(1, fragment_size);
-  eg_file_read_bytes(fragment_file, fragment_code, fragment_size);
-  eg_file_close(fragment_file);
-
-  re_shader_t vertex_shader;
-  re_shader_init_spv(&vertex_shader, (uint32_t *)vertex_code, vertex_size);
-
-  re_shader_t fragment_shader;
-  re_shader_init_spv(
-      &fragment_shader, (uint32_t *)fragment_code, fragment_size);
-
-  re_pipeline_layout_init(layout, &vertex_shader, &fragment_shader);
-
-  free(vertex_code);
-  free(fragment_code);
-
-  re_shader_destroy(&fragment_shader);
-  re_shader_destroy(&vertex_shader);
-}
-
-void eg_default_pipeline_layouts_init() {
-  init_pipeline_layout_spv(
-      &g_default_pipeline_layouts.pbr,
-      "/shaders/pbr.vert.spv",
-      "/shaders/pbr.frag.spv");
-
-  init_pipeline_layout_spv(
-      &g_default_pipeline_layouts.skybox,
-      "/shaders/skybox.vert.spv",
-      "/shaders/skybox.frag.spv");
-}
-
-void eg_default_pipeline_layouts_destroy() {
-  re_pipeline_layout_destroy(&g_default_pipeline_layouts.pbr);
-  re_pipeline_layout_destroy(&g_default_pipeline_layouts.skybox);
-}
-
 void eg_init_pipeline_spv(
     re_pipeline_t *pipeline,
     const re_render_target_t *render_target,
-    const char *vertex_path,
-    const char *fragment_path,
+    const char *paths[],
+    uint32_t path_count,
     const re_pipeline_parameters_t params) {
-  eg_file_t *vertex_file = eg_file_open_read(vertex_path);
-  assert(vertex_file);
-  size_t vertex_size = eg_file_size(vertex_file);
-  unsigned char *vertex_code = calloc(1, vertex_size);
-  eg_file_read_bytes(vertex_file, vertex_code, vertex_size);
-  eg_file_close(vertex_file);
+  uint8_t *codes[RE_MAX_SHADER_STAGES] = {0};
+  re_shader_t shaders[RE_MAX_SHADER_STAGES];
 
-  eg_file_t *fragment_file = eg_file_open_read(fragment_path);
-  assert(fragment_file);
-  size_t fragment_size = eg_file_size(fragment_file);
-  unsigned char *fragment_code = calloc(1, fragment_size);
-  eg_file_read_bytes(fragment_file, fragment_code, fragment_size);
-  eg_file_close(fragment_file);
+  for (uint32_t i = 0; i < path_count; i++) {
+    eg_file_t *file = eg_file_open_read(paths[i]);
+    assert(file);
+    size_t size = eg_file_size(file);
+    codes[i] = calloc(1, size);
+    eg_file_read_bytes(file, codes[i], size);
+    eg_file_close(file);
 
-  re_shader_t vertex_shader;
-  re_shader_init_spv(&vertex_shader, (uint32_t *)vertex_code, vertex_size);
-
-  re_shader_t fragment_shader;
-  re_shader_init_spv(
-      &fragment_shader, (uint32_t *)fragment_code, fragment_size);
+    re_shader_init_spv(&shaders[i], (uint32_t *)codes[i], size);
+  }
 
   re_pipeline_init_graphics(
-      pipeline, render_target, &vertex_shader, &fragment_shader, params);
+      pipeline, render_target, shaders, path_count, params);
 
-  free(vertex_code);
-  free(fragment_code);
-
-  re_shader_destroy(&fragment_shader);
-  re_shader_destroy(&vertex_shader);
+  for (uint32_t i = 0; i < path_count; i++) {
+    free(codes[i]);
+    re_shader_destroy(&shaders[i]);
+  }
 }
 
 re_pipeline_parameters_t eg_standard_pipeline_parameters() {
@@ -134,8 +73,7 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
 re_pipeline_parameters_t eg_outline_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
+  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
   params.rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
   params.rasterization_state.lineWidth = 2.0f;
 

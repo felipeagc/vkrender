@@ -154,8 +154,6 @@ int main(int argc, const char *argv[]) {
   eg_fs_mount("../shaders/out", "/shaders");
   eg_fs_mount("../../shaders/out", "/shaders");
 
-  eg_default_pipeline_layouts_init();
-
   game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
 
   eg_asset_manager_init(&game.asset_manager);
@@ -185,8 +183,8 @@ int main(int argc, const char *argv[]) {
   eg_pipeline_asset_init(
       pbr_pipeline,
       &game.window.render_target,
-      "/shaders/pbr.vert.spv",
-      "/shaders/pbr.frag.spv",
+      (const char *[]){"/shaders/pbr.vert.spv", "/shaders/pbr.frag.spv"},
+      2,
       eg_standard_pipeline_parameters());
 
   eg_pipeline_asset_t *terrain_pipeline = eg_asset_alloc(
@@ -194,8 +192,9 @@ int main(int argc, const char *argv[]) {
   eg_pipeline_asset_init(
       terrain_pipeline,
       &game.window.render_target,
-      "/shaders/terrain.vert.spv",
-      "/shaders/terrain.frag.spv",
+      (const char *[]){"/shaders/terrain.vert.spv",
+                       "/shaders/terrain.frag.spv"},
+      2,
       eg_standard_pipeline_parameters());
 
   eg_pipeline_asset_t *skybox_pipeline = eg_asset_alloc(
@@ -203,8 +202,8 @@ int main(int argc, const char *argv[]) {
   eg_pipeline_asset_init(
       skybox_pipeline,
       &game.window.render_target,
-      "/shaders/skybox.vert.spv",
-      "/shaders/skybox.frag.spv",
+      (const char *[]){"/shaders/skybox.vert.spv", "/shaders/skybox.frag.spv"},
+      2,
       eg_skybox_pipeline_parameters());
 
   game.world.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
@@ -310,8 +309,6 @@ int main(int argc, const char *argv[]) {
 
   eg_world_destroy(&game.world);
   eg_asset_manager_destroy(&game.asset_manager);
-
-  eg_default_pipeline_layouts_destroy();
 
   eg_fs_destroy();
 
