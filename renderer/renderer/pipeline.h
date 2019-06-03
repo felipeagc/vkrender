@@ -58,8 +58,10 @@ typedef struct re_vertex_t {
 
 typedef struct re_pipeline_layout_t {
   VkPipelineLayout layout;
+
   re_descriptor_set_allocator_t
       *descriptor_set_allocators[RE_MAX_DESCRIPTOR_SETS];
+  uint32_t descriptor_set_count;
 
   VkPushConstantRange push_constants[RE_MAX_PUSH_CONSTANT_RANGES];
   uint32_t push_constant_count;

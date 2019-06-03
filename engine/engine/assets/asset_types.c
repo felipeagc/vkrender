@@ -7,12 +7,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-eg_asset_destructor_t eg_asset_destructors[EG_ASSET_TYPE_COUNT] = {
-    [EG_PIPELINE_ASSET_TYPE] = (eg_asset_destructor_t)eg_pipeline_asset_destroy,
-    [EG_ENVIRONMENT_ASSET_TYPE] =
-        (eg_asset_destructor_t)eg_environment_asset_destroy,
-    [EG_MESH_ASSET_TYPE] = (eg_asset_destructor_t)eg_mesh_asset_destroy,
-    [EG_PBR_MATERIAL_ASSET_TYPE] =
-        (eg_asset_destructor_t)eg_pbr_material_asset_destroy,
-    [EG_GLTF_ASSET_TYPE] = (eg_asset_destructor_t)eg_gltf_asset_destroy,
-};
+#define E(t, initializer, inspector, destructor, name) sizeof(t),
+const size_t EG_ASSET_SIZES[] = {EG__ASSETS};
+#undef E
+
+#define E(t, initializer, inspector, destructor, name) name,
+const char *EG_ASSET_NAMES[] = {EG__ASSETS};
+#undef E
+
+#define E(t, initializer, inspector, destructor, name)                         \
+  ((eg_comp_initializer_t)initializer),
+/* const eg_asset_initializer_t EG_ASSET_INITIALIZERS[] = {EG__ASSETS}; */
+#undef E
+
+#define E(t, initializer, inspector, destructor, name)                         \
+  ((eg_asset_inspector_t)inspector),
+const eg_asset_inspector_t EG_ASSET_INSPECTORS[] = {EG__ASSETS};
+#undef E
+
+#define E(t, initializer, inspector, destructor, name)                         \
+  ((eg_asset_destructor_t)destructor),
+const eg_asset_destructor_t EG_ASSET_DESTRUCTORS[] = {EG__ASSETS};
+#undef E

@@ -2,11 +2,17 @@
 
 #include <renderer/image.h>
 
+typedef struct eg_inspector_t eg_inspector_t;
+
 typedef struct eg_terrain_comp_t {
-  re_image_t heightmap;
+  uint32_t temp;
 } eg_terrain_comp_t;
 
-void eg_terrain_comp_init(
-    eg_terrain_comp_t *terrain, uint32_t width, uint32_t height);
+/*
+ * Required component functions
+ */
+void eg_terrain_comp_default(eg_terrain_comp_t *terrain);
+
+void eg_terrain_comp_inspect(eg_terrain_comp_t *terrain, eg_inspector_t *inspector);
 
 void eg_terrain_comp_destroy(eg_terrain_comp_t *terrain);

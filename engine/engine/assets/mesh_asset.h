@@ -12,6 +12,16 @@ typedef struct eg_mesh_asset_t {
   uint32_t index_count;
 } eg_mesh_asset_t;
 
+/*
+ * Required asset functions
+ */
+void eg_mesh_asset_inspect(eg_mesh_asset_t *mesh, eg_inspector_t *inspector);
+
+void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh);
+
+/*
+ * Specific functions
+ */
 void eg_mesh_asset_init(
     eg_mesh_asset_t *mesh,
     re_vertex_t *vertices,
@@ -21,4 +31,3 @@ void eg_mesh_asset_init(
 
 void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, re_cmd_buffer_t *cmd_buffer);
 
-void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh);

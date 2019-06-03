@@ -4,6 +4,7 @@
 #include "assets/gltf_asset.h"
 #include "assets/mesh_asset.h"
 #include "assets/pbr_material_asset.h"
+#include "assets/pipeline_asset.h"
 #include "comps/gltf_comp.h"
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
@@ -385,9 +386,11 @@ static void mouse_pressed(eg_inspector_t *inspector) {
         EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
       PUSH_CONSTANT();
 
-      meshes[e].uniform.model = eg_transform_comp_mat4(&transforms[e]);
       eg_mesh_comp_draw_no_mat(
-          &meshes[e], cmd_buffer, &inspector->picking_pipeline);
+          &meshes[e],
+          cmd_buffer,
+          &inspector->picking_pipeline,
+          eg_transform_comp_mat4(&transforms[e]));
     }
 
     if (EG_HAS_COMP(inspector->world, eg_gltf_comp_t, e) &&
@@ -699,8 +702,11 @@ void eg_inspector_draw_selected_outline(
     eg_transform_comp_t *transform = EG_COMP(
         inspector->world, eg_transform_comp_t, inspector->selected_entity);
 
-    mesh->uniform.model = eg_transform_comp_mat4(transform);
-    eg_mesh_comp_draw_no_mat(mesh, cmd_buffer, &inspector->outline_pipeline);
+    eg_mesh_comp_draw_no_mat(
+        mesh,
+        cmd_buffer,
+        &inspector->outline_pipeline,
+        eg_transform_comp_mat4(transform));
   }
 }
 
@@ -803,124 +809,29 @@ static void inspect_statistics(re_window_t *window) {
   }
 }
 
-static void inspect_environment_asset(eg_asset_t *asset) {}
-
-static void inspect_pbr_material_asset(eg_asset_t *asset) {
-  eg_pbr_material_asset_t *material = (eg_pbr_material_asset_t *)asset;
-
-  igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
-  igDragFloat(
-      "Metallic", &material->uniform.metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-  igDragFloat(
-      "Roughness",
-      &material->uniform.roughness,
-      0.01f,
-      0.0f,
-      1.0f,
-      "%.3f",
-      1.0f);
-  igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
-}
-
-static void inspect_pipeline_asset(eg_asset_t *asset) {
-  eg_pipeline_asset_t *pipeline_asset = (eg_pipeline_asset_t *)asset;
-  igText("Pipeline: %#010x", (uint64_t)pipeline_asset->pipeline.pipeline);
-}
-
-static void inspect_gltf_model_asset(eg_asset_t *asset) {
-  eg_gltf_asset_t *gltf_asset = (eg_gltf_asset_t *)asset;
-
-  igText("Vertex count: %u", gltf_asset->vertex_count);
-  igText("Index count: %u", gltf_asset->index_count);
-  igText("Image count: %u", gltf_asset->image_count);
-  igText("Mesh count: %u", gltf_asset->mesh_count);
-
-  for (uint32_t j = 0; j < gltf_asset->material_count; j++) {
-    igPushIDInt(j);
-    eg_gltf_asset_material_t *material = &gltf_asset->materials[j];
-
-    if (igCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-      igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
-      igDragFloat(
-          "Metallic",
-          &material->uniform.metallic,
-          0.01f,
-          0.0f,
-          1.0f,
-          "%.3f",
-          1.0f);
-      igDragFloat(
-          "Roughness",
-          &material->uniform.roughness,
-          0.01f,
-          0.0f,
-          1.0f,
-          "%.3f",
-          1.0f);
-      igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
-    }
-    igPopID();
-  }
-}
-
-static void inspect_transform_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_transform_comp_t *transform = EG_COMP(world, eg_transform_comp_t, entity);
-
-  igDragFloat3(
-      "Position", &transform->position.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
-  igDragFloat3("Scale", &transform->scale.x, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
-  igDragFloat3("Axis", &transform->axis.x, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-  igDragFloat("Angle", &transform->angle, 0.01f, 0.0f, 0.0f, "%.3f rad", 1.0f);
-}
-
-static void inspect_point_light_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_point_light_comp_t *point_light =
-      EG_COMP(world, eg_point_light_comp_t, entity);
-  igColorEdit4("Color", &point_light->color.r, 0);
-  igDragFloat(
-      "Intensity", &point_light->intensity, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
-}
-
-static void inspect_renderable_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_renderable_comp_t *renderable =
-      EG_COMP(world, eg_renderable_comp_t, entity);
-
-  igText("Pipeline asset: %s", renderable->pipeline->asset.name);
-}
-
-static void inspect_mesh_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_mesh_comp_t *mesh = EG_COMP(world, eg_mesh_comp_t, entity);
-
-  igText("Material: %s", mesh->material->asset.name);
-  igSameLine(0.0f, -1.0f);
-  if (igSmallButton("Inspect")) {
-    igOpenPopup("meshmaterialpopup");
-  }
-
-  if (igBeginPopup("meshmaterialpopup", 0)) {
-    inspect_pbr_material_asset((eg_asset_t *)mesh->material);
-    igEndPopup();
-  }
-}
-
-static void inspect_gltf_model_comp(eg_world_t *world, eg_entity_t entity) {
-  eg_gltf_comp_t *gltf_model = EG_COMP(world, eg_gltf_comp_t, entity);
-
-  igText("Asset: %s", gltf_model->asset->asset.name);
-  igSameLine(0.0f, -1.0f);
-  if (igSmallButton("Inspect")) {
-    igOpenPopup("gltfmodelpopup");
-  }
-
-  if (igBeginPopup("gltfmodelpopup", 0)) {
-    inspect_gltf_model_asset((eg_asset_t *)gltf_model->asset);
-    igEndPopup();
-  }
-}
-
 static void inspect_settings(eg_inspector_t *inspector) {
   igCheckbox("Snapping", &inspector->snap);
   igDragFloat("Snap to", &inspector->snapping, 0.01f, 0.0f, 0.0f, "%.3f", 1.0f);
+}
+
+void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
+  if (igSmallButton("Add component")) {
+    igOpenPopup("addcomp");
+  }
+
+  if (igBeginPopup("addcomp", 0)) {
+    for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
+      if (EG_HAS_COMP_ID(inspector->world, comp_id, entity)) {
+        continue;
+      }
+      if (igSelectable(
+              EG_COMP_NAMES[comp_id], false, 0, (ImVec2){0.0f, 0.0f})) {
+        eg_world_add_comp(inspector->world, comp_id, entity);
+      }
+    }
+
+    igEndPopup();
+  }
 }
 
 static inline void selected_entity_ui(eg_inspector_t *inspector) {
@@ -939,6 +850,8 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
         return;
       }
 
+      igSeparator();
+
       if (igCollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
         for (eg_tag_t tag = 0; tag < EG_TAG_MAX; tag++) {
           bool has_tag =
@@ -949,39 +862,35 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
         }
       }
 
-      if (EG_HAS_COMP(world, eg_transform_comp_t, entity) &&
-          igCollapsingHeader(
-              EG_COMP_NAME(eg_transform_comp_t),
-              ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_transform_comp(world, entity);
-      }
+      for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
+        igPushIDInt((int)comp_id);
 
-      if (EG_HAS_COMP(world, eg_point_light_comp_t, entity) &&
-          igCollapsingHeader(
-              EG_COMP_NAME(eg_point_light_comp_t),
-              ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_point_light_comp(world, entity);
-      }
+        if (!EG_HAS_COMP_ID(world, comp_id, entity) ||
+            !igCollapsingHeader(
+                EG_COMP_NAMES[comp_id], ImGuiTreeNodeFlags_DefaultOpen)) {
+          igPopID();
+          continue;
+        }
 
-      if (EG_HAS_COMP(world, eg_renderable_comp_t, entity) &&
-          igCollapsingHeader(
-              EG_COMP_NAME(eg_renderable_comp_t),
-              ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_renderable_comp(world, entity);
-      }
+        if (igSmallButton("Remove component")) {
+          eg_world_remove_comp(world, comp_id, entity);
+          igPopID();
+          continue;
+        }
 
-      if (EG_HAS_COMP(world, eg_mesh_comp_t, entity) &&
-          igCollapsingHeader(
-              EG_COMP_NAME(eg_mesh_comp_t), ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_mesh_comp(world, entity);
-      }
+        if (EG_COMP_INSPECTORS[comp_id] != NULL) {
+          EG_COMP_INSPECTORS[comp_id](
+              EG_COMP_BY_ID(world, comp_id, inspector->selected_entity),
+              inspector);
+        }
 
-      if (EG_HAS_COMP(world, eg_gltf_comp_t, entity) &&
-          igCollapsingHeader(
-              EG_COMP_NAME(eg_gltf_comp_t), ImGuiTreeNodeFlags_DefaultOpen)) {
-        inspect_gltf_model_comp(world, entity);
+        igPopID();
       }
     }
+
+    igSeparator();
+    add_component_button(inspector, inspector->selected_entity);
+
     igEnd();
   }
 }
@@ -1047,40 +956,14 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
 
           igPushIDInt(i);
 
-#define ASSET_HEADER(format, ...)                                              \
-  snprintf(str, sizeof(str), format, __VA_ARGS__);                             \
-  if (igCollapsingHeader(str, 0))
-
-          switch (asset->type) {
-          case EG_ENVIRONMENT_ASSET_TYPE: {
-            ASSET_HEADER("Environment: %s", asset->name) {
-              inspect_environment_asset(asset);
-            }
-            break;
-          }
-          case EG_PBR_MATERIAL_ASSET_TYPE: {
-            ASSET_HEADER("Material: %s", asset->name) {
-              inspect_pbr_material_asset(asset);
-            }
-            break;
-          }
-          case EG_MESH_ASSET_TYPE: {
-            ASSET_HEADER("Mesh: %s", asset->name) {}
-            break;
-          }
-          case EG_PIPELINE_ASSET_TYPE: {
-            ASSET_HEADER("Pipeline: %s", asset->name) {
-              inspect_pipeline_asset(asset);
-            }
-            break;
-          }
-          case EG_GLTF_ASSET_TYPE: {
-            ASSET_HEADER("GLTF model: %s", asset->name) {
-              inspect_gltf_model_asset(asset);
-            }
-            break;
-          }
-          default: break;
+          snprintf(
+              str,
+              sizeof(str),
+              "%s: %s",
+              EG_ASSET_NAMES[asset->type],
+              asset->name);
+          if (igCollapsingHeader(str, 0)) {
+            EG_ASSET_INSPECTORS[asset->type](asset, inspector);
           }
 
           igPopID();

@@ -203,8 +203,6 @@ void re_pipeline_layout_init(
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
   }
 
-  uint32_t set_count = 0;
-
   for (uint32_t i = 0; i < shader_count; i++) {
     SpvReflectShaderModule *mod = &modules[i];
 
@@ -212,11 +210,12 @@ void re_pipeline_layout_init(
 
     for (uint32_t s = 0; s < mod->descriptor_set_count; s++) {
       SpvReflectDescriptorSet *set = &mod->descriptor_sets[s];
-      set_count = MAX(set_count, set->set + 1);
+      layout->descriptor_set_count =
+          MAX(layout->descriptor_set_count, set->set + 1);
     }
   }
 
-  assert(set_count <= RE_MAX_DESCRIPTOR_SETS);
+  assert(layout->descriptor_set_count <= RE_MAX_DESCRIPTOR_SETS);
 
   uint32_t binding_counts[RE_MAX_DESCRIPTOR_SETS] = {0};
 
@@ -265,7 +264,7 @@ void re_pipeline_layout_init(
   VkDescriptorSetLayout set_layouts[RE_MAX_DESCRIPTOR_SETS] = {0};
 
   // Request the allocator
-  for (uint32_t i = 0; i < set_count; i++) {
+  for (uint32_t i = 0; i < layout->descriptor_set_count; i++) {
     layout->descriptor_set_allocators[i] =
         rx_ctx_request_descriptor_set_allocator(alloc_layouts[i]);
     set_layouts[i] = layout->descriptor_set_allocators[i]->set_layout;
@@ -296,7 +295,7 @@ void re_pipeline_layout_init(
           .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
           .pNext = NULL,
           .flags = 0,
-          .setLayoutCount = set_count,
+          .setLayoutCount = layout->descriptor_set_count,
           .pSetLayouts = set_layouts,
           .pushConstantRangeCount = layout->push_constant_count,
           .pPushConstantRanges = layout->push_constants,

@@ -25,6 +25,17 @@ typedef struct eg_pbr_material_asset_t {
   re_image_t *emissive_texture;
 } eg_pbr_material_asset_t;
 
+/*
+ * Required asset functions
+ */
+void eg_pbr_material_asset_inspect(
+    eg_pbr_material_asset_t *material, eg_inspector_t *inspector);
+
+void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material);
+
+/*
+ * Specific functions
+ */
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,
     re_image_t *albedo_texture,
@@ -38,5 +49,3 @@ void eg_pbr_material_asset_bind(
     re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline,
     uint32_t set_index);
-
-void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material);

@@ -1,5 +1,7 @@
 #include "pbr_material_asset.h"
+
 #include "../engine.h"
+#include "../imgui.h"
 #include "../pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
@@ -8,6 +10,24 @@
 #include <renderer/util.h>
 #include <renderer/window.h>
 #include <string.h>
+
+void eg_pbr_material_asset_inspect(
+    eg_pbr_material_asset_t *material, eg_inspector_t *inspector) {
+  igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
+  igDragFloat(
+      "Metallic", &material->uniform.metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+  igDragFloat(
+      "Roughness",
+      &material->uniform.roughness,
+      0.01f,
+      0.0f,
+      1.0f,
+      "%.3f",
+      1.0f);
+  igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+}
+
+void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {}
 
 void eg_pbr_material_asset_init(
     eg_pbr_material_asset_t *material,
@@ -65,5 +85,3 @@ void eg_pbr_material_asset_bind(
 
   re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set_index);
 }
-
-void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {}

@@ -68,7 +68,7 @@ void eg_asset_manager_free(
 
   fstd_map_remove(&asset_manager->map, asset->name);
 
-  eg_asset_destructors[asset->type](asset);
+  EG_ASSET_DESTRUCTORS[asset->type](asset);
 
   mtx_lock(&asset_manager->mutex);
   fstd_free(&asset_manager->allocator, asset);
@@ -79,10 +79,9 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
   for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
     eg_asset_t *asset = eg_asset_manager_get_by_index(asset_manager, i);
 
-    if (asset == NULL)
-      continue;
+    if (asset == NULL) continue;
 
-    eg_asset_destructors[asset->type](asset);
+    EG_ASSET_DESTRUCTORS[asset->type](asset);
   }
 
   fstd_map_destroy(&asset_manager->map);

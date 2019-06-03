@@ -1,17 +1,51 @@
 #include "gltf_asset.h"
+
 #include "../engine.h"
 #include "../filesystem.h"
-#include "../pipelines.h"
+#include "../imgui.h"
 #include <assert.h>
 #include <cgltf.h>
 #include <float.h>
 #include <fstd_util.h>
 #include <renderer/context.h>
-#include <renderer/pipeline.h>
 #include <renderer/util.h>
 #include <stb_image.h>
 #include <stdlib.h>
 #include <string.h>
+
+void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector) {
+  igText("Vertex count: %u", model->vertex_count);
+  igText("Index count: %u", model->index_count);
+  igText("Image count: %u", model->image_count);
+  igText("Mesh count: %u", model->mesh_count);
+
+  for (uint32_t j = 0; j < model->material_count; j++) {
+    igPushIDInt(j);
+    eg_gltf_asset_material_t *material = &model->materials[j];
+
+    if (igCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
+      igColorEdit4("Color", &material->uniform.base_color_factor.x, 0);
+      igDragFloat(
+          "Metallic",
+          &material->uniform.metallic,
+          0.01f,
+          0.0f,
+          1.0f,
+          "%.3f",
+          1.0f);
+      igDragFloat(
+          "Roughness",
+          &material->uniform.roughness,
+          0.01f,
+          0.0f,
+          1.0f,
+          "%.3f",
+          1.0f);
+      igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+    }
+    igPopID();
+  }
+}
 
 static void dimensions_init(eg_gltf_asset_dimensions_t *dimensions) {
   dimensions->min = (vec3_t){FLT_MAX, FLT_MAX, FLT_MAX};

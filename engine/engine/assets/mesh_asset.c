@@ -3,6 +3,13 @@
 #include <renderer/window.h>
 #include <string.h>
 
+void eg_mesh_asset_inspect(eg_mesh_asset_t *mesh, eg_inspector_t *inspector) {}
+
+void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
+  re_buffer_destroy(&mesh->vertex_buffer);
+  re_buffer_destroy(&mesh->index_buffer);
+}
+
 void eg_mesh_asset_init(
     eg_mesh_asset_t *mesh,
     re_vertex_t *vertices,
@@ -65,9 +72,4 @@ void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, re_cmd_buffer_t *cmd_buffer) {
   re_cmd_bind_vertex_buffers(cmd_buffer, 0, 1, &mesh->vertex_buffer, &offsets);
 
   re_cmd_draw_indexed(cmd_buffer, mesh->index_count, 1, 0, 0, 0);
-}
-
-void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
-  re_buffer_destroy(&mesh->vertex_buffer);
-  re_buffer_destroy(&mesh->index_buffer);
 }

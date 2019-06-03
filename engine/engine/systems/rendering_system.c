@@ -1,5 +1,6 @@
 #include "rendering_system.h"
 
+#include "../assets/pipeline_asset.h"
 #include "../comps/gltf_comp.h"
 #include "../comps/mesh_comp.h"
 #include "../comps/renderable_comp.h"
@@ -10,8 +11,7 @@
 
 static void bind_stuff(
     eg_world_t *world, re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline) {
-  if (pipeline == NULL)
-    return;
+  if (pipeline == NULL) return;
 
   re_cmd_bind_pipeline(cmd_buffer, pipeline);
   eg_camera_bind(&world->camera, cmd_buffer, pipeline, 0);
@@ -33,18 +33,21 @@ void eg_rendering_system(eg_world_t *world, re_cmd_buffer_t *cmd_buffer) {
       continue;
     }
 
-    // Bind pipeline
-    if (EG_HAS_COMP(world, eg_renderable_comp_t, e)) {
-      if (&renderables[e].pipeline->pipeline != pipeline) {
-        pipeline = &renderables[e].pipeline->pipeline;
-        bind_stuff(world, cmd_buffer, pipeline);
-      }
-    } else {
-      pipeline = NULL;
+    if (!EG_HAS_COMP(world, eg_renderable_comp_t, e)) {
+      continue;
     }
 
-    if (pipeline == NULL) {
+    // Bind pipeline
+    re_pipeline_t *renderable_pipeline =
+        eg_renderable_comp_get_pipeline(&renderables[e]);
+
+    if (renderable_pipeline == NULL) {
       continue;
+    }
+
+    if (renderable_pipeline != pipeline) {
+      pipeline = renderable_pipeline;
+      bind_stuff(world, cmd_buffer, pipeline);
     }
 
     // Render mesh
@@ -61,8 +64,11 @@ void eg_rendering_system(eg_world_t *world, re_cmd_buffer_t *cmd_buffer) {
         re_cmd_push_constants(cmd_buffer, pipeline, 0, sizeof(pc), &pc);
       }
 
-      meshes[e].uniform.model = eg_transform_comp_mat4(&transforms[e]);
-      eg_mesh_comp_draw(&meshes[e], cmd_buffer, pipeline);
+      eg_mesh_comp_draw(
+          &meshes[e],
+          cmd_buffer,
+          pipeline,
+          eg_transform_comp_mat4(&transforms[e]));
     }
 
     if (EG_HAS_COMP(world, eg_gltf_comp_t, e) &&

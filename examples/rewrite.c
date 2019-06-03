@@ -32,7 +32,6 @@ static eg_entity_t add_gltf(
 
   eg_transform_comp_t *transform =
       EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
-  eg_transform_comp_init(transform);
   transform->position = position;
   transform->scale = scale;
 
@@ -52,7 +51,6 @@ add_light(game_t *game, vec3_t position, vec3_t color, float intensity) {
 
   eg_transform_comp_t *transform_comp =
       EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
-  eg_transform_comp_init(transform_comp);
   transform_comp->position = position;
 
   eg_point_light_comp_t *light_comp =
@@ -114,7 +112,6 @@ static eg_entity_t add_terrain(
 
   eg_transform_comp_t *transform =
       EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
-  eg_transform_comp_init(transform);
   transform->position = (vec3_t){0.0f, -2.0f, 0.0f};
 
   eg_mesh_comp_t *mesh = EG_ADD_COMP(&game->world, eg_mesh_comp_t, ent);
@@ -122,7 +119,6 @@ static eg_entity_t add_terrain(
 
   eg_terrain_comp_t *terrain =
       EG_ADD_COMP(&game->world, eg_terrain_comp_t, ent);
-  eg_terrain_comp_init(terrain, dim, dim);
 
   eg_renderable_comp_t *renderable =
       EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);

@@ -30,6 +30,17 @@ upload_ktx(re_image_t *image, re_cmd_pool_t pool, ktx_data_t *ktx_data) {
   }
 }
 
+void eg_environment_asset_inspect(
+    eg_environment_asset_t *environment, eg_inspector_t *inspector) {}
+
+void eg_environment_asset_destroy(eg_environment_asset_t *environment) {
+  re_image_destroy(&environment->skybox_cubemap);
+  re_image_destroy(&environment->irradiance_cubemap);
+  re_image_destroy(&environment->radiance_cubemap);
+
+  re_image_destroy(&environment->brdf_lut);
+}
+
 void eg_environment_asset_init(
     eg_environment_asset_t *environment,
     const char *skybox_path,
@@ -168,12 +179,4 @@ void eg_environment_asset_init(
 
     free(data);
   }
-}
-
-void eg_environment_asset_destroy(eg_environment_asset_t *environment) {
-  re_image_destroy(&environment->skybox_cubemap);
-  re_image_destroy(&environment->irradiance_cubemap);
-  re_image_destroy(&environment->radiance_cubemap);
-
-  re_image_destroy(&environment->brdf_lut);
 }

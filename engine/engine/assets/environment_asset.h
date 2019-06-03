@@ -2,7 +2,6 @@
 
 #include "asset_types.h"
 #include <renderer/image.h>
-#include <stdint.h>
 
 typedef struct eg_environment_asset_t {
   eg_asset_t asset;
@@ -13,6 +12,17 @@ typedef struct eg_environment_asset_t {
   re_image_t brdf_lut;
 } eg_environment_asset_t;
 
+/*
+ * Required asset functions
+ */
+void eg_environment_asset_inspect(
+    eg_environment_asset_t *environment, eg_inspector_t *inspector);
+
+void eg_environment_asset_destroy(eg_environment_asset_t *environment);
+
+/*
+ * Specific functions
+ */
 void eg_environment_asset_init(
     eg_environment_asset_t *environment,
     const char *skybox_path,
@@ -20,4 +30,3 @@ void eg_environment_asset_init(
     const char *radiance_path,
     const char *brdf_lut_path);
 
-void eg_environment_asset_destroy(eg_environment_asset_t *environment);

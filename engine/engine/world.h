@@ -14,8 +14,14 @@
 #define EG_COMP(world, comp, entity)                                           \
   (&((comp *)(world)->pools[EG_COMP_TYPE(comp)].data)[entity])
 
+#define EG_COMP_BY_ID(world, comp_id, entity)                                  \
+  (&(world)->pools[comp_id].data[entity * EG_COMP_SIZES[comp_id]])
+
 #define EG_HAS_COMP(world, comp, entity)                                       \
   fstd_bitset_at((world)->comp_masks[EG_COMP_TYPE(comp)].bytes, entity)
+
+#define EG_HAS_COMP_ID(world, comp_id, entity)                                 \
+  fstd_bitset_at((world)->comp_masks[comp_id].bytes, entity)
 
 #define EG_ADD_COMP(world, comp, entity)                                       \
   eg_world_add_comp((world), EG_COMP_TYPE(comp), entity)
