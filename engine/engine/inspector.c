@@ -1,19 +1,15 @@
 #include "inspector.h"
+
 #include "asset_manager.h"
-#include "assets/environment_asset.h"
-#include "assets/gltf_asset.h"
-#include "assets/mesh_asset.h"
-#include "assets/pbr_material_asset.h"
-#include "assets/pipeline_asset.h"
 #include "comps/gltf_comp.h"
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
-#include "comps/renderable_comp.h"
 #include "comps/transform_comp.h"
 #include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
 #include "world.h"
+#include <float.h>
 #include <renderer/context.h>
 #include <renderer/window.h>
 #include <stb_image.h>
@@ -769,6 +765,25 @@ static void inspect_statistics(re_window_t *window) {
   igText("Delta time: %.4fms", window->delta_time);
   igText("FPS: %.2f", 1.0f / window->delta_time);
   igText("");
+
+#define FRAME_TIMES_MAX 512
+
+  static float frame_times[FRAME_TIMES_MAX] = {0};
+  static int frame = 0;
+
+  frame_times[frame] = window->delta_time;
+  frame = (frame + 1) % FRAME_TIMES_MAX;
+
+  igPlotLines(
+      "Frame time",
+      frame_times,
+      FRAME_TIMES_MAX,
+      frame,
+      NULL,
+      0.0f,
+      1.0f/60.0f,
+      (ImVec2){0, 100},
+      sizeof(float));
 
   igText(
       "Descriptor set allocator count: %u",
