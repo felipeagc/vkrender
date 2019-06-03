@@ -13,7 +13,7 @@ typedef struct re_allocation_t {
 } re_allocation_t;
 
 typedef struct re_allocator_t {
-
+  uint32_t temp;
 } re_allocator_t;
 
 void re_allocator_init(re_allocator_t *allocator);
