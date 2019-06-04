@@ -29,7 +29,7 @@ void re_buffer_pool_init(
   buffer_pool->current_frame = 0;
   buffer_pool->part_size =
       (uint32_t)g_ctx.physical_limits.minUniformBufferOffsetAlignment;
-  buffer_pool->buffer_parts = options->size / buffer_pool->part_size;
+  buffer_pool->buffer_parts = (uint32_t)options->size / buffer_pool->part_size;
   assert(buffer_pool->buffer_parts > 1);
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; i++) {

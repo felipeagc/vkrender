@@ -49,7 +49,7 @@ VkResult re_create_buffer(
   VkPhysicalDeviceMemoryProperties props = {0};
   vkGetPhysicalDeviceMemoryProperties(g_ctx.physical_device, &props);
 
-  VkMemoryAllocateInfo vk_alloc_info = {};
+  VkMemoryAllocateInfo vk_alloc_info = {0};
   vk_alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   vk_alloc_info.allocationSize = mem_requirements.size;
 
