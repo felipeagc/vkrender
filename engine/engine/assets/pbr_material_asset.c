@@ -73,15 +73,16 @@ void eg_pbr_material_asset_bind(
     eg_pbr_material_asset_t *material,
     re_cmd_buffer_t *cmd_buffer,
     re_pipeline_t *pipeline,
-    uint32_t set_index) {
-  re_cmd_bind_image(cmd_buffer, 0, material->albedo_texture);
-  re_cmd_bind_image(cmd_buffer, 1, material->normal_texture);
-  re_cmd_bind_image(cmd_buffer, 2, material->metallic_roughness_texture);
-  re_cmd_bind_image(cmd_buffer, 3, material->occlusion_texture);
-  re_cmd_bind_image(cmd_buffer, 4, material->emissive_texture);
+    uint32_t set) {
+  re_cmd_bind_image(cmd_buffer, set, 0, material->albedo_texture);
+  re_cmd_bind_image(cmd_buffer, set, 1, material->normal_texture);
+  re_cmd_bind_image(cmd_buffer, set, 2, material->metallic_roughness_texture);
+  re_cmd_bind_image(cmd_buffer, set, 3, material->occlusion_texture);
+  re_cmd_bind_image(cmd_buffer, set, 4, material->emissive_texture);
 
-  void *mapping = re_cmd_bind_uniform(cmd_buffer, 5, sizeof(material->uniform));
+  void *mapping =
+      re_cmd_bind_uniform(cmd_buffer, set, 5, sizeof(material->uniform));
   memcpy(mapping, &material->uniform, sizeof(material->uniform));
 
-  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set_index);
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set);
 }

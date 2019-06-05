@@ -10,8 +10,9 @@ typedef VkCommandPool re_cmd_pool_t;
 
 typedef struct re_cmd_buffer_t {
   VkCommandBuffer cmd_buffer;
-  re_descriptor_info_t bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS];
 
+  re_descriptor_info_t bindings[RE_MAX_DESCRIPTOR_SETS]
+                               [RE_MAX_DESCRIPTOR_SET_BINDINGS];
   uint32_t dynamic_offset;
 
   re_viewport_t viewport;
@@ -66,13 +67,17 @@ void re_cmd_bind_descriptor_set(
 void re_cmd_bind_descriptor(
     re_cmd_buffer_t *cmd_buffer,
     uint32_t binding,
+    uint32_t set,
     re_descriptor_info_t descriptor);
 
 void re_cmd_bind_image(
-    re_cmd_buffer_t *cmd_buffer, uint32_t binding, re_image_t *image);
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t set,
+    uint32_t binding,
+    re_image_t *image);
 
-void *
-re_cmd_bind_uniform(re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size);
+void *re_cmd_bind_uniform(
+    re_cmd_buffer_t *cmd_buffer, uint32_t set, uint32_t binding, size_t size);
 
 // TODO: push constants
 void re_cmd_push_constants(

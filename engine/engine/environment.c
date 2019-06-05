@@ -32,18 +32,19 @@ void eg_environment_bind(
     eg_environment_t *environment,
     re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline,
-    uint32_t set_index) {
+    uint32_t set) {
   re_cmd_bind_pipeline(cmd_buffer, pipeline);
 
   void *mapping =
-      re_cmd_bind_uniform(cmd_buffer, 0, sizeof(environment->uniform));
+      re_cmd_bind_uniform(cmd_buffer, set, 0, sizeof(environment->uniform));
   memcpy(mapping, &environment->uniform, sizeof(environment->uniform));
 
-  re_cmd_bind_image(cmd_buffer, 1, &environment->asset->irradiance_cubemap);
-  re_cmd_bind_image(cmd_buffer, 2, &environment->asset->radiance_cubemap);
-  re_cmd_bind_image(cmd_buffer, 3, &environment->asset->brdf_lut);
+  re_cmd_bind_image(
+      cmd_buffer, set, 1, &environment->asset->irradiance_cubemap);
+  re_cmd_bind_image(cmd_buffer, set, 2, &environment->asset->radiance_cubemap);
+  re_cmd_bind_image(cmd_buffer, set, 3, &environment->asset->brdf_lut);
 
-  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set_index);
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set);
 }
 
 void eg_environment_draw_skybox(
@@ -53,15 +54,16 @@ void eg_environment_draw_skybox(
   re_cmd_bind_pipeline(cmd_buffer, pipeline);
 
   void *mapping =
-      re_cmd_bind_uniform(cmd_buffer, 0, sizeof(environment->uniform));
+      re_cmd_bind_uniform(cmd_buffer, 1, 0, sizeof(environment->uniform));
   memcpy(mapping, &environment->uniform, sizeof(environment->uniform));
 
   switch (environment->skybox_type) {
   case EG_SKYBOX_DEFAULT:
-    re_cmd_bind_image(cmd_buffer, 1, &environment->asset->skybox_cubemap);
+    re_cmd_bind_image(cmd_buffer, 1, 1, &environment->asset->skybox_cubemap);
     break;
   case EG_SKYBOX_IRRADIANCE:
-    re_cmd_bind_image(cmd_buffer, 1, &environment->asset->irradiance_cubemap);
+    re_cmd_bind_image(
+        cmd_buffer, 1, 1, &environment->asset->irradiance_cubemap);
     break;
   }
 

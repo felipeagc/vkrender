@@ -2,7 +2,7 @@
 
 #include "../assets/mesh_asset.h"
 #include "../assets/pbr_material_asset.h"
-#include "../imgui.h"
+#include "../inspector_utils.h"
 #include <renderer/context.h>
 #include <string.h>
 
@@ -12,20 +12,16 @@ void eg_mesh_comp_default(eg_mesh_comp_t *mesh) {
 }
 
 void eg_mesh_comp_inspect(eg_mesh_comp_t *mesh, eg_inspector_t *inspector) {
-  if (mesh->material) {
-    igText("Material: %s", mesh->material->asset.name);
-    igSameLine(0.0f, -1.0f);
-    if (igSmallButton("Inspect")) {
-      igOpenPopup("meshmaterialpopup");
-    }
-
-    if (igBeginPopup("meshmaterialpopup", 0)) {
-      eg_pbr_material_asset_inspect(mesh->material, inspector);
-      igEndPopup();
-    }
-  } else {
-    igText("No material");
-  }
+  eg_inspect_assets(
+      inspector,
+      mesh,
+      2,
+      (eg_inspect_assets_t[]){
+          {"Material",
+           (eg_asset_t **)&mesh->material,
+           EG_ASSET_TYPE(eg_pbr_material_asset_t)},
+          {"Mesh", (eg_asset_t **)&mesh->asset, EG_ASSET_TYPE(eg_mesh_asset_t)},
+      });
 }
 
 void eg_mesh_comp_destroy(eg_mesh_comp_t *mesh) {}
@@ -56,7 +52,7 @@ void eg_mesh_comp_draw(
   uniform.local_model = mat4_identity();
   uniform.model = transform;
 
-  void *mapping = re_cmd_bind_uniform(cmd_buffer, 0, sizeof(uniform));
+  void *mapping = re_cmd_bind_uniform(cmd_buffer, 2, 0, sizeof(uniform));
   memcpy(mapping, &uniform, sizeof(uniform));
 
   re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 2);
@@ -79,7 +75,7 @@ void eg_mesh_comp_draw_no_mat(
   uniform.local_model = mat4_identity();
   uniform.model = transform;
 
-  void *mapping = re_cmd_bind_uniform(cmd_buffer, 0, sizeof(uniform));
+  void *mapping = re_cmd_bind_uniform(cmd_buffer, 1, 0, sizeof(uniform));
   memcpy(mapping, &uniform, sizeof(uniform));
 
   re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 1);

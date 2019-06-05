@@ -1,9 +1,7 @@
 #include "gltf_comp.h"
 
-#include "../asset_manager.h"
 #include "../assets/gltf_asset.h"
-#include "../imgui.h"
-#include "../inspector.h"
+#include "../inspector_utils.h"
 #include "../pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
@@ -15,40 +13,15 @@
 void eg_gltf_comp_default(eg_gltf_comp_t *model) { model->asset = NULL; }
 
 void eg_gltf_comp_inspect(eg_gltf_comp_t *model, eg_inspector_t *inspector) {
-  if (model->asset) {
-    igText("Asset: %s", model->asset->asset.name);
-
-    igSameLine(0.0f, -1.0f);
-    if (igSmallButton("Inspect")) {
-      igOpenPopup("inspectgltfmodelasset");
-    }
-
-    if (igBeginPopup("inspectgltfmodelasset", 0)) {
-      eg_gltf_asset_inspect(model->asset, inspector);
-      igEndPopup();
-    }
-  } else {
-    igText("No asset");
-  }
-
-  if (igSmallButton("Select asset")) {
-    igOpenPopup("selectgltfmodelasset");
-  }
-
-  if (igBeginPopup("selectgltfmodelasset", 0)) {
-    for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
-      eg_asset_t *asset =
-          eg_asset_manager_get_by_index(inspector->asset_manager, i);
-      if (asset == NULL) continue;
-      if (asset->type != EG_ASSET_TYPE(eg_gltf_asset_t)) continue;
-
-      if (igSelectable(asset->name, false, 0, (ImVec2){0.0f, 0.0f})) {
-        model->asset = (eg_gltf_asset_t *)asset;
-      }
-    }
-
-    igEndPopup();
-  }
+  eg_inspect_assets(
+      inspector,
+      model,
+      1,
+      (eg_inspect_assets_t[]){
+          {"Model",
+           (eg_asset_t **)&model->asset,
+           EG_ASSET_TYPE(eg_gltf_asset_t)},
+      });
 }
 
 void eg_gltf_comp_destroy(eg_gltf_comp_t *model) {}
@@ -71,7 +44,7 @@ static void draw_node(
       ubo.local_model = node->mesh->matrix;
       ubo.model = matrix;
 
-      void *mapping = re_cmd_bind_uniform(cmd_buffer, 0, sizeof(ubo));
+      void *mapping = re_cmd_bind_uniform(cmd_buffer, 2, 0, sizeof(ubo));
       memcpy(mapping, &ubo, sizeof(ubo));
 
       re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 2);
@@ -84,17 +57,22 @@ static void draw_node(
         // Material
         {
 
-          re_cmd_bind_image(cmd_buffer, 0, primitive->material->albedo_texture);
-          re_cmd_bind_image(cmd_buffer, 1, primitive->material->normal_texture);
           re_cmd_bind_image(
-              cmd_buffer, 2, primitive->material->metallic_roughness_texture);
+              cmd_buffer, 3, 0, primitive->material->albedo_texture);
           re_cmd_bind_image(
-              cmd_buffer, 3, primitive->material->occlusion_texture);
+              cmd_buffer, 3, 1, primitive->material->normal_texture);
           re_cmd_bind_image(
-              cmd_buffer, 4, primitive->material->emissive_texture);
+              cmd_buffer,
+              3,
+              2,
+              primitive->material->metallic_roughness_texture);
+          re_cmd_bind_image(
+              cmd_buffer, 3, 3, primitive->material->occlusion_texture);
+          re_cmd_bind_image(
+              cmd_buffer, 3, 4, primitive->material->emissive_texture);
 
           void *mapping = re_cmd_bind_uniform(
-              cmd_buffer, 5, sizeof(primitive->material->uniform));
+              cmd_buffer, 3, 5, sizeof(primitive->material->uniform));
           memcpy(
               mapping,
               &primitive->material->uniform,
@@ -138,7 +116,7 @@ static void draw_node_no_mat(
       ubo.local_model = node->mesh->matrix;
       ubo.model = matrix;
 
-      void *mapping = re_cmd_bind_uniform(cmd_buffer, 0, sizeof(ubo));
+      void *mapping = re_cmd_bind_uniform(cmd_buffer, 1, 0, sizeof(ubo));
       memcpy(mapping, &ubo, sizeof(ubo));
 
       re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 1);

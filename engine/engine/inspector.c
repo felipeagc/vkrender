@@ -245,7 +245,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
       &inspector->billboard_picking_pipeline,
       0);
 
-  re_cmd_bind_image(cmd_buffer, 0, &inspector->light_billboard_image);
+  re_cmd_bind_image(cmd_buffer, 1, 0, &inspector->light_billboard_image);
   re_cmd_bind_descriptor_set(cmd_buffer, &inspector->billboard_pipeline, 1);
 
   eg_transform_comp_t *transforms =
@@ -526,7 +526,7 @@ void eg_inspector_draw_gizmos(
   eg_camera_bind(
       &inspector->world->camera, cmd_buffer, &inspector->billboard_pipeline, 0);
 
-  re_cmd_bind_image(cmd_buffer, 0, &inspector->light_billboard_image);
+  re_cmd_bind_image(cmd_buffer, 1, 0, &inspector->light_billboard_image);
   re_cmd_bind_descriptor_set(cmd_buffer, &inspector->billboard_pipeline, 1);
 
   eg_transform_comp_t *transforms =
@@ -781,7 +781,7 @@ static void inspect_statistics(re_window_t *window) {
       frame,
       NULL,
       0.0f,
-      1.0f/60.0f,
+      1.0f / 60.0f,
       (ImVec2){0, 100},
       sizeof(float));
 
@@ -830,7 +830,8 @@ static void inspect_settings(eg_inspector_t *inspector) {
 }
 
 void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
-  if (igSmallButton("Add component")) {
+  if (igButton(
+          "Add component", (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
     igOpenPopup("addcomp");
   }
 
@@ -887,7 +888,7 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
           continue;
         }
 
-        if (igSmallButton("Remove component")) {
+        if (igButton("Remove component", (ImVec2){0})) {
           eg_world_remove_comp(world, comp_id, entity);
           igPopID();
           continue;
@@ -940,7 +941,9 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
       }
 
       if (igBeginTabItem("Entities", NULL, 0)) {
-        if (igSmallButton("Add entity")) {
+        if (igButton(
+                "Add entity",
+                (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
           eg_world_add(world);
         }
 

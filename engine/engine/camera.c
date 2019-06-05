@@ -45,11 +45,12 @@ void eg_camera_bind(
     eg_camera_t *camera,
     re_cmd_buffer_t *cmd_buffer,
     struct re_pipeline_t *pipeline,
-    uint32_t set_index) {
-  void *mapping = re_cmd_bind_uniform(cmd_buffer, 0, sizeof(camera->uniform));
+    uint32_t set) {
+  void *mapping =
+      re_cmd_bind_uniform(cmd_buffer, set, 0, sizeof(camera->uniform));
   memcpy(mapping, &camera->uniform, sizeof(camera->uniform));
 
-  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set_index);
+  re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set);
 }
 
 void eg_camera_destroy(eg_camera_t *camera) {}

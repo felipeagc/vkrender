@@ -73,16 +73,14 @@ void re_cmd_bind_descriptor_set(
     re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline, uint32_t set_index) {
   re_descriptor_set_allocator_t *allocator =
       pipeline->layout.descriptor_set_allocators[set_index];
-  assert(allocator != NULL);
+  if (allocator == NULL) return;
 
-  VkDescriptorSet set =
-      re_descriptor_set_allocator_alloc(allocator, cmd_buffer->bindings);
+  VkDescriptorSet set = re_descriptor_set_allocator_alloc(
+      allocator, cmd_buffer->bindings[set_index]);
   assert(set != VK_NULL_HANDLE);
 
-  uint32_t dynamic_offset_count = 0;
-  if (allocator->layout.uniform_buffer_dynamic_mask != 0) {
-    dynamic_offset_count = 1;
-  }
+  uint32_t dynamic_offset_count =
+      (allocator->layout.uniform_buffer_dynamic_mask != 0) ? 1 : 0;
 
   assert(
       cmd_buffer->dynamic_offset %
@@ -102,25 +100,29 @@ void re_cmd_bind_descriptor_set(
 
 void re_cmd_bind_descriptor(
     re_cmd_buffer_t *cmd_buffer,
+    uint32_t set,
     uint32_t binding,
     re_descriptor_info_t descriptor) {
   assert(binding < RE_MAX_DESCRIPTOR_SET_BINDINGS);
-  cmd_buffer->bindings[binding] = descriptor;
+  cmd_buffer->bindings[set][binding] = descriptor;
 }
 
 void re_cmd_bind_image(
-    re_cmd_buffer_t *cmd_buffer, uint32_t binding, re_image_t *image) {
+    re_cmd_buffer_t *cmd_buffer,
+    uint32_t set,
+    uint32_t binding,
+    re_image_t *image) {
   assert(binding < RE_MAX_DESCRIPTOR_SET_BINDINGS);
-  cmd_buffer->bindings[binding] = image->descriptor;
+  cmd_buffer->bindings[set][binding] = image->descriptor;
 }
 
 void *re_cmd_bind_uniform(
-    re_cmd_buffer_t *cmd_buffer, uint32_t binding, size_t size) {
+    re_cmd_buffer_t *cmd_buffer, uint32_t set, uint32_t binding, size_t size) {
   assert(binding < RE_MAX_DESCRIPTOR_SET_BINDINGS);
   return re_buffer_pool_alloc(
       &g_ctx.ubo_pool,
       size,
-      &cmd_buffer->bindings[binding],
+      &cmd_buffer->bindings[set][binding],
       &cmd_buffer->dynamic_offset);
 }
 

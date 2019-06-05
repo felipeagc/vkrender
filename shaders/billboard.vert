@@ -60,7 +60,10 @@ void main() {
     camera_right_world_space * pos[gl_VertexIndex].x +
     camera_up_world_space * pos[gl_VertexIndex].y;
 
-  gl_Position = camera.proj * camera.view * billboard.model * vec4(world_pos, 1.0);
+  mat4 model = mat4(1.0f);
+  model[3] = billboard.model[3];
+
+  gl_Position = camera.proj * camera.view * model * vec4(world_pos, 1.0);
   tex_coords0 = tex_coords[gl_VertexIndex];
   tex_coords0.y = 1.0 - tex_coords0.y;
 }

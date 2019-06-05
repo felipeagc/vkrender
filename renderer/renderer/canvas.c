@@ -482,7 +482,7 @@ void re_canvas_draw(
   }
 
   re_cmd_bind_descriptor(
-      cmd_buffer, 0, (re_descriptor_info_t){.image = descriptor});
+      cmd_buffer, 0, 0, (re_descriptor_info_t){.image = descriptor});
 
   re_cmd_bind_descriptor_set(cmd_buffer, pipeline, 0);
 

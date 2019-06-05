@@ -99,9 +99,9 @@ eg_world_add_comp(eg_world_t *world, eg_comp_type_t comp, eg_entity_t entity) {
 
 void eg_world_remove_comp(
     eg_world_t *world, eg_comp_type_t comp, eg_entity_t entity) {
-  /* if (!EG__HAS_COMP(world, entity, comp)) { */
-  /*   return; */
-  /* } */
+  if (!EG__HAS_COMP(world, entity, comp)) {
+    return;
+  }
 
   const uint32_t comp_size = EG_COMP_SIZES[comp];
 
