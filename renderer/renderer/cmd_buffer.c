@@ -132,6 +132,8 @@ void re_cmd_push_constants(
     uint32_t index,
     uint32_t size,
     const void *values) {
+  if (pipeline->layout.push_constants[index].stageFlags == 0) return;
+
   vkCmdPushConstants(
       cmd_buffer->cmd_buffer,
       pipeline->layout.layout,

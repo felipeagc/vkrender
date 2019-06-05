@@ -132,6 +132,15 @@ int main(int argc, const char *argv[]) {
 
   re_ctx_init();
   eg_engine_init();
+
+  eg_fs_init(argv[0]);
+  eg_fs_mount("./assets", "/assets");
+  eg_fs_mount("../assets", "/assets");
+  eg_fs_mount("../../assets", "/assets");
+  eg_fs_mount("./shaders/out", "/shaders");
+  eg_fs_mount("../shaders/out", "/shaders");
+  eg_fs_mount("../../shaders/out", "/shaders");
+
   re_window_init(
       &game.window,
       &(re_window_options_t){
@@ -141,14 +150,6 @@ int main(int argc, const char *argv[]) {
           .sample_count = VK_SAMPLE_COUNT_1_BIT,
       });
   eg_imgui_init(&game.window, &game.window.render_target);
-
-  eg_fs_init(argv[0]);
-  eg_fs_mount("./assets", "/assets");
-  eg_fs_mount("../assets", "/assets");
-  eg_fs_mount("../../assets", "/assets");
-  eg_fs_mount("./shaders/out", "/shaders");
-  eg_fs_mount("../shaders/out", "/shaders");
-  eg_fs_mount("../../shaders/out", "/shaders");
 
   game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
 
