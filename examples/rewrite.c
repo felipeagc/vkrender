@@ -246,9 +246,6 @@ int main(int argc, const char *argv[]) {
       eg_inspector_process_event(&game.inspector, &event);
     }
 
-    uint32_t width, height;
-    re_window_size(&game.window, &width, &height);
-
     re_cmd_buffer_t *cmd_buffer =
         re_window_get_current_command_buffer(&game.window);
 
@@ -262,12 +259,7 @@ int main(int argc, const char *argv[]) {
     re_ctx_begin_frame();
     re_window_begin_frame(&game.window);
 
-    eg_fps_camera_system_update(
-        &game.fps_system,
-        &game.window,
-        cmd_buffer,
-        (float)width,
-        (float)height);
+    eg_fps_camera_system_update(&game.fps_system, &game.window, cmd_buffer);
 
     eg_light_system(&game.world);
 

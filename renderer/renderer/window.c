@@ -1221,20 +1221,20 @@ void re_window_begin_render_pass(re_window_t *window) {
       &render_pass_begin_info,
       VK_SUBPASS_CONTENTS_INLINE);
 
-  VkViewport viewport = {
-      0.0f,                                   // x
-      0.0f,                                   // y
-      (float)window->swapchain_extent.width,  // width
-      (float)window->swapchain_extent.height, // height
-      0.0f,                                   // minDepth
-      1.0f,                                   // maxDepth
-  };
+  re_cmd_set_viewport(
+      command_buffer,
+      &(re_viewport_t){.x = 0.0f,
+                       .y = 0.0f,
+                       .width = window->swapchain_extent.width,
+                       .height = window->swapchain_extent.height,
+                       .min_depth = 0.0f,
+                       .max_depth = 1.0f});
 
-  vkCmdSetViewport(command_buffer->cmd_buffer, 0, 1, &viewport);
-
-  VkRect2D scissor = {{0, 0}, window->swapchain_extent};
-
-  vkCmdSetScissor(command_buffer->cmd_buffer, 0, 1, &scissor);
+  re_cmd_set_scissor(
+      command_buffer,
+      &(re_rect_2d_t){
+          {0, 0},
+          {window->swapchain_extent.width, window->swapchain_extent.height}});
 }
 
 void re_window_end_render_pass(re_window_t *window) {

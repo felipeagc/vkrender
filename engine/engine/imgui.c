@@ -95,6 +95,9 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
         io->Fonts, font_data, size, 17.0f, NULL, NULL);
   }
 
+  // Setup style
+  setup_style();
+
   ImGui_ImplGlfw_InitForVulkan(window->glfw_window, false);
 
   // Setup Vulkan binding
@@ -110,9 +113,6 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
   init_info.Allocator = NULL;
   init_info.CheckVkResultFn = check_vk_result_fn;
   ImGui_ImplVulkan_Init(&init_info, render_target->render_pass);
-
-  // Setup style
-  setup_style();
 
   // Upload Fonts
   {

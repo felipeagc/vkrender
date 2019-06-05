@@ -24,16 +24,12 @@ typedef struct eg_camera_t {
 
 void eg_camera_init(eg_camera_t *camera);
 
-void eg_camera_update(
-    eg_camera_t *camera,
-    re_cmd_buffer_t *cmd_buffer,
-    float width,
-    float height);
+void eg_camera_update(eg_camera_t *camera, re_cmd_buffer_t *cmd_buffer);
 
 void eg_camera_bind(
     eg_camera_t *camera,
     re_cmd_buffer_t *cmd_buffer,
-    struct re_pipeline_t *pipeline,
+    re_pipeline_t *pipeline,
     uint32_t set_index);
 
 void eg_camera_destroy(eg_camera_t *camera);

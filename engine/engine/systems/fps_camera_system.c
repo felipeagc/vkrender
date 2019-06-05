@@ -5,8 +5,7 @@
 #include <renderer/window.h>
 
 float out_expo(float t, float b, float c, float d) {
-  if (t == d)
-    return b + c;
+  if (t == d) return b + c;
   return c * 1.001f * (-powf(2, -10 * t / d) + 1) + b;
 }
 
@@ -39,9 +38,7 @@ void eg_fps_camera_system_init(
 void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
-    re_cmd_buffer_t *cmd_buffer,
-    float width,
-    float height) {
+    re_cmd_buffer_t *cmd_buffer) {
   // Camera control toggle
   {
     if (system->prev_right_pressed !=
@@ -138,5 +135,5 @@ void eg_fps_camera_system_update(
   system->camera->uniform.view = mat4_mul(
       system->camera->uniform.view, quat_to_mat4(system->camera->rotation));
 
-  eg_camera_update(system->camera, cmd_buffer, width, height);
+  eg_camera_update(system->camera, cmd_buffer);
 }

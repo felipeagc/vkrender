@@ -37,6 +37,4 @@ void eg_fps_camera_system_init(
 void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
-    re_cmd_buffer_t *cmd_buffer,
-    float width,
-    float height);
+    re_cmd_buffer_t *cmd_buffer);

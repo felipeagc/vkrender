@@ -18,15 +18,14 @@ void eg_camera_init(eg_camera_t *camera) {
   camera->rotation = (quat_t){0};
 }
 
-void eg_camera_update(
-    eg_camera_t *camera,
-    re_cmd_buffer_t *cmd_buffer,
-    float width,
-    float height) {
+void eg_camera_update(eg_camera_t *camera, re_cmd_buffer_t *cmd_buffer) {
   camera->uniform.proj = mat4_perspective(
-      camera->fov, width / height, camera->near_clip, camera->far_clip);
+      camera->fov,
+      cmd_buffer->viewport.width / cmd_buffer->viewport.height,
+      camera->near_clip,
+      camera->far_clip);
 
-  // @note: See:
+  // NOTE: see
   // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
   mat4_t correction = {{
       {1.0, 0.0, 0.0, 0.0},
@@ -44,7 +43,7 @@ void eg_camera_update(
 void eg_camera_bind(
     eg_camera_t *camera,
     re_cmd_buffer_t *cmd_buffer,
-    struct re_pipeline_t *pipeline,
+    re_pipeline_t *pipeline,
     uint32_t set) {
   void *mapping =
       re_cmd_bind_uniform(cmd_buffer, set, 0, sizeof(camera->uniform));
