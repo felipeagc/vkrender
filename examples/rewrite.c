@@ -237,13 +237,25 @@ int main(int argc, const char *argv[]) {
 
   add_terrain(&game, "Terrain", 256, terrain_pipeline);
 
+  bool inspector_enabled = true;
+
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);
 
     re_event_t event;
     while (re_window_next_event(&game.window, &event)) {
+      if (event.type == RE_EVENT_KEY_PRESSED) {
+        if (event.keyboard.key == GLFW_KEY_I &&
+            event.keyboard.mods == GLFW_MOD_CONTROL) {
+          inspector_enabled = !inspector_enabled;
+        }
+      }
+
       eg_imgui_process_event(&event);
-      eg_inspector_process_event(&game.inspector, &event);
+
+      if (inspector_enabled) {
+        eg_inspector_process_event(&game.inspector, &event);
+      }
     }
 
     re_cmd_buffer_t *cmd_buffer =
@@ -252,7 +264,9 @@ int main(int argc, const char *argv[]) {
     eg_world_update(&game.world);
 
     eg_imgui_begin();
-    eg_inspector_draw_ui(&game.inspector);
+    if (inspector_enabled) {
+      eg_inspector_draw_ui(&game.inspector);
+    }
     eg_imgui_end();
 
     // Begin command buffer recording
@@ -275,14 +289,16 @@ int main(int argc, const char *argv[]) {
     // Draw the entities
     eg_rendering_system(&game.world, cmd_buffer);
 
-    // Draw the selected entity
-    eg_inspector_draw_selected_outline(&game.inspector, cmd_buffer);
+    if (inspector_enabled) {
+      // Draw the selected entity
+      eg_inspector_draw_selected_outline(&game.inspector, cmd_buffer);
 
-    // Draw the gizmos
-    eg_inspector_draw_gizmos(&game.inspector, cmd_buffer);
+      // Draw the gizmos
+      eg_inspector_draw_gizmos(&game.inspector, cmd_buffer);
 
-    // Update the selected entity's position based on gizmo movement
-    eg_inspector_update(&game.inspector);
+      // Update the selected entity's position based on gizmo movement
+      eg_inspector_update(&game.inspector);
+    }
 
     // Draw imgui
     eg_imgui_draw(cmd_buffer);

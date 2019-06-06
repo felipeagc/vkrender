@@ -39,8 +39,13 @@ void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
     re_cmd_buffer_t *cmd_buffer) {
-  // Camera control toggle
-  {
+  float speed = 10.0f * (float)window->delta_time;
+  vec3_t movement = vec3_zero();
+
+  system->time += (float)window->delta_time;
+
+  if (!igIsAnyItemActive()) {
+    // Camera control toggle
     if (system->prev_right_pressed !=
         re_window_is_mouse_right_pressed(window)) {
       if (re_window_get_input_mode(window, GLFW_CURSOR) ==
@@ -58,10 +63,8 @@ void eg_fps_camera_system_update(
     }
 
     system->prev_right_pressed = re_window_is_mouse_right_pressed(window);
-  }
 
-  // Camera mouse controls
-  {
+    // Camera mouse controls
     double x, y;
     re_window_get_cursor_pos(window, &x, &y);
 
@@ -71,7 +74,7 @@ void eg_fps_camera_system_update(
     system->prev_disabled_cursor_x = x;
     system->prev_disabled_cursor_y = y;
 
-    if (re_window_is_mouse_right_pressed(window) && !igIsAnyItemActive()) {
+    if (re_window_is_mouse_right_pressed(window)) {
       if (re_window_get_input_mode(window, GLFW_CURSOR) ==
           GLFW_CURSOR_DISABLED) {
         system->cam_yaw += to_radians((float)dx) * system->sensitivity;
@@ -80,37 +83,33 @@ void eg_fps_camera_system_update(
             clamp(system->cam_pitch, to_radians(-89.0f), to_radians(89.0f));
       }
     }
+
+    system->cam_front.x = cosf(system->cam_yaw) * cosf(system->cam_pitch);
+    system->cam_front.y = sinf(system->cam_pitch);
+    system->cam_front.z = sinf(system->cam_yaw) * cosf(system->cam_pitch);
+    system->cam_front = vec3_normalize(system->cam_front);
+
+    system->cam_right =
+        vec3_normalize(vec3_cross(system->cam_front, (vec3_t){0.0, 1.0, 0.0}));
+    system->cam_up =
+        vec3_normalize(vec3_cross(system->cam_right, system->cam_front));
+
+    // Keyboard movement
+    if (re_window_is_key_pressed(window, GLFW_KEY_W)) {
+      movement = vec3_add(movement, system->cam_front);
+    }
+    if (re_window_is_key_pressed(window, GLFW_KEY_S)) {
+      movement = vec3_sub(movement, system->cam_front);
+    }
+    if (re_window_is_key_pressed(window, GLFW_KEY_A)) {
+      movement = vec3_sub(movement, system->cam_right);
+    }
+    if (re_window_is_key_pressed(window, GLFW_KEY_D)) {
+      movement = vec3_add(movement, system->cam_right);
+    }
+
+    movement = vec3_muls(movement, speed);
   }
-
-  system->time += (float)window->delta_time;
-
-  system->cam_front.x = cosf(system->cam_yaw) * cosf(system->cam_pitch);
-  system->cam_front.y = sinf(system->cam_pitch);
-  system->cam_front.z = sinf(system->cam_yaw) * cosf(system->cam_pitch);
-  system->cam_front = vec3_normalize(system->cam_front);
-
-  system->cam_right =
-      vec3_normalize(vec3_cross(system->cam_front, (vec3_t){0.0, 1.0, 0.0}));
-  system->cam_up =
-      vec3_normalize(vec3_cross(system->cam_right, system->cam_front));
-
-  float speed = 10.0f * (float)window->delta_time;
-  vec3_t movement = vec3_zero();
-
-  if (re_window_is_key_pressed(window, GLFW_KEY_W)) {
-    movement = vec3_add(movement, system->cam_front);
-  }
-  if (re_window_is_key_pressed(window, GLFW_KEY_S)) {
-    movement = vec3_sub(movement, system->cam_front);
-  }
-  if (re_window_is_key_pressed(window, GLFW_KEY_A)) {
-    movement = vec3_sub(movement, system->cam_right);
-  }
-  if (re_window_is_key_pressed(window, GLFW_KEY_D)) {
-    movement = vec3_add(movement, system->cam_right);
-  }
-
-  movement = vec3_muls(movement, speed);
 
   system->cam_target = vec3_add(system->cam_target, movement);
 

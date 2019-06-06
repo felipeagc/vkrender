@@ -31,7 +31,7 @@ static void setup_style() {
 
   colors[ImGuiCol_Text] = (ImVec4){1.00f, 1.00f, 1.00f, 1.00f};
   colors[ImGuiCol_TextDisabled] = (ImVec4){0.55f, 0.61f, 0.71f, 1.00f};
-  colors[ImGuiCol_WindowBg] = (ImVec4){0.09f, 0.08f, 0.15f, 1.00f};
+  colors[ImGuiCol_WindowBg] = (ImVec4){0.09f, 0.08f, 0.15f, 0.95f};
   colors[ImGuiCol_ChildBg] = (ImVec4){0.09f, 0.08f, 0.15f, 1.00f};
   colors[ImGuiCol_PopupBg] = (ImVec4){0.09f, 0.08f, 0.15f, 1.00f};
   colors[ImGuiCol_Border] = (ImVec4){0.23f, 0.27f, 0.40f, 1.00f};
@@ -91,8 +91,13 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
     eg_file_read_bytes(file, font_data, size);
     eg_file_close(file);
 
+    ImFontConfig *config = ImFontConfig_ImFontConfig();
+    config->GlyphOffset = (ImVec2){1.0f, -1.0f};
+
     ImFontAtlas_AddFontFromMemoryTTF(
-        io->Fonts, font_data, size, 17.0f, NULL, NULL);
+        io->Fonts, font_data, size, 17.0f, config, NULL);
+
+    ImFontConfig_destroy(config);
   }
 
   // Setup style

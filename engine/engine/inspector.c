@@ -879,22 +879,26 @@ static inline void selected_entity_ui(eg_inspector_t *inspector) {
       }
 
       for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
-        igPushIDInt((int)comp_id);
-
-        if (!EG_HAS_COMP_ID(world, comp_id, entity) ||
-            !igCollapsingHeader(
-                EG_COMP_NAMES[comp_id], ImGuiTreeNodeFlags_DefaultOpen)) {
-          igPopID();
+        if (!EG_HAS_COMP_ID(world, comp_id, entity)) {
           continue;
         }
 
-        if (igButton("Remove component", (ImVec2){0})) {
+        igPushIDInt((int)comp_id);
+
+        bool header_open = igCollapsingHeader(
+            EG_COMP_NAMES[comp_id],
+            ImGuiTreeNodeFlags_DefaultOpen |
+                ImGuiTreeNodeFlags_AllowItemOverlap);
+
+        igSameLine(igGetWindowWidth() - 25.0f, 0.0f);
+
+        if (igSmallButton("×")) {
           eg_world_remove_comp(world, comp_id, entity);
           igPopID();
           continue;
         }
 
-        if (EG_COMP_INSPECTORS[comp_id] != NULL) {
+        if (header_open && EG_COMP_INSPECTORS[comp_id] != NULL) {
           EG_COMP_INSPECTORS[comp_id](
               EG_COMP_BY_ID(world, comp_id, inspector->selected_entity),
               inspector);
@@ -967,8 +971,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
 
       if (igBeginTabItem("Assets", NULL, 0)) {
         if (igButton(
-                "Add asset",
-                (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
+                "Add asset", (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
           // TODO: add asset
         }
         for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
