@@ -16,6 +16,18 @@ typedef struct re_frame_resources_t {
 
   VkFramebuffer framebuffer;
 
+  struct {
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView view;
+  } depth_stencil;
+
+  struct {
+    VkImage image;
+    VmaAllocation allocation;
+    VkImageView view;
+  } multisampled_color;
+
   re_cmd_buffer_t command_buffer;
 } re_frame_resources_t;
 
@@ -31,19 +43,6 @@ typedef struct re_window_t {
   VkSurfaceKHR surface;
 
   VkFormat depth_format;
-
-  // @NOTE: might wanna make one of these per frame
-  struct {
-    VkImage image;
-    VmaAllocation allocation;
-    VkImageView view;
-  } depth_stencil;
-
-  struct {
-    VkImage image;
-    VmaAllocation allocation;
-    VkImageView view;
-  } multisampled_color;
 
   re_frame_resources_t frame_resources[RE_MAX_FRAMES_IN_FLIGHT];
 

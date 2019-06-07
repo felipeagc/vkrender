@@ -348,135 +348,140 @@ static inline void create_depth_stencil_image(re_window_t *window) {
   bool res = re_ctx_get_supported_depth_format(&window->depth_format);
   assert(res);
 
-  VkImageCreateInfo image_create_info = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      .pNext = NULL,
-      .flags = 0,
-      .imageType = VK_IMAGE_TYPE_2D,
-      .format = window->depth_format,
-      .extent = {window->swapchain_extent.width,
-                 window->swapchain_extent.height,
-                 1},
-      .mipLevels = 1,
-      .arrayLayers = 1,
-      .samples = window->render_target.sample_count,
-      .tiling = VK_IMAGE_TILING_OPTIMAL,
-      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
-               VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-      .queueFamilyIndexCount = 0,
-      .pQueueFamilyIndices = NULL,
-      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-  };
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; ++i) {
+    VkImageCreateInfo image_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = window->depth_format,
+        .extent = {window->swapchain_extent.width,
+                   window->swapchain_extent.height,
+                   1},
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = window->render_target.sample_count,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+                 VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = NULL,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
 
-  VmaAllocationCreateInfo alloc_info = {0};
-  alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
-  alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    VmaAllocationCreateInfo alloc_info = {0};
+    alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-  VK_CHECK(vmaCreateImage(
-      g_ctx.gpu_allocator,
-      &image_create_info,
-      &alloc_info,
-      &window->depth_stencil.image,
-      &window->depth_stencil.allocation,
-      NULL));
+    VK_CHECK(vmaCreateImage(
+        g_ctx.gpu_allocator,
+        &image_create_info,
+        &alloc_info,
+        &window->frame_resources[i].depth_stencil.image,
+        &window->frame_resources[i].depth_stencil.allocation,
+        NULL));
 
-  VkImageViewCreateInfo image_view_create_info = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-      .pNext = NULL,                                     // pNext
-      .flags = 0,                                        // flags
-      .image = window->depth_stencil.image,
-      .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = window->depth_format,
-      .components =
-          {
-              .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-              .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-              .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-              .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-          },
-      .subresourceRange = {
-          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-          .baseMipLevel = 0,
-          .levelCount = 1,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
-      }};
+    VkImageViewCreateInfo image_view_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+        .pNext = NULL,                                     // pNext
+        .flags = 0,                                        // flags
+        .image = window->frame_resources[i].depth_stencil.image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = window->depth_format,
+        .components =
+            {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+            },
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        }};
 
-  if (window->depth_format >= VK_FORMAT_D16_UNORM_S8_UINT) {
-    image_view_create_info.subresourceRange.aspectMask |=
-        VK_IMAGE_ASPECT_STENCIL_BIT;
+    if (window->depth_format >= VK_FORMAT_D16_UNORM_S8_UINT) {
+      image_view_create_info.subresourceRange.aspectMask |=
+          VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+
+    VK_CHECK(vkCreateImageView(
+        g_ctx.device,
+        &image_view_create_info,
+        NULL,
+        &window->frame_resources[i].depth_stencil.view));
   }
-
-  VK_CHECK(vkCreateImageView(
-      g_ctx.device,
-      &image_view_create_info,
-      NULL,
-      &window->depth_stencil.view));
 }
 
 static inline void create_multisampled_color_image(re_window_t *window) {
-  VkImageCreateInfo image_create_info = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      .pNext = NULL,
-      .flags = 0,
-      .imageType = VK_IMAGE_TYPE_2D,
-      .format = window->swapchain_image_format,
-      .extent = {window->swapchain_extent.width,
-                 window->swapchain_extent.height,
-                 1},
-      .mipLevels = 1,
-      .arrayLayers = 1,
-      .samples = window->render_target.sample_count,
-      .tiling = VK_IMAGE_TILING_OPTIMAL,
-      .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-      .queueFamilyIndexCount = 0,
-      .pQueueFamilyIndices = NULL,
-      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-  };
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; ++i) {
 
-  VmaAllocationCreateInfo alloc_info = {0};
-  alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-  alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+    VkImageCreateInfo image_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = window->swapchain_image_format,
+        .extent = {window->swapchain_extent.width,
+                   window->swapchain_extent.height,
+                   1},
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = window->render_target.sample_count,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                 VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = NULL,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
 
-  VK_CHECK(vmaCreateImage(
-      g_ctx.gpu_allocator,
-      &image_create_info,
-      &alloc_info,
-      &window->multisampled_color.image,
-      &window->multisampled_color.allocation,
-      NULL));
+    VmaAllocationCreateInfo alloc_info = {0};
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
-  VkImageViewCreateInfo image_view_create_info = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      .pNext = NULL,
-      .flags = 0,
-      .image = window->multisampled_color.image,
-      .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = window->swapchain_image_format,
-      .components =
-          {
-              .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-              .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-              .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-              .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-          },
-      .subresourceRange = {
-          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-          .baseMipLevel = 0,
-          .levelCount = 1,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
-      }};
+    VK_CHECK(vmaCreateImage(
+        g_ctx.gpu_allocator,
+        &image_create_info,
+        &alloc_info,
+        &window->frame_resources[i].multisampled_color.image,
+        &window->frame_resources[i].multisampled_color.allocation,
+        NULL));
 
-  VK_CHECK(vkCreateImageView(
-      g_ctx.device,
-      &image_view_create_info,
-      NULL,
-      &window->multisampled_color.view));
+    VkImageViewCreateInfo image_view_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .image = window->frame_resources[i].multisampled_color.image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = window->swapchain_image_format,
+        .components =
+            {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+            },
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        }};
+
+    VK_CHECK(vkCreateImageView(
+        g_ctx.device,
+        &image_view_create_info,
+        NULL,
+        &window->frame_resources[i].multisampled_color.view));
+  }
 }
 
 static inline void create_render_pass(re_window_t *window) {
@@ -601,16 +606,15 @@ static inline void create_render_pass(re_window_t *window) {
       &window->render_target.render_pass));
 }
 
-static inline void regen_framebuffer(
-    re_window_t *window,
-    VkFramebuffer *framebuffer,
-    VkImageView *swapchain_image_view) {
-  vkDestroyFramebuffer(g_ctx.device, *framebuffer, NULL);
+static inline void regen_framebuffer(re_window_t *window) {
+  re_frame_resources_t *fr = &window->frame_resources[window->current_frame];
+
+  vkDestroyFramebuffer(g_ctx.device, fr->framebuffer, NULL);
 
   VkImageView attachments[] = {
-      *swapchain_image_view,
-      window->depth_stencil.view,
-      window->multisampled_color.view,
+      window->swapchain_image_views[window->current_image_index],
+      fr->depth_stencil.view,
+      fr->multisampled_color.view,
   };
 
   VkFramebufferCreateInfo create_info = {
@@ -629,7 +633,8 @@ static inline void regen_framebuffer(
     create_info.attachmentCount -= 1;
   }
 
-  VK_CHECK(vkCreateFramebuffer(g_ctx.device, &create_info, NULL, framebuffer));
+  VK_CHECK(
+      vkCreateFramebuffer(g_ctx.device, &create_info, NULL, &fr->framebuffer));
 }
 
 static inline void destroy_resizables(re_window_t *window) {
@@ -642,26 +647,34 @@ static inline void destroy_resizables(re_window_t *window) {
         &window->frame_resources[i].command_buffer);
   }
 
-  if (window->depth_stencil.image) {
-    vkDestroyImageView(g_ctx.device, window->depth_stencil.view, NULL);
-    vmaDestroyImage(
-        g_ctx.gpu_allocator,
-        window->depth_stencil.image,
-        window->depth_stencil.allocation);
-    window->depth_stencil.image = VK_NULL_HANDLE;
-    window->depth_stencil.allocation = VK_NULL_HANDLE;
-    window->depth_stencil.view = VK_NULL_HANDLE;
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
+    if (window->frame_resources[i].depth_stencil.image) {
+      vkDestroyImageView(
+          g_ctx.device, window->frame_resources[i].depth_stencil.view, NULL);
+      vmaDestroyImage(
+          g_ctx.gpu_allocator,
+          window->frame_resources[i].depth_stencil.image,
+          window->frame_resources[i].depth_stencil.allocation);
+      window->frame_resources[i].depth_stencil.image = VK_NULL_HANDLE;
+      window->frame_resources[i].depth_stencil.allocation = VK_NULL_HANDLE;
+      window->frame_resources[i].depth_stencil.view = VK_NULL_HANDLE;
+    }
   }
 
-  if (window->multisampled_color.image) {
-    vkDestroyImageView(g_ctx.device, window->multisampled_color.view, NULL);
-    vmaDestroyImage(
-        g_ctx.gpu_allocator,
-        window->multisampled_color.image,
-        window->multisampled_color.allocation);
-    window->multisampled_color.image = VK_NULL_HANDLE;
-    window->multisampled_color.allocation = VK_NULL_HANDLE;
-    window->multisampled_color.view = VK_NULL_HANDLE;
+  for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
+    if (window->frame_resources[i].multisampled_color.image) {
+      vkDestroyImageView(
+          g_ctx.device,
+          window->frame_resources[i].multisampled_color.view,
+          NULL);
+      vmaDestroyImage(
+          g_ctx.gpu_allocator,
+          window->frame_resources[i].multisampled_color.image,
+          window->frame_resources[i].multisampled_color.allocation);
+      window->frame_resources[i].multisampled_color.image = VK_NULL_HANDLE;
+      window->frame_resources[i].multisampled_color.allocation = VK_NULL_HANDLE;
+      window->frame_resources[i].multisampled_color.view = VK_NULL_HANDLE;
+    }
   }
 
   vkDestroyRenderPass(g_ctx.device, window->render_target.render_pass, NULL);
@@ -1056,10 +1069,7 @@ void re_window_begin_frame(re_window_t *window) {
       1,                         // layerCount
   };
 
-  regen_framebuffer(
-      window,
-      &window->frame_resources[window->current_frame].framebuffer,
-      &window->swapchain_image_views[window->current_image_index]);
+  regen_framebuffer(window);
 
   re_cmd_buffer_t *command_buffer =
       &window->frame_resources[window->current_frame].command_buffer;
