@@ -44,6 +44,7 @@ static inline size_t re_format_pixel_size(VkFormat format) {
   case VK_FORMAT_R32_SFLOAT: return 4;
   case VK_FORMAT_R8G8B8_UNORM: return 3;
   case VK_FORMAT_R8G8B8A8_UNORM: return 4;
+  case VK_FORMAT_B8G8R8A8_UNORM: return 4;
   case VK_FORMAT_R32G32B32A32_SFLOAT: return 16;
   case VK_FORMAT_R16G16B16A16_SFLOAT: return 8;
   default: return 0;

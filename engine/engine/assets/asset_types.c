@@ -1,11 +1,10 @@
 #include "asset_types.h"
+
 #include "environment_asset.h"
 #include "gltf_asset.h"
 #include "mesh_asset.h"
 #include "pbr_material_asset.h"
 #include "pipeline_asset.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define E(t, initializer, inspector, destructor, name) sizeof(t),
 const size_t EG_ASSET_SIZES[] = {EG__ASSETS};

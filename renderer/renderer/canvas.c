@@ -463,6 +463,9 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
 }
 
 void re_canvas_end(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
+  // Supress unused warning
+  (void)canvas;
+
   vkCmdEndRenderPass(cmd_buffer->cmd_buffer);
 }
 

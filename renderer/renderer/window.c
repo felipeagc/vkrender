@@ -40,18 +40,23 @@ get_swapchain_num_images(VkSurfaceCapabilitiesKHR *surface_capabilities) {
 
 static inline VkSurfaceFormatKHR
 get_swapchain_format(VkSurfaceFormatKHR *formats, uint32_t format_count) {
-  if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
-    return (VkSurfaceFormatKHR){VK_FORMAT_R8G8B8A8_UNORM,
-                                VK_COLORSPACE_SRGB_NONLINEAR_KHR};
-  }
+  VkSurfaceFormatKHR format = formats[0];
 
-  for (uint32_t i = 0; i < format_count; i++) {
-    if (formats[i].format == VK_FORMAT_R8G8B8A8_UNORM) {
-      return formats[i];
+  if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
+    format = (VkSurfaceFormatKHR){
+        .format = VK_FORMAT_B8G8R8A8_UNORM,
+        .colorSpace = formats[0].colorSpace,
+    };
+  } else {
+    for (uint32_t i = 0; i < format_count; i++) {
+      if (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM) {
+        format = formats[i];
+        break;
+      }
     }
   }
 
-  return formats[0];
+  return format;
 }
 
 static inline VkExtent2D get_swapchain_extent(
@@ -1011,7 +1016,12 @@ void re_window_destroy(re_window_t *window) {
   free(window->swapchain_image_views);
 }
 
-void re_window_poll_events(re_window_t *window) { glfwPollEvents(); }
+void re_window_poll_events(re_window_t *window) {
+  // Supress unused warning
+  (void)window;
+
+  glfwPollEvents();
+}
 
 bool re_window_next_event(re_window_t *window, re_event_t *event) {
   memset(event, 0, sizeof(re_event_t));
