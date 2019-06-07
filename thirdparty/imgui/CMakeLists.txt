@@ -10,8 +10,6 @@ add_library(
 	imgui_draw.cpp
 	imgui_impl_glfw.cpp
 	imgui_impl_glfw.h
-	imgui_impl_vulkan.cpp
-	imgui_impl_vulkan.h
 	imgui_widgets.cpp
 	imstb_rectpack.h
 	imstb_textedit.h

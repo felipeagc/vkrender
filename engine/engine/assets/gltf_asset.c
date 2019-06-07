@@ -42,6 +42,27 @@ void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector) {
           "%.3f",
           1.0f);
       igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
+
+      float img_size = 128.0f;
+
+#define IMAGE(image, name)                                                     \
+  if ((image)) {                                                               \
+    igImage(                                                                   \
+        (image),                                                               \
+        (ImVec2){img_size, img_size},                                          \
+        (ImVec2){0.0f, 0.0f},                                                  \
+        (ImVec2){1.0f, 1.0f},                                                  \
+        (ImVec4){1.0f, 1.0f, 1.0f, 1.0f},                                      \
+        (ImVec4){0.0f, 0.0f, 0.0f, 0.0f});                                     \
+                                                                               \
+    if (igIsItemHovered(0)) igSetTooltip(name);                                \
+  }
+
+      IMAGE(material->albedo_texture, "Albedo");
+      IMAGE(material->normal_texture, "Normal");
+      IMAGE(material->metallic_roughness_texture, "Metallic/roughness");
+      IMAGE(material->occlusion_texture, "Occlusion");
+      IMAGE(material->emissive_texture, "Emissive");
     }
     igPopID();
   }
