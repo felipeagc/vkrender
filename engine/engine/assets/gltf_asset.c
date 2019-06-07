@@ -549,6 +549,7 @@ void eg_gltf_asset_init(
         .layer_count = 1,
         .mip_level_count = 1,
         .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .anisotropy = true,
     };
 
     re_image_init(&model->images[i], &image_options);

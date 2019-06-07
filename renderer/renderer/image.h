@@ -26,6 +26,8 @@ typedef struct re_image_options_t {
   uint32_t layer_count;
   uint32_t mip_level_count;
   VkFormat format;
+  bool dedicated;
+  bool anisotropy;
 } re_image_options_t;
 
 void re_image_init(re_image_t *image, re_image_options_t *options);

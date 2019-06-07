@@ -73,6 +73,7 @@ void eg_environment_asset_init(
             .layer_count = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
             .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .anisotropy = true,
         });
 
     upload_ktx(
