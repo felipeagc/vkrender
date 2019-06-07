@@ -739,10 +739,10 @@ VkSampleCountFlagBits re_ctx_get_max_sample_count() {
 }
 
 bool re_ctx_get_supported_depth_format(VkFormat *depth_format) {
-  VkFormat depth_formats[] = {VK_FORMAT_D32_SFLOAT_S8_UINT,
-                              VK_FORMAT_D32_SFLOAT,
-                              VK_FORMAT_D24_UNORM_S8_UINT,
+  VkFormat depth_formats[] = {VK_FORMAT_D24_UNORM_S8_UINT,
+                              VK_FORMAT_D32_SFLOAT_S8_UINT,
                               VK_FORMAT_D16_UNORM_S8_UINT,
+                              VK_FORMAT_D32_SFLOAT,
                               VK_FORMAT_D16_UNORM};
   for (uint32_t i = 0; i < ARRAY_SIZE(depth_formats); i++) {
     VkFormatProperties format_props;
