@@ -1,4 +1,19 @@
 add_library(
+	vma
+
+	vma/vk_mem_alloc.cpp
+	vma/vk_mem_alloc.h)
+
+target_link_libraries(vma volk)
+
+add_library(
+	spirv_reflect
+
+	spirv_reflect/spirv_reflect.c
+	spirv_reflect/spirv_reflect.h
+	spirv_reflect/spirv.h)
+
+add_library(
 	renderer
 
 	renderer/renderer.h
@@ -38,17 +53,7 @@ add_library(
 	renderer/buffer_pool.h
 
 	renderer/util.c
-	renderer/util.h
-
-	renderer/memory.c
-	renderer/memory.h
-
-	vma/vk_mem_alloc.cpp
-	vma/vk_mem_alloc.h
-
-	spirv_reflect/spirv_reflect.c
-	spirv_reflect/spirv_reflect.h
-	spirv_reflect/spirv.h
+	renderer/util.h 
 	)
 
 target_link_libraries(
@@ -60,9 +65,20 @@ target_link_libraries(
 	fstd
 	gmath
 	stb_image
-	tinycthread)
+	tinycthread
+	vma
+	spirv_reflect)
 
 target_include_directories(
 	renderer
 	PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR})
+
+if(NOT MSVC)
+	target_compile_options(renderer PRIVATE
+		-Wall
+		-Wextra
+		-pedantic
+	  -Wno-missing-braces
+		)
+endif()

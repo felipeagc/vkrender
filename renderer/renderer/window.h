@@ -95,7 +95,6 @@ bool re_window_is_mouse_right_pressed(const re_window_t *window);
 
 bool re_window_is_key_pressed(const re_window_t *window, int key);
 
-// TODO: rename command to cmd
-re_cmd_buffer_t *re_window_get_current_command_buffer(re_window_t *window);
+re_cmd_buffer_t *re_window_get_cmd_buffer(re_window_t *window);
 
 void re_window_destroy(re_window_t *window);

@@ -557,7 +557,6 @@ void re_ctx_init() {
 
   get_device_limits(&g_ctx);
 
-  re_allocator_init(&g_ctx.allocator);
   setup_memory_allocator(&g_ctx);
 
   create_graphics_command_pool(&g_ctx);
@@ -646,8 +645,6 @@ void re_ctx_destroy() {
   vkDestroyCommandPool(g_ctx.device, g_ctx.graphics_command_pool, NULL);
 
   vmaDestroyAllocator(g_ctx.gpu_allocator);
-
-  re_allocator_destroy(&g_ctx.allocator);
 
   vkDestroyDevice(g_ctx.device, NULL);
 

@@ -253,8 +253,6 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
 
   eg_transform_comp_t *transforms =
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
-  eg_point_light_comp_t *point_lights =
-      EG_COMP_ARRAY(inspector->world, eg_point_light_comp_t);
 
   for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
     if (EG_HAS_TAG(inspector->world, e, EG_TAG_HIDDEN)) {
@@ -774,7 +772,7 @@ static void inspect_statistics(re_window_t *window) {
   static float frame_times[FRAME_TIMES_MAX] = {0};
   static int frame = 0;
 
-  frame_times[frame] = window->delta_time;
+  frame_times[frame] = (float)window->delta_time;
   frame = (frame + 1) % FRAME_TIMES_MAX;
 
   igPlotLines(

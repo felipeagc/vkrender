@@ -258,8 +258,7 @@ int main(int argc, const char *argv[]) {
       }
     }
 
-    re_cmd_buffer_t *cmd_buffer =
-        re_window_get_current_command_buffer(&game.window);
+    re_cmd_buffer_t *cmd_buffer = re_window_get_cmd_buffer(&game.window);
 
     eg_world_update(&game.world);
 

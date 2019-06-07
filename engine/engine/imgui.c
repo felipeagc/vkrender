@@ -214,7 +214,7 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
     config->GlyphOffset = (ImVec2){1.0f, -1.0f};
 
     ImFontAtlas_AddFontFromMemoryTTF(
-        io->Fonts, font_data, size, 17.0f, config, NULL);
+        io->Fonts, font_data, (int)size, 17.0f, config, NULL);
 
     ImFontConfig_destroy(config);
   }
@@ -377,10 +377,10 @@ void eg_imgui_draw(re_cmd_buffer_t *cmd_buffer) {
 
   int vtx_offset = 0;
   int idx_offset = 0;
-  for (uint32_t n = 0; n < draw_data->CmdListsCount; n++) {
+  for (int32_t n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList *cmd_list = draw_data->CmdLists[n];
 
-    for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+    for (int32_t cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd *pcmd = &cmd_list->CmdBuffer.Data[cmd_i];
 
       if (pcmd->UserCallback) {

@@ -5,17 +5,6 @@
 #include <math.h>
 #include <string.h>
 
-static inline void create_image(
-    VkImage *image,
-    VmaAllocation *allocation,
-    VkImageView *image_view,
-    VkSampler *sampler,
-    VkFormat format,
-    uint32_t width,
-    uint32_t height,
-    uint32_t layers,
-    uint32_t levels) {}
-
 void re_image_init(re_image_t *image, re_image_options_t *options) {
   if (options->layer_count == 0) {
     options->layer_count = 1;

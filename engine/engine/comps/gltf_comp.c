@@ -106,8 +106,6 @@ static void draw_node_no_mat(
   if (node->mesh != NULL) {
     // Mesh
     {
-      const uint32_t set_index = 1;
-
       struct {
         mat4_t local_model;
         mat4_t model;

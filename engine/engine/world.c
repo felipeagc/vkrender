@@ -103,7 +103,7 @@ void eg_world_remove_comp(
     return;
   }
 
-  const uint32_t comp_size = EG_COMP_SIZES[comp];
+  const size_t comp_size = EG_COMP_SIZES[comp];
 
   bool zeroed = true;
   for (uint32_t i = 0; i < comp_size; i++) {
@@ -114,8 +114,7 @@ void eg_world_remove_comp(
   }
 
   if (!zeroed) {
-    EG_COMP_DESTRUCTORS[comp](
-        &world->pools[comp].data[entity * EG_COMP_SIZES[comp]]);
+    EG_COMP_DESTRUCTORS[comp](&world->pools[comp].data[entity * comp_size]);
   }
 
   fstd_bitset_set(&world->comp_masks[comp], entity, false);

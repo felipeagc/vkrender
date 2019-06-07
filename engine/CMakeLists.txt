@@ -81,3 +81,12 @@ target_include_directories(
 	engine
 	PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR})
+
+if(NOT MSVC)
+	target_compile_options(engine PRIVATE
+		-Wall
+		-Wextra
+	  -Wno-missing-braces
+	  -Wno-unused-parameter
+		)
+endif()

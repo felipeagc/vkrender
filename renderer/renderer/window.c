@@ -1235,8 +1235,8 @@ void re_window_begin_render_pass(re_window_t *window) {
       command_buffer,
       &(re_viewport_t){.x = 0.0f,
                        .y = 0.0f,
-                       .width = window->swapchain_extent.width,
-                       .height = window->swapchain_extent.height,
+                       .width = (float)window->swapchain_extent.width,
+                       .height = (float)window->swapchain_extent.height,
                        .min_depth = 0.0f,
                        .max_depth = 1.0f});
 
@@ -1291,6 +1291,6 @@ bool re_window_is_key_pressed(const re_window_t *window, int key) {
   return glfwGetKey(window->glfw_window, key) == GLFW_PRESS;
 }
 
-re_cmd_buffer_t *re_window_get_current_command_buffer(re_window_t *window) {
+re_cmd_buffer_t *re_window_get_cmd_buffer(re_window_t *window) {
   return &window->frame_resources[window->current_frame].command_buffer;
 }

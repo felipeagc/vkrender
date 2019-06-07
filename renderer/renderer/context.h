@@ -2,7 +2,6 @@
 
 #include "buffer_pool.h"
 #include "image.h"
-#include "memory.h"
 #include "vulkan.h"
 #include <stdbool.h>
 #include <tinycthread.h>
@@ -45,8 +44,6 @@ typedef struct re_context_t {
   re_descriptor_set_allocator_t *descriptor_set_allocators;
 
   re_buffer_pool_t ubo_pool;
-
-  re_allocator_t allocator;
 } re_context_t;
 
 extern re_context_t g_ctx;
