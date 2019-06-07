@@ -149,9 +149,9 @@ int main(int argc, const char *argv[]) {
           .height = 900,
           .sample_count = VK_SAMPLE_COUNT_1_BIT,
       });
-  eg_imgui_init(&game.window, &game.window.render_target);
-
   game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};
+
+  eg_imgui_init(&game.window, &game.window.render_target);
 
   eg_asset_manager_init(&game.asset_manager);
 
@@ -205,32 +205,32 @@ int main(int argc, const char *argv[]) {
 
   game.world.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
 
-  add_gltf(
-      &game,
-      "Helmet",
-      "/assets/models/DamagedHelmet.glb",
-      pbr_pipeline,
-      (vec3_t){0.0, 0.0, 0.0},
-      (vec3_t){1.0, 1.0, 1.0},
-      true);
+  /* add_gltf( */
+  /*     &game, */
+  /*     "Helmet", */
+  /*     "/assets/models/DamagedHelmet.glb", */
+  /*     pbr_pipeline, */
+  /*     (vec3_t){0.0, 0.0, 0.0}, */
+  /*     (vec3_t){1.0, 1.0, 1.0}, */
+  /*     true); */
 
-  add_gltf(
-      &game,
-      "Water bottle",
-      "/assets/models/WaterBottle.glb",
-      pbr_pipeline,
-      (vec3_t){2.0, 0.0, 0.0},
-      (vec3_t){10.0, 10.0, 10.0},
-      false);
+  /* add_gltf( */
+  /*     &game, */
+  /*     "Water bottle", */
+  /*     "/assets/models/WaterBottle.glb", */
+  /*     pbr_pipeline, */
+  /*     (vec3_t){2.0, 0.0, 0.0}, */
+  /*     (vec3_t){10.0, 10.0, 10.0}, */
+  /*     false); */
 
-  add_gltf(
-      &game,
-      "Boom box",
-      "/assets/models/BoomBox.glb",
-      pbr_pipeline,
-      (vec3_t){-2.0, 0.0, 0.0},
-      (vec3_t){100.0, 100.0, 100.0},
-      false);
+  /* add_gltf( */
+  /*     &game, */
+  /*     "Boom box", */
+  /*     "/assets/models/BoomBox.glb", */
+  /*     pbr_pipeline, */
+  /*     (vec3_t){-2.0, 0.0, 0.0}, */
+  /*     (vec3_t){100.0, 100.0, 100.0}, */
+  /*     false); */
 
   add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
   add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);

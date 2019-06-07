@@ -169,7 +169,8 @@ void re_image_upload(
   re_buffer_init(
       &staging_buffer,
       &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_TRANSFER,
+          .usage = RE_BUFFER_USAGE_TRANSFER,
+          .memory = RE_BUFFER_MEMORY_HOST,
           .size = img_size,
       });
 

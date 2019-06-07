@@ -641,7 +641,8 @@ void eg_gltf_asset_init(
   re_buffer_init(
       &staging_buffer,
       &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_TRANSFER,
+          .usage = RE_BUFFER_USAGE_TRANSFER,
+          .memory = RE_BUFFER_MEMORY_HOST,
           .size = vertex_buffer_size > index_buffer_size ? vertex_buffer_size
                                                          : index_buffer_size,
       });
@@ -652,14 +653,16 @@ void eg_gltf_asset_init(
   re_buffer_init(
       &model->vertex_buffer,
       &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_VERTEX,
+          .usage = RE_BUFFER_USAGE_VERTEX,
+          .memory = RE_BUFFER_MEMORY_DEVICE,
           .size = vertex_buffer_size,
       });
 
   re_buffer_init(
       &model->index_buffer,
       &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_INDEX,
+          .usage = RE_BUFFER_USAGE_INDEX,
+          .memory = RE_BUFFER_MEMORY_DEVICE,
           .size = index_buffer_size,
       });
 

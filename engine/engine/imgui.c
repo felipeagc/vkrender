@@ -1,19 +1,111 @@
 #include "imgui.h"
 
 #include "filesystem.h"
+#include "pipelines.h"
+#include "util.h"
 #include <fstd_util.h>
 #include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
 #include <renderer/context.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
+#include <string.h>
 
-static void check_vk_result_fn(VkResult result) {
-  if (result != VK_SUCCESS) {
-    RE_LOG_FATAL("Failed to initialize IMGUI!");
-    abort();
-  }
-}
+static re_pipeline_t g_pipeline = {0};
+static re_image_t g_atlas = {0};
+static re_buffer_t g_vertex_buffers[RE_MAX_FRAMES_IN_FLIGHT] = {0};
+static re_buffer_t g_index_buffers[RE_MAX_FRAMES_IN_FLIGHT] = {0};
+static uint32_t g_frame_index = 0;
+
+static const uint32_t glsl_shader_vert_spv[] = {
+    0x07230203, 0x00010000, 0x00080001, 0x0000002e, 0x00000000, 0x00020011,
+    0x00000001, 0x0006000b, 0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e,
+    0x00000000, 0x0003000e, 0x00000000, 0x00000001, 0x000a000f, 0x00000000,
+    0x00000004, 0x6e69616d, 0x00000000, 0x0000000b, 0x0000000f, 0x00000015,
+    0x0000001b, 0x0000001c, 0x00030003, 0x00000002, 0x000001c2, 0x00040005,
+    0x00000004, 0x6e69616d, 0x00000000, 0x00030005, 0x00000009, 0x00000000,
+    0x00050006, 0x00000009, 0x00000000, 0x6f6c6f43, 0x00000072, 0x00040006,
+    0x00000009, 0x00000001, 0x00005655, 0x00030005, 0x0000000b, 0x0074754f,
+    0x00040005, 0x0000000f, 0x6c6f4361, 0x0000726f, 0x00030005, 0x00000015,
+    0x00565561, 0x00060005, 0x00000019, 0x505f6c67, 0x65567265, 0x78657472,
+    0x00000000, 0x00060006, 0x00000019, 0x00000000, 0x505f6c67, 0x7469736f,
+    0x006e6f69, 0x00030005, 0x0000001b, 0x00000000, 0x00040005, 0x0000001c,
+    0x736f5061, 0x00000000, 0x00060005, 0x0000001e, 0x73755075, 0x6e6f4368,
+    0x6e617473, 0x00000074, 0x00050006, 0x0000001e, 0x00000000, 0x61635375,
+    0x0000656c, 0x00060006, 0x0000001e, 0x00000001, 0x61725475, 0x616c736e,
+    0x00006574, 0x00030005, 0x00000020, 0x00006370, 0x00040047, 0x0000000b,
+    0x0000001e, 0x00000000, 0x00040047, 0x0000000f, 0x0000001e, 0x00000002,
+    0x00040047, 0x00000015, 0x0000001e, 0x00000001, 0x00050048, 0x00000019,
+    0x00000000, 0x0000000b, 0x00000000, 0x00030047, 0x00000019, 0x00000002,
+    0x00040047, 0x0000001c, 0x0000001e, 0x00000000, 0x00050048, 0x0000001e,
+    0x00000000, 0x00000023, 0x00000000, 0x00050048, 0x0000001e, 0x00000001,
+    0x00000023, 0x00000008, 0x00030047, 0x0000001e, 0x00000002, 0x00020013,
+    0x00000002, 0x00030021, 0x00000003, 0x00000002, 0x00030016, 0x00000006,
+    0x00000020, 0x00040017, 0x00000007, 0x00000006, 0x00000004, 0x00040017,
+    0x00000008, 0x00000006, 0x00000002, 0x0004001e, 0x00000009, 0x00000007,
+    0x00000008, 0x00040020, 0x0000000a, 0x00000003, 0x00000009, 0x0004003b,
+    0x0000000a, 0x0000000b, 0x00000003, 0x00040015, 0x0000000c, 0x00000020,
+    0x00000001, 0x0004002b, 0x0000000c, 0x0000000d, 0x00000000, 0x00040020,
+    0x0000000e, 0x00000001, 0x00000007, 0x0004003b, 0x0000000e, 0x0000000f,
+    0x00000001, 0x00040020, 0x00000011, 0x00000003, 0x00000007, 0x0004002b,
+    0x0000000c, 0x00000013, 0x00000001, 0x00040020, 0x00000014, 0x00000001,
+    0x00000008, 0x0004003b, 0x00000014, 0x00000015, 0x00000001, 0x00040020,
+    0x00000017, 0x00000003, 0x00000008, 0x0003001e, 0x00000019, 0x00000007,
+    0x00040020, 0x0000001a, 0x00000003, 0x00000019, 0x0004003b, 0x0000001a,
+    0x0000001b, 0x00000003, 0x0004003b, 0x00000014, 0x0000001c, 0x00000001,
+    0x0004001e, 0x0000001e, 0x00000008, 0x00000008, 0x00040020, 0x0000001f,
+    0x00000009, 0x0000001e, 0x0004003b, 0x0000001f, 0x00000020, 0x00000009,
+    0x00040020, 0x00000021, 0x00000009, 0x00000008, 0x0004002b, 0x00000006,
+    0x00000028, 0x00000000, 0x0004002b, 0x00000006, 0x00000029, 0x3f800000,
+    0x00050036, 0x00000002, 0x00000004, 0x00000000, 0x00000003, 0x000200f8,
+    0x00000005, 0x0004003d, 0x00000007, 0x00000010, 0x0000000f, 0x00050041,
+    0x00000011, 0x00000012, 0x0000000b, 0x0000000d, 0x0003003e, 0x00000012,
+    0x00000010, 0x0004003d, 0x00000008, 0x00000016, 0x00000015, 0x00050041,
+    0x00000017, 0x00000018, 0x0000000b, 0x00000013, 0x0003003e, 0x00000018,
+    0x00000016, 0x0004003d, 0x00000008, 0x0000001d, 0x0000001c, 0x00050041,
+    0x00000021, 0x00000022, 0x00000020, 0x0000000d, 0x0004003d, 0x00000008,
+    0x00000023, 0x00000022, 0x00050085, 0x00000008, 0x00000024, 0x0000001d,
+    0x00000023, 0x00050041, 0x00000021, 0x00000025, 0x00000020, 0x00000013,
+    0x0004003d, 0x00000008, 0x00000026, 0x00000025, 0x00050081, 0x00000008,
+    0x00000027, 0x00000024, 0x00000026, 0x00050051, 0x00000006, 0x0000002a,
+    0x00000027, 0x00000000, 0x00050051, 0x00000006, 0x0000002b, 0x00000027,
+    0x00000001, 0x00070050, 0x00000007, 0x0000002c, 0x0000002a, 0x0000002b,
+    0x00000028, 0x00000029, 0x00050041, 0x00000011, 0x0000002d, 0x0000001b,
+    0x0000000d, 0x0003003e, 0x0000002d, 0x0000002c, 0x000100fd, 0x00010038};
+
+static const uint32_t glsl_shader_frag_spv[] = {
+    0x07230203, 0x00010000, 0x00080001, 0x0000001e, 0x00000000, 0x00020011,
+    0x00000001, 0x0006000b, 0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e,
+    0x00000000, 0x0003000e, 0x00000000, 0x00000001, 0x0007000f, 0x00000004,
+    0x00000004, 0x6e69616d, 0x00000000, 0x00000009, 0x0000000d, 0x00030010,
+    0x00000004, 0x00000007, 0x00030003, 0x00000002, 0x000001c2, 0x00040005,
+    0x00000004, 0x6e69616d, 0x00000000, 0x00040005, 0x00000009, 0x6c6f4366,
+    0x0000726f, 0x00030005, 0x0000000b, 0x00000000, 0x00050006, 0x0000000b,
+    0x00000000, 0x6f6c6f43, 0x00000072, 0x00040006, 0x0000000b, 0x00000001,
+    0x00005655, 0x00030005, 0x0000000d, 0x00006e49, 0x00050005, 0x00000016,
+    0x78655473, 0x65727574, 0x00000000, 0x00040047, 0x00000009, 0x0000001e,
+    0x00000000, 0x00040047, 0x0000000d, 0x0000001e, 0x00000000, 0x00040047,
+    0x00000016, 0x00000022, 0x00000000, 0x00040047, 0x00000016, 0x00000021,
+    0x00000000, 0x00020013, 0x00000002, 0x00030021, 0x00000003, 0x00000002,
+    0x00030016, 0x00000006, 0x00000020, 0x00040017, 0x00000007, 0x00000006,
+    0x00000004, 0x00040020, 0x00000008, 0x00000003, 0x00000007, 0x0004003b,
+    0x00000008, 0x00000009, 0x00000003, 0x00040017, 0x0000000a, 0x00000006,
+    0x00000002, 0x0004001e, 0x0000000b, 0x00000007, 0x0000000a, 0x00040020,
+    0x0000000c, 0x00000001, 0x0000000b, 0x0004003b, 0x0000000c, 0x0000000d,
+    0x00000001, 0x00040015, 0x0000000e, 0x00000020, 0x00000001, 0x0004002b,
+    0x0000000e, 0x0000000f, 0x00000000, 0x00040020, 0x00000010, 0x00000001,
+    0x00000007, 0x00090019, 0x00000013, 0x00000006, 0x00000001, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x0003001b, 0x00000014,
+    0x00000013, 0x00040020, 0x00000015, 0x00000000, 0x00000014, 0x0004003b,
+    0x00000015, 0x00000016, 0x00000000, 0x0004002b, 0x0000000e, 0x00000018,
+    0x00000001, 0x00040020, 0x00000019, 0x00000001, 0x0000000a, 0x00050036,
+    0x00000002, 0x00000004, 0x00000000, 0x00000003, 0x000200f8, 0x00000005,
+    0x00050041, 0x00000010, 0x00000011, 0x0000000d, 0x0000000f, 0x0004003d,
+    0x00000007, 0x00000012, 0x00000011, 0x0004003d, 0x00000014, 0x00000017,
+    0x00000016, 0x00050041, 0x00000019, 0x0000001a, 0x0000000d, 0x00000018,
+    0x0004003d, 0x0000000a, 0x0000001b, 0x0000001a, 0x00050057, 0x00000007,
+    0x0000001c, 0x00000017, 0x0000001b, 0x00050085, 0x00000007, 0x0000001d,
+    0x00000012, 0x0000001c, 0x0003003e, 0x00000009, 0x0000001d, 0x000100fd,
+    0x00010038};
 
 static void setup_style() {
   ImGuiStyle *style = igGetStyle();
@@ -80,9 +172,36 @@ static void setup_style() {
 }
 
 void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
+  memset(&g_pipeline, 0, sizeof(g_pipeline));
+  memset(&g_atlas, 0, sizeof(g_atlas));
+  memset(g_vertex_buffers, 0, sizeof(g_vertex_buffers));
+  memset(g_index_buffers, 0, sizeof(g_index_buffers));
+
   igCreateContext(NULL);
   ImGuiIO *io = igGetIO();
 
+  // Create pipeline
+  {
+    re_shader_t shaders[2];
+
+    re_shader_init_spv(
+        &shaders[0], glsl_shader_vert_spv, sizeof(glsl_shader_vert_spv));
+    re_shader_init_spv(
+        &shaders[1], glsl_shader_frag_spv, sizeof(glsl_shader_frag_spv));
+
+    re_pipeline_init_graphics(
+        &g_pipeline,
+        &window->render_target,
+        shaders,
+        ARRAY_SIZE(shaders),
+        eg_imgui_pipeline_parameters());
+
+    for (uint32_t i = 0; i < 2; i++) {
+      re_shader_destroy(&shaders[i]);
+    }
+  }
+
+  // Load font
   {
     eg_file_t *file = eg_file_open_read("/assets/fonts/opensans_semibold.ttf");
     assert(file);
@@ -103,64 +222,206 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
   // Setup style
   setup_style();
 
-  ImGui_ImplGlfw_InitForVulkan(window->glfw_window, false);
-
-  // Setup Vulkan binding
-  ImGui_ImplVulkan_InitInfo init_info = {0};
-  init_info.Instance = g_ctx.instance;
-  init_info.PhysicalDevice = g_ctx.physical_device;
-  init_info.Device = g_ctx.device;
-  init_info.QueueFamily = g_ctx.graphics_queue_family_index;
-  init_info.Queue = g_ctx.graphics_queue;
-  init_info.PipelineCache = VK_NULL_HANDLE;
-  init_info.DescriptorPool = g_ctx.descriptor_pool;
-  init_info.SampleCount = render_target->sample_count;
-  init_info.Allocator = NULL;
-  init_info.CheckVkResultFn = check_vk_result_fn;
-  ImGui_ImplVulkan_Init(&init_info, render_target->render_pass);
-
-  // Upload Fonts
+  // Upload atlas
   {
-    // Use any command queue
-    VkCommandPool command_pool = g_ctx.graphics_command_pool;
-    re_cmd_buffer_t *cmd_buffer = re_window_get_current_command_buffer(window);
+    unsigned char *pixels;
+    int width, height;
+    ImFontAtlas_GetTexDataAsRGBA32(io->Fonts, &pixels, &width, &height, NULL);
 
-    VK_CHECK(vkResetCommandPool(g_ctx.device, command_pool, 0));
+    re_image_init(
+        &g_atlas,
+        &(re_image_options_t){
+            .width = (uint32_t)width,
+            .height = (uint32_t)height,
+            .layer_count = 1,
+            .mip_level_count = 1,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+        });
 
-    re_begin_cmd_buffer(
-        cmd_buffer,
-        &(re_cmd_buffer_begin_info_t){.usage =
-                                          RE_CMD_BUFFER_USAGE_ONE_TIME_SUBMIT});
+    re_image_upload(
+        &g_atlas,
+        g_ctx.transient_command_pool,
+        pixels,
+        (uint32_t)width,
+        (uint32_t)height,
+        0,
+        0);
 
-    ImGui_ImplVulkan_CreateFontsTexture(cmd_buffer->cmd_buffer);
-
-    VkSubmitInfo end_info = {0};
-    end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    end_info.commandBufferCount = 1;
-    end_info.pCommandBuffers = &cmd_buffer->cmd_buffer;
-
-    re_end_cmd_buffer(cmd_buffer);
-
-    mtx_lock(&g_ctx.queue_mutex);
-    VK_CHECK(vkQueueSubmit(g_ctx.graphics_queue, 1, &end_info, VK_NULL_HANDLE));
-    mtx_unlock(&g_ctx.queue_mutex);
-
-    VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
-
-    ImGui_ImplVulkan_InvalidateFontUploadObjects();
+    io->Fonts->TexID = (void *)&g_atlas;
   }
+
+  ImGui_ImplGlfw_InitForVulkan(window->glfw_window, false);
 }
 
 void eg_imgui_begin() {
-  ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   igNewFrame();
 }
 
 void eg_imgui_end() { igRender(); }
 
+static void create_or_resize_buffer(
+    re_buffer_t *buffer, re_buffer_usage_t usage, size_t size) {
+  if (buffer->buffer == VK_NULL_HANDLE) {
+    re_buffer_init(
+        buffer,
+        &(re_buffer_options_t){
+            .usage = usage, .memory = RE_BUFFER_MEMORY_HOST, .size = size});
+    return;
+  }
+  if (buffer->size < size) {
+    re_buffer_destroy(buffer);
+    re_buffer_init(
+        buffer,
+        &(re_buffer_options_t){
+            .usage = usage, .memory = RE_BUFFER_MEMORY_HOST, .size = size});
+    return;
+  }
+}
+
 void eg_imgui_draw(re_cmd_buffer_t *cmd_buffer) {
-  ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), cmd_buffer->cmd_buffer);
+  g_frame_index = (g_frame_index + 1) % RE_MAX_FRAMES_IN_FLIGHT;
+
+  ImDrawData *draw_data = igGetDrawData();
+
+  // Avoid rendering when minimized, scale coordinates for retina displays
+  // (screen coordinates != framebuffer coordinates)
+  int fb_width =
+      (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
+  int fb_height =
+      (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
+  if (fb_width <= 0 || fb_height <= 0 || draw_data->TotalVtxCount == 0) return;
+
+  // Create the Vertex and Index buffers:
+  size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
+  size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
+  create_or_resize_buffer(
+      &g_vertex_buffers[g_frame_index], RE_BUFFER_USAGE_VERTEX, vertex_size);
+  create_or_resize_buffer(
+      &g_index_buffers[g_frame_index], RE_BUFFER_USAGE_INDEX, index_size);
+
+  // Upload vertex and index data
+  {
+    ImDrawVert *vtx_dst = NULL;
+    ImDrawIdx *idx_dst = NULL;
+
+    bool res;
+    res = re_buffer_map_memory(
+        &g_vertex_buffers[g_frame_index], (void **)(&vtx_dst));
+    assert(res);
+    res = re_buffer_map_memory(
+        &g_index_buffers[g_frame_index], (void **)(&idx_dst));
+    assert(res);
+
+    for (int n = 0; n < draw_data->CmdListsCount; n++) {
+      const ImDrawList *cmd_list = draw_data->CmdLists[n];
+      memcpy(
+          vtx_dst,
+          cmd_list->VtxBuffer.Data,
+          cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+      memcpy(
+          idx_dst,
+          cmd_list->IdxBuffer.Data,
+          cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+      vtx_dst += cmd_list->VtxBuffer.Size;
+      idx_dst += cmd_list->IdxBuffer.Size;
+    }
+
+    re_buffer_unmap_memory(&g_vertex_buffers[g_frame_index]);
+    re_buffer_unmap_memory(&g_index_buffers[g_frame_index]);
+  }
+
+  // Bind pipeline
+  re_cmd_bind_pipeline(cmd_buffer, &g_pipeline);
+
+  // Bind buffers
+  re_cmd_bind_index_buffer(
+      cmd_buffer, &g_index_buffers[g_frame_index], 0, RE_INDEX_TYPE_UINT16);
+  re_cmd_bind_vertex_buffers(
+      cmd_buffer, 0, 1, &g_vertex_buffers[g_frame_index], &(size_t){0});
+
+  // Setup viewport
+  re_cmd_set_viewport(
+      cmd_buffer,
+      &(re_viewport_t){.x = 0,
+                       .y = 0,
+                       .width = (float)fb_width,
+                       .height = (float)fb_height,
+                       .min_depth = 0.0f,
+                       .max_depth = 1.0f});
+
+  // Push constants
+  // Setup scale and translation:
+  // Our visible imgui space lies from draw_data->DisplayPos (top left) to
+  // draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayMin is
+  // typically (0,0) for single viewport apps.
+  {
+
+    struct {
+      float scale[2];
+      float translate[2];
+    } pc;
+
+    pc.scale[0] = 2.0f / draw_data->DisplaySize.x;
+    pc.scale[1] = 2.0f / draw_data->DisplaySize.y;
+    pc.translate[0] = -1.0f - draw_data->DisplayPos.x * pc.scale[0];
+    pc.translate[1] = -1.0f - draw_data->DisplayPos.y * pc.scale[1];
+
+    re_cmd_push_constants(cmd_buffer, &g_pipeline, 0, sizeof(pc), &pc);
+  }
+
+  ImVec2 clip_off = draw_data->DisplayPos; // (0,0) unless using multi-viewports
+  ImVec2 clip_scale =
+      draw_data->FramebufferScale; // (1,1) unless using retina display which
+                                   // are often (2,2)
+
+  int vtx_offset = 0;
+  int idx_offset = 0;
+  for (uint32_t n = 0; n < draw_data->CmdListsCount; n++) {
+    const ImDrawList *cmd_list = draw_data->CmdLists[n];
+
+    for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+      const ImDrawCmd *pcmd = &cmd_list->CmdBuffer.Data[cmd_i];
+
+      if (pcmd->UserCallback) {
+        pcmd->UserCallback(cmd_list, pcmd);
+      } else {
+        // The texture for the draw call is specified by pcmd->TextureId.
+        // The vast majority of draw calls will use the imgui texture atlas,
+        // which value you have set yourself during initialization.
+        re_cmd_bind_image(cmd_buffer, 0, 0, (re_image_t *)pcmd->TextureId);
+        re_cmd_bind_descriptor_set(cmd_buffer, &g_pipeline, 0);
+
+        ImVec4 clip_rect;
+        clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
+        clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
+        clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
+        clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
+
+        if (clip_rect.x < fb_width && clip_rect.y < fb_height &&
+            clip_rect.z >= 0.0f && clip_rect.w >= 0.0f) {
+          // Apply scissor/clipping rectangle
+          re_cmd_set_scissor(
+              cmd_buffer,
+              &(re_rect_2d_t){
+                  .offset = {(int32_t)(clip_rect.x), (int32_t)(clip_rect.y)},
+                  .extent = {(uint32_t)(clip_rect.z - clip_rect.x),
+                             (uint32_t)(clip_rect.w - clip_rect.y)}});
+
+          // Draw
+          re_cmd_draw_indexed(
+              cmd_buffer,
+              (uint32_t)pcmd->ElemCount,
+              1,
+              idx_offset,
+              vtx_offset,
+              0);
+        }
+      }
+      idx_offset += pcmd->ElemCount;
+    }
+    vtx_offset += cmd_list->VtxBuffer.Size;
+  }
 }
 
 void eg_imgui_process_event(const re_event_t *event) {
@@ -224,7 +485,15 @@ void eg_imgui_process_event(const re_event_t *event) {
 void eg_imgui_destroy() {
   VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
 
-  ImGui_ImplVulkan_Shutdown();
+  re_pipeline_destroy(&g_pipeline);
+
+  re_image_destroy(&g_atlas);
+
+  for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; ++i) {
+    re_buffer_destroy(&g_vertex_buffers[i]);
+    re_buffer_destroy(&g_index_buffers[i]);
+  }
+
   ImGui_ImplGlfw_Shutdown();
   igDestroyContext(NULL);
 }

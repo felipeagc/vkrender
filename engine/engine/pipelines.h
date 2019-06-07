@@ -11,6 +11,8 @@ void eg_init_pipeline_spv(
 
 re_pipeline_parameters_t eg_standard_pipeline_parameters();
 
+re_pipeline_parameters_t eg_imgui_pipeline_parameters();
+
 re_pipeline_parameters_t eg_picking_pipeline_parameters();
 
 re_pipeline_parameters_t eg_billboard_pipeline_parameters();

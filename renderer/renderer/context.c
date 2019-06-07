@@ -612,7 +612,8 @@ void re_ctx_init() {
   re_buffer_pool_init(
       &g_ctx.ubo_pool,
       &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_UNIFORM,
+          .usage = RE_BUFFER_USAGE_UNIFORM,
+          .memory = RE_BUFFER_MEMORY_HOST,
           .size = 1 << 16, // 65k blocks
       });
 

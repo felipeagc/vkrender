@@ -5,23 +5,32 @@
 #include <stdbool.h>
 #include <vma/vk_mem_alloc.h>
 
-typedef enum re_buffer_type_t {
-  RE_BUFFER_TYPE_VERTEX,
-  RE_BUFFER_TYPE_INDEX,
-  RE_BUFFER_TYPE_UNIFORM,
-  RE_BUFFER_TYPE_TRANSFER,
+typedef enum re_buffer_usage_t {
+  RE_BUFFER_USAGE_VERTEX,
+  RE_BUFFER_USAGE_INDEX,
+  RE_BUFFER_USAGE_UNIFORM,
+  RE_BUFFER_USAGE_TRANSFER,
 
-  RE_BUFFER_TYPE_MAX,
-} re_buffer_type_t;
+  RE_BUFFER_USAGE_MAX,
+} re_buffer_usage_t;
+
+typedef enum re_buffer_memory_t {
+  RE_BUFFER_MEMORY_HOST,
+  RE_BUFFER_MEMORY_DEVICE,
+
+  RE_BUFFER_MEMORY_MAX,
+} re_buffer_memory_t;
 
 typedef struct re_buffer_options_t {
-  re_buffer_type_t type;
+  re_buffer_usage_t usage;
+  re_buffer_memory_t memory;
   size_t size;
 } re_buffer_options_t;
 
 typedef struct re_buffer_t {
   VkBuffer buffer;
   VmaAllocation allocation;
+  size_t size;
 } re_buffer_t;
 
 void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options);

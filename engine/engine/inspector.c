@@ -181,11 +181,13 @@ void eg_inspector_init(
 
   re_buffer_init(
       &inspector->pos_gizmo_vertex_buffer,
-      &(re_buffer_options_t){.type = RE_BUFFER_TYPE_VERTEX,
+      &(re_buffer_options_t){.usage = RE_BUFFER_USAGE_VERTEX,
+                             .memory = RE_BUFFER_MEMORY_DEVICE,
                              .size = sizeof(pos_gizmo_vertices)});
   re_buffer_init(
       &inspector->pos_gizmo_index_buffer,
-      &(re_buffer_options_t){.type = RE_BUFFER_TYPE_INDEX,
+      &(re_buffer_options_t){.usage = RE_BUFFER_USAGE_INDEX,
+                             .memory = RE_BUFFER_MEMORY_DEVICE,
                              .size = sizeof(pos_gizmo_indices)});
 
   size_t staging_size =
@@ -194,7 +196,8 @@ void eg_inspector_init(
   re_buffer_t staging_buffer;
   re_buffer_init(
       &staging_buffer,
-      &(re_buffer_options_t){.type = RE_BUFFER_TYPE_TRANSFER,
+      &(re_buffer_options_t){.usage = RE_BUFFER_USAGE_TRANSFER,
+                             .memory = RE_BUFFER_MEMORY_HOST,
                              .size = staging_size});
 
   void *memory;
@@ -850,79 +853,12 @@ void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
   }
 }
 
-static inline void selected_entity_ui(eg_inspector_t *inspector) {
-  eg_world_t *world = inspector->world;
-
-  if (eg_world_exists(world, inspector->selected_entity)) {
-    if (igBegin("Selected entity", NULL, 0)) {
-      eg_entity_t entity = inspector->selected_entity;
-
-      igText("Entity #%u", inspector->selected_entity);
-      igSameLine(0.0f, -1.0f);
-      if (igSmallButton("Remove")) {
-        eg_world_remove(world, inspector->selected_entity);
-        set_selected(inspector, UINT32_MAX);
-        igEnd();
-        return;
-      }
-
-      igSeparator();
-
-      if (igCollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
-        for (eg_tag_t tag = 0; tag < EG_TAG_MAX; tag++) {
-          bool has_tag =
-              EG_HAS_TAG(inspector->world, inspector->selected_entity, tag);
-          igCheckbox(EG_TAG_NAMES[tag], &has_tag);
-          EG_SET_TAG(
-              inspector->world, inspector->selected_entity, tag, has_tag);
-        }
-      }
-
-      for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
-        if (!EG_HAS_COMP_ID(world, comp_id, entity)) {
-          continue;
-        }
-
-        igPushIDInt((int)comp_id);
-
-        bool header_open = igCollapsingHeader(
-            EG_COMP_NAMES[comp_id],
-            ImGuiTreeNodeFlags_DefaultOpen |
-                ImGuiTreeNodeFlags_AllowItemOverlap);
-
-        igSameLine(igGetWindowWidth() - 25.0f, 0.0f);
-
-        if (igSmallButton("×")) {
-          eg_world_remove_comp(world, comp_id, entity);
-          igPopID();
-          continue;
-        }
-
-        if (header_open && EG_COMP_INSPECTORS[comp_id] != NULL) {
-          EG_COMP_INSPECTORS[comp_id](
-              EG_COMP_BY_ID(world, comp_id, inspector->selected_entity),
-              inspector);
-        }
-
-        igPopID();
-      }
-    }
-
-    igSeparator();
-    add_component_button(inspector, inspector->selected_entity);
-
-    igEnd();
-  }
-}
-
 void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   static char str[256] = "";
 
   re_window_t *window = inspector->window;
   eg_world_t *world = inspector->world;
   eg_asset_manager_t *asset_manager = inspector->asset_manager;
-
-  selected_entity_ui(inspector);
 
   if (igBegin("Inspector", NULL, 0)) {
     if (igBeginTabBar("Inspector", 0)) {
@@ -1008,6 +944,67 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
       igEndTabBar();
     }
   }
+
+  igEnd();
+
+  if (!eg_world_exists(world, inspector->selected_entity)) {
+    return;
+  }
+
+  if (igBegin("Selected entity", NULL, 0)) {
+    eg_entity_t entity = inspector->selected_entity;
+
+    igText("Entity #%u", inspector->selected_entity);
+    igSameLine(0.0f, -1.0f);
+    if (igSmallButton("Remove")) {
+      eg_world_remove(world, inspector->selected_entity);
+      set_selected(inspector, UINT32_MAX);
+      igEnd();
+      return;
+    }
+
+    igSeparator();
+
+    if (igCollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
+      for (eg_tag_t tag = 0; tag < EG_TAG_MAX; tag++) {
+        bool has_tag =
+            EG_HAS_TAG(inspector->world, inspector->selected_entity, tag);
+        igCheckbox(EG_TAG_NAMES[tag], &has_tag);
+        EG_SET_TAG(inspector->world, inspector->selected_entity, tag, has_tag);
+      }
+    }
+
+    for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
+      if (!EG_HAS_COMP_ID(world, comp_id, entity)) {
+        continue;
+      }
+
+      igPushIDInt((int)comp_id);
+
+      bool header_open = igCollapsingHeader(
+          EG_COMP_NAMES[comp_id],
+          ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap);
+
+      igSameLine(igGetWindowWidth() - 25.0f, 0.0f);
+
+      if (igSmallButton("×")) {
+        eg_world_remove_comp(world, comp_id, entity);
+        igPopID();
+        continue;
+      }
+
+      if (header_open && EG_COMP_INSPECTORS[comp_id] != NULL) {
+        EG_COMP_INSPECTORS[comp_id](
+            EG_COMP_BY_ID(world, comp_id, inspector->selected_entity),
+            inspector);
+      }
+
+      igPopID();
+    }
+  }
+
+  igSeparator();
+  add_component_button(inspector, inspector->selected_entity);
 
   igEnd();
 }

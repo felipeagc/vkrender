@@ -1,6 +1,8 @@
 #include "buffer.h"
+
 #include "context.h"
 #include "util.h"
+#include <string.h>
 
 static inline re_cmd_buffer_t
 begin_single_time_command_buffer(re_cmd_pool_t pool) {
@@ -82,38 +84,50 @@ static inline void create_buffer(
 
 void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
   assert(options->size > 0);
-  assert(options->type < RE_BUFFER_TYPE_MAX);
+  assert(options->usage < RE_BUFFER_USAGE_MAX);
+  assert(options->memory < RE_BUFFER_MEMORY_MAX);
 
-  VkBufferUsageFlags buffer_usage;
-  VmaMemoryUsage memory_usage;
-  VkMemoryPropertyFlags memory_property;
+  VkBufferUsageFlags buffer_usage = 0;
+  VmaMemoryUsage memory_usage = 0;
+  VkMemoryPropertyFlags memory_property = 0;
 
-  switch (options->type) {
-  case RE_BUFFER_TYPE_VERTEX:
-    buffer_usage =
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    break;
-  case RE_BUFFER_TYPE_INDEX:
-    buffer_usage =
-        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    break;
-  case RE_BUFFER_TYPE_UNIFORM:
-    buffer_usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+  switch (options->memory) {
+  case RE_BUFFER_MEMORY_HOST: {
     memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
-  case RE_BUFFER_TYPE_TRANSFER:
-    buffer_usage =
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    break;
-  default: assert(0); break;
   }
+  case RE_BUFFER_MEMORY_DEVICE: {
+    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    break;
+  }
+  default: assert(0);
+  }
+
+  switch (options->usage) {
+  case RE_BUFFER_USAGE_VERTEX: {
+    buffer_usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    break;
+  }
+  case RE_BUFFER_USAGE_INDEX: {
+    buffer_usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    break;
+  }
+  case RE_BUFFER_USAGE_UNIFORM: {
+    buffer_usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    break;
+  }
+  case RE_BUFFER_USAGE_TRANSFER: {
+    buffer_usage |=
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    break;
+  }
+  default: assert(0);
+  }
+
+  buffer->size = options->size;
 
   create_buffer(
       &buffer->buffer,
@@ -283,6 +297,5 @@ void re_buffer_destroy(re_buffer_t *buffer) {
     vmaDestroyBuffer(g_ctx.gpu_allocator, buffer->buffer, buffer->allocation);
   }
 
-  buffer->buffer = VK_NULL_HANDLE;
-  buffer->allocation = VK_NULL_HANDLE;
+  memset(buffer, 0, sizeof(*buffer));
 }

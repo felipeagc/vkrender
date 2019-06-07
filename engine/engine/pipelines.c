@@ -1,6 +1,7 @@
 #include "pipelines.h"
 
 #include "filesystem.h"
+#include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/util.h>
 #include <renderer/window.h>
@@ -39,6 +40,51 @@ re_pipeline_parameters_t eg_standard_pipeline_parameters() {
 
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
+
+  return params;
+}
+
+re_pipeline_parameters_t eg_imgui_pipeline_parameters() {
+  re_pipeline_parameters_t params = re_default_pipeline_parameters();
+
+  static VkVertexInputBindingDescription binding_desc[1] = {{
+      .binding = 0,
+      .stride = sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t),
+      .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+  }};
+
+  static VkVertexInputAttributeDescription attribute_desc[3] = {
+      {.location = 0,
+       .binding = 0,
+       .format = VK_FORMAT_R32G32_SFLOAT,
+       .offset = 0},
+      {.location = 1,
+       .binding = 0,
+       .format = VK_FORMAT_R32G32_SFLOAT,
+       .offset = sizeof(float) * 2},
+      {.location = 2,
+       .binding = 0,
+       .format = VK_FORMAT_R8G8B8A8_UNORM,
+       .offset = sizeof(float) * 4},
+  };
+
+  params.vertex_input_state = (VkPipelineVertexInputStateCreateInfo){
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .vertexBindingDescriptionCount = ARRAY_SIZE(binding_desc),
+      .pVertexBindingDescriptions = binding_desc,
+      .vertexAttributeDescriptionCount = ARRAY_SIZE(attribute_desc),
+      .pVertexAttributeDescriptions = attribute_desc,
+  };
+
+  params.depth_stencil_state = (VkPipelineDepthStencilStateCreateInfo){
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+  };
+
+  params.rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
+  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
+  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   return params;
 }

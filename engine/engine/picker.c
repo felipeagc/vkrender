@@ -36,7 +36,8 @@ void eg_picker_init(
   re_buffer_init(
       &picker->pixel_buffer,
       &(re_buffer_options_t){
-          .type = RE_BUFFER_TYPE_TRANSFER,
+          .usage = RE_BUFFER_USAGE_TRANSFER,
+          .memory = RE_BUFFER_MEMORY_HOST,
           .size = sizeof(uint32_t),
       });
 }

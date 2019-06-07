@@ -20,10 +20,6 @@ typedef struct re_image_t {
   VkFormat format;
 } re_image_t;
 
-/*
- * data: uint8_t * layers[level_count][layer_count]
- * or uint8_t* layers[level_count * layer_count]
- */
 typedef struct re_image_options_t {
   uint32_t width;
   uint32_t height;
