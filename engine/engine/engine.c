@@ -11,6 +11,7 @@ void eg_engine_init() {
           .width = 1,
           .height = 1,
           .format = VK_FORMAT_R8G8B8A8_UNORM,
+          .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
       });
 
   re_image_upload(
@@ -28,6 +29,7 @@ void eg_engine_init() {
           .width = 1,
           .height = 1,
           .format = VK_FORMAT_R8G8B8A8_UNORM,
+          .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
       });
 
   re_image_upload(

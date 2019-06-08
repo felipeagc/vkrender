@@ -73,7 +73,8 @@ void eg_environment_asset_init(
             .layer_count = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
             .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-            .anisotropy = true,
+            .flags = RE_IMAGE_FLAG_ANISOTROPY,
+            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     upload_ktx(
@@ -105,6 +106,7 @@ void eg_environment_asset_init(
             .layer_count = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
             .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     upload_ktx(
@@ -137,6 +139,7 @@ void eg_environment_asset_init(
             .layer_count = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
             .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     upload_ktx(
@@ -167,6 +170,7 @@ void eg_environment_asset_init(
         &(re_image_options_t){
             .width = (uint32_t)width,
             .height = (uint32_t)height,
+            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     re_image_upload(

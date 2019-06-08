@@ -160,6 +160,7 @@ void eg_inspector_init(
         &(re_image_options_t){
             .width = (uint32_t)width,
             .height = (uint32_t)height,
+            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     re_image_upload(

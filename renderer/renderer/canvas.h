@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cmd_buffer.h"
+#include "image.h"
 #include "pipeline.h"
 #include "render_target.h"
 #include "vulkan.h"
@@ -15,27 +16,15 @@ typedef struct re_canvas_t {
   VkFormat depth_format;
   VkFormat color_format;
 
-  VkSampler sampler;
+  uint32_t current_frame;
 
   struct {
-    VkImage image;
-    VmaAllocation allocation;
-    VkImageView image_view;
-  } color;
+    re_image_t color;
+    re_image_t color_resolve;
+    re_image_t depth;
 
-  struct {
-    VkImage image;
-    VmaAllocation allocation;
-    VkImageView image_view;
-  } resolve;
-
-  struct {
-    VkImage image;
-    VmaAllocation allocation;
-    VkImageView image_view;
-  } depth;
-
-  VkFramebuffer framebuffer;
+    VkFramebuffer framebuffer;
+  } resources[RE_MAX_FRAMES_IN_FLIGHT];
 } re_canvas_t;
 
 typedef struct re_canvas_options_t {

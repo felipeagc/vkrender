@@ -236,6 +236,7 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
             .layer_count = 1,
             .mip_level_count = 1,
             .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     re_image_upload(

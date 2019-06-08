@@ -18,6 +18,14 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
     options->format = VK_FORMAT_R8G8B8A8_UNORM;
   }
 
+  if (options->sample_count == 0) {
+    options->sample_count = VK_SAMPLE_COUNT_1_BIT;
+  }
+
+  if (options->aspect == 0) {
+    options->aspect = RE_IMAGE_ASPECT_COLOR;
+  }
+
   assert(options->width > 0);
   assert(options->height > 0);
   assert(options->mip_level_count > 0);
@@ -38,22 +46,36 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
         .extent = {.width = image->width, .height = image->height, .depth = 1},
         .mipLevels = image->mip_level_count,
         .arrayLayers = image->layer_count,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = options->sample_count,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        .usage = 0,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
+
+    // Usages
+    if (options->usage & RE_IMAGE_USAGE_SAMPLED)
+      image_create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (options->usage & RE_IMAGE_USAGE_TRANSFER_SRC)
+      image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    if (options->usage & RE_IMAGE_USAGE_TRANSFER_DST)
+      image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (options->usage & RE_IMAGE_USAGE_COLOR_ATTACHMENT)
+      image_create_info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (options->usage & RE_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT)
+      image_create_info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
     if (image->layer_count == 6) {
       image_create_info.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     }
 
     VmaAllocationCreateInfo image_alloc_create_info = {0};
-    if (options->dedicated) {
+
+    if (options->flags & RE_IMAGE_FLAG_DEDICATED) {
       image_alloc_create_info.flags |=
           VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
     }
+
     image_alloc_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VK_CHECK(vmaCreateImage(
@@ -67,6 +89,14 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
 
   // Create image view
   {
+    VkImageAspectFlags aspect = 0;
+    if (options->aspect & RE_IMAGE_ASPECT_COLOR)
+      aspect |= VK_IMAGE_ASPECT_COLOR_BIT;
+    if (options->aspect & RE_IMAGE_ASPECT_DEPTH)
+      aspect |= VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (options->aspect & RE_IMAGE_ASPECT_STENCIL)
+      aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
     VkImageViewCreateInfo image_view_create_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = image->image,
@@ -76,7 +106,7 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
                        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
                        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
                        .a = VK_COMPONENT_SWIZZLE_IDENTITY},
-        .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .subresourceRange = {.aspectMask = aspect,
                              .baseMipLevel = 0,
                              .levelCount = image->mip_level_count,
                              .baseArrayLayer = 0,
@@ -112,7 +142,7 @@ void re_image_init(re_image_t *image, re_image_options_t *options) {
         .unnormalizedCoordinates = VK_FALSE,
     };
 
-    if (options->anisotropy) {
+    if (options->flags & RE_IMAGE_FLAG_ANISOTROPY) {
       sampler_create_info.anisotropyEnable = VK_TRUE;
       sampler_create_info.maxAnisotropy =
           g_ctx.physical_limits.maxSamplerAnisotropy;
