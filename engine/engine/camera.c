@@ -10,7 +10,7 @@
 
 void eg_camera_init(eg_camera_t *camera) {
   camera->near_clip = 0.001f;
-  camera->far_clip = 300.0f;
+  camera->far_clip  = 300.0f;
 
   camera->fov = to_radians(70.0f);
 
@@ -59,7 +59,7 @@ vec3_t eg_camera_ndc_to_world(eg_camera_t *camera, vec3_t ndc) {
   mat4_t inv_proj = mat4_inverse(camera->uniform.proj);
 
   vec4_t world = mat4_mulv(inv_proj, (vec4_t){ndc, 1.0f});
-  world = mat4_mulv(inv_view, world);
+  world        = mat4_mulv(inv_view, world);
 
   if (fabs(world.w) >= FLT_EPSILON) {
     world.xyz = vec3_divs(world.xyz, world.w);

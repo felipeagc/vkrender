@@ -36,4 +36,3 @@ void eg_gltf_comp_draw_no_mat(
     re_cmd_buffer_t *cmd_buffer,
     re_pipeline_t *pipeline,
     mat4_t transform);
-

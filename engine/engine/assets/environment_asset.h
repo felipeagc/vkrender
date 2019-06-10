@@ -29,4 +29,3 @@ void eg_environment_asset_init(
     const char *irradiance_path,
     const char *radiance_path,
     const char *brdf_lut_path);
-

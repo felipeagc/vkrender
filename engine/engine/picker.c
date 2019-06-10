@@ -10,10 +10,10 @@ void eg_picker_init(
   re_canvas_init(
       &picker->canvas,
       &(re_canvas_options_t){
-          .width = width,
-          .height = height,
+          .width        = width,
+          .height       = height,
           .color_format = VK_FORMAT_R32_UINT,
-          .clear_color = {
+          .clear_color  = {
               .uint32 = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX},
           }});
 
@@ -27,7 +27,7 @@ void eg_picker_init(
 
   re_allocate_cmd_buffers(
       &(re_cmd_buffer_alloc_info_t){
-          .pool = g_ctx.graphics_command_pool,
+          .pool  = g_ctx.graphics_command_pool,
           .count = 1,
           .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
       },
@@ -36,9 +36,9 @@ void eg_picker_init(
   re_buffer_init(
       &picker->pixel_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_TRANSFER,
+          .usage  = RE_BUFFER_USAGE_TRANSFER,
           .memory = RE_BUFFER_MEMORY_HOST,
-          .size = sizeof(uint32_t),
+          .size   = sizeof(uint32_t),
       });
 }
 
@@ -78,9 +78,9 @@ void eg_picker_end(eg_picker_t *picker) {
       g_ctx.graphics_queue,
       1,
       &(VkSubmitInfo){
-          .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+          .sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO,
           .commandBufferCount = 1,
-          .pCommandBuffers = &picker->cmd_buffer.cmd_buffer,
+          .pCommandBuffers    = &picker->cmd_buffer.cmd_buffer,
       },
       picker->fence));
 

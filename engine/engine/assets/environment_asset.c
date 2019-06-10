@@ -15,7 +15,7 @@ upload_ktx(re_image_t *image, re_cmd_pool_t pool, ktx_data_t *ktx_data) {
     for (uint32_t face = 0; face < ktx_data->face_count; face++) {
       ktx_face_t *face_ptr = &mip_ptr->array_elements[0].faces[face];
 
-      uint32_t mip_width = ktx_data->pixel_width / (1 << mip_level);
+      uint32_t mip_width  = ktx_data->pixel_width / (1 << mip_level);
       uint32_t mip_height = ktx_data->pixel_height / (1 << mip_level);
 
       re_image_upload(
@@ -56,7 +56,7 @@ void eg_environment_asset_init(
     eg_file_t *file = eg_file_open_read(skybox_path);
     assert(file);
     size_t raw_data_size = eg_file_size(file);
-    uint8_t *raw_data = calloc(1, raw_data_size);
+    uint8_t *raw_data    = calloc(1, raw_data_size);
     eg_file_read_bytes(file, raw_data, raw_data_size);
     eg_file_close(file);
 
@@ -68,12 +68,12 @@ void eg_environment_asset_init(
     re_image_init(
         &environment->skybox_cubemap,
         &(re_image_options_t){
-            .width = ktx_data.pixel_width,
-            .height = ktx_data.pixel_height,
-            .layer_count = ktx_data.face_count,
+            .width           = ktx_data.pixel_width,
+            .height          = ktx_data.pixel_height,
+            .layer_count     = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
-            .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-            .flags = RE_IMAGE_FLAG_ANISOTROPY,
+            .format          = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .flags           = RE_IMAGE_FLAG_ANISOTROPY,
             .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
@@ -88,7 +88,7 @@ void eg_environment_asset_init(
     eg_file_t *file = eg_file_open_read(irradiance_path);
     assert(file);
     size_t raw_data_size = eg_file_size(file);
-    uint8_t *raw_data = calloc(1, raw_data_size);
+    uint8_t *raw_data    = calloc(1, raw_data_size);
     eg_file_read_bytes(file, raw_data, raw_data_size);
     eg_file_close(file);
 
@@ -101,11 +101,11 @@ void eg_environment_asset_init(
     re_image_init(
         &environment->irradiance_cubemap,
         &(re_image_options_t){
-            .width = ktx_data.pixel_width,
-            .height = ktx_data.pixel_height,
-            .layer_count = ktx_data.face_count,
+            .width           = ktx_data.pixel_width,
+            .height          = ktx_data.pixel_height,
+            .layer_count     = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
-            .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .format          = VK_FORMAT_R16G16B16A16_SFLOAT,
             .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
@@ -122,7 +122,7 @@ void eg_environment_asset_init(
     eg_file_t *file = eg_file_open_read(radiance_path);
     assert(file);
     size_t raw_data_size = eg_file_size(file);
-    uint8_t *raw_data = calloc(1, raw_data_size);
+    uint8_t *raw_data    = calloc(1, raw_data_size);
     eg_file_read_bytes(file, raw_data, raw_data_size);
     eg_file_close(file);
 
@@ -134,11 +134,11 @@ void eg_environment_asset_init(
     re_image_init(
         &environment->radiance_cubemap,
         &(re_image_options_t){
-            .width = ktx_data.pixel_width,
-            .height = ktx_data.pixel_height,
-            .layer_count = ktx_data.face_count,
+            .width           = ktx_data.pixel_width,
+            .height          = ktx_data.pixel_height,
+            .layer_count     = ktx_data.face_count,
             .mip_level_count = ktx_data.mipmap_level_count,
-            .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .format          = VK_FORMAT_R16G16B16A16_SFLOAT,
             .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
@@ -155,7 +155,7 @@ void eg_environment_asset_init(
     eg_file_t *file = eg_file_open_read(brdf_lut_path);
     assert(file);
     size_t raw_data_size = eg_file_size(file);
-    uint8_t *raw_data = calloc(1, raw_data_size);
+    uint8_t *raw_data    = calloc(1, raw_data_size);
     eg_file_read_bytes(file, raw_data, raw_data_size);
     eg_file_close(file);
 
@@ -168,9 +168,9 @@ void eg_environment_asset_init(
     re_image_init(
         &environment->brdf_lut,
         &(re_image_options_t){
-            .width = (uint32_t)width,
+            .width  = (uint32_t)width,
             .height = (uint32_t)height,
-            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
+            .usage  = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     re_image_upload(

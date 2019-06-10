@@ -66,16 +66,16 @@ static inline void create_resources(re_canvas_t *canvas) {
     };
 
     VkSubpassDescription subpass_description = {
-        .flags = 0,
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 0,
-        .pInputAttachments = NULL,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_attachment_reference,
-        .pResolveAttachments = &resolve_color_attachment_reference,
+        .flags                   = 0,
+        .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount    = 0,
+        .pInputAttachments       = NULL,
+        .colorAttachmentCount    = 1,
+        .pColorAttachments       = &color_attachment_reference,
+        .pResolveAttachments     = &resolve_color_attachment_reference,
         .pDepthStencilAttachment = &depth_attachment_reference,
         .preserveAttachmentCount = 0,
-        .pPreserveAttachments = NULL,
+        .pPreserveAttachments    = NULL,
     };
 
     if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
@@ -84,37 +84,35 @@ static inline void create_resources(re_canvas_t *canvas) {
 
     VkSubpassDependency dependencies[] = {
         (VkSubpassDependency){
-            VK_SUBPASS_EXTERNAL,                           // srcSubpass
-            0,                                             // dstSubpass
-            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // srcStageMask
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
-            VK_ACCESS_MEMORY_READ_BIT,                     // srcAccessMask
-            VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // dstAccessMask
-            VK_DEPENDENCY_BY_REGION_BIT,              // dependencyFlags
+            .srcSubpass    = VK_SUBPASS_EXTERNAL,
+            .dstSubpass    = 0,
+            .srcStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            .dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
         },
         (VkSubpassDependency){
-            0,                                             // srcSubpass
-            VK_SUBPASS_EXTERNAL,                           // dstSubpass
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
-            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
-            VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // srcAccessMask
-            VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
-            VK_DEPENDENCY_BY_REGION_BIT,              // dependencyFlags
+            .srcSubpass    = 0,
+            .dstSubpass    = VK_SUBPASS_EXTERNAL,
+            .srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
         },
     };
 
     VkRenderPassCreateInfo render_pass_create_info = {
-        VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,     // sType
-        NULL,                                          // pNext
-        0,                                             // flags
-        (uint32_t)ARRAY_SIZE(attachment_descriptions), // attachmentCount
-        attachment_descriptions,                       // pAttachments
-        1,                                             // subpassCount
-        &subpass_description,                          // pSubpasses
-        (uint32_t)ARRAY_SIZE(dependencies),            // dependencyCount
-        dependencies,                                  // pDependencies
+        .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .attachmentCount = (uint32_t)ARRAY_SIZE(attachment_descriptions),
+        .pAttachments    = attachment_descriptions,
+        .subpassCount    = 1,
+        .pSubpasses      = &subpass_description,
+        .dependencyCount = (uint32_t)ARRAY_SIZE(dependencies),
+        .pDependencies   = dependencies,
     };
 
     if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
@@ -136,11 +134,11 @@ static inline void create_resources(re_canvas_t *canvas) {
             .flags = RE_IMAGE_FLAG_DEDICATED,
             .usage = RE_IMAGE_USAGE_COLOR_ATTACHMENT |
                      RE_IMAGE_USAGE_TRANSFER_SRC | RE_IMAGE_USAGE_SAMPLED,
-            .format = canvas->color_format,
-            .sample_count = canvas->render_target.sample_count,
-            .width = canvas->render_target.width,
-            .height = canvas->render_target.height,
-            .layer_count = 1,
+            .format          = canvas->color_format,
+            .sample_count    = canvas->render_target.sample_count,
+            .width           = canvas->render_target.width,
+            .height          = canvas->render_target.height,
+            .layer_count     = 1,
             .mip_level_count = 1,
         });
 
@@ -150,11 +148,11 @@ static inline void create_resources(re_canvas_t *canvas) {
             .flags = RE_IMAGE_FLAG_DEDICATED,
             .usage = RE_IMAGE_USAGE_COLOR_ATTACHMENT |
                      RE_IMAGE_USAGE_TRANSFER_SRC | RE_IMAGE_USAGE_SAMPLED,
-            .format = canvas->color_format,
-            .sample_count = VK_SAMPLE_COUNT_1_BIT,
-            .width = canvas->render_target.width,
-            .height = canvas->render_target.height,
-            .layer_count = 1,
+            .format          = canvas->color_format,
+            .sample_count    = VK_SAMPLE_COUNT_1_BIT,
+            .width           = canvas->render_target.width,
+            .height          = canvas->render_target.height,
+            .layer_count     = 1,
             .mip_level_count = 1,
         });
 
@@ -164,13 +162,13 @@ static inline void create_resources(re_canvas_t *canvas) {
             .flags = RE_IMAGE_FLAG_DEDICATED,
             .usage = RE_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT |
                      RE_IMAGE_USAGE_TRANSFER_SRC,
-            .format = canvas->depth_format,
-            .sample_count = canvas->render_target.sample_count,
-            .width = canvas->render_target.width,
-            .height = canvas->render_target.height,
-            .layer_count = 1,
+            .format          = canvas->depth_format,
+            .sample_count    = canvas->render_target.sample_count,
+            .width           = canvas->render_target.width,
+            .height          = canvas->render_target.height,
+            .layer_count     = 1,
             .mip_level_count = 1,
-            .aspect = RE_IMAGE_ASPECT_DEPTH,
+            .aspect          = RE_IMAGE_ASPECT_DEPTH,
         });
 
     VkImageView attachments[] = {
@@ -180,15 +178,13 @@ static inline void create_resources(re_canvas_t *canvas) {
     };
 
     VkFramebufferCreateInfo create_info = {
-        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
-        NULL,                                      // pNext
-        0,                                         // flags
-        canvas->render_target.render_pass,         // renderPass
-        (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
-        attachments,                               // pAttachments
-        canvas->render_target.width,               // width
-        canvas->render_target.height,              // height
-        1,                                         // layers
+        .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .renderPass      = canvas->render_target.render_pass,
+        .attachmentCount = (uint32_t)ARRAY_SIZE(attachments),
+        .pAttachments    = attachments,
+        .width           = canvas->render_target.width,
+        .height          = canvas->render_target.height,
+        .layers          = 1,
     };
 
     if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
@@ -224,7 +220,7 @@ void re_canvas_init(re_canvas_t *canvas, re_canvas_options_t *options) {
 
   assert(options->width > 0);
   assert(options->height > 0);
-  canvas->render_target.width = options->width;
+  canvas->render_target.width  = options->width;
   canvas->render_target.height = options->height;
 
   if (options->sample_count == 0) {
@@ -256,15 +252,14 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
   };
 
   VkRenderPassBeginInfo render_pass_begin_info = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,             // sType
-      NULL,                                                 // pNext
-      canvas->render_target.render_pass,                    // renderPass
-      canvas->resources[canvas->current_frame].framebuffer, // framebuffer
-      {{0, 0},
-       {canvas->render_target.width,
-        canvas->render_target.height}}, // renderArea
-      ARRAY_SIZE(clear_values),         // clearValueCount
-      clear_values,                     // pClearValues
+      .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+      .renderPass      = canvas->render_target.render_pass,
+      .framebuffer     = canvas->resources[canvas->current_frame].framebuffer,
+      .renderArea      = {{0, 0},
+                     {canvas->render_target.width,
+                      canvas->render_target.height}},
+      .clearValueCount = ARRAY_SIZE(clear_values),
+      .pClearValues    = clear_values,
   };
 
   if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
@@ -279,10 +274,10 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
   re_cmd_set_viewport(
       cmd_buffer,
       &(re_viewport_t){
-          .x = 0.0f,
-          .y = 0.0f,
-          .width = (float)canvas->render_target.width,
-          .height = (float)canvas->render_target.height,
+          .x         = 0.0f,
+          .y         = 0.0f,
+          .width     = (float)canvas->render_target.width,
+          .height    = (float)canvas->render_target.height,
           .min_depth = 0.0f,
           .max_depth = 1.0f,
       });
@@ -331,7 +326,7 @@ void re_canvas_draw(
 
 void re_canvas_resize(
     re_canvas_t *canvas, const uint32_t width, const uint32_t height) {
-  canvas->render_target.width = width;
+  canvas->render_target.width  = width;
   canvas->render_target.height = height;
 
   destroy_resources(canvas);

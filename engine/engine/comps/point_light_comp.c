@@ -3,7 +3,7 @@
 #include "../imgui.h"
 
 void eg_point_light_comp_default(eg_point_light_comp_t *comp) {
-  comp->color = (vec4_t){1.0f, 1.0f, 1.0f, 1.0f};
+  comp->color     = (vec4_t){1.0f, 1.0f, 1.0f, 1.0f};
   comp->intensity = 1.0f;
 }
 
@@ -17,6 +17,6 @@ void eg_point_light_comp_destroy(eg_point_light_comp_t *comp) {}
 
 void eg_point_light_comp_init(
     eg_point_light_comp_t *comp, vec4_t color, float intensity) {
-  comp->color = color;
+  comp->color     = color;
   comp->intensity = intensity;
 }

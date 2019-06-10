@@ -83,7 +83,7 @@ static inline bool check_validation_layer_support() {
 
   for (uint32_t l = 0; l < ARRAY_SIZE(RE_REQUIRED_VALIDATION_LAYERS); l++) {
     const char *layer_name = RE_REQUIRED_VALIDATION_LAYERS[l];
-    bool layer_found = false;
+    bool layer_found       = false;
 
     for (uint32_t i = 0; i < count; i++) {
       if (strcmp(available_layers[i].layerName, layer_name) == 0) {
@@ -150,7 +150,7 @@ static inline bool check_physical_device_properties(
 
   for (uint32_t i = 0; i < ARRAY_SIZE(RE_REQUIRED_DEVICE_EXTENSIONS); i++) {
     const char *required_extension = RE_REQUIRED_DEVICE_EXTENSIONS[i];
-    bool found = false;
+    bool found                     = false;
     for (uint32_t i = 0; i < extension_count; i++) {
       if (strcmp(required_extension, available_extensions[i].extensionName) ==
           0) {
@@ -207,7 +207,7 @@ static inline bool check_physical_device_properties(
       malloc(sizeof(*queue_present_support) * queue_family_prop_count);
 
   uint32_t graphics_queue_family_index = UINT32_MAX;
-  uint32_t present_queue_family_index = UINT32_MAX;
+  uint32_t present_queue_family_index  = UINT32_MAX;
   uint32_t transfer_queue_family_index = UINT32_MAX;
 
   // @TODO: figure out better logic to single out a transfer queue
@@ -236,7 +236,7 @@ static inline bool check_physical_device_properties(
           *transfer_queue_family = i;
         }
         *graphics_queue_family = i;
-        *present_queue_family = i;
+        *present_queue_family  = i;
 
         free(queue_family_properties);
         free(queue_present_support);
@@ -276,7 +276,7 @@ static inline bool check_physical_device_properties(
   }
 
   *graphics_queue_family = graphics_queue_family_index;
-  *present_queue_family = present_queue_family_index;
+  *present_queue_family  = present_queue_family_index;
   *transfer_queue_family = transfer_queue_family_index;
 
   free(queue_family_properties);
@@ -298,21 +298,21 @@ static inline void create_instance(re_context_t *ctx) {
   RE_LOG_DEBUG("Not using validation layers");
 #endif
 
-  VkApplicationInfo appInfo = {0};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pNext = NULL;
-  appInfo.pApplicationName = "App";
+  VkApplicationInfo appInfo  = {0};
+  appInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  appInfo.pNext              = NULL;
+  appInfo.pApplicationName   = "App";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
-  appInfo.pEngineName = "No engine";
-  appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
-  appInfo.apiVersion = VK_API_VERSION_1_1;
+  appInfo.pEngineName        = "No engine";
+  appInfo.engineVersion      = VK_MAKE_VERSION(1, 1, 0);
+  appInfo.apiVersion         = VK_API_VERSION_1_1;
 
   VkInstanceCreateInfo createInfo = {0};
-  createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  createInfo.flags = 0;
-  createInfo.pApplicationInfo = &appInfo;
+  createInfo.sType                = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  createInfo.flags                = 0;
+  createInfo.pApplicationInfo     = &appInfo;
 
-  createInfo.enabledLayerCount = 0;
+  createInfo.enabledLayerCount   = 0;
   createInfo.ppEnabledLayerNames = NULL;
 
 #ifdef RE_ENABLE_VALIDATION
@@ -328,7 +328,7 @@ static inline void create_instance(re_context_t *ctx) {
   get_required_extensions(NULL, &extension_count);
   const char **extensions = malloc(sizeof(*extensions) * extension_count);
   get_required_extensions(extensions, &extension_count);
-  createInfo.enabledExtensionCount = extension_count;
+  createInfo.enabledExtensionCount   = extension_count;
   createInfo.ppEnabledExtensionNames = extensions;
 
   VK_CHECK(vkCreateInstance(&createInfo, NULL, &ctx->instance));
@@ -381,9 +381,9 @@ static inline void create_device(re_context_t *ctx) {
 
   RE_LOG_DEBUG("Using physical device: %s", properties.deviceName);
 
-  uint32_t queue_create_info_count = 0;
+  uint32_t queue_create_info_count              = 0;
   VkDeviceQueueCreateInfo queue_create_infos[3] = {0};
-  float queue_priorities[] = {1.0f};
+  float queue_priorities[]                      = {1.0f};
 
   queue_create_infos[queue_create_info_count++] = (VkDeviceQueueCreateInfo){
       VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -417,12 +417,12 @@ static inline void create_device(re_context_t *ctx) {
   }
 
   VkDeviceCreateInfo device_create_info = {0};
-  device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  device_create_info.flags = 0;
+  device_create_info.sType              = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  device_create_info.flags              = 0;
   device_create_info.queueCreateInfoCount = queue_create_info_count;
-  device_create_info.pQueueCreateInfos = queue_create_infos;
+  device_create_info.pQueueCreateInfos    = queue_create_infos;
 
-  device_create_info.enabledLayerCount = 0;
+  device_create_info.enabledLayerCount   = 0;
   device_create_info.ppEnabledLayerNames = NULL;
 
   // Validation layer stuff
@@ -465,26 +465,26 @@ static inline void get_device_limits(re_context_t *ctx) {
 
 static inline void setup_memory_allocator(re_context_t *ctx) {
   VmaAllocatorCreateInfo allocator_info = {0};
-  allocator_info.physicalDevice = ctx->physical_device;
-  allocator_info.device = ctx->device;
+  allocator_info.physicalDevice         = ctx->physical_device;
+  allocator_info.device                 = ctx->device;
 
   allocator_info.pVulkanFunctions = &(VmaVulkanFunctions) {
-    .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
+    .vkGetPhysicalDeviceProperties       = vkGetPhysicalDeviceProperties,
     .vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
     .vkAllocateMemory = vkAllocateMemory, .vkFreeMemory = vkFreeMemory,
     .vkMapMemory = vkMapMemory, .vkUnmapMemory = vkUnmapMemory,
-    .vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges,
+    .vkFlushMappedMemoryRanges      = vkFlushMappedMemoryRanges,
     .vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges,
-    .vkBindBufferMemory = vkBindBufferMemory,
-    .vkBindImageMemory = vkBindImageMemory,
-    .vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements,
-    .vkGetImageMemoryRequirements = vkGetImageMemoryRequirements,
+    .vkBindBufferMemory             = vkBindBufferMemory,
+    .vkBindImageMemory              = vkBindImageMemory,
+    .vkGetBufferMemoryRequirements  = vkGetBufferMemoryRequirements,
+    .vkGetImageMemoryRequirements   = vkGetImageMemoryRequirements,
     .vkCreateBuffer = vkCreateBuffer, .vkDestroyBuffer = vkDestroyBuffer,
     .vkCreateImage = vkCreateImage, .vkDestroyImage = vkDestroyImage,
     .vkCmdCopyBuffer = vkCmdCopyBuffer,
 #if VMA_DEDICATED_ALLOCATION
     .vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR,
-    .vkGetImageMemoryRequirements2KHR = vkGetImageMemoryRequirements2KHR,
+    .vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR,
 #endif
   };
 
@@ -504,9 +504,9 @@ static inline void create_graphics_command_pool(re_context_t *ctx) {
 
 static inline void create_transient_command_pool(re_context_t *ctx) {
   VkCommandPoolCreateInfo create_info = {0};
-  create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  create_info.pNext = 0;
-  create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  create_info.pNext            = 0;
+  create_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
   create_info.queueFamilyIndex = ctx->graphics_queue_family_index;
 
   VK_CHECK(vkCreateCommandPool(
@@ -519,26 +519,26 @@ void re_ctx_init() {
   glfwInit();
   glfwSetErrorCallback(glfw_error_callback);
 
-  g_ctx.instance = VK_NULL_HANDLE;
-  g_ctx.device = VK_NULL_HANDLE;
+  g_ctx.instance        = VK_NULL_HANDLE;
+  g_ctx.device          = VK_NULL_HANDLE;
   g_ctx.physical_device = VK_NULL_HANDLE;
-  g_ctx.debug_callback = VK_NULL_HANDLE;
+  g_ctx.debug_callback  = VK_NULL_HANDLE;
 
   g_ctx.graphics_queue_family_index = -1;
-  g_ctx.present_queue_family_index = -1;
+  g_ctx.present_queue_family_index  = -1;
   g_ctx.transfer_queue_family_index = -1;
-  g_ctx.graphics_queue = VK_NULL_HANDLE;
-  g_ctx.present_queue = VK_NULL_HANDLE;
-  g_ctx.transfer_queue = VK_NULL_HANDLE;
+  g_ctx.graphics_queue              = VK_NULL_HANDLE;
+  g_ctx.present_queue               = VK_NULL_HANDLE;
+  g_ctx.transfer_queue              = VK_NULL_HANDLE;
 
-  g_ctx.gpu_allocator = VK_NULL_HANDLE;
-  g_ctx.graphics_command_pool = VK_NULL_HANDLE;
+  g_ctx.gpu_allocator          = VK_NULL_HANDLE;
+  g_ctx.graphics_command_pool  = VK_NULL_HANDLE;
   g_ctx.transient_command_pool = VK_NULL_HANDLE;
 
   g_ctx.descriptor_pool = VK_NULL_HANDLE;
 
   g_ctx.descriptor_set_allocator_count = 0;
-  g_ctx.descriptor_set_allocators = NULL;
+  g_ctx.descriptor_set_allocators      = NULL;
 
   mtx_init(&g_ctx.queue_mutex, mtx_plain);
 
@@ -602,7 +602,7 @@ void re_ctx_init() {
     create_info.pNext = NULL;
     create_info.flags = 0;
     create_info.bindingCount = ARRAY_SIZE(single_texture_bindings);
-    create_info.pBindings = single_texture_bindings;
+    create_info.pBindings    = single_texture_bindings;
 
     vkCreateDescriptorSetLayout(
         g_ctx.device, &create_info, NULL, &g_ctx.canvas_descriptor_set_layout);
@@ -611,9 +611,9 @@ void re_ctx_init() {
   re_buffer_pool_init(
       &g_ctx.ubo_pool,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_UNIFORM,
+          .usage  = RE_BUFFER_USAGE_UNIFORM,
           .memory = RE_BUFFER_MEMORY_HOST,
-          .size = 1 << 16, // 65k blocks
+          .size   = 1 << 16, // 65k blocks
       });
 
   g_ctx.descriptor_set_allocators = calloc(

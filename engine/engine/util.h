@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#define _EG_LOG_INTERNAL(prefix, ...)                                           \
+#define _EG_LOG_INTERNAL(prefix, ...)                                          \
   do {                                                                         \
     printf(prefix __VA_ARGS__);                                                \
     puts("");                                                                  \

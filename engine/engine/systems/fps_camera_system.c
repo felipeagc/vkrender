@@ -15,11 +15,11 @@ void eg_fps_camera_system_init(
 
   system->cam_target = system->camera->position;
 
-  system->cam_up = (vec3_t){0};
+  system->cam_up    = (vec3_t){0};
   system->cam_front = (vec3_t){0.0, 0.0, 1.0};
   system->cam_right = (vec3_t){0};
 
-  system->cam_yaw = to_radians(90.0f);
+  system->cam_yaw   = to_radians(90.0f);
   system->cam_pitch = 0.0f;
 
   system->prev_normal_cursor_x = 0;
@@ -39,7 +39,7 @@ void eg_fps_camera_system_update(
     eg_fps_camera_system_t *system,
     re_window_t *window,
     re_cmd_buffer_t *cmd_buffer) {
-  float speed = 10.0f * (float)window->delta_time;
+  float speed     = 10.0f * (float)window->delta_time;
   vec3_t movement = vec3_zero();
 
   system->time += (float)window->delta_time;
@@ -87,7 +87,7 @@ void eg_fps_camera_system_update(
     system->cam_front.x = cosf(system->cam_yaw) * cosf(system->cam_pitch);
     system->cam_front.y = sinf(system->cam_pitch);
     system->cam_front.z = sinf(system->cam_yaw) * cosf(system->cam_pitch);
-    system->cam_front = vec3_normalize(system->cam_front);
+    system->cam_front   = vec3_normalize(system->cam_front);
 
     system->cam_right =
         vec3_normalize(vec3_cross(system->cam_front, (vec3_t){0.0, 1.0, 0.0}));

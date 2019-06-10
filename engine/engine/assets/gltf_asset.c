@@ -69,9 +69,9 @@ void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector) {
 }
 
 static void dimensions_init(eg_gltf_asset_dimensions_t *dimensions) {
-  dimensions->min = (vec3_t){FLT_MAX, FLT_MAX, FLT_MAX};
-  dimensions->max = (vec3_t){-FLT_MAX, -FLT_MAX, -FLT_MAX};
-  dimensions->size = (vec3_t){0, 0, 0};
+  dimensions->min    = (vec3_t){FLT_MAX, FLT_MAX, FLT_MAX};
+  dimensions->max    = (vec3_t){-FLT_MAX, -FLT_MAX, -FLT_MAX};
+  dimensions->size   = (vec3_t){0, 0, 0};
   dimensions->center = (vec3_t){0, 0, 0};
   dimensions->radius = 0.0f;
 }
@@ -83,10 +83,10 @@ static void material_init(
     re_image_t *metallic_roughness_texture,
     re_image_t *occlusion_texture,
     re_image_t *emissive_texture) {
-  material->uniform.base_color_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  material->uniform.metallic = 1.0;
-  material->uniform.roughness = 1.0;
-  material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  material->uniform.base_color_factor  = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  material->uniform.metallic           = 1.0;
+  material->uniform.roughness          = 1.0;
+  material->uniform.emissive_factor    = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
 
   material->albedo_texture = albedo_texture;
@@ -97,7 +97,7 @@ static void material_init(
   material->normal_texture = normal_texture;
   if (material->normal_texture == NULL) {
     material->uniform.has_normal_texture = 0.0f;
-    material->normal_texture = &g_eng.white_texture;
+    material->normal_texture             = &g_eng.white_texture;
   }
 
   material->metallic_roughness_texture = metallic_roughness_texture;
@@ -123,21 +123,21 @@ static void primitive_init(
     eg_gltf_asset_material_t *material) {
   primitive->first_index = first_index;
   primitive->index_count = index_count;
-  primitive->material = material;
+  primitive->material    = material;
   dimensions_init(&primitive->dimensions);
 }
 
 static void primitive_set_dimensions(
     eg_gltf_asset_primitive_t *primitive, vec3_t min, vec3_t max) {
-  primitive->dimensions.min = min;
-  primitive->dimensions.max = max;
-  primitive->dimensions.size = vec3_sub(max, min);
+  primitive->dimensions.min    = min;
+  primitive->dimensions.max    = max;
+  primitive->dimensions.size   = vec3_sub(max, min);
   primitive->dimensions.center = vec3_divs(vec3_add(max, min), 2.0f);
   primitive->dimensions.radius = vec3_distance(min, max) / 2.0f;
 }
 
 static void mesh_init(eg_gltf_asset_mesh_t *mesh, mat4_t matrix) {
-  mesh->primitives = NULL;
+  mesh->primitives      = NULL;
   mesh->primitive_count = 0;
 
   mesh->matrix = mat4_identity();
@@ -150,15 +150,15 @@ static void mesh_destroy(eg_gltf_asset_mesh_t *mesh) {
 }
 
 static void node_init(eg_gltf_asset_node_t *node) {
-  node->parent = NULL;
-  node->children = NULL;
+  node->parent         = NULL;
+  node->children       = NULL;
   node->children_count = 0;
-  node->matrix = mat4_identity();
-  node->name = NULL;
-  node->mesh = NULL;
-  node->translation = (vec3_t){0.0, 0.0, 0.0};
-  node->scale = (vec3_t){1.0, 1.0, 1.0};
-  node->rotation = quat_from_axis_angle((vec3_t){1.0, 0.0, 0.0}, 0.0);
+  node->matrix         = mat4_identity();
+  node->name           = NULL;
+  node->mesh           = NULL;
+  node->translation    = (vec3_t){0.0, 0.0, 0.0};
+  node->scale          = (vec3_t){1.0, 1.0, 1.0};
+  node->rotation       = quat_from_axis_angle((vec3_t){1.0, 0.0, 0.0}, 0.0);
 }
 
 static mat4_t node_local_matrix(eg_gltf_asset_node_t *node) {
@@ -172,10 +172,10 @@ static mat4_t node_local_matrix(eg_gltf_asset_node_t *node) {
 }
 
 static mat4_t node_get_matrix(eg_gltf_asset_node_t *node) {
-  mat4_t m = node_local_matrix(node);
+  mat4_t m                     = node_local_matrix(node);
   eg_gltf_asset_node_t *parent = node->parent;
   while (parent != NULL) {
-    m = mat4_mul(node_local_matrix(parent), m);
+    m      = mat4_mul(node_local_matrix(parent), m);
     parent = parent->parent;
   }
   return m;
@@ -258,7 +258,7 @@ static void load_node(
   }
 
   if (node->mesh != NULL) {
-    cgltf_mesh *mesh = node->mesh;
+    cgltf_mesh *mesh               = node->mesh;
     eg_gltf_asset_mesh_t *new_mesh = &model->meshes[node->mesh - data->meshes];
     mesh_init(new_mesh, new_node->matrix);
 
@@ -273,8 +273,8 @@ static void load_node(
         continue;
       }
 
-      uint32_t index_start = *index_count;
-      uint32_t vertex_start = *vertex_count;
+      uint32_t index_start      = *index_count;
+      uint32_t vertex_start     = *vertex_count;
       uint32_t prim_index_count = 0;
 
       vec3_t pos_min = {0};
@@ -282,12 +282,12 @@ static void load_node(
 
       // Vertices
       {
-        float *buffer_pos = NULL;
-        float *buffer_normals = NULL;
+        float *buffer_pos       = NULL;
+        float *buffer_normals   = NULL;
         float *buffer_texcoords = NULL;
 
-        cgltf_accessor *pos_accessor = NULL;
-        cgltf_accessor *normal_accessor = NULL;
+        cgltf_accessor *pos_accessor      = NULL;
+        cgltf_accessor *normal_accessor   = NULL;
         cgltf_accessor *texcoord_accessor = NULL;
         for (uint32_t j = 0; j < primitive->attributes_count; j++) {
           if (primitive->attributes[j].type == cgltf_attribute_type_position) {
@@ -326,14 +326,14 @@ static void load_node(
 
         if (normal_accessor != NULL) {
           cgltf_buffer_view *normal_view = normal_accessor->buffer_view;
-          buffer_normals = (float *)&(
+          buffer_normals                 = (float *)&(
               (unsigned char *)normal_view->buffer
                   ->data)[normal_accessor->offset + normal_view->offset];
         }
 
         if (texcoord_accessor != NULL) {
           cgltf_buffer_view *texcoord_view = texcoord_accessor->buffer_view;
-          buffer_texcoords = (float *)&(
+          buffer_texcoords                 = (float *)&(
               ((unsigned char *)texcoord_view->buffer
                    ->data)[texcoord_accessor->offset + texcoord_view->offset]);
         }
@@ -362,9 +362,9 @@ static void load_node(
 
       // Indices
       {
-        cgltf_accessor *accessor = primitive->indices;
+        cgltf_accessor *accessor       = primitive->indices;
         cgltf_buffer_view *buffer_view = accessor->buffer_view;
-        cgltf_buffer *buffer = buffer_view->buffer;
+        cgltf_buffer *buffer           = buffer_view->buffer;
 
         prim_index_count = (uint32_t)accessor->count;
 
@@ -441,7 +441,7 @@ get_node_dimensions(eg_gltf_asset_node_t *node, vec3_t *min, vec3_t *max) {
   if (node->mesh != NULL) {
     for (uint32_t i = 0; i < node->mesh->primitive_count; i++) {
       eg_gltf_asset_primitive_t *primitive = &node->mesh->primitives[i];
-      vec4_t loc_min = mat4_mulv(
+      vec4_t loc_min                       = mat4_mulv(
           node_get_matrix(node),
           (vec4_t){.xyz = primitive->dimensions.min, .w = 1.0f});
       vec4_t loc_max = mat4_mulv(
@@ -492,18 +492,18 @@ static void get_scene_dimensions(eg_gltf_asset_t *model) {
 void eg_gltf_asset_init(
     eg_gltf_asset_t *model, const char *path, bool flip_uvs) {
   model->vertex_buffer = (re_buffer_t){0};
-  model->index_buffer = (re_buffer_t){0};
+  model->index_buffer  = (re_buffer_t){0};
 
-  model->images = NULL;
+  model->images      = NULL;
   model->image_count = 0;
 
-  model->materials = NULL;
+  model->materials      = NULL;
   model->material_count = 0;
 
-  model->nodes = NULL;
+  model->nodes      = NULL;
   model->node_count = 0;
 
-  model->meshes = NULL;
+  model->meshes     = NULL;
   model->mesh_count = 0;
 
   dimensions_init(&model->dimensions);
@@ -518,8 +518,8 @@ void eg_gltf_asset_init(
   eg_file_close(gltf_file);
 
   cgltf_options options = {0};
-  cgltf_data *data = NULL;
-  cgltf_result result = cgltf_parse(&options, gltf_data, gltf_size, &data);
+  cgltf_data *data      = NULL;
+  cgltf_result result   = cgltf_parse(&options, gltf_data, gltf_size, &data);
   assert(result == cgltf_result_success);
 
   result = cgltf_load_buffers(&options, data, path);
@@ -529,7 +529,7 @@ void eg_gltf_asset_init(
 
   // Load images
   model->image_count = (uint32_t)data->images_count;
-  model->images = calloc(model->image_count, sizeof(*model->images));
+  model->images      = calloc(model->image_count, sizeof(*model->images));
   for (uint32_t i = 0; i < model->image_count; i++) {
     cgltf_image *image = &data->images[i];
     unsigned char *buffer_data =
@@ -544,13 +544,13 @@ void eg_gltf_asset_init(
     assert(image_data != NULL);
 
     re_image_options_t image_options = {
-        .width = (uint32_t)width,
-        .height = (uint32_t)height,
-        .layer_count = 1,
+        .width           = (uint32_t)width,
+        .height          = (uint32_t)height,
+        .layer_count     = 1,
         .mip_level_count = 1,
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
-        .flags = RE_IMAGE_FLAG_ANISOTROPY,
-        .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
+        .format          = VK_FORMAT_R8G8B8A8_UNORM,
+        .flags           = RE_IMAGE_FLAG_ANISOTROPY,
+        .usage           = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
     };
 
     re_image_init(&model->images[i], &image_options);
@@ -574,11 +574,11 @@ void eg_gltf_asset_init(
     cgltf_material *material = &data->materials[i];
     assert(material->has_pbr_metallic_roughness);
 
-    re_image_t *albedo_image = NULL;
-    re_image_t *normal_image = NULL;
+    re_image_t *albedo_image             = NULL;
+    re_image_t *normal_image             = NULL;
     re_image_t *metallic_roughness_image = NULL;
-    re_image_t *occlusion_image = NULL;
-    re_image_t *emissive_image = NULL;
+    re_image_t *occlusion_image          = NULL;
+    re_image_t *emissive_image           = NULL;
 
     if (material->pbr_metallic_roughness.base_color_texture.texture != NULL) {
       albedo_image = &model->images
@@ -625,15 +625,15 @@ void eg_gltf_asset_init(
 
   // Nodes and meshes
   model->node_count = (uint32_t)data->nodes_count;
-  model->nodes = calloc(model->node_count, sizeof(*model->nodes));
+  model->nodes      = calloc(model->node_count, sizeof(*model->nodes));
 
   model->mesh_count = (uint32_t)data->meshes_count;
-  model->meshes = calloc(model->mesh_count, sizeof(*model->meshes));
+  model->meshes     = calloc(model->mesh_count, sizeof(*model->meshes));
 
   re_vertex_t *vertices = NULL;
-  model->vertex_count = 0;
-  uint32_t *indices = NULL;
-  model->index_count = 0;
+  model->vertex_count   = 0;
+  uint32_t *indices     = NULL;
+  model->index_count    = 0;
 
   for (size_t i = 0; i < data->scene->nodes_count; i++) {
     load_node(
@@ -656,7 +656,7 @@ void eg_gltf_asset_init(
 
   // Vertex and index buffers
   size_t vertex_buffer_size = model->vertex_count * sizeof(re_vertex_t);
-  size_t index_buffer_size = model->index_count * sizeof(uint32_t);
+  size_t index_buffer_size  = model->index_count * sizeof(uint32_t);
 
   assert((vertex_buffer_size > 0) && (index_buffer_size > 0));
 
@@ -664,9 +664,9 @@ void eg_gltf_asset_init(
   re_buffer_init(
       &staging_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_TRANSFER,
+          .usage  = RE_BUFFER_USAGE_TRANSFER,
           .memory = RE_BUFFER_MEMORY_HOST,
-          .size = vertex_buffer_size > index_buffer_size ? vertex_buffer_size
+          .size   = vertex_buffer_size > index_buffer_size ? vertex_buffer_size
                                                          : index_buffer_size,
       });
 
@@ -676,17 +676,17 @@ void eg_gltf_asset_init(
   re_buffer_init(
       &model->vertex_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_VERTEX,
+          .usage  = RE_BUFFER_USAGE_VERTEX,
           .memory = RE_BUFFER_MEMORY_DEVICE,
-          .size = vertex_buffer_size,
+          .size   = vertex_buffer_size,
       });
 
   re_buffer_init(
       &model->index_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_INDEX,
+          .usage  = RE_BUFFER_USAGE_INDEX,
           .memory = RE_BUFFER_MEMORY_DEVICE,
-          .size = index_buffer_size,
+          .size   = index_buffer_size,
       });
 
   memcpy(staging_memory_ptr, vertices, vertex_buffer_size);

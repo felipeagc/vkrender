@@ -50,8 +50,8 @@ VkResult re_create_buffer(
   vkGetPhysicalDeviceMemoryProperties(g_ctx.physical_device, &props);
 
   VkMemoryAllocateInfo vk_alloc_info = {0};
-  vk_alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  vk_alloc_info.allocationSize = mem_requirements.size;
+  vk_alloc_info.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  vk_alloc_info.allocationSize       = mem_requirements.size;
 
   vk_alloc_info.memoryTypeIndex = find_memory_type(
       &props, mem_requirements.memoryTypeBits, alloc_info->props);
@@ -90,4 +90,3 @@ void re_destroy_buffer(
   vkDestroyBuffer(g_ctx.device, buffer, NULL);
   vkFreeMemory(g_ctx.device, allocation->memory, NULL);
 }
-

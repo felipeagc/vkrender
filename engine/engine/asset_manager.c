@@ -52,8 +52,8 @@ eg_asset_t *eg_asset_manager_alloc(
   assert(fstd_map_get(&asset_manager->map, name) == NULL);
 
   eg_asset_t **asset_entry = fstd_map_set(&asset_manager->map, name, &asset);
-  asset->type = type;
-  asset->name = fstd_map_get_key(&asset_manager->map, asset_entry);
+  asset->type              = type;
+  asset->name              = fstd_map_get_key(&asset_manager->map, asset_entry);
 
   mtx_unlock(&asset_manager->mutex);
 
@@ -92,4 +92,3 @@ void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
 
   mtx_destroy(&asset_manager->mutex);
 }
-

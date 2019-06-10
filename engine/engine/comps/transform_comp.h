@@ -33,4 +33,3 @@ eg_transform_comp_mat4(const eg_transform_comp_t *transform) {
 
   return mat4_mul(mat4_mul(scale, rotation), translation);
 }
-

@@ -26,7 +26,7 @@ static void node_destroy(re_buffer_pool_node_t *node) {
 void re_buffer_pool_init(
     re_buffer_pool_t *buffer_pool, re_buffer_options_t *options) {
   buffer_pool->buffer_options = *options;
-  buffer_pool->current_frame = 0;
+  buffer_pool->current_frame  = 0;
   buffer_pool->part_size =
       (uint32_t)g_ctx.physical_limits.minUniformBufferOffsetAlignment;
   buffer_pool->buffer_parts = (uint32_t)options->size / buffer_pool->part_size;
@@ -77,7 +77,7 @@ void *re_buffer_pool_alloc(
         *out_descriptor = (re_descriptor_info_t){
             .buffer = {.buffer = node->buffer.buffer,
                        .offset = 0,
-                       .range = VK_WHOLE_SIZE},
+                       .range  = VK_WHOLE_SIZE},
         };
         *out_offset = i * buffer_pool->part_size;
         return ((uint8_t *)node->mapping) + i * buffer_pool->part_size;
@@ -109,7 +109,7 @@ void re_buffer_pool_destroy(re_buffer_pool_t *buffer_pool) {
 
     while (node != NULL) {
       re_buffer_pool_node_t *old_node = node;
-      node = node->next;
+      node                            = node->next;
       free(old_node);
     }
   }

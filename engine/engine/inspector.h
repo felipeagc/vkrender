@@ -12,9 +12,9 @@ typedef struct eg_asset_manager_t eg_asset_manager_t;
 
 typedef enum eg_drag_direction_t {
   EG_DRAG_DIRECTION_NONE = 0,
-  EG_DRAG_DIRECTION_X = UINT32_MAX - 1,
-  EG_DRAG_DIRECTION_Y = UINT32_MAX - 2,
-  EG_DRAG_DIRECTION_Z = UINT32_MAX - 3,
+  EG_DRAG_DIRECTION_X    = UINT32_MAX - 1,
+  EG_DRAG_DIRECTION_Y    = UINT32_MAX - 2,
+  EG_DRAG_DIRECTION_Z    = UINT32_MAX - 3,
 } eg_drag_direction_t;
 
 typedef struct eg_inspector_t {
@@ -73,4 +73,3 @@ void eg_inspector_draw_selected_outline(
     eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer);
 
 void eg_inspector_draw_ui(eg_inspector_t *inspector);
-

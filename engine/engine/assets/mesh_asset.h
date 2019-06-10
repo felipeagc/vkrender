@@ -30,4 +30,3 @@ void eg_mesh_asset_init(
     uint32_t index_count);
 
 void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, re_cmd_buffer_t *cmd_buffer);
-

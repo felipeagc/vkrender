@@ -33,7 +33,7 @@ static eg_entity_t add_gltf(
   eg_transform_comp_t *transform =
       EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
   transform->position = position;
-  transform->scale = scale;
+  transform->scale    = scale;
 
   eg_gltf_comp_t *model = EG_ADD_COMP(&game->world, eg_gltf_comp_t, ent);
   eg_gltf_comp_init(model, model_asset);
@@ -73,15 +73,16 @@ static eg_entity_t add_terrain(
     for (uint32_t j = 0; j < dim; j++) {
       float x = ((float)i - (float)dim / 2.0f);
       float z = ((float)j - (float)dim / 2.0f);
+
       vertices[i * dim + j] = (re_vertex_t){
-          .pos = {x, 0.0f, z},
+          .pos    = {x, 0.0f, z},
           .normal = {0.0f, 1.0f, 0.0f},
       };
     }
   }
 
-  uint32_t index_count = (dim - 1) * (dim - 1) * 6;
-  uint32_t *indices = calloc(index_count, sizeof(uint32_t));
+  uint32_t index_count   = (dim - 1) * (dim - 1) * 6;
+  uint32_t *indices      = calloc(index_count, sizeof(uint32_t));
   uint32_t current_index = 0;
 
   for (uint32_t i = 0; i < dim - 1; i++) {
@@ -144,9 +145,9 @@ int main(int argc, const char *argv[]) {
   re_window_init(
       &game.window,
       &(re_window_options_t){
-          .title = "Re-write",
-          .width = 1600,
-          .height = 900,
+          .title        = "Re-write",
+          .width        = 1600,
+          .height       = 900,
           .sample_count = VK_SAMPLE_COUNT_1_BIT,
       });
   game.window.clear_color = (vec4_t){1.0, 1.0, 1.0, 1.0};

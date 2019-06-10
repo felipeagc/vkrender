@@ -24,7 +24,7 @@ void eg_rendering_system(eg_world_t *world, re_cmd_buffer_t *cmd_buffer) {
   eg_transform_comp_t *transforms = EG_COMP_ARRAY(world, eg_transform_comp_t);
   eg_renderable_comp_t *renderables =
       EG_COMP_ARRAY(world, eg_renderable_comp_t);
-  eg_mesh_comp_t *meshes = EG_COMP_ARRAY(world, eg_mesh_comp_t);
+  eg_mesh_comp_t *meshes      = EG_COMP_ARRAY(world, eg_mesh_comp_t);
   eg_gltf_comp_t *gltf_models = EG_COMP_ARRAY(world, eg_gltf_comp_t);
 
   // Draw all meshes

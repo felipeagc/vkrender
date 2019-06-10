@@ -10,7 +10,7 @@ begin_single_time_command_buffer(re_cmd_pool_t pool) {
 
   re_allocate_cmd_buffers(
       &(re_cmd_buffer_alloc_info_t){
-          .pool = pool,
+          .pool  = pool,
           .count = 1,
           .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
       },
@@ -70,8 +70,8 @@ static inline void create_buffer(
   };
 
   VmaAllocationCreateInfo alloc_info = {0};
-  alloc_info.usage = memory_usage;
-  alloc_info.requiredFlags = memory_property;
+  alloc_info.usage                   = memory_usage;
+  alloc_info.requiredFlags           = memory_property;
 
   VK_CHECK(vmaCreateBuffer(
       g_ctx.gpu_allocator,
@@ -87,18 +87,18 @@ void re_buffer_init(re_buffer_t *buffer, re_buffer_options_t *options) {
   assert(options->usage < RE_BUFFER_USAGE_MAX);
   assert(options->memory < RE_BUFFER_MEMORY_MAX);
 
-  VkBufferUsageFlags buffer_usage = 0;
-  VmaMemoryUsage memory_usage = 0;
+  VkBufferUsageFlags buffer_usage       = 0;
+  VmaMemoryUsage memory_usage           = 0;
   VkMemoryPropertyFlags memory_property = 0;
 
   switch (options->memory) {
   case RE_BUFFER_MEMORY_HOST: {
-    memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    memory_usage    = VMA_MEMORY_USAGE_CPU_TO_GPU;
     memory_property = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     break;
   }
   case RE_BUFFER_MEMORY_DEVICE: {
-    memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    memory_usage    = VMA_MEMORY_USAGE_GPU_ONLY;
     memory_property = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     break;
@@ -178,11 +178,11 @@ void re_buffer_transfer_to_image(
   re_cmd_buffer_t cmd_buffer = begin_single_time_command_buffer(pool);
 
   VkImageSubresourceRange subresource_range = {0};
-  subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresource_range.baseMipLevel = level;
-  subresource_range.levelCount = 1;
-  subresource_range.baseArrayLayer = layer;
-  subresource_range.layerCount = 1;
+  subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresource_range.baseMipLevel            = level;
+  subresource_range.levelCount              = 1;
+  subresource_range.baseArrayLayer          = layer;
+  subresource_range.layerCount              = 1;
 
   re_set_image_layout(
       &cmd_buffer,
@@ -239,12 +239,13 @@ void re_image_transfer_to_buffer(
     uint32_t level) {
   re_cmd_buffer_t command_buffer = begin_single_time_command_buffer(pool);
 
-  VkImageSubresourceRange subresource_range = {0};
-  subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresource_range.baseMipLevel = level;
-  subresource_range.levelCount = 1;
-  subresource_range.baseArrayLayer = layer;
-  subresource_range.layerCount = 1;
+  VkImageSubresourceRange subresource_range = {
+      .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel   = level,
+      .levelCount     = 1,
+      .baseArrayLayer = layer,
+      .layerCount     = 1,
+  };
 
   re_set_image_layout(
       &command_buffer,
@@ -256,17 +257,15 @@ void re_image_transfer_to_buffer(
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
   VkBufferImageCopy region = {
-      0, // bufferOffset
-      0, // bufferRowLength
-      0, // bufferImageHeight
-      {
-          VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
-          level,                     // mipLevel
-          layer,                     // baseArrayLayer
-          1,                         // layerCount
-      },                             // imageSubresource
-      {offset_x, offset_y, 0},       // imageOffset
-      {width, height, 1},            // imageExtent
+      .bufferOffset      = 0,
+      .bufferRowLength   = 0,
+      .bufferImageHeight = 0,
+      .imageSubresource  = {.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+                           .mipLevel       = level,
+                           .baseArrayLayer = layer,
+                           .layerCount     = 1},
+      .imageOffset       = {offset_x, offset_y, 0},
+      .imageExtent       = {width, height, 1},
   };
 
   vkCmdCopyImageToBuffer(

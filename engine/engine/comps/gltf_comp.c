@@ -42,7 +42,7 @@ static void draw_node(
       } ubo;
 
       ubo.local_model = node->mesh->matrix;
-      ubo.model = matrix;
+      ubo.model       = matrix;
 
       void *mapping = re_cmd_bind_uniform(cmd_buffer, 2, 0, sizeof(ubo));
       memcpy(mapping, &ubo, sizeof(ubo));
@@ -112,7 +112,7 @@ static void draw_node_no_mat(
       } ubo;
 
       ubo.local_model = node->mesh->matrix;
-      ubo.model = matrix;
+      ubo.model       = matrix;
 
       void *mapping = re_cmd_bind_uniform(cmd_buffer, 1, 0, sizeof(ubo));
       memcpy(mapping, &ubo, sizeof(ubo));
@@ -182,4 +182,3 @@ void eg_gltf_comp_draw_no_mat(
         model, &model->asset->nodes[j], cmd_buffer, pipeline, transform);
   }
 }
-

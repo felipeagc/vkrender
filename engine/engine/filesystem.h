@@ -20,4 +20,3 @@ int eg_file_close(eg_file_t *path);
 size_t eg_file_size(eg_file_t *file);
 
 size_t eg_file_read_bytes(eg_file_t *file, void *buffer, size_t length);
-

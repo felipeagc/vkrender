@@ -19,8 +19,8 @@ static inline void eg_inspect_assets(
   igColumns(3, NULL, true);
 
   for (uint32_t i = 0; i < asset_count; i++) {
-    const char *label = assets[i].label;
-    eg_asset_t **asset = assets[i].asset;
+    const char *label    = assets[i].label;
+    eg_asset_t **asset   = assets[i].asset;
     eg_asset_type_t type = assets[i].type;
 
     igPushIDStr(label);
@@ -73,4 +73,3 @@ static inline void eg_inspect_assets(
   igColumns(1, NULL, true);
   igPopID();
 }
-

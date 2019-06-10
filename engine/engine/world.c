@@ -5,7 +5,7 @@
   fstd_bitset_at(&world->comp_masks[comp_type], entity)
 
 static eg_entity_t to_remove[EG_MAX_ENTITIES] = {0};
-static size_t to_remove_count = 0;
+static size_t to_remove_count                 = 0;
 
 void eg_world_init(
     eg_world_t *world, eg_environment_asset_t *environment_asset) {

@@ -23,10 +23,10 @@ static void node_init(
   VK_CHECK(vkAllocateDescriptorSets(
       g_ctx.device,
       &(VkDescriptorSetAllocateInfo){
-          .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-          .descriptorPool = g_ctx.descriptor_pool,
+          .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+          .descriptorPool     = g_ctx.descriptor_pool,
           .descriptorSetCount = ARRAY_SIZE(node->descriptor_sets),
-          .pSetLayouts = set_layouts,
+          .pSetLayouts        = set_layouts,
       },
       node->descriptor_sets));
 }
@@ -37,28 +37,28 @@ void re_descriptor_set_allocator_init(
   memset(allocator, 0, sizeof(*allocator));
 
   allocator->current_frame = 0;
-  allocator->layout = layout;
+  allocator->layout        = layout;
 
   // Set up the bindings and entries
-  VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
+  VkDescriptorSetLayoutBinding bindings[RE_MAX_DESCRIPTOR_SET_BINDINGS]   = {0};
   VkDescriptorUpdateTemplateEntry entries[RE_MAX_DESCRIPTOR_SET_BINDINGS] = {0};
 
   allocator->binding_count = 0;
   for (uint32_t i = 0; i < RE_MAX_DESCRIPTOR_SET_BINDINGS; i++) {
-    bindings[i].binding = i;
-    bindings[i].stageFlags = allocator->layout.stage_flags[i];
+    bindings[i].binding         = i;
+    bindings[i].stageFlags      = allocator->layout.stage_flags[i];
     bindings[i].descriptorCount = (uint32_t)layout.array_size[i];
 
-    entries[i].dstBinding = i;
+    entries[i].dstBinding      = i;
     entries[i].dstArrayElement = 0;
     entries[i].descriptorCount = bindings[i].descriptorCount;
-    entries[i].offset = sizeof(re_descriptor_info_t) * i;
-    entries[i].stride = sizeof(re_descriptor_info_t);
+    entries[i].offset          = sizeof(re_descriptor_info_t) * i;
+    entries[i].stride          = sizeof(re_descriptor_info_t);
 
     if (layout.uniform_buffer_mask & (1u << i)) {
       assert(bindings[i].descriptorCount > 0);
       bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      entries[i].descriptorType = bindings[i].descriptorType;
+      entries[i].descriptorType  = bindings[i].descriptorType;
       allocator->binding_count++;
       continue;
     }
@@ -66,7 +66,7 @@ void re_descriptor_set_allocator_init(
     if (layout.uniform_buffer_dynamic_mask & (1u << i)) {
       assert(bindings[i].descriptorCount > 0);
       bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-      entries[i].descriptorType = bindings[i].descriptorType;
+      entries[i].descriptorType  = bindings[i].descriptorType;
       allocator->binding_count++;
       continue;
     }
@@ -74,7 +74,7 @@ void re_descriptor_set_allocator_init(
     if (layout.combined_image_sampler_mask & (1u << i)) {
       assert(bindings[i].descriptorCount > 0);
       bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      entries[i].descriptorType = bindings[i].descriptorType;
+      entries[i].descriptorType  = bindings[i].descriptorType;
       allocator->binding_count++;
       continue;
     }
@@ -82,9 +82,9 @@ void re_descriptor_set_allocator_init(
 
   // Create set layout
   VkDescriptorSetLayoutCreateInfo set_layout_create_info = {
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
       .bindingCount = allocator->binding_count,
-      .pBindings = bindings,
+      .pBindings    = bindings,
   };
 
   VK_CHECK(vkCreateDescriptorSetLayout(
@@ -96,7 +96,7 @@ void re_descriptor_set_allocator_init(
       &(VkDescriptorUpdateTemplateCreateInfo){
           .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO,
           .descriptorUpdateEntryCount = allocator->binding_count,
-          .pDescriptorUpdateEntries = entries,
+          .pDescriptorUpdateEntries   = entries,
           .templateType = VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET,
           .descriptorSetLayout = allocator->set_layout,
       },
@@ -114,8 +114,8 @@ void re_descriptor_set_allocator_begin_frame(
   allocator->current_frame =
       (allocator->current_frame + 1) % RE_MAX_FRAMES_IN_FLIGHT;
 
-  allocator->writes[allocator->current_frame] = 0;
-  allocator->matches[allocator->current_frame] = 0;
+  allocator->writes[allocator->current_frame]         = 0;
+  allocator->matches[allocator->current_frame]        = 0;
   allocator->max_iterations[allocator->current_frame] = 0;
 
   allocator->last_nodes[allocator->current_frame] =
@@ -143,7 +143,7 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
       allocator->last_nodes[allocator->current_frame];
 
   for (re_descriptor_set_allocator_node_t *node = last_node; node != NULL;
-       node = node->next) {
+       node                                     = node->next) {
     for (uint32_t i = first_set; i < RE_DESCRIPTOR_RING_SIZE; i++) {
       iters++;
 
@@ -158,7 +158,7 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
         allocator->matches[allocator->current_frame]++;
         node->data[i].in_use = true;
 
-        allocator->last_sets[allocator->current_frame] = i;
+        allocator->last_sets[allocator->current_frame]  = i;
         allocator->last_nodes[allocator->current_frame] = node;
 
         allocator->max_iterations[allocator->current_frame] =
@@ -195,7 +195,7 @@ VkDescriptorSet re_descriptor_set_allocator_alloc(
             allocator->update_template,
             descriptors);
 
-        allocator->last_sets[allocator->current_frame] = i;
+        allocator->last_sets[allocator->current_frame]  = i;
         allocator->last_nodes[allocator->current_frame] = node;
 
         allocator->max_iterations[allocator->current_frame] =
@@ -245,7 +245,7 @@ void re_descriptor_set_allocator_destroy(
 
     while (node != NULL) {
       re_descriptor_set_allocator_node_t *old_node = node;
-      node = old_node->next;
+      node                                         = old_node->next;
       free(old_node);
     }
   }

@@ -13,6 +13,7 @@ typedef struct eg_terrain_comp_t {
  */
 void eg_terrain_comp_default(eg_terrain_comp_t *terrain);
 
-void eg_terrain_comp_inspect(eg_terrain_comp_t *terrain, eg_inspector_t *inspector);
+void eg_terrain_comp_inspect(
+    eg_terrain_comp_t *terrain, eg_inspector_t *inspector);
 
 void eg_terrain_comp_destroy(eg_terrain_comp_t *terrain);

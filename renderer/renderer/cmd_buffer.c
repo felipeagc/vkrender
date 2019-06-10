@@ -13,10 +13,10 @@ void re_allocate_cmd_buffers(
   VK_CHECK(vkAllocateCommandBuffers(
       g_ctx.device,
       &(VkCommandBufferAllocateInfo){
-          .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-          .pNext = NULL,
-          .commandPool = alloc_info->pool,
-          .level = (VkCommandBufferLevel)alloc_info->level,
+          .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+          .pNext              = NULL,
+          .commandPool        = alloc_info->pool,
+          .level              = (VkCommandBufferLevel)alloc_info->level,
           .commandBufferCount = alloc_info->count,
       },
       cmd_buffers));
@@ -45,9 +45,9 @@ void re_begin_cmd_buffer(
   VK_CHECK(vkBeginCommandBuffer(
       cmd_buffer->cmd_buffer,
       &(VkCommandBufferBeginInfo){
-          .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-          .pNext = NULL,
-          .flags = begin_info->usage,
+          .sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+          .pNext            = NULL,
+          .flags            = begin_info->usage,
           .pInheritanceInfo = NULL,
       }));
 }

@@ -19,29 +19,29 @@ void eg_mesh_asset_init(
   mesh->index_count = index_count;
 
   size_t vertex_buffer_size = sizeof(re_vertex_t) * vertex_count;
-  size_t index_buffer_size = sizeof(uint32_t) * index_count;
+  size_t index_buffer_size  = sizeof(uint32_t) * index_count;
   re_buffer_init(
       &mesh->vertex_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_VERTEX,
+          .usage  = RE_BUFFER_USAGE_VERTEX,
           .memory = RE_BUFFER_MEMORY_DEVICE,
-          .size = vertex_buffer_size,
+          .size   = vertex_buffer_size,
       });
   re_buffer_init(
       &mesh->index_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_INDEX,
+          .usage  = RE_BUFFER_USAGE_INDEX,
           .memory = RE_BUFFER_MEMORY_DEVICE,
-          .size = index_buffer_size,
+          .size   = index_buffer_size,
       });
 
   re_buffer_t staging_buffer;
   re_buffer_init(
       &staging_buffer,
       &(re_buffer_options_t){
-          .usage = RE_BUFFER_USAGE_TRANSFER,
+          .usage  = RE_BUFFER_USAGE_TRANSFER,
           .memory = RE_BUFFER_MEMORY_HOST,
-          .size = vertex_buffer_size > index_buffer_size ? vertex_buffer_size
+          .size   = vertex_buffer_size > index_buffer_size ? vertex_buffer_size
                                                          : index_buffer_size,
       });
 

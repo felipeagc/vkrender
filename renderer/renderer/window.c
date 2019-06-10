@@ -44,7 +44,7 @@ get_swapchain_format(VkSurfaceFormatKHR *formats, uint32_t format_count) {
 
   if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
     format = (VkSurfaceFormatKHR){
-        .format = VK_FORMAT_B8G8R8A8_UNORM,
+        .format     = VK_FORMAT_B8G8R8A8_UNORM,
         .colorSpace = formats[0].colorSpace,
     };
   } else {
@@ -181,10 +181,9 @@ static inline void create_sync_objects(re_window_t *window) {
   for (uint32_t i = 0; i < ARRAY_SIZE(window->frame_resources); i++) {
     re_frame_resources_t *resources = &window->frame_resources[i];
 
-    VkSemaphoreCreateInfo semaphore_create_info = {0};
-    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphore_create_info.pNext = NULL;
-    semaphore_create_info.flags = 0;
+    VkSemaphoreCreateInfo semaphore_create_info = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
 
     VK_CHECK(vkCreateSemaphore(
         g_ctx.device,
@@ -198,10 +197,10 @@ static inline void create_sync_objects(re_window_t *window) {
         NULL,
         &resources->rendering_finished_semaphore));
 
-    VkFenceCreateInfo fence_create_info = {0};
-    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_create_info.pNext = NULL;
-    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VkFenceCreateInfo fence_create_info = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
 
     VK_CHECK(vkCreateFence(
         g_ctx.device, &fence_create_info, NULL, &resources->fence));
@@ -255,25 +254,22 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   VkSwapchainKHR old_swapchain = window->swapchain;
 
   VkSwapchainCreateInfoKHR create_info = {
-      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
-      NULL,                                        // pNext
-      0,                                           // flags
-      window->surface,
-      desired_num_images,                // minImageCount
-      desired_format.format,             // imageFormat
-      desired_format.colorSpace,         // imageColorSpace
-      desired_extent,                    // imageExtent
-      1,                                 // imageArrayLayers
-      desired_usage,                     // imageUsage
-      VK_SHARING_MODE_EXCLUSIVE,         // imageSharingMode
-      0,                                 // queueFamilyIndexCount
-      NULL,                              // pQueueFamiylIndices
-      desired_transform,                 // preTransform
-      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, // compositeAlpha
-      desired_present_mode,              // presentMode
-      VK_TRUE,                           // clipped
-      old_swapchain                      // oldSwapchain
-  };
+      .sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+      .surface               = window->surface,
+      .minImageCount         = desired_num_images,
+      .imageFormat           = desired_format.format,
+      .imageColorSpace       = desired_format.colorSpace,
+      .imageExtent           = desired_extent,
+      .imageArrayLayers      = 1,
+      .imageUsage            = desired_usage,
+      .imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices   = NULL,
+      .preTransform          = desired_transform,
+      .compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+      .presentMode           = desired_present_mode,
+      .clipped               = VK_TRUE,
+      .oldSwapchain          = old_swapchain};
 
   vkCreateSwapchainKHR(g_ctx.device, &create_info, NULL, &window->swapchain);
 
@@ -282,9 +278,9 @@ create_swapchain(re_window_t *window, uint32_t width, uint32_t height) {
   }
 
   window->swapchain_image_format = desired_format.format;
-  window->swapchain_extent = desired_extent;
-  window->render_target.width = window->swapchain_extent.width;
-  window->render_target.height = window->swapchain_extent.height;
+  window->swapchain_extent       = desired_extent;
+  window->render_target.width    = window->swapchain_extent.width;
+  window->render_target.height   = window->swapchain_extent.height;
 
   VK_CHECK(vkGetSwapchainImagesKHR(
       g_ctx.device, window->swapchain, &window->swapchain_image_count, NULL));
@@ -337,7 +333,7 @@ static inline void allocate_graphics_command_buffers(re_window_t *window) {
 
   re_allocate_cmd_buffers(
       &(re_cmd_buffer_alloc_info_t){
-          .pool = g_ctx.graphics_command_pool,
+          .pool  = g_ctx.graphics_command_pool,
           .level = RE_CMD_BUFFER_LEVEL_PRIMARY,
           .count = RE_MAX_FRAMES_IN_FLIGHT,
       },
@@ -355,24 +351,24 @@ static inline void create_depth_stencil_image(re_window_t *window) {
 
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; ++i) {
     VkImageCreateInfo image_create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = window->depth_format,
-        .extent = {window->swapchain_extent.width,
+        .sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext       = NULL,
+        .flags       = 0,
+        .imageType   = VK_IMAGE_TYPE_2D,
+        .format      = window->depth_format,
+        .extent      = {window->swapchain_extent.width,
                    window->swapchain_extent.height,
                    1},
-        .mipLevels = 1,
+        .mipLevels   = 1,
         .arrayLayers = 1,
-        .samples = window->render_target.sample_count,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+        .samples     = window->render_target.sample_count,
+        .tiling      = VK_IMAGE_TILING_OPTIMAL,
+        .usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
                  VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .sharingMode           = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = NULL,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .pQueueFamilyIndices   = NULL,
+        .initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
     VmaAllocationCreateInfo alloc_info = {0};
@@ -388,12 +384,12 @@ static inline void create_depth_stencil_image(re_window_t *window) {
         NULL));
 
     VkImageViewCreateInfo image_view_create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        .pNext = NULL,                                     // pNext
-        .flags = 0,                                        // flags
-        .image = window->frame_resources[i].depth_stencil.image,
+        .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+        .pNext    = NULL,                                     // pNext
+        .flags    = 0,                                        // flags
+        .image    = window->frame_resources[i].depth_stencil.image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = window->depth_format,
+        .format   = window->depth_format,
         .components =
             {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -402,11 +398,11 @@ static inline void create_depth_stencil_image(re_window_t *window) {
                 .a = VK_COMPONENT_SWIZZLE_IDENTITY,
             },
         .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .baseMipLevel = 0,
-            .levelCount = 1,
+            .aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .baseMipLevel   = 0,
+            .levelCount     = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1,
+            .layerCount     = 1,
         }};
 
     if (window->depth_format >= VK_FORMAT_D16_UNORM_S8_UINT) {
@@ -426,29 +422,29 @@ static inline void create_multisampled_color_image(re_window_t *window) {
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; ++i) {
 
     VkImageCreateInfo image_create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = window->swapchain_image_format,
-        .extent = {window->swapchain_extent.width,
+        .sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext       = NULL,
+        .flags       = 0,
+        .imageType   = VK_IMAGE_TYPE_2D,
+        .format      = window->swapchain_image_format,
+        .extent      = {window->swapchain_extent.width,
                    window->swapchain_extent.height,
                    1},
-        .mipLevels = 1,
+        .mipLevels   = 1,
         .arrayLayers = 1,
-        .samples = window->render_target.sample_count,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+        .samples     = window->render_target.sample_count,
+        .tiling      = VK_IMAGE_TILING_OPTIMAL,
+        .usage       = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .sharingMode           = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = NULL,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .pQueueFamilyIndices   = NULL,
+        .initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
     VmaAllocationCreateInfo alloc_info = {0};
-    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    alloc_info.usage                   = VMA_MEMORY_USAGE_GPU_ONLY;
     alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
     VK_CHECK(vmaCreateImage(
@@ -460,12 +456,12 @@ static inline void create_multisampled_color_image(re_window_t *window) {
         NULL));
 
     VkImageViewCreateInfo image_view_create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .image = window->frame_resources[i].multisampled_color.image,
+        .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext    = NULL,
+        .flags    = 0,
+        .image    = window->frame_resources[i].multisampled_color.image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = window->swapchain_image_format,
+        .format   = window->swapchain_image_format,
         .components =
             {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -474,11 +470,11 @@ static inline void create_multisampled_color_image(re_window_t *window) {
                 .a = VK_COMPONENT_SWIZZLE_IDENTITY,
             },
         .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0,
-            .levelCount = 1,
+            .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel   = 0,
+            .levelCount     = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1,
+            .layerCount     = 1,
         }};
 
     VK_CHECK(vkCreateImageView(
@@ -660,9 +656,9 @@ static inline void destroy_resizables(re_window_t *window) {
           g_ctx.gpu_allocator,
           window->frame_resources[i].depth_stencil.image,
           window->frame_resources[i].depth_stencil.allocation);
-      window->frame_resources[i].depth_stencil.image = VK_NULL_HANDLE;
+      window->frame_resources[i].depth_stencil.image      = VK_NULL_HANDLE;
       window->frame_resources[i].depth_stencil.allocation = VK_NULL_HANDLE;
-      window->frame_resources[i].depth_stencil.view = VK_NULL_HANDLE;
+      window->frame_resources[i].depth_stencil.view       = VK_NULL_HANDLE;
     }
   }
 
@@ -676,9 +672,9 @@ static inline void destroy_resizables(re_window_t *window) {
           g_ctx.gpu_allocator,
           window->frame_resources[i].multisampled_color.image,
           window->frame_resources[i].multisampled_color.allocation);
-      window->frame_resources[i].multisampled_color.image = VK_NULL_HANDLE;
+      window->frame_resources[i].multisampled_color.image      = VK_NULL_HANDLE;
       window->frame_resources[i].multisampled_color.allocation = VK_NULL_HANDLE;
-      window->frame_resources[i].multisampled_color.view = VK_NULL_HANDLE;
+      window->frame_resources[i].multisampled_color.view       = VK_NULL_HANDLE;
     }
   }
 
@@ -706,7 +702,7 @@ static inline void update_size(re_window_t *window) {
  */
 
 static re_event_t *new_event() {
-  re_event_t *event = g_event_queue.events + g_event_queue.head;
+  re_event_t *event  = g_event_queue.events + g_event_queue.head;
   g_event_queue.head = (g_event_queue.head + 1) % RE_EVENT_QUEUE_CAPACITY;
   assert(g_event_queue.head != g_event_queue.tail);
   memset(event, 0, sizeof(re_event_t));
@@ -714,41 +710,41 @@ static re_event_t *new_event() {
 }
 
 static void re_window_pos_callback(GLFWwindow *window, int x, int y) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->type = RE_EVENT_WINDOW_MOVED;
-  event->window = win;
-  event->pos.x = x;
-  event->pos.y = y;
+  event->type       = RE_EVENT_WINDOW_MOVED;
+  event->window     = win;
+  event->pos.x      = x;
+  event->pos.y      = y;
 }
 
 static void re_window_size_callback(GLFWwindow *window, int width, int height) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
-  re_event_t *event = new_event();
-  event->type = RE_EVENT_WINDOW_RESIZED;
-  event->window = win;
-  event->size.width = width;
+  re_window_t *win   = glfwGetWindowUserPointer(window);
+  re_event_t *event  = new_event();
+  event->type        = RE_EVENT_WINDOW_RESIZED;
+  event->window      = win;
+  event->size.width  = width;
   event->size.height = height;
 }
 
 static void re_window_close_callback(GLFWwindow *window) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->type = RE_EVENT_WINDOW_CLOSED;
-  event->window = win;
+  event->type       = RE_EVENT_WINDOW_CLOSED;
+  event->window     = win;
 }
 
 static void re_window_refresh_callback(GLFWwindow *window) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->type = RE_EVENT_WINDOW_REFRESH;
-  event->window = win;
+  event->type       = RE_EVENT_WINDOW_REFRESH;
+  event->window     = win;
 }
 
 static void re_window_focus_callback(GLFWwindow *window, int focused) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->window = win;
+  event->window     = win;
 
   if (focused)
     event->type = RE_EVENT_WINDOW_FOCUSED;
@@ -757,9 +753,9 @@ static void re_window_focus_callback(GLFWwindow *window, int focused) {
 }
 
 static void re_window_iconify_callback(GLFWwindow *window, int iconified) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->window = win;
+  event->window     = win;
 
   if (iconified)
     event->type = RE_EVENT_WINDOW_ICONIFIED;
@@ -769,21 +765,21 @@ static void re_window_iconify_callback(GLFWwindow *window, int iconified) {
 
 static void
 re_framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
-  re_event_t *event = new_event();
-  event->type = RE_EVENT_FRAMEBUFFER_RESIZED;
-  event->window = win;
-  event->size.width = width;
+  re_window_t *win   = glfwGetWindowUserPointer(window);
+  re_event_t *event  = new_event();
+  event->type        = RE_EVENT_FRAMEBUFFER_RESIZED;
+  event->window      = win;
+  event->size.width  = width;
   event->size.height = height;
 }
 
 static void
 re_mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
-  re_event_t *event = new_event();
-  event->window = win;
+  re_window_t *win    = glfwGetWindowUserPointer(window);
+  re_event_t *event   = new_event();
+  event->window       = win;
   event->mouse.button = button;
-  event->mouse.mods = mods;
+  event->mouse.mods   = mods;
 
   if (action == GLFW_PRESS)
     event->type = RE_EVENT_BUTTON_PRESSED;
@@ -792,18 +788,18 @@ re_mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
 }
 
 static void re_cursor_pos_callback(GLFWwindow *window, double x, double y) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->type = RE_EVENT_CURSOR_MOVED;
-  event->window = win;
-  event->pos.x = (int)x;
-  event->pos.y = (int)y;
+  event->type       = RE_EVENT_CURSOR_MOVED;
+  event->window     = win;
+  event->pos.x      = (int)x;
+  event->pos.y      = (int)y;
 }
 
 static void re_cursor_enter_callback(GLFWwindow *window, int entered) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->window = win;
+  event->window     = win;
 
   if (entered)
     event->type = RE_EVENT_CURSOR_ENTERED;
@@ -812,22 +808,22 @@ static void re_cursor_enter_callback(GLFWwindow *window, int entered) {
 }
 
 static void re_scroll_callback(GLFWwindow *window, double x, double y) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->type = RE_EVENT_SCROLLED;
-  event->window = win;
-  event->scroll.x = x;
-  event->scroll.y = y;
+  event->type       = RE_EVENT_SCROLLED;
+  event->window     = win;
+  event->scroll.x   = x;
+  event->scroll.y   = y;
 }
 
 static void re_key_callback(
     GLFWwindow *window, int key, int scancode, int action, int mods) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
-  re_event_t *event = new_event();
-  event->window = win;
-  event->keyboard.key = key;
+  re_window_t *win         = glfwGetWindowUserPointer(window);
+  re_event_t *event        = new_event();
+  event->window            = win;
+  event->keyboard.key      = key;
   event->keyboard.scancode = scancode;
-  event->keyboard.mods = mods;
+  event->keyboard.mods     = mods;
 
   if (action == GLFW_PRESS)
     event->type = RE_EVENT_KEY_PRESSED;
@@ -838,16 +834,16 @@ static void re_key_callback(
 }
 
 static void re_char_callback(GLFWwindow *window, unsigned int codepoint) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->type = RE_EVENT_CODEPOINT_INPUT;
-  event->window = win;
-  event->codepoint = codepoint;
+  event->type       = RE_EVENT_CODEPOINT_INPUT;
+  event->window     = win;
+  event->codepoint  = codepoint;
 }
 
 static void re_monitor_callback(GLFWmonitor *monitor, int action) {
   re_event_t *event = new_event();
-  event->monitor = monitor;
+  event->monitor    = monitor;
 
   if (action == GLFW_CONNECTED)
     event->type = RE_EVENT_MONITOR_CONNECTED;
@@ -858,7 +854,7 @@ static void re_monitor_callback(GLFWmonitor *monitor, int action) {
 #if GLFW_VERSION_MINOR >= 2
 static void re_joystick_callback(int jid, int action) {
   re_event_t *event = new_event();
-  event->joystick = jid;
+  event->joystick   = jid;
 
   if (action == GLFW_CONNECTED)
     event->type = RE_EVENT_JOYSTICK_CONNECTED;
@@ -869,9 +865,9 @@ static void re_joystick_callback(int jid, int action) {
 
 #if GLFW_VERSION_MINOR >= 3
 static void re_window_maximize_callback(GLFWwindow *window, int maximized) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->window = win;
+  event->window     = win;
 
   if (maximized)
     event->type = RE_EVENT_WINDOW_MAXIMIZED;
@@ -881,12 +877,12 @@ static void re_window_maximize_callback(GLFWwindow *window, int maximized) {
 
 static void re_window_content_scale_callback(
     GLFWwindow *window, float xscale, float yscale) {
-  re_window_t *win = glfwGetWindowUserPointer(window);
+  re_window_t *win  = glfwGetWindowUserPointer(window);
   re_event_t *event = new_event();
-  event->window = win;
-  event->type = RE_EVENT_WINDOW_SCALE_CHANGED;
-  event->scale.x = xscale;
-  event->scale.y = yscale;
+  event->window     = win;
+  event->type       = RE_EVENT_WINDOW_SCALE_CHANGED;
+  event->scale.x    = xscale;
+  event->scale.y    = yscale;
 }
 #endif
 
@@ -899,13 +895,13 @@ static void re_window_content_scale_callback(
 bool re_window_init(re_window_t *window, re_window_options_t *options) {
   memset(window, 0, sizeof(*window));
   window->clear_color = (vec4_t){0.0, 0.0, 0.0, 1.0};
-  window->delta_time = 0.0f;
+  window->delta_time  = 0.0f;
   window->time_before = 0.0f;
 
-  window->swapchain = VK_NULL_HANDLE;
-  window->surface = VK_NULL_HANDLE;
+  window->swapchain             = VK_NULL_HANDLE;
+  window->surface               = VK_NULL_HANDLE;
   window->swapchain_image_count = 0;
-  window->swapchain_images = NULL;
+  window->swapchain_images      = NULL;
   window->swapchain_image_views = NULL;
 
   window->current_frame = 0;
@@ -1027,7 +1023,7 @@ bool re_window_next_event(re_window_t *window, re_event_t *event) {
   memset(event, 0, sizeof(re_event_t));
 
   if (g_event_queue.head != g_event_queue.tail) {
-    *event = g_event_queue.events[g_event_queue.tail];
+    *event             = g_event_queue.events[g_event_queue.tail];
     g_event_queue.tail = (g_event_queue.tail + 1) % RE_EVENT_QUEUE_CAPACITY;
   }
 
@@ -1243,10 +1239,10 @@ void re_window_begin_render_pass(re_window_t *window) {
 
   re_cmd_set_viewport(
       command_buffer,
-      &(re_viewport_t){.x = 0.0f,
-                       .y = 0.0f,
-                       .width = (float)window->swapchain_extent.width,
-                       .height = (float)window->swapchain_extent.height,
+      &(re_viewport_t){.x         = 0.0f,
+                       .y         = 0.0f,
+                       .width     = (float)window->swapchain_extent.width,
+                       .height    = (float)window->swapchain_extent.height,
                        .min_depth = 0.0f,
                        .max_depth = 1.0f});
 
@@ -1275,7 +1271,7 @@ int re_window_get_input_mode(const re_window_t *window, int mode) {
 
 void re_window_size(
     const re_window_t *window, uint32_t *width, uint32_t *height) {
-  *width = window->swapchain_extent.width;
+  *width  = window->swapchain_extent.width;
   *height = window->swapchain_extent.height;
 }
 

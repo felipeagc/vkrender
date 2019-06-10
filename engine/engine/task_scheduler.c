@@ -6,8 +6,8 @@ _Thread_local uint32_t eg_worker_id = 0;
 static inline void
 task_init(eg_task_t *task, thrd_start_t routine, void *args) {
   task->routine = routine;
-  task->args = args;
-  task->next = NULL;
+  task->args    = args;
+  task->next    = NULL;
 }
 
 static inline void
@@ -55,11 +55,11 @@ int worker_routine(void *args) {
   return 0;
 }
 
-static inline void worker_init(
-    eg_worker_t *worker, eg_task_scheduler_t *scheduler, uint32_t id) {
-  worker->id = id;
+static inline void
+worker_init(eg_worker_t *worker, eg_task_scheduler_t *scheduler, uint32_t id) {
+  worker->id        = id;
   worker->scheduler = scheduler;
-  worker->working = false;
+  worker->working   = false;
   thrd_create(&worker->thread, worker_routine, worker);
   mtx_init(&worker->mutex, mtx_plain);
 }

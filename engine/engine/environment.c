@@ -17,12 +17,12 @@ void eg_environment_init(
 
   environment->skybox_type = EG_SKYBOX_DEFAULT;
 
-  environment->uniform.sun_direction = (vec3_t){0.0, -1.0, 0.0};
-  environment->uniform.exposure = 8.0f;
-  environment->uniform.sun_color = (vec3_t){1.0f, 1.0f, 1.0f};
-  environment->uniform.sun_intensity = 1.0f;
+  environment->uniform.sun_direction       = (vec3_t){0.0, -1.0, 0.0};
+  environment->uniform.exposure            = 8.0f;
+  environment->uniform.sun_color           = (vec3_t){1.0f, 1.0f, 1.0f};
+  environment->uniform.sun_intensity       = 1.0f;
   environment->uniform.radiance_mip_levels = 1.0f;
-  environment->uniform.point_light_count = 0;
+  environment->uniform.point_light_count   = 0;
 
   environment->uniform.radiance_mip_levels =
       (float)environment->asset->radiance_cubemap.mip_level_count;

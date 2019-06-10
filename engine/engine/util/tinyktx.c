@@ -11,7 +11,18 @@
 #define ALIGN_MASK(_value, _mask) (((_value) + (_mask)) & ((~0) & (~(_mask))))
 
 const static uint8_t ktx_identifier[12] = {
-    0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A,
+    0xAB,
+    0x4B,
+    0x54,
+    0x58,
+    0x20,
+    0x31,
+    0x31,
+    0xBB,
+    0x0D,
+    0x0A,
+    0x1A,
+    0x0A,
 };
 
 typedef struct ktx_header_t {
@@ -135,19 +146,19 @@ ktx_read(uint8_t *raw_data, size_t raw_data_size, ktx_data_t *data) {
   *data = (ktx_data_t){
       .raw_data = raw_data,
 
-      .pixel_width = header.pixel_width,
+      .pixel_width  = header.pixel_width,
       .pixel_height = header.pixel_height,
-      .pixel_depth = MAX(header.pixel_depth, 1),
+      .pixel_depth  = MAX(header.pixel_depth, 1),
 
       .array_element_count = MAX(header.number_of_array_elements, 1),
-      .face_count = MAX(header.number_of_faces, 1),
-      .mipmap_level_count = MAX(header.number_of_mipmap_levels, 1),
+      .face_count          = MAX(header.number_of_faces, 1),
+      .mipmap_level_count  = MAX(header.number_of_mipmap_levels, 1),
 
-      .type = header.gl_type,
+      .type      = header.gl_type,
       .type_size = header.gl_type_size,
 
-      .format = header.gl_format,
-      .internal_format = header.gl_internal_format,
+      .format               = header.gl_format,
+      .internal_format      = header.gl_internal_format,
       .base_internal_format = header.gl_base_internal_format,
   };
 
@@ -179,7 +190,7 @@ ktx_read(uint8_t *raw_data, size_t raw_data_size, ktx_data_t *data) {
     uint32_t image_size = *((uint32_t *)(raw_data + pos));
     pos += sizeof(image_size);
 
-    uint32_t mip_width = header.pixel_width / (1 << mip_level);
+    uint32_t mip_width  = header.pixel_width / (1 << mip_level);
     uint32_t mip_height = header.pixel_height / (1 << mip_level);
 
     for (uint32_t layer = 0; layer < data->array_element_count; layer++) {

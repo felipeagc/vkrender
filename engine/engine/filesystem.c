@@ -12,7 +12,7 @@ int eg_fs_mount(const char *path_to_archive, const char *mount_point) {
   const char *base_dir = PHYSFS_getBaseDir();
 
   size_t path_size = strlen(path_to_archive) + strlen(base_dir) + 2;
-  char *path = malloc(path_size);
+  char *path       = malloc(path_size);
 
   snprintf(path, path_size, "%s/%s", base_dir, path_to_archive);
 

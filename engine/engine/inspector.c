@@ -80,13 +80,13 @@ void eg_inspector_init(
     eg_asset_manager_t *asset_manager) {
   memset(inspector, 0, sizeof(*inspector));
 
-  inspector->selected_entity = UINT32_MAX;
-  inspector->window = window;
-  inspector->world = world;
-  inspector->asset_manager = asset_manager;
+  inspector->selected_entity       = UINT32_MAX;
+  inspector->window                = window;
+  inspector->world                 = world;
+  inspector->asset_manager         = asset_manager;
   inspector->drawing_render_target = render_target;
-  inspector->snapping = 0.1f;
-  inspector->snap = false;
+  inspector->snapping              = 0.1f;
+  inspector->snap                  = false;
 
   eg_picker_init(
       &inspector->picker,
@@ -144,7 +144,7 @@ void eg_inspector_init(
   {
     eg_file_t *image_file = eg_file_open_read("/assets/light.png");
     assert(image_file);
-    size_t image_file_size = eg_file_size(image_file);
+    size_t image_file_size         = eg_file_size(image_file);
     unsigned char *image_file_data = calloc(1, image_file_size);
     eg_file_read_bytes(image_file, image_file_data, image_file_size);
     eg_file_close(image_file);
@@ -158,9 +158,9 @@ void eg_inspector_init(
     re_image_init(
         &inspector->light_billboard_image,
         &(re_image_options_t){
-            .width = (uint32_t)width,
+            .width  = (uint32_t)width,
             .height = (uint32_t)height,
-            .usage = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
+            .usage  = RE_IMAGE_USAGE_SAMPLED | RE_IMAGE_USAGE_TRANSFER_DST,
         });
 
     re_image_upload(
@@ -176,20 +176,20 @@ void eg_inspector_init(
   }
 
   inspector->drag_direction = EG_DRAG_DIRECTION_NONE;
-  inspector->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
+  inspector->pos_delta      = (vec3_t){0.0f, 0.0f, 0.0f};
 
   inspector->pos_gizmo_index_count = ARRAY_SIZE(pos_gizmo_indices);
 
   re_buffer_init(
       &inspector->pos_gizmo_vertex_buffer,
-      &(re_buffer_options_t){.usage = RE_BUFFER_USAGE_VERTEX,
+      &(re_buffer_options_t){.usage  = RE_BUFFER_USAGE_VERTEX,
                              .memory = RE_BUFFER_MEMORY_DEVICE,
-                             .size = sizeof(pos_gizmo_vertices)});
+                             .size   = sizeof(pos_gizmo_vertices)});
   re_buffer_init(
       &inspector->pos_gizmo_index_buffer,
-      &(re_buffer_options_t){.usage = RE_BUFFER_USAGE_INDEX,
+      &(re_buffer_options_t){.usage  = RE_BUFFER_USAGE_INDEX,
                              .memory = RE_BUFFER_MEMORY_DEVICE,
-                             .size = sizeof(pos_gizmo_indices)});
+                             .size   = sizeof(pos_gizmo_indices)});
 
   size_t staging_size =
       MAX(sizeof(pos_gizmo_vertices), sizeof(pos_gizmo_indices));
@@ -197,9 +197,9 @@ void eg_inspector_init(
   re_buffer_t staging_buffer;
   re_buffer_init(
       &staging_buffer,
-      &(re_buffer_options_t){.usage = RE_BUFFER_USAGE_TRANSFER,
+      &(re_buffer_options_t){.usage  = RE_BUFFER_USAGE_TRANSFER,
                              .memory = RE_BUFFER_MEMORY_HOST,
-                             .size = staging_size});
+                             .size   = staging_size});
 
   void *memory;
   re_buffer_map_memory(&staging_buffer, &memory);
@@ -294,18 +294,18 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
       cmd_buffer->cmd_buffer,
       1,
       &(VkClearAttachment){
-          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-          .clearValue.depthStencil.depth = 1.0f,
+          .aspectMask                      = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .clearValue.depthStencil.depth   = 1.0f,
           .clearValue.depthStencil.stencil = 0,
       },
       1,
       &(VkClearRect){
-          .rect.offset.x = 0,
-          .rect.offset.y = 0,
-          .rect.extent.width = inspector->picker.canvas.render_target.width,
+          .rect.offset.x      = 0,
+          .rect.offset.y      = 0,
+          .rect.extent.width  = inspector->picker.canvas.render_target.width,
           .rect.extent.height = inspector->picker.canvas.render_target.height,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
+          .baseArrayLayer     = 0,
+          .layerCount         = 1,
       });
 
   re_cmd_bind_pipeline(cmd_buffer, &inspector->gizmo_picking_pipeline);
@@ -331,7 +331,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
       EG_DRAG_DIRECTION_X, EG_DRAG_DIRECTION_Y, EG_DRAG_DIRECTION_Z};
 
   for (uint32_t i = 0; i < 3; i++) {
-    mat4_t mat = gizmo_matrices[i];
+    mat4_t mat     = gizmo_matrices[i];
     mat.cols[3][0] = object_mat.cols[3][0];
     mat.cols[3][1] = object_mat.cols[3][1];
     mat.cols[3][2] = object_mat.cols[3][2];
@@ -373,7 +373,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
   eg_transform_comp_t *transforms =
       EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
   eg_gltf_comp_t *gltf_models = EG_COMP_ARRAY(inspector->world, eg_gltf_comp_t);
-  eg_mesh_comp_t *meshes = EG_COMP_ARRAY(inspector->world, eg_mesh_comp_t);
+  eg_mesh_comp_t *meshes      = EG_COMP_ARRAY(inspector->world, eg_mesh_comp_t);
 
 #define PUSH_CONSTANT()                                                        \
   re_cmd_push_constants(                                                       \
@@ -434,11 +434,11 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     vec3_t transform_ndc =
         eg_camera_world_to_ndc(&inspector->world->camera, transform->position);
 
-    float width = (float)inspector->drawing_render_target->width;
+    float width  = (float)inspector->drawing_render_target->width;
     float height = (float)inspector->drawing_render_target->height;
 
-    float nx = (((float)cursor_x / width) * 2.0f) - 1.0f;
-    float ny = (((float)cursor_y / height) * 2.0f) - 1.0f;
+    float nx          = (((float)cursor_x / width) * 2.0f) - 1.0f;
+    float ny          = (((float)cursor_y / height) * 2.0f) - 1.0f;
     vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
     vec3_t cursor_world =
         eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
@@ -465,7 +465,7 @@ void eg_inspector_process_event(
   }
   case RE_EVENT_BUTTON_RELEASED: {
     if (event->mouse.button == GLFW_MOUSE_BUTTON_LEFT) {
-      inspector->pos_delta = (vec3_t){0.0f, 0.0f, 0.0f};
+      inspector->pos_delta      = (vec3_t){0.0f, 0.0f, 0.0f};
       inspector->drag_direction = EG_DRAG_DIRECTION_NONE;
     }
     break;
@@ -490,11 +490,11 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   double cursor_x, cursor_y;
   re_window_get_cursor_pos(inspector->window, &cursor_x, &cursor_y);
 
-  float width = (float)inspector->drawing_render_target->width;
+  float width  = (float)inspector->drawing_render_target->width;
   float height = (float)inspector->drawing_render_target->height;
 
-  float nx = (((float)cursor_x / width) * 2.0f) - 1.0f;
-  float ny = (((float)cursor_y / height) * 2.0f) - 1.0f;
+  float nx          = (((float)cursor_x / width) * 2.0f) - 1.0f;
+  float ny          = (((float)cursor_y / height) * 2.0f) - 1.0f;
   vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
   vec3_t cursor_world =
       eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
@@ -559,7 +559,7 @@ void eg_inspector_draw_gizmos(
           vec3_distance(
               transforms[light_entities[j]].position,
               inspector->world->camera.uniform.pos.xyz)) {
-        eg_entity_t t = light_entities[i];
+        eg_entity_t t     = light_entities[i];
         light_entities[i] = light_entities[j];
         light_entities[j] = t;
       }
@@ -599,18 +599,18 @@ void eg_inspector_draw_gizmos(
       cmd_buffer->cmd_buffer,
       1,
       &(VkClearAttachment){
-          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-          .clearValue.depthStencil.depth = 1.0f,
+          .aspectMask                      = VK_IMAGE_ASPECT_DEPTH_BIT,
+          .clearValue.depthStencil.depth   = 1.0f,
           .clearValue.depthStencil.stencil = 0,
       },
       1,
       &(VkClearRect){
-          .rect.offset.x = 0,
-          .rect.offset.y = 0,
-          .rect.extent.width = inspector->drawing_render_target->width,
+          .rect.offset.x      = 0,
+          .rect.offset.y      = 0,
+          .rect.extent.width  = inspector->drawing_render_target->width,
           .rect.extent.height = inspector->drawing_render_target->height,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
+          .baseArrayLayer     = 0,
+          .layerCount         = 1,
       });
 
   re_cmd_bind_pipeline(cmd_buffer, &inspector->gizmo_pipeline);
@@ -637,7 +637,7 @@ void eg_inspector_draw_gizmos(
                      {0.0f, 0.0f, 1.0f, 0.5f}};
 
   for (uint32_t i = 0; i < 3; i++) {
-    mat4_t mat = gizmo_matrices[i];
+    mat4_t mat     = gizmo_matrices[i];
     mat.cols[3][0] = object_mat.cols[3][0];
     mat.cols[3][1] = object_mat.cols[3][1];
     mat.cols[3][2] = object_mat.cols[3][2];
@@ -750,7 +750,7 @@ static void inspect_environment(eg_environment_t *environment) {
       "%.3f",
       1.0f);
 
-  static int current_item = 0;
+  static int current_item   = 0;
   const char *const items[] = {"Default", "Irradiance"};
 
   if (igListBoxStr_arr(
@@ -771,10 +771,10 @@ static void inspect_statistics(re_window_t *window) {
 #define FRAME_TIMES_MAX 512
 
   static float frame_times[FRAME_TIMES_MAX] = {0};
-  static int frame = 0;
+  static int frame                          = 0;
 
   frame_times[frame] = (float)window->delta_time;
-  frame = (frame + 1) % FRAME_TIMES_MAX;
+  frame              = (frame + 1) % FRAME_TIMES_MAX;
 
   igPlotLines(
       "Frame time",
@@ -855,8 +855,8 @@ void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
 void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   static char str[256] = "";
 
-  re_window_t *window = inspector->window;
-  eg_world_t *world = inspector->world;
+  re_window_t *window               = inspector->window;
+  eg_world_t *world                 = inspector->world;
   eg_asset_manager_t *asset_manager = inspector->asset_manager;
 
   if (igBegin("Inspector", NULL, 0)) {

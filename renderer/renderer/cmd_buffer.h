@@ -28,7 +28,7 @@ typedef enum re_cmd_buffer_usage_t {
 } re_cmd_buffer_usage_t;
 
 typedef enum re_cmd_buffer_level_t {
-  RE_CMD_BUFFER_LEVEL_PRIMARY = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+  RE_CMD_BUFFER_LEVEL_PRIMARY   = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
   RE_CMD_BUFFER_LEVEL_SECONDARY = VK_COMMAND_BUFFER_LEVEL_SECONDARY,
 } re_cmd_buffer_level_t;
 
@@ -124,4 +124,3 @@ void re_cmd_bind_index_buffer(
     re_buffer_t *buffer,
     size_t offset,
     re_index_type_t index_type);
-

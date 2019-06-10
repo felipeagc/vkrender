@@ -7,7 +7,7 @@
 #include <string.h>
 
 void eg_mesh_comp_default(eg_mesh_comp_t *mesh) {
-  mesh->asset = NULL;
+  mesh->asset    = NULL;
   mesh->material = NULL;
 }
 
@@ -30,7 +30,7 @@ void eg_mesh_comp_init(
     eg_mesh_comp_t *mesh,
     eg_mesh_asset_t *asset,
     eg_pbr_material_asset_t *material) {
-  mesh->asset = asset;
+  mesh->asset    = asset;
   mesh->material = material;
 }
 
@@ -50,7 +50,7 @@ void eg_mesh_comp_draw(
   } uniform;
 
   uniform.local_model = mat4_identity();
-  uniform.model = transform;
+  uniform.model       = transform;
 
   void *mapping = re_cmd_bind_uniform(cmd_buffer, 2, 0, sizeof(uniform));
   memcpy(mapping, &uniform, sizeof(uniform));
@@ -73,7 +73,7 @@ void eg_mesh_comp_draw_no_mat(
   } uniform;
 
   uniform.local_model = mat4_identity();
-  uniform.model = transform;
+  uniform.model       = transform;
 
   void *mapping = re_cmd_bind_uniform(cmd_buffer, 1, 0, sizeof(uniform));
   memcpy(mapping, &uniform, sizeof(uniform));
@@ -82,4 +82,3 @@ void eg_mesh_comp_draw_no_mat(
 
   eg_mesh_asset_draw(mesh->asset, cmd_buffer);
 }
-

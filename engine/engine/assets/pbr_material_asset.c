@@ -36,10 +36,10 @@ void eg_pbr_material_asset_init(
     re_image_t *metallic_roughness_texture,
     re_image_t *occlusion_texture,
     re_image_t *emissive_texture) {
-  material->uniform.base_color_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  material->uniform.metallic = 1.0;
-  material->uniform.roughness = 1.0;
-  material->uniform.emissive_factor = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  material->uniform.base_color_factor  = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  material->uniform.metallic           = 1.0;
+  material->uniform.roughness          = 1.0;
+  material->uniform.emissive_factor    = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.has_normal_texture = 1.0f;
 
   material->albedo_texture = albedo_texture;
@@ -50,7 +50,7 @@ void eg_pbr_material_asset_init(
   material->normal_texture = normal_texture;
   if (material->normal_texture == NULL) {
     material->uniform.has_normal_texture = 0.0f;
-    material->normal_texture = &g_eng.white_texture;
+    material->normal_texture             = &g_eng.white_texture;
   }
 
   material->metallic_roughness_texture = metallic_roughness_texture;

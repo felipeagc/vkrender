@@ -19,7 +19,7 @@ void eg_init_pipeline_spv(
     eg_file_t *file = eg_file_open_read(paths[i]);
     assert(file);
     size_t size = eg_file_size(file);
-    codes[i] = calloc(1, size);
+    codes[i]    = calloc(1, size);
     eg_file_read_bytes(file, codes[i], size);
     eg_file_close(file);
 
@@ -39,7 +39,7 @@ re_pipeline_parameters_t eg_standard_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
+  params.rasterization_state.cullMode  = VK_CULL_MODE_BACK_BIT;
 
   return params;
 }
@@ -48,34 +48,34 @@ re_pipeline_parameters_t eg_imgui_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   static VkVertexInputBindingDescription binding_desc[1] = {{
-      .binding = 0,
-      .stride = sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t),
+      .binding   = 0,
+      .stride    = sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t),
       .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
   }};
 
   static VkVertexInputAttributeDescription attribute_desc[3] = {
       {.location = 0,
-       .binding = 0,
-       .format = VK_FORMAT_R32G32_SFLOAT,
-       .offset = 0},
+       .binding  = 0,
+       .format   = VK_FORMAT_R32G32_SFLOAT,
+       .offset   = 0},
       {.location = 1,
-       .binding = 0,
-       .format = VK_FORMAT_R32G32_SFLOAT,
-       .offset = sizeof(float) * 2},
+       .binding  = 0,
+       .format   = VK_FORMAT_R32G32_SFLOAT,
+       .offset   = sizeof(float) * 2},
       {.location = 2,
-       .binding = 0,
-       .format = VK_FORMAT_R8G8B8A8_UNORM,
-       .offset = sizeof(float) * 4},
+       .binding  = 0,
+       .format   = VK_FORMAT_R8G8B8A8_UNORM,
+       .offset   = sizeof(float) * 4},
   };
 
   params.vertex_input_state = (VkPipelineVertexInputStateCreateInfo){
       .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
       .pNext = NULL,
       .flags = 0,
-      .vertexBindingDescriptionCount = ARRAY_SIZE(binding_desc),
-      .pVertexBindingDescriptions = binding_desc,
+      .vertexBindingDescriptionCount   = ARRAY_SIZE(binding_desc),
+      .pVertexBindingDescriptions      = binding_desc,
       .vertexAttributeDescriptionCount = ARRAY_SIZE(attribute_desc),
-      .pVertexAttributeDescriptions = attribute_desc,
+      .pVertexAttributeDescriptions    = attribute_desc,
   };
 
   params.depth_stencil_state = (VkPipelineDepthStencilStateCreateInfo){
@@ -83,8 +83,8 @@ re_pipeline_parameters_t eg_imgui_pipeline_parameters() {
   };
 
   params.rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
-  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
-  params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  params.rasterization_state.cullMode    = VK_CULL_MODE_NONE;
+  params.rasterization_state.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   return params;
 }
@@ -93,7 +93,7 @@ re_pipeline_parameters_t eg_picking_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
+  params.rasterization_state.cullMode  = VK_CULL_MODE_NONE;
 
   return params;
 }
@@ -111,7 +111,7 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
       NULL, // pVertexAttributeDescriptions
   };
 
-  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
+  params.rasterization_state.cullMode  = VK_CULL_MODE_BACK_BIT;
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   return params;
@@ -120,9 +120,9 @@ re_pipeline_parameters_t eg_billboard_pipeline_parameters() {
 re_pipeline_parameters_t eg_outline_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
+  params.rasterization_state.cullMode    = VK_CULL_MODE_NONE;
   params.rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
-  params.rasterization_state.lineWidth = 2.0f;
+  params.rasterization_state.lineWidth   = 2.0f;
 
   return params;
 }
@@ -143,7 +143,7 @@ re_pipeline_parameters_t eg_skybox_pipeline_parameters() {
   params.rasterization_state.cullMode = VK_CULL_MODE_NONE;
 
   params.depth_stencil_state.depthWriteEnable = VK_FALSE;
-  params.depth_stencil_state.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+  params.depth_stencil_state.depthCompareOp   = VK_COMPARE_OP_LESS_OR_EQUAL;
 
   return params;
 }
@@ -161,7 +161,7 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
       NULL, // pVertexAttributeDescriptions
   };
 
-  params.rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
+  params.rasterization_state.cullMode  = VK_CULL_MODE_FRONT_BIT;
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   params.depth_stencil_state.depthTestEnable = VK_FALSE;
@@ -195,7 +195,7 @@ re_pipeline_parameters_t eg_fullscreen_pipeline_parameters() {
 re_pipeline_parameters_t eg_gizmo_pipeline_parameters() {
   re_pipeline_parameters_t params = re_default_pipeline_parameters();
 
-  params.rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
+  params.rasterization_state.cullMode  = VK_CULL_MODE_BACK_BIT;
   params.rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   return params;
