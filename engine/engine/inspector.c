@@ -909,8 +909,8 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
                 "Add asset", (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
           // TODO: add asset
         }
-        for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
-          eg_asset_t *asset = eg_asset_manager_get_by_index(asset_manager, i);
+        for (uint32_t i = 0; i < asset_manager->max_index; i++) {
+          eg_asset_t *asset = eg_asset_manager_get(asset_manager, i);
           if (asset == NULL) {
             continue;
           }
@@ -922,7 +922,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
               sizeof(str),
               "%s: %s",
               EG_ASSET_NAMES[asset->type],
-              asset->name);
+              eg_asset_get_name(asset));
           if (igCollapsingHeader(str, 0)) {
             EG_ASSET_INSPECTORS[asset->type](asset, inspector);
           }

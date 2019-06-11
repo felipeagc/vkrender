@@ -5,6 +5,9 @@
 #include "mesh_asset.h"
 #include "pbr_material_asset.h"
 #include "pipeline_asset.h"
+#include <string.h>
+
+const char *const EG_DEFAULT_ASSET_NAME = "Unnamed asset";
 
 #define E(t, initializer, inspector, destructor, name) sizeof(t),
 const size_t EG_ASSET_SIZES[] = {EG__ASSETS};
@@ -28,3 +31,24 @@ const eg_asset_inspector_t EG_ASSET_INSPECTORS[] = {EG__ASSETS};
   ((eg_asset_destructor_t)destructor),
 const eg_asset_destructor_t EG_ASSET_DESTRUCTORS[] = {EG__ASSETS};
 #undef E
+
+void eg_asset_set_name(eg_asset_t *asset, const char *name) {
+  if (asset->name != NULL) {
+    free(asset->name);
+  }
+
+  if (name == NULL || strlen(name) <= 0) {
+    asset->name = NULL;
+    return;
+  }
+
+  asset->name = strdup(name);
+}
+
+const char *eg_asset_get_name(eg_asset_t *asset) {
+  if (asset->name == NULL) {
+    return EG_DEFAULT_ASSET_NAME;
+  }
+
+  return asset->name;
+}

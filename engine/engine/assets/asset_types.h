@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*
   To add a new asset type:
@@ -12,6 +13,8 @@
  */
 
 typedef struct eg_inspector_t eg_inspector_t;
+
+extern const char *const EG_DEFAULT_ASSET_NAME;
 
 typedef void (*eg_asset_initializer_t)(void *);
 typedef void (*eg_asset_inspector_t)(void *, eg_inspector_t *inspector);
@@ -60,8 +63,10 @@ extern const eg_asset_destructor_t EG_ASSET_DESTRUCTORS[EG_ASSET_TYPE_MAX];
 
 typedef struct eg_asset_t {
   eg_asset_type_t type;
-
-  // This string's lifetime is managed by the
-  // asset manager's hash map, so no need to free it.
-  const char *name;
+  uint32_t index;
+  char *name;
 } eg_asset_t;
+
+void eg_asset_set_name(eg_asset_t *asset, const char *name);
+
+const char *eg_asset_get_name(eg_asset_t *asset);

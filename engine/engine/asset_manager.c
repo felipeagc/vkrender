@@ -1,63 +1,75 @@
 #include "asset_manager.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
-/*
- *
- * Asset manager
- *
- */
-
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
   mtx_init(&asset_manager->mutex, mtx_plain);
 
   // Allocator with 16k blocks
-  fstd_allocator_init(&asset_manager->allocator, 2 << 13);
+  fstd_allocator_init(&asset_manager->allocator, 16384);
 
-  fstd_map_init(&asset_manager->map, EG_MAX_ASSETS, eg_asset_t *);
-}
-
-eg_asset_t *
-eg_asset_manager_get(eg_asset_manager_t *asset_manager, const char *name) {
-  return fstd_map_get(&asset_manager->map, name);
-}
-
-eg_asset_t *eg_asset_manager_get_by_index(
-    eg_asset_manager_t *asset_manager, uint32_t index) {
-  if (index >= EG_MAX_ASSETS) {
-    return NULL;
-  }
-
-  eg_asset_t **asset = fstd_map_get_by_index(&asset_manager->map, index, NULL);
-
-  if (asset == NULL) {
-    return NULL;
-  }
-
-  return *asset;
+  asset_manager->cap       = 128;
+  asset_manager->max_index = 0;
+  asset_manager->assets    = realloc(
+      asset_manager->assets,
+      asset_manager->cap * sizeof(*asset_manager->assets));
+  memset(
+      asset_manager->assets,
+      0,
+      asset_manager->cap * sizeof(*asset_manager->assets));
 }
 
 eg_asset_t *eg_asset_manager_alloc(
-    eg_asset_manager_t *asset_manager,
-    const char *name,
-    eg_asset_type_t type,
-    size_t size) {
+    eg_asset_manager_t *asset_manager, eg_asset_type_t asset_type) {
   mtx_lock(&asset_manager->mutex);
 
-  eg_asset_t *asset = fstd_alloc(&asset_manager->allocator, (uint32_t)size);
+  eg_asset_t *asset = fstd_alloc(
+      &asset_manager->allocator, (uint32_t)EG_ASSET_SIZES[asset_type]);
 
-  // TODO: allow replacing map entries
-  assert(fstd_map_get(&asset_manager->map, name) == NULL);
+  uint32_t index = UINT32_MAX;
 
-  eg_asset_t **asset_entry = fstd_map_set(&asset_manager->map, name, &asset);
-  asset->type              = type;
-  asset->name              = fstd_map_get_key(&asset_manager->map, asset_entry);
+  for (uint32_t i = 0; i < asset_manager->cap; i++) {
+    if (asset_manager->assets[i] == NULL) {
+      index = i;
+      break;
+    }
+  }
+
+  // If no available slot was found
+  if (index == UINT32_MAX) {
+    asset_manager->cap *= 2;
+
+    asset_manager->assets = realloc(
+        asset_manager->assets,
+        asset_manager->cap * sizeof(*asset_manager->assets));
+    memset(
+        &asset_manager->assets[asset_manager->cap / 2],
+        0,
+        (asset_manager->cap / 2) * sizeof(*asset_manager->assets));
+
+    index = asset_manager->cap / 2;
+  }
+
+  asset_manager->assets[index] = asset;
+
+  asset_manager->max_index =
+      (index > asset_manager->max_index) ? index : asset_manager->max_index;
+
+  asset->type  = asset_type;
+  asset->name  = NULL;
+  asset->index = index;
 
   mtx_unlock(&asset_manager->mutex);
 
   return asset;
+}
+
+eg_asset_t *
+eg_asset_manager_get(eg_asset_manager_t *asset_manager, uint32_t index) {
+  return asset_manager->assets[index];
 }
 
 void eg_asset_manager_free(
@@ -66,28 +78,41 @@ void eg_asset_manager_free(
     return;
   }
 
-  fstd_map_remove(&asset_manager->map, asset->name);
+  uint32_t index = asset->index;
+
+  if (asset_manager->max_index == index) {
+    for (uint32_t i = index - 1; i >= 0; i--) {
+      if (asset_manager->assets[i] != NULL) {
+        asset_manager->max_index = i;
+        break;
+      }
+    }
+  }
+
+  if (asset->name != NULL) {
+    free(asset->name);
+  }
 
   EG_ASSET_DESTRUCTORS[asset->type](asset);
 
   mtx_lock(&asset_manager->mutex);
   fstd_free(&asset_manager->allocator, asset);
+  asset_manager->assets[index] = NULL;
   mtx_unlock(&asset_manager->mutex);
 }
 
 void eg_asset_manager_destroy(eg_asset_manager_t *asset_manager) {
-  for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
-    eg_asset_t *asset = eg_asset_manager_get_by_index(asset_manager, i);
+  for (uint32_t i = 0; i < asset_manager->max_index; i++) {
+    eg_asset_t *asset = eg_asset_manager_get(asset_manager, i);
 
     if (asset == NULL) continue;
 
-    EG_ASSET_DESTRUCTORS[asset->type](asset);
+    eg_asset_manager_free(asset_manager, asset);
   }
-
-  fstd_map_destroy(&asset_manager->map);
 
   mtx_lock(&asset_manager->mutex);
   fstd_allocator_destroy(&asset_manager->allocator);
+  free(asset_manager->assets);
   mtx_unlock(&asset_manager->mutex);
 
   mtx_destroy(&asset_manager->mutex);

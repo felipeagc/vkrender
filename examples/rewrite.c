@@ -18,14 +18,16 @@ typedef struct game_t {
 
 static eg_entity_t add_gltf(
     game_t *game,
-    const char *name,
     const char *path,
     eg_pipeline_asset_t *pipeline_asset,
     vec3_t position,
     vec3_t scale,
     bool flip_uvs) {
   eg_gltf_asset_t *model_asset =
-      eg_asset_alloc(&game->asset_manager, name, eg_gltf_asset_t);
+      eg_asset_alloc(&game->asset_manager, eg_gltf_asset_t);
+
+  eg_asset_set_name(&model_asset->asset, path);
+
   eg_gltf_asset_init(model_asset, path, flip_uvs);
 
   eg_entity_t ent = eg_world_add(&game->world);
@@ -61,11 +63,8 @@ add_light(game_t *game, vec3_t position, vec3_t color, float intensity) {
   return ent;
 }
 
-static eg_entity_t add_terrain(
-    game_t *game,
-    const char *name,
-    uint32_t dim,
-    eg_pipeline_asset_t *pipeline_asset) {
+static eg_entity_t
+add_terrain(game_t *game, uint32_t dim, eg_pipeline_asset_t *pipeline_asset) {
   uint32_t vertex_count = dim * dim;
   re_vertex_t *vertices = calloc(vertex_count, sizeof(re_vertex_t));
 
@@ -98,14 +97,14 @@ static eg_entity_t add_terrain(
   }
 
   eg_mesh_asset_t *mesh_asset =
-      eg_asset_alloc(&game->asset_manager, name, eg_mesh_asset_t);
+      eg_asset_alloc(&game->asset_manager, eg_mesh_asset_t);
   eg_mesh_asset_init(mesh_asset, vertices, vertex_count, indices, index_count);
 
   free(indices);
   free(vertices);
 
-  eg_pbr_material_asset_t *mat_asset = eg_asset_alloc(
-      &game->asset_manager, "Terrain material", eg_pbr_material_asset_t);
+  eg_pbr_material_asset_t *mat_asset =
+      eg_asset_alloc(&game->asset_manager, eg_pbr_material_asset_t);
   eg_pbr_material_asset_init(mat_asset, NULL, NULL, NULL, NULL, NULL);
   mat_asset->uniform.base_color_factor = (vec4_t){0.0f, 0.228f, 0.456f, 1.0f};
 
@@ -156,8 +155,8 @@ int main(int argc, const char *argv[]) {
 
   eg_asset_manager_init(&game.asset_manager);
 
-  eg_environment_asset_t *environment_asset = eg_asset_alloc(
-      &game.asset_manager, "Environment", eg_environment_asset_t);
+  eg_environment_asset_t *environment_asset =
+      eg_asset_alloc(&game.asset_manager, eg_environment_asset_t);
   eg_environment_asset_init(
       environment_asset,
       "/assets/environments/bridge_skybox.ktx",
@@ -177,7 +176,8 @@ int main(int argc, const char *argv[]) {
   eg_fps_camera_system_init(&game.fps_system, &game.world.camera);
 
   eg_pipeline_asset_t *pbr_pipeline =
-      eg_asset_alloc(&game.asset_manager, "PBR pipeline", eg_pipeline_asset_t);
+      eg_asset_alloc(&game.asset_manager, eg_pipeline_asset_t);
+  eg_asset_set_name(&pbr_pipeline->asset, "PBR pipeline");
   eg_pipeline_asset_init(
       pbr_pipeline,
       &game.window.render_target,
@@ -185,8 +185,9 @@ int main(int argc, const char *argv[]) {
       2,
       eg_standard_pipeline_parameters());
 
-  eg_pipeline_asset_t *terrain_pipeline = eg_asset_alloc(
-      &game.asset_manager, "Terrain pipeline", eg_pipeline_asset_t);
+  eg_pipeline_asset_t *terrain_pipeline =
+      eg_asset_alloc(&game.asset_manager, eg_pipeline_asset_t);
+  eg_asset_set_name(&terrain_pipeline->asset, "Terrain pipeline");
   eg_pipeline_asset_init(
       terrain_pipeline,
       &game.window.render_target,
@@ -195,8 +196,9 @@ int main(int argc, const char *argv[]) {
       2,
       eg_standard_pipeline_parameters());
 
-  eg_pipeline_asset_t *skybox_pipeline = eg_asset_alloc(
-      &game.asset_manager, "Skybox pipeline", eg_pipeline_asset_t);
+  eg_pipeline_asset_t *skybox_pipeline =
+      eg_asset_alloc(&game.asset_manager, eg_pipeline_asset_t);
+  eg_asset_set_name(&skybox_pipeline->asset, "Skybox pipeline");
   eg_pipeline_asset_init(
       skybox_pipeline,
       &game.window.render_target,
@@ -208,7 +210,6 @@ int main(int argc, const char *argv[]) {
 
   add_gltf(
       &game,
-      "Helmet",
       "/assets/models/DamagedHelmet.glb",
       pbr_pipeline,
       (vec3_t){0.0, 0.0, 0.0},
@@ -217,7 +218,6 @@ int main(int argc, const char *argv[]) {
 
   add_gltf(
       &game,
-      "Water bottle",
       "/assets/models/WaterBottle.glb",
       pbr_pipeline,
       (vec3_t){2.0, 0.0, 0.0},
@@ -226,7 +226,6 @@ int main(int argc, const char *argv[]) {
 
   add_gltf(
       &game,
-      "Boom box",
       "/assets/models/BoomBox.glb",
       pbr_pipeline,
       (vec3_t){-2.0, 0.0, 0.0},
@@ -236,7 +235,7 @@ int main(int argc, const char *argv[]) {
   add_light(&game, (vec3_t){3.0, 3.0, 3.0}, (vec3_t){1.0, 0.0, 0.0}, 2.0f);
   add_light(&game, (vec3_t){-3.0, 3.0, -3.0}, (vec3_t){0.0, 1.0, 0.0}, 2.0f);
 
-  add_terrain(&game, "Terrain", 256, terrain_pipeline);
+  add_terrain(&game, 256, terrain_pipeline);
 
   bool inspector_enabled = true;
 

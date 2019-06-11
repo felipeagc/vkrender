@@ -28,20 +28,21 @@ static inline void eg_inspect_assets(
     igText(label);
     igNextColumn();
 
-    const char *name = (*asset != NULL) ? (*asset)->name : "No asset";
+    const char *name =
+        (*asset != NULL) ? eg_asset_get_name(*asset) : "No asset";
 
     if (igSelectable(name, false, 0, (ImVec2){0})) {
       igOpenPopup("selectasset");
     }
 
     if (igBeginPopup("selectasset", 0)) {
-      for (uint32_t i = 0; i < EG_MAX_ASSETS; i++) {
+      for (uint32_t i = 0; i < inspector->asset_manager->max_index; i++) {
         eg_asset_t *cur_asset =
-            eg_asset_manager_get_by_index(inspector->asset_manager, i);
+            eg_asset_manager_get(inspector->asset_manager, i);
         if (cur_asset == NULL) continue;
         if (cur_asset->type != type) continue;
 
-        if (igSelectable(cur_asset->name, false, 0, (ImVec2){0})) {
+        if (igSelectable(eg_asset_get_name(cur_asset), false, 0, (ImVec2){0})) {
           *asset = cur_asset;
         }
       }
