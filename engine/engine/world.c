@@ -8,9 +8,13 @@ static eg_entity_t to_remove[EG_MAX_ENTITIES] = {0};
 static size_t to_remove_count                 = 0;
 
 void eg_world_init(
-    eg_world_t *world, eg_environment_asset_t *environment_asset) {
+    eg_world_t *world,
+    eg_image_asset_t *skybox,
+    eg_image_asset_t *irradiance,
+    eg_image_asset_t *radiance,
+    eg_image_asset_t *brdf) {
   eg_camera_init(&world->camera);
-  eg_environment_init(&world->environment, environment_asset);
+  eg_environment_init(&world->environment, skybox, irradiance, radiance, brdf);
 
   world->entity_max = 0;
 

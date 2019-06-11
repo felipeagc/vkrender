@@ -30,8 +30,8 @@
 #include "engine/systems/rendering_system.h"
 
 #include "engine/assets/asset_types.h"
-#include "engine/assets/environment_asset.h"
 #include "engine/assets/gltf_asset.h"
+#include "engine/assets/image_asset.h"
 #include "engine/assets/mesh_asset.h"
 #include "engine/assets/pbr_material_asset.h"
 #include "engine/assets/pipeline_asset.h"

@@ -1,5 +1,6 @@
 #include "environment.h"
-#include "assets/environment_asset.h"
+
+#include "assets/image_asset.h"
 #include "pipelines.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
@@ -12,8 +13,15 @@
 #define ENVIRONMENT_SET_INDEX 1
 
 void eg_environment_init(
-    eg_environment_t *environment, eg_environment_asset_t *asset) {
-  environment->asset = asset;
+    eg_environment_t *environment,
+    eg_image_asset_t *skybox,
+    eg_image_asset_t *irradiance,
+    eg_image_asset_t *radiance,
+    eg_image_asset_t *brdf) {
+  environment->skybox     = skybox;
+  environment->irradiance = irradiance;
+  environment->radiance   = radiance;
+  environment->brdf       = brdf;
 
   environment->skybox_type = EG_SKYBOX_DEFAULT;
 
@@ -25,7 +33,7 @@ void eg_environment_init(
   environment->uniform.point_light_count   = 0;
 
   environment->uniform.radiance_mip_levels =
-      (float)environment->asset->radiance_cubemap.mip_level_count;
+      (float)environment->radiance->image.mip_level_count;
 }
 
 void eg_environment_bind(
@@ -39,10 +47,9 @@ void eg_environment_bind(
       re_cmd_bind_uniform(cmd_buffer, set, 0, sizeof(environment->uniform));
   memcpy(mapping, &environment->uniform, sizeof(environment->uniform));
 
-  re_cmd_bind_image(
-      cmd_buffer, set, 1, &environment->asset->irradiance_cubemap);
-  re_cmd_bind_image(cmd_buffer, set, 2, &environment->asset->radiance_cubemap);
-  re_cmd_bind_image(cmd_buffer, set, 3, &environment->asset->brdf_lut);
+  re_cmd_bind_image(cmd_buffer, set, 1, &environment->irradiance->image);
+  re_cmd_bind_image(cmd_buffer, set, 2, &environment->radiance->image);
+  re_cmd_bind_image(cmd_buffer, set, 3, &environment->brdf->image);
 
   re_cmd_bind_descriptor_set(cmd_buffer, pipeline, set);
 }
@@ -59,11 +66,10 @@ void eg_environment_draw_skybox(
 
   switch (environment->skybox_type) {
   case EG_SKYBOX_DEFAULT:
-    re_cmd_bind_image(cmd_buffer, 1, 1, &environment->asset->skybox_cubemap);
+    re_cmd_bind_image(cmd_buffer, 1, 1, &environment->skybox->image);
     break;
   case EG_SKYBOX_IRRADIANCE:
-    re_cmd_bind_image(
-        cmd_buffer, 1, 1, &environment->asset->irradiance_cubemap);
+    re_cmd_bind_image(cmd_buffer, 1, 1, &environment->irradiance->image);
     break;
   }
 

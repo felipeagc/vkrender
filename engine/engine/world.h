@@ -1,6 +1,5 @@
 #pragma once
 
-#include "assets/environment_asset.h"
 #include "camera.h"
 #include "comps/comp_types.h"
 #include "environment.h"
@@ -73,7 +72,11 @@ typedef struct eg_world_t {
 } eg_world_t;
 
 void eg_world_init(
-    eg_world_t *world, eg_environment_asset_t *environment_asset);
+    eg_world_t *world,
+    eg_image_asset_t *skybox,
+    eg_image_asset_t *irradiance,
+    eg_image_asset_t *radiance,
+    eg_image_asset_t *brdf);
 
 void eg_world_update(eg_world_t *world);
 

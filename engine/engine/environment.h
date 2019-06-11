@@ -7,7 +7,7 @@
 #define EG_MAX_POINT_LIGHTS 20
 
 typedef struct re_pipeline_t re_pipeline_t;
-typedef struct eg_environment_asset_t eg_environment_asset_t;
+typedef struct eg_image_asset_t eg_image_asset_t;
 
 typedef enum eg_skybox_type_t {
   EG_SKYBOX_DEFAULT,
@@ -30,14 +30,21 @@ typedef struct eg_environment_uniform_t {
 } eg_environment_uniform_t;
 
 typedef struct eg_environment_t {
-  eg_environment_asset_t *asset;
+  eg_image_asset_t *skybox;
+  eg_image_asset_t *irradiance;
+  eg_image_asset_t *radiance;
+  eg_image_asset_t *brdf;
 
   eg_skybox_type_t skybox_type;
   eg_environment_uniform_t uniform;
 } eg_environment_t;
 
 void eg_environment_init(
-    eg_environment_t *environment, eg_environment_asset_t *asset);
+    eg_environment_t *environment,
+    eg_image_asset_t *skybox,
+    eg_image_asset_t *irradiance,
+    eg_image_asset_t *radiance,
+    eg_image_asset_t *brdf);
 
 void eg_environment_bind(
     eg_environment_t *environment,

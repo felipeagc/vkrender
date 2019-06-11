@@ -1,7 +1,7 @@
 #include "asset_types.h"
 
-#include "environment_asset.h"
 #include "gltf_asset.h"
+#include "image_asset.h"
 #include "mesh_asset.h"
 #include "pbr_material_asset.h"
 #include "pipeline_asset.h"

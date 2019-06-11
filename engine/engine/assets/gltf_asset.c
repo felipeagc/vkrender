@@ -43,7 +43,7 @@ void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector) {
           1.0f);
       igColorEdit4("Emissive factor", &material->uniform.emissive_factor.x, 0);
 
-      float img_size = 128.0f;
+      const float img_size = 128.0f;
 
 #define IMAGE(image, name)                                                     \
   if ((image)) {                                                               \

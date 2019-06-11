@@ -61,14 +61,15 @@ add_library(
 	engine/assets/asset_types.h
 	engine/assets/pipeline_asset.c
 	engine/assets/pipeline_asset.h
-	engine/assets/environment_asset.c
-	engine/assets/environment_asset.h
+	engine/assets/image_asset.c
+	engine/assets/image_asset.h
 	engine/assets/mesh_asset.c
 	engine/assets/mesh_asset.h
 	engine/assets/gltf_asset.c
 	engine/assets/gltf_asset.h
 	engine/assets/pbr_material_asset.c
-	engine/assets/pbr_material_asset.h)
+	engine/assets/pbr_material_asset.h
+	)
 
 target_link_libraries(
 	engine

@@ -29,11 +29,11 @@ typedef void (*eg_asset_destructor_t)(void *);
     eg_pipeline_asset_inspect,                                                 \
     eg_pipeline_asset_destroy,                                                 \
     "Pipeline")                                                                \
-  E(eg_environment_asset_t,                                                    \
-    eg_environment_asset_default,                                              \
-    eg_environment_asset_inspect,                                              \
-    eg_environment_asset_destroy,                                              \
-    "Environment")                                                             \
+  E(eg_image_asset_t,                                                          \
+    eg_image_asset_default,                                                    \
+    eg_image_asset_inspect,                                                    \
+    eg_image_asset_destroy,                                                    \
+    "Image")                                                                   \
   E(eg_mesh_asset_t,                                                           \
     eg_mesh_asset_default,                                                     \
     eg_mesh_asset_inspect,                                                     \

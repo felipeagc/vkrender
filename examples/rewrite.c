@@ -155,16 +155,23 @@ int main(int argc, const char *argv[]) {
 
   eg_asset_manager_init(&game.asset_manager);
 
-  eg_environment_asset_t *environment_asset =
-      eg_asset_alloc(&game.asset_manager, eg_environment_asset_t);
-  eg_environment_asset_init(
-      environment_asset,
-      "/assets/environments/bridge_skybox.ktx",
-      "/assets/environments/bridge_irradiance.ktx",
-      "/assets/environments/bridge_radiance.ktx",
-      "/assets/brdf_lut.png");
+  eg_image_asset_t *skybox =
+      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
+  eg_image_asset_init(skybox, "/assets/environments/bridge_skybox.ktx");
 
-  eg_world_init(&game.world, environment_asset);
+  eg_image_asset_t *irradiance =
+      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
+  eg_image_asset_init(irradiance, "/assets/environments/bridge_irradiance.ktx");
+
+  eg_image_asset_t *radiance =
+      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
+  eg_image_asset_init(radiance, "/assets/environments/bridge_radiance.ktx");
+
+  eg_image_asset_t *brdf =
+      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
+  eg_image_asset_init(brdf, "/assets/brdf_lut.png");
+
+  eg_world_init(&game.world, skybox, irradiance, radiance, brdf);
 
   // Systems
   eg_inspector_init(
