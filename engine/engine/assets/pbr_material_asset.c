@@ -3,13 +3,10 @@
 #include "../asset_manager.h"
 #include "../engine.h"
 #include "../imgui.h"
-#include "../pipelines.h"
-#include <fstd_util.h>
-#include <renderer/context.h>
+#include "image_asset.h"
+#include <renderer/buffer.h>
 #include <renderer/image.h>
 #include <renderer/pipeline.h>
-#include <renderer/util.h>
-#include <renderer/window.h>
 #include <string.h>
 
 eg_pbr_material_asset_t *eg_pbr_material_asset_create(
@@ -22,33 +19,13 @@ eg_pbr_material_asset_t *eg_pbr_material_asset_create(
   material->uniform.metallic           = 1.0;
   material->uniform.roughness          = 1.0;
   material->uniform.emissive_factor    = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  material->uniform.has_normal_texture = 1.0f;
+  material->uniform.has_normal_texture = 0;
 
-  material->albedo_texture = options->albedo_texture;
-  if (material->albedo_texture == NULL) {
-    material->albedo_texture = &g_eng.white_texture;
-  }
-
-  material->normal_texture = options->normal_texture;
-  if (material->normal_texture == NULL) {
-    material->uniform.has_normal_texture = 0.0f;
-    material->normal_texture             = &g_eng.white_texture;
-  }
-
+  material->albedo_texture             = options->albedo_texture;
+  material->normal_texture             = options->normal_texture;
+  material->occlusion_texture          = options->occlusion_texture;
   material->metallic_roughness_texture = options->metallic_roughness_texture;
-  if (material->metallic_roughness_texture == NULL) {
-    material->metallic_roughness_texture = &g_eng.white_texture;
-  }
-
-  material->occlusion_texture = options->occlusion_texture;
-  if (material->occlusion_texture == NULL) {
-    material->occlusion_texture = &g_eng.white_texture;
-  }
-
-  material->emissive_texture = options->emissive_texture;
-  if (material->emissive_texture == NULL) {
-    material->emissive_texture = &g_eng.black_texture;
-  }
+  material->emissive_texture           = options->emissive_texture;
 
   return material;
 }
@@ -76,11 +53,31 @@ void eg_pbr_material_asset_bind(
     re_cmd_buffer_t *cmd_buffer,
     re_pipeline_t *pipeline,
     uint32_t set) {
-  re_cmd_bind_image(cmd_buffer, set, 0, material->albedo_texture);
-  re_cmd_bind_image(cmd_buffer, set, 1, material->normal_texture);
-  re_cmd_bind_image(cmd_buffer, set, 2, material->metallic_roughness_texture);
-  re_cmd_bind_image(cmd_buffer, set, 3, material->occlusion_texture);
-  re_cmd_bind_image(cmd_buffer, set, 4, material->emissive_texture);
+  re_image_t *albedo             = &g_eng.white_texture;
+  re_image_t *normal             = &g_eng.white_texture;
+  re_image_t *metallic_roughness = &g_eng.white_texture;
+  re_image_t *occlusion          = &g_eng.white_texture;
+  re_image_t *emissive           = &g_eng.black_texture;
+
+  if (material->albedo_texture != NULL)
+    albedo = &material->albedo_texture->image;
+  if (material->normal_texture != NULL)
+    normal = &material->normal_texture->image;
+  if (material->metallic_roughness_texture != NULL)
+    metallic_roughness = &material->metallic_roughness_texture->image;
+  if (material->occlusion_texture != NULL)
+    occlusion = &material->occlusion_texture->image;
+  if (material->emissive_texture != NULL)
+    emissive = &material->emissive_texture->image;
+
+  re_cmd_bind_image(cmd_buffer, set, 0, albedo);
+  re_cmd_bind_image(cmd_buffer, set, 1, normal);
+  re_cmd_bind_image(cmd_buffer, set, 2, metallic_roughness);
+  re_cmd_bind_image(cmd_buffer, set, 3, occlusion);
+  re_cmd_bind_image(cmd_buffer, set, 4, emissive);
+
+  material->uniform.has_normal_texture =
+      (material->normal_texture != NULL) ? 1 : 0;
 
   void *mapping =
       re_cmd_bind_uniform(cmd_buffer, set, 5, sizeof(material->uniform));

@@ -88,7 +88,7 @@ static void material_init(
   material->uniform.metallic           = 1.0;
   material->uniform.roughness          = 1.0;
   material->uniform.emissive_factor    = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  material->uniform.has_normal_texture = 1.0f;
+  material->uniform.has_normal_texture = 1;
 
   material->albedo_texture = albedo_texture;
   if (material->albedo_texture == NULL) {
@@ -97,7 +97,7 @@ static void material_init(
 
   material->normal_texture = normal_texture;
   if (material->normal_texture == NULL) {
-    material->uniform.has_normal_texture = 0.0f;
+    material->uniform.has_normal_texture = 0;
     material->normal_texture             = &g_eng.white_texture;
   }
 

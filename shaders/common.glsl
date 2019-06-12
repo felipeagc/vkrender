@@ -37,7 +37,7 @@ struct Material {
   float metallic;
   float roughness;
   vec4 emissive;
-  float has_normal_texture;
+  uint has_normal_texture;
 };
 
 struct Model {

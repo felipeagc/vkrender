@@ -2,35 +2,35 @@
 
 #include "asset_types.h"
 #include <gmath.h>
-#include <renderer/buffer.h>
 
-typedef struct re_image_t re_image_t;
+typedef struct re_cmd_buffer_t re_cmd_buffer_t;
 typedef struct re_pipeline_t re_pipeline_t;
+typedef struct eg_image_asset_t eg_image_asset_t;
 
 typedef struct eg_pbr_material_uniform_t {
   vec4_t base_color_factor;
   float metallic;
   float roughness;
   vec4_t emissive_factor;
-  float has_normal_texture;
+  uint32_t has_normal_texture;
 } eg_pbr_material_uniform_t;
 
 typedef struct eg_pbr_material_asset_options_t {
-  re_image_t *albedo_texture;
-  re_image_t *normal_texture;
-  re_image_t *metallic_roughness_texture;
-  re_image_t *occlusion_texture;
-  re_image_t *emissive_texture;
+  eg_image_asset_t *albedo_texture;
+  eg_image_asset_t *normal_texture;
+  eg_image_asset_t *metallic_roughness_texture;
+  eg_image_asset_t *occlusion_texture;
+  eg_image_asset_t *emissive_texture;
 } eg_pbr_material_asset_options_t;
 
 typedef struct eg_pbr_material_asset_t {
   eg_asset_t asset;
   eg_pbr_material_uniform_t uniform;
-  re_image_t *albedo_texture;
-  re_image_t *normal_texture;
-  re_image_t *metallic_roughness_texture;
-  re_image_t *occlusion_texture;
-  re_image_t *emissive_texture;
+  eg_image_asset_t *albedo_texture;
+  eg_image_asset_t *normal_texture;
+  eg_image_asset_t *metallic_roughness_texture;
+  eg_image_asset_t *occlusion_texture;
+  eg_image_asset_t *emissive_texture;
 } eg_pbr_material_asset_t;
 
 /*

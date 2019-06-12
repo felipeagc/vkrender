@@ -11,6 +11,7 @@ typedef struct eg_image_asset_options_t {
 
 typedef struct eg_image_asset_t {
   eg_asset_t asset;
+
   re_image_t image;
 } eg_image_asset_t;
 

@@ -7,7 +7,7 @@ vec3 normal_map(
     Material material,
     sampler2D normal_texture,
     vec2 tex_coords) {
-  if (material.has_normal_texture == 0.0f) {
+  if (material.has_normal_texture == 0) {
     return normalize(normal);
   }
   // Retrieve the tangent space matrix
