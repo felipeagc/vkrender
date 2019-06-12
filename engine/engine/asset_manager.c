@@ -70,8 +70,13 @@ void *eg_asset_manager_alloc(
 void *eg_asset_manager_create(
     eg_asset_manager_t *asset_manager,
     eg_asset_type_t asset_type,
+    const char *name,
     void *options) {
-  return EG_ASSET_CONSTRUCTORS[asset_type](asset_manager, options);
+  eg_asset_t *asset = EG_ASSET_CONSTRUCTORS[asset_type](asset_manager, options);
+  if (asset != NULL) {
+    eg_asset_set_name(asset, name);
+  }
+  return asset;
 }
 
 eg_asset_t *
