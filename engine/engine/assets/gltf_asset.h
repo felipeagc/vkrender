@@ -52,6 +52,11 @@ typedef struct eg_gltf_asset_node_t {
   quat_t rotation;
 } eg_gltf_asset_node_t;
 
+typedef struct eg_gltf_asset_options_t {
+  const char *path;
+  bool flip_uvs;
+} eg_gltf_asset_options_t;
+
 typedef struct eg_gltf_asset_t {
   eg_asset_t asset;
 
@@ -78,12 +83,9 @@ typedef struct eg_gltf_asset_t {
 /*
  * Required asset functions
  */
+eg_gltf_asset_t *eg_gltf_asset_create(
+    eg_asset_manager_t *asset_manager, eg_gltf_asset_options_t *options);
+
 void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector);
 
 void eg_gltf_asset_destroy(eg_gltf_asset_t *model);
-
-/*
- * Specific functions
- */
-void eg_gltf_asset_init(
-    eg_gltf_asset_t *model, const char *path, bool flip_uvs);

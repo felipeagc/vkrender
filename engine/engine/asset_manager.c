@@ -22,7 +22,7 @@ void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
       asset_manager->cap * sizeof(*asset_manager->assets));
 }
 
-eg_asset_t *eg_asset_manager_alloc(
+void *eg_asset_manager_alloc(
     eg_asset_manager_t *asset_manager, eg_asset_type_t asset_type) {
   mtx_lock(&asset_manager->mutex);
 
@@ -65,6 +65,13 @@ eg_asset_t *eg_asset_manager_alloc(
   mtx_unlock(&asset_manager->mutex);
 
   return asset;
+}
+
+void *eg_asset_manager_create(
+    eg_asset_manager_t *asset_manager,
+    eg_asset_type_t asset_type,
+    void *options) {
+  return EG_ASSET_CONSTRUCTORS[asset_type](asset_manager, options);
 }
 
 eg_asset_t *

@@ -1,25 +1,19 @@
 #include "mesh_asset.h"
+
+#include "../asset_manager.h"
 #include <renderer/context.h>
 #include <renderer/window.h>
 #include <string.h>
 
-void eg_mesh_asset_inspect(eg_mesh_asset_t *mesh, eg_inspector_t *inspector) {}
+eg_mesh_asset_t *eg_mesh_asset_create(
+    eg_asset_manager_t *asset_manager, eg_mesh_asset_options_t *options) {
+  eg_mesh_asset_t *mesh =
+      eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_mesh_asset_t));
 
-void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
-  re_buffer_destroy(&mesh->vertex_buffer);
-  re_buffer_destroy(&mesh->index_buffer);
-}
+  mesh->index_count = options->index_count;
 
-void eg_mesh_asset_init(
-    eg_mesh_asset_t *mesh,
-    re_vertex_t *vertices,
-    uint32_t vertex_count,
-    uint32_t *indices,
-    uint32_t index_count) {
-  mesh->index_count = index_count;
-
-  size_t vertex_buffer_size = sizeof(re_vertex_t) * vertex_count;
-  size_t index_buffer_size  = sizeof(uint32_t) * index_count;
+  size_t vertex_buffer_size = sizeof(re_vertex_t) * options->vertex_count;
+  size_t index_buffer_size  = sizeof(uint32_t) * options->index_count;
   re_buffer_init(
       &mesh->vertex_buffer,
       &(re_buffer_options_t){
@@ -48,14 +42,14 @@ void eg_mesh_asset_init(
   void *memory;
   re_buffer_map_memory(&staging_buffer, &memory);
 
-  memcpy(memory, vertices, vertex_buffer_size);
+  memcpy(memory, options->vertices, vertex_buffer_size);
   re_buffer_transfer_to_buffer(
       &staging_buffer,
       &mesh->vertex_buffer,
       g_ctx.transient_command_pool,
       vertex_buffer_size);
 
-  memcpy(memory, indices, index_buffer_size);
+  memcpy(memory, options->indices, index_buffer_size);
   re_buffer_transfer_to_buffer(
       &staging_buffer,
       &mesh->index_buffer,
@@ -65,6 +59,15 @@ void eg_mesh_asset_init(
   re_buffer_unmap_memory(&staging_buffer);
 
   re_buffer_destroy(&staging_buffer);
+
+  return mesh;
+}
+
+void eg_mesh_asset_inspect(eg_mesh_asset_t *mesh, eg_inspector_t *inspector) {}
+
+void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
+  re_buffer_destroy(&mesh->vertex_buffer);
+  re_buffer_destroy(&mesh->index_buffer);
 }
 
 void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, re_cmd_buffer_t *cmd_buffer) {

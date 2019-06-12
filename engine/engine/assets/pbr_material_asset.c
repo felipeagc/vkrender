@@ -1,5 +1,6 @@
 #include "pbr_material_asset.h"
 
+#include "../asset_manager.h"
 #include "../engine.h"
 #include "../imgui.h"
 #include "../pipelines.h"
@@ -10,6 +11,47 @@
 #include <renderer/util.h>
 #include <renderer/window.h>
 #include <string.h>
+
+eg_pbr_material_asset_t *eg_pbr_material_asset_create(
+    eg_asset_manager_t *asset_manager,
+    eg_pbr_material_asset_options_t *options) {
+  eg_pbr_material_asset_t *material = eg_asset_manager_alloc(
+      asset_manager, EG_ASSET_TYPE(eg_pbr_material_asset_t));
+
+  material->uniform.base_color_factor  = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  material->uniform.metallic           = 1.0;
+  material->uniform.roughness          = 1.0;
+  material->uniform.emissive_factor    = (vec4_t){1.0, 1.0, 1.0, 1.0};
+  material->uniform.has_normal_texture = 1.0f;
+
+  material->albedo_texture = options->albedo_texture;
+  if (material->albedo_texture == NULL) {
+    material->albedo_texture = &g_eng.white_texture;
+  }
+
+  material->normal_texture = options->normal_texture;
+  if (material->normal_texture == NULL) {
+    material->uniform.has_normal_texture = 0.0f;
+    material->normal_texture             = &g_eng.white_texture;
+  }
+
+  material->metallic_roughness_texture = options->metallic_roughness_texture;
+  if (material->metallic_roughness_texture == NULL) {
+    material->metallic_roughness_texture = &g_eng.white_texture;
+  }
+
+  material->occlusion_texture = options->occlusion_texture;
+  if (material->occlusion_texture == NULL) {
+    material->occlusion_texture = &g_eng.white_texture;
+  }
+
+  material->emissive_texture = options->emissive_texture;
+  if (material->emissive_texture == NULL) {
+    material->emissive_texture = &g_eng.black_texture;
+  }
+
+  return material;
+}
 
 void eg_pbr_material_asset_inspect(
     eg_pbr_material_asset_t *material, eg_inspector_t *inspector) {
@@ -28,46 +70,6 @@ void eg_pbr_material_asset_inspect(
 }
 
 void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {}
-
-void eg_pbr_material_asset_init(
-    eg_pbr_material_asset_t *material,
-    re_image_t *albedo_texture,
-    re_image_t *normal_texture,
-    re_image_t *metallic_roughness_texture,
-    re_image_t *occlusion_texture,
-    re_image_t *emissive_texture) {
-  material->uniform.base_color_factor  = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  material->uniform.metallic           = 1.0;
-  material->uniform.roughness          = 1.0;
-  material->uniform.emissive_factor    = (vec4_t){1.0, 1.0, 1.0, 1.0};
-  material->uniform.has_normal_texture = 1.0f;
-
-  material->albedo_texture = albedo_texture;
-  if (material->albedo_texture == NULL) {
-    material->albedo_texture = &g_eng.white_texture;
-  }
-
-  material->normal_texture = normal_texture;
-  if (material->normal_texture == NULL) {
-    material->uniform.has_normal_texture = 0.0f;
-    material->normal_texture             = &g_eng.white_texture;
-  }
-
-  material->metallic_roughness_texture = metallic_roughness_texture;
-  if (material->metallic_roughness_texture == NULL) {
-    material->metallic_roughness_texture = &g_eng.white_texture;
-  }
-
-  material->occlusion_texture = occlusion_texture;
-  if (material->occlusion_texture == NULL) {
-    material->occlusion_texture = &g_eng.white_texture;
-  }
-
-  material->emissive_texture = emissive_texture;
-  if (material->emissive_texture == NULL) {
-    material->emissive_texture = &g_eng.black_texture;
-  }
-}
 
 void eg_pbr_material_asset_bind(
     eg_pbr_material_asset_t *material,

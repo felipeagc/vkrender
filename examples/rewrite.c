@@ -23,12 +23,12 @@ static eg_entity_t add_gltf(
     vec3_t position,
     vec3_t scale,
     bool flip_uvs) {
-  eg_gltf_asset_t *model_asset =
-      eg_asset_alloc(&game->asset_manager, eg_gltf_asset_t);
+  eg_gltf_asset_t *model_asset = eg_asset_manager_create(
+      &game->asset_manager,
+      EG_ASSET_TYPE(eg_gltf_asset_t),
+      &(eg_gltf_asset_options_t){.path = path, .flip_uvs = flip_uvs});
 
   eg_asset_set_name(&model_asset->asset, path);
-
-  eg_gltf_asset_init(model_asset, path, flip_uvs);
 
   eg_entity_t ent = eg_world_add(&game->world);
 
@@ -96,16 +96,24 @@ add_terrain(game_t *game, uint32_t dim, eg_pipeline_asset_t *pipeline_asset) {
     }
   }
 
-  eg_mesh_asset_t *mesh_asset =
-      eg_asset_alloc(&game->asset_manager, eg_mesh_asset_t);
-  eg_mesh_asset_init(mesh_asset, vertices, vertex_count, indices, index_count);
+  eg_mesh_asset_t *mesh_asset = eg_asset_manager_create(
+      &game->asset_manager,
+      EG_ASSET_TYPE(eg_mesh_asset_t),
+      &(eg_mesh_asset_options_t){
+          .vertices     = vertices,
+          .vertex_count = vertex_count,
+          .indices      = indices,
+          .index_count  = index_count,
+      });
 
   free(indices);
   free(vertices);
 
-  eg_pbr_material_asset_t *mat_asset =
-      eg_asset_alloc(&game->asset_manager, eg_pbr_material_asset_t);
-  eg_pbr_material_asset_init(mat_asset, NULL, NULL, NULL, NULL, NULL);
+  eg_pbr_material_asset_t *mat_asset = eg_asset_manager_create(
+      &game->asset_manager,
+      EG_ASSET_TYPE(eg_pbr_material_asset_t),
+      &(eg_pbr_material_asset_options_t){});
+
   mat_asset->uniform.base_color_factor = (vec4_t){0.0f, 0.228f, 0.456f, 1.0f};
 
   eg_entity_t ent = eg_world_add(&game->world);
@@ -155,21 +163,28 @@ int main(int argc, const char *argv[]) {
 
   eg_asset_manager_init(&game.asset_manager);
 
-  eg_image_asset_t *skybox =
-      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
-  eg_image_asset_init(skybox, "/assets/environments/bridge_skybox.ktx");
+  eg_image_asset_t *skybox = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_image_asset_t),
+      &(eg_image_asset_options_t){
+          .path = "/assets/environments/bridge_skybox.ktx"});
 
-  eg_image_asset_t *irradiance =
-      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
-  eg_image_asset_init(irradiance, "/assets/environments/bridge_irradiance.ktx");
+  eg_image_asset_t *irradiance = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_image_asset_t),
+      &(eg_image_asset_options_t){
+          .path = "/assets/environments/bridge_irradiance.ktx"});
 
-  eg_image_asset_t *radiance =
-      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
-  eg_image_asset_init(radiance, "/assets/environments/bridge_radiance.ktx");
+  eg_image_asset_t *radiance = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_image_asset_t),
+      &(eg_image_asset_options_t){
+          .path = "/assets/environments/bridge_radiance.ktx"});
 
-  eg_image_asset_t *brdf =
-      eg_asset_alloc(&game.asset_manager, eg_image_asset_t);
-  eg_image_asset_init(brdf, "/assets/brdf_lut.png");
+  eg_image_asset_t *brdf = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_image_asset_t),
+      &(eg_image_asset_options_t){.path = "/assets/brdf_lut.png"});
 
   eg_world_init(&game.world, skybox, irradiance, radiance, brdf);
 
@@ -182,36 +197,38 @@ int main(int argc, const char *argv[]) {
       &game.asset_manager);
   eg_fps_camera_system_init(&game.fps_system, &game.world.camera);
 
-  eg_pipeline_asset_t *pbr_pipeline =
-      eg_asset_alloc(&game.asset_manager, eg_pipeline_asset_t);
+  eg_pipeline_asset_t *pbr_pipeline = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_pipeline_asset_t),
+      &(eg_pipeline_asset_options_t){
+          .render_target = &game.window.render_target,
+          .vert          = "/shaders/pbr.vert.spv",
+          .frag          = "/shaders/pbr.frag.spv",
+          .params        = eg_standard_pipeline_parameters(),
+      });
   eg_asset_set_name(&pbr_pipeline->asset, "PBR pipeline");
-  eg_pipeline_asset_init(
-      pbr_pipeline,
-      &game.window.render_target,
-      (const char *[]){"/shaders/pbr.vert.spv", "/shaders/pbr.frag.spv"},
-      2,
-      eg_standard_pipeline_parameters());
 
-  eg_pipeline_asset_t *terrain_pipeline =
-      eg_asset_alloc(&game.asset_manager, eg_pipeline_asset_t);
+  eg_pipeline_asset_t *terrain_pipeline = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_pipeline_asset_t),
+      &(eg_pipeline_asset_options_t){
+          .render_target = &game.window.render_target,
+          .vert          = "/shaders/terrain.vert.spv",
+          .frag          = "/shaders/terrain.frag.spv",
+          .params        = eg_standard_pipeline_parameters(),
+      });
   eg_asset_set_name(&terrain_pipeline->asset, "Terrain pipeline");
-  eg_pipeline_asset_init(
-      terrain_pipeline,
-      &game.window.render_target,
-      (const char *[]){"/shaders/terrain.vert.spv",
-                       "/shaders/terrain.frag.spv"},
-      2,
-      eg_standard_pipeline_parameters());
 
-  eg_pipeline_asset_t *skybox_pipeline =
-      eg_asset_alloc(&game.asset_manager, eg_pipeline_asset_t);
+  eg_pipeline_asset_t *skybox_pipeline = eg_asset_manager_create(
+      &game.asset_manager,
+      EG_ASSET_TYPE(eg_pipeline_asset_t),
+      &(eg_pipeline_asset_options_t){
+          .render_target = &game.window.render_target,
+          .vert          = "/shaders/skybox.vert.spv",
+          .frag          = "/shaders/skybox.frag.spv",
+          .params        = eg_skybox_pipeline_parameters(),
+      });
   eg_asset_set_name(&skybox_pipeline->asset, "Skybox pipeline");
-  eg_pipeline_asset_init(
-      skybox_pipeline,
-      &game.window.render_target,
-      (const char *[]){"/shaders/skybox.vert.spv", "/shaders/skybox.frag.spv"},
-      2,
-      eg_skybox_pipeline_parameters());
 
   game.world.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
 

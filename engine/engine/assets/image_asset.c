@@ -1,5 +1,6 @@
 #include "image_asset.h"
 
+#include "../asset_manager.h"
 #include "../filesystem.h"
 #include "../imgui.h"
 #include "../util.h"
@@ -72,15 +73,16 @@ void eg_image_asset_destroy(eg_image_asset_t *image) {
   re_image_destroy(&image->image);
 }
 
-void eg_image_asset_init(eg_image_asset_t *image, const char *path) {
+eg_image_asset_t *eg_image_asset_create(
+    eg_asset_manager_t *asset_manager, eg_image_asset_options_t *options) {
   char ext[128] = "";
-  get_ext(path, ext);
+  get_ext(options->path, ext);
 
   if (strcmp(ext, "ktx") == 0) {
     ktx_data_t ktx_data;
     ktx_result_t ktx_result;
 
-    eg_file_t *file = eg_file_open_read(path);
+    eg_file_t *file = eg_file_open_read(options->path);
     assert(file);
     size_t raw_data_size = eg_file_size(file);
     uint8_t *raw_data    = calloc(1, raw_data_size);
@@ -105,6 +107,9 @@ void eg_image_asset_init(eg_image_asset_t *image, const char *path) {
     }
     }
 
+    eg_image_asset_t *image =
+        eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+
     re_image_init(
         &image->image,
         &(re_image_options_t){
@@ -120,13 +125,13 @@ void eg_image_asset_init(eg_image_asset_t *image, const char *path) {
 
     ktx_data_destroy(&ktx_data);
 
-    return;
+    return image;
   }
 
   if (strcmp(ext, "png") == 0 || strcmp(ext, "jpeg") == 0 ||
       strcmp(ext, "jpg") == 0) {
 
-    eg_file_t *file = eg_file_open_read(path);
+    eg_file_t *file = eg_file_open_read(options->path);
     assert(file);
     size_t raw_data_size = eg_file_size(file);
     uint8_t *raw_data    = calloc(1, raw_data_size);
@@ -137,7 +142,12 @@ void eg_image_asset_init(eg_image_asset_t *image, const char *path) {
     uint8_t *data = stbi_load_from_memory(
         raw_data, (int)raw_data_size, &width, &height, &channels, 4);
 
+    assert(data != NULL);
+
     free(raw_data);
+
+    eg_image_asset_t *image =
+        eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
 
     re_image_init(
         &image->image,
@@ -158,8 +168,8 @@ void eg_image_asset_init(eg_image_asset_t *image, const char *path) {
 
     free(data);
 
-    return;
+    return image;
   }
 
-  assert(0 && "Unknown image extension");
+  return NULL;
 }

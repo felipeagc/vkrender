@@ -5,9 +5,6 @@
 #include <fstd_map.h>
 #include <tinycthread.h>
 
-#define eg_asset_alloc(asset_manager, type)                                    \
-  ((type *)eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(type)))
-
 typedef struct eg_asset_manager_t {
   mtx_t mutex;
   fstd_allocator_t allocator;
@@ -18,8 +15,13 @@ typedef struct eg_asset_manager_t {
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager);
 
-eg_asset_t *eg_asset_manager_alloc(
+void *eg_asset_manager_alloc(
     eg_asset_manager_t *asset_manager, eg_asset_type_t asset_type);
+
+void *eg_asset_manager_create(
+    eg_asset_manager_t *asset_manager,
+    eg_asset_type_t asset_type,
+    void *options);
 
 eg_asset_t *
 eg_asset_manager_get(eg_asset_manager_t *asset_manager, uint32_t index);

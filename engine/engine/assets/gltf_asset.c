@@ -1,5 +1,6 @@
 #include "gltf_asset.h"
 
+#include "../asset_manager.h"
 #include "../engine.h"
 #include "../filesystem.h"
 #include "../imgui.h"
@@ -489,8 +490,12 @@ static void get_scene_dimensions(eg_gltf_asset_t *model) {
       vec3_distance(model->dimensions.min, model->dimensions.max) / 2.0f;
 }
 
-void eg_gltf_asset_init(
-    eg_gltf_asset_t *model, const char *path, bool flip_uvs) {
+eg_gltf_asset_t *eg_gltf_asset_create(
+    eg_asset_manager_t *asset_manager, eg_gltf_asset_options_t *options) {
+
+  eg_gltf_asset_t *model =
+      eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_gltf_asset_t));
+
   model->vertex_buffer = (re_buffer_t){0};
   model->index_buffer  = (re_buffer_t){0};
 
@@ -508,7 +513,7 @@ void eg_gltf_asset_init(
 
   dimensions_init(&model->dimensions);
 
-  eg_file_t *gltf_file = eg_file_open_read(path);
+  eg_file_t *gltf_file = eg_file_open_read(options->path);
   assert(gltf_file);
   size_t gltf_size = eg_file_size(gltf_file);
   assert(gltf_size > 0);
@@ -517,12 +522,12 @@ void eg_gltf_asset_init(
   eg_file_read_bytes(gltf_file, gltf_data, gltf_size);
   eg_file_close(gltf_file);
 
-  cgltf_options options = {0};
-  cgltf_data *data      = NULL;
-  cgltf_result result   = cgltf_parse(&options, gltf_data, gltf_size, &data);
+  cgltf_options gltf_options = {0};
+  cgltf_data *data           = NULL;
+  cgltf_result result = cgltf_parse(&gltf_options, gltf_data, gltf_size, &data);
   assert(result == cgltf_result_success);
 
-  result = cgltf_load_buffers(&options, data, path);
+  result = cgltf_load_buffers(&gltf_options, data, options->path);
   assert(result == cgltf_result_success);
 
   assert(data->file_type == cgltf_file_type_glb);
@@ -645,7 +650,7 @@ void eg_gltf_asset_init(
         &model->vertex_count,
         &indices,
         &model->index_count,
-        flip_uvs);
+        options->flip_uvs);
   }
 
   for (size_t i = 0; i < data->scene->nodes_count; i++) {
@@ -718,6 +723,8 @@ void eg_gltf_asset_init(
   if (indices != NULL) {
     free(indices);
   }
+
+  return model;
 }
 
 void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {

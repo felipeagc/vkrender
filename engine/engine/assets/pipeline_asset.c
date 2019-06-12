@@ -1,7 +1,23 @@
 #include "pipeline_asset.h"
 
+#include "../asset_manager.h"
 #include "../imgui.h"
 #include "../pipelines.h"
+
+eg_pipeline_asset_t *eg_pipeline_asset_create(
+    eg_asset_manager_t *asset_manager, eg_pipeline_asset_options_t *options) {
+  eg_pipeline_asset_t *pipeline_asset =
+      eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
+
+  eg_init_pipeline_spv(
+      &pipeline_asset->pipeline,
+      options->render_target,
+      (const char *[]){options->vert, options->frag},
+      2,
+      options->params);
+
+  return pipeline_asset;
+}
 
 void eg_pipeline_asset_inspect(
     eg_pipeline_asset_t *pipeline_asset, eg_inspector_t *inspector) {
@@ -32,14 +48,4 @@ void eg_pipeline_asset_inspect(
 
 void eg_pipeline_asset_destroy(eg_pipeline_asset_t *pipeline_asset) {
   re_pipeline_destroy(&pipeline_asset->pipeline);
-}
-
-void eg_pipeline_asset_init(
-    eg_pipeline_asset_t *pipeline_asset,
-    const re_render_target_t *render_target,
-    const char *paths[],
-    uint32_t path_count,
-    const re_pipeline_parameters_t params) {
-  eg_init_pipeline_spv(
-      &pipeline_asset->pipeline, render_target, paths, path_count, params);
 }
