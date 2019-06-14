@@ -33,6 +33,9 @@ add_library(
 	engine/task_scheduler.c
 	engine/task_scheduler.h
 
+	engine/serializer.c
+	engine/serializer.h
+
 	engine/util/tinyktx.c
 	engine/util/tinyktx.h
 
