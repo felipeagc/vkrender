@@ -36,7 +36,7 @@ static inline void eg_inspect_assets(
     }
 
     if (igBeginPopup("selectasset", 0)) {
-      for (uint32_t i = 0; i < inspector->asset_manager->max_index; i++) {
+      for (uint32_t i = 0; i < inspector->asset_manager->count; i++) {
         eg_asset_t *cur_asset =
             eg_asset_manager_get(inspector->asset_manager, i);
         if (cur_asset == NULL) continue;

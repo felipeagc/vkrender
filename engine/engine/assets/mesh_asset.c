@@ -14,6 +14,7 @@ eg_mesh_asset_t *eg_mesh_asset_create(
 
   size_t vertex_buffer_size = sizeof(re_vertex_t) * options->vertex_count;
   size_t index_buffer_size  = sizeof(uint32_t) * options->index_count;
+
   re_buffer_init(
       &mesh->vertex_buffer,
       &(re_buffer_options_t){

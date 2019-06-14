@@ -34,6 +34,7 @@ add_library(
 	engine/task_scheduler.h
 
 	engine/util/tinyktx.c
+	engine/util/tinyktx.h
 
 	engine/comps/comp_types.c
 	engine/comps/comp_types.h
@@ -89,5 +90,7 @@ if(NOT MSVC)
 		-Wextra
 	  -Wno-missing-braces
 	  -Wno-unused-parameter
+		-mavx
+		-maes
 		)
 endif()

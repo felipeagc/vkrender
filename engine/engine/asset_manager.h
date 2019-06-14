@@ -10,7 +10,7 @@ typedef struct eg_asset_manager_t {
   fstd_allocator_t allocator;
   eg_asset_t **assets;
   uint32_t cap;
-  uint32_t max_index;
+  uint32_t count;
 } eg_asset_manager_t;
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager);

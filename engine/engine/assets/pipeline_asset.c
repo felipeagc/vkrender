@@ -1,6 +1,7 @@
 #include "pipeline_asset.h"
 
 #include "../asset_manager.h"
+#include "../filesystem.h"
 #include "../imgui.h"
 #include "../pipelines.h"
 
@@ -9,12 +10,42 @@ eg_pipeline_asset_t *eg_pipeline_asset_create(
   eg_pipeline_asset_t *pipeline_asset =
       eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
 
-  eg_init_pipeline_spv(
+  uint8_t *vert_code, *frag_code;
+  re_shader_t vert_shader, frag_shader;
+
+  {
+    eg_file_t *file = eg_file_open_read(options->vert);
+    assert(file);
+    size_t size = eg_file_size(file);
+    vert_code   = calloc(1, size);
+    eg_file_read_bytes(file, vert_code, size);
+    eg_file_close(file);
+
+    re_shader_init_spv(&vert_shader, (uint32_t *)vert_code, size);
+  }
+
+  {
+    eg_file_t *file = eg_file_open_read(options->frag);
+    assert(file);
+    size_t size = eg_file_size(file);
+    frag_code   = calloc(1, size);
+    eg_file_read_bytes(file, frag_code, size);
+    eg_file_close(file);
+
+    re_shader_init_spv(&frag_shader, (uint32_t *)frag_code, size);
+  }
+
+  re_pipeline_init_graphics(
       &pipeline_asset->pipeline,
       options->render_target,
-      (const char *[]){options->vert, options->frag},
+      (re_shader_t[]){vert_shader, frag_shader},
       2,
       options->params);
+
+  free(vert_code);
+  free(frag_code);
+  re_shader_destroy(&vert_shader);
+  re_shader_destroy(&frag_shader);
 
   return pipeline_asset;
 }
