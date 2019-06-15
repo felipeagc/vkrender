@@ -10,7 +10,7 @@ typedef struct game_t {
   re_window_t window;
 
   eg_asset_manager_t asset_manager;
-  eg_world_t world;
+  eg_scene_t scene;
 
   eg_fps_camera_system_t fps_system;
   eg_inspector_t inspector;
@@ -29,18 +29,19 @@ static eg_entity_t add_gltf(
       path,
       &(eg_gltf_asset_options_t){.path = path, .flip_uvs = flip_uvs});
 
-  eg_entity_t ent = eg_world_add(&game->world);
+  eg_entity_t ent = eg_entity_add(&game->scene.entity_manager);
 
   eg_transform_comp_t *transform =
-      EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_transform_comp_t, ent);
   transform->position = position;
   transform->scale    = scale;
 
-  eg_gltf_comp_t *model = EG_ADD_COMP(&game->world, eg_gltf_comp_t, ent);
+  eg_gltf_comp_t *model =
+      EG_ADD_COMP(&game->scene.entity_manager, eg_gltf_comp_t, ent);
   eg_gltf_comp_init(model, model_asset);
 
   eg_renderable_comp_t *renderable =
-      EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_renderable_comp_t, ent);
   eg_renderable_comp_init(renderable, pipeline_asset);
 
   return ent;
@@ -48,14 +49,14 @@ static eg_entity_t add_gltf(
 
 static eg_entity_t
 add_light(game_t *game, vec3_t position, vec3_t color, float intensity) {
-  eg_entity_t ent = eg_world_add(&game->world);
+  eg_entity_t ent = eg_entity_add(&game->scene.entity_manager);
 
   eg_transform_comp_t *transform_comp =
-      EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_transform_comp_t, ent);
   transform_comp->position = position;
 
   eg_point_light_comp_t *light_comp =
-      EG_ADD_COMP(&game->world, eg_point_light_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_point_light_comp_t, ent);
   eg_point_light_comp_init(
       light_comp, (vec4_t){.xyz = color, .w = 1.0f}, intensity);
 
@@ -117,20 +118,21 @@ add_terrain(game_t *game, uint32_t dim, eg_pipeline_asset_t *pipeline_asset) {
 
   mat_asset->uniform.base_color_factor = (vec4_t){0.0f, 0.228f, 0.456f, 1.0f};
 
-  eg_entity_t ent = eg_world_add(&game->world);
+  eg_entity_t ent = eg_entity_add(&game->scene.entity_manager);
 
   eg_transform_comp_t *transform =
-      EG_ADD_COMP(&game->world, eg_transform_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_transform_comp_t, ent);
   transform->position = (vec3_t){0.0f, -2.0f, 0.0f};
 
-  eg_mesh_comp_t *mesh = EG_ADD_COMP(&game->world, eg_mesh_comp_t, ent);
+  eg_mesh_comp_t *mesh =
+      EG_ADD_COMP(&game->scene.entity_manager, eg_mesh_comp_t, ent);
   eg_mesh_comp_init(mesh, mesh_asset, mat_asset);
 
   eg_terrain_comp_t *terrain =
-      EG_ADD_COMP(&game->world, eg_terrain_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_terrain_comp_t, ent);
 
   eg_renderable_comp_t *renderable =
-      EG_ADD_COMP(&game->world, eg_renderable_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, eg_renderable_comp_t, ent);
   eg_renderable_comp_init(renderable, pipeline_asset);
 
   return ent;
@@ -191,16 +193,16 @@ int main(int argc, const char *argv[]) {
       "BRDF LuT",
       &(eg_image_asset_options_t){.path = "/assets/brdf_lut.png"});
 
-  eg_world_init(&game.world, skybox, irradiance, radiance, brdf);
+  eg_scene_init(&game.scene, skybox, irradiance, radiance, brdf);
 
   // Systems
   eg_inspector_init(
       &game.inspector,
       &game.window,
       &game.window.render_target,
-      &game.world,
+      &game.scene,
       &game.asset_manager);
-  eg_fps_camera_system_init(&game.fps_system, &game.world.camera);
+  eg_fps_camera_system_init(&game.fps_system, &game.scene.camera);
 
   eg_pipeline_asset_t *pbr_pipeline = eg_asset_manager_create(
       &game.asset_manager,
@@ -235,7 +237,7 @@ int main(int argc, const char *argv[]) {
           .params        = eg_skybox_pipeline_parameters(),
       });
 
-  game.world.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
+  game.scene.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
 
   add_gltf(
       &game,
@@ -289,7 +291,7 @@ int main(int argc, const char *argv[]) {
 
     re_cmd_buffer_t *cmd_buffer = re_window_get_cmd_buffer(&game.window);
 
-    eg_world_update(&game.world);
+    eg_entity_manager_update(&game.scene.entity_manager);
 
     eg_imgui_begin();
     if (inspector_enabled) {
@@ -303,19 +305,19 @@ int main(int argc, const char *argv[]) {
 
     eg_fps_camera_system_update(&game.fps_system, &game.window, cmd_buffer);
 
-    eg_light_system(&game.world);
+    eg_light_system(&game.scene);
 
     // Begin window renderpass
     re_window_begin_render_pass(&game.window);
 
     // Draw the skybox
     eg_camera_bind(
-        &game.world.camera, cmd_buffer, &skybox_pipeline->pipeline, 0);
+        &game.scene.camera, cmd_buffer, &skybox_pipeline->pipeline, 0);
     eg_environment_draw_skybox(
-        &game.world.environment, cmd_buffer, &skybox_pipeline->pipeline);
+        &game.scene.environment, cmd_buffer, &skybox_pipeline->pipeline);
 
     // Draw the entities
-    eg_rendering_system(&game.world, cmd_buffer);
+    eg_rendering_system(&game.scene, cmd_buffer);
 
     if (inspector_enabled) {
       // Draw the selected entity
@@ -340,7 +342,7 @@ int main(int argc, const char *argv[]) {
 
   eg_inspector_destroy(&game.inspector);
 
-  eg_world_destroy(&game.world);
+  eg_scene_destroy(&game.scene);
   eg_asset_manager_destroy(&game.asset_manager);
 
   eg_fs_destroy();

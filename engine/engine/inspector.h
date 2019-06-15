@@ -1,13 +1,12 @@
 #pragma once
 
 #include "picker.h"
-#include "world.h"
+#include "scene.h"
 #include <renderer/canvas.h>
 #include <renderer/event.h>
 #include <renderer/pipeline.h>
 
 typedef struct re_window_t re_window_t;
-typedef struct eg_world_t eg_world_t;
 typedef struct eg_asset_manager_t eg_asset_manager_t;
 
 typedef enum eg_drag_direction_t {
@@ -21,7 +20,7 @@ typedef struct eg_inspector_t {
   eg_entity_t selected_entity;
 
   re_window_t *window;
-  eg_world_t *world;
+  eg_scene_t *scene;
   eg_asset_manager_t *asset_manager;
 
   re_image_t light_billboard_image;
@@ -56,7 +55,7 @@ void eg_inspector_init(
     eg_inspector_t *inspector,
     re_window_t *window,
     re_render_target_t *render_target,
-    eg_world_t *world,
+    eg_scene_t *scene,
     eg_asset_manager_t *asset_manager);
 
 void eg_inspector_destroy(eg_inspector_t *inspector);

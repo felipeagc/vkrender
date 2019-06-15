@@ -2,8 +2,9 @@
 
 #include "engine/asset_manager.h"
 #include "engine/engine.h"
+#include "engine/entity_manager.h"
 #include "engine/filesystem.h"
-#include "engine/world.h"
+#include "engine/scene.h"
 
 #include "engine/imgui.h"
 

@@ -7,8 +7,10 @@ add_library(
 
 	engine/engine.c
 	engine/engine.h
-	engine/world.c
-	engine/world.h
+	engine/scene.c
+	engine/scene.h
+	engine/entity_manager.c
+	engine/entity_manager.h
 	engine/asset_manager.c
 	engine/asset_manager.h
 	engine/filesystem.c

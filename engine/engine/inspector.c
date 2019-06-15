@@ -8,7 +8,6 @@
 #include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
-#include "world.h"
 #include <float.h>
 #include <renderer/context.h>
 #include <renderer/window.h>
@@ -76,13 +75,13 @@ void eg_inspector_init(
     eg_inspector_t *inspector,
     re_window_t *window,
     re_render_target_t *render_target,
-    eg_world_t *world,
+    eg_scene_t *scene,
     eg_asset_manager_t *asset_manager) {
   memset(inspector, 0, sizeof(*inspector));
 
   inspector->selected_entity       = UINT32_MAX;
   inspector->window                = window;
-  inspector->world                 = world;
+  inspector->scene                 = scene;
   inspector->asset_manager         = asset_manager;
   inspector->drawing_render_target = render_target;
   inspector->snapping              = 0.1f;
@@ -241,10 +240,12 @@ void eg_inspector_destroy(eg_inspector_t *inspector) {
 
 static void
 draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
+
   re_cmd_bind_pipeline(cmd_buffer, &inspector->billboard_picking_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera,
+      &inspector->scene->camera,
       cmd_buffer,
       &inspector->billboard_picking_pipeline,
       0);
@@ -253,15 +254,15 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
   re_cmd_bind_descriptor_set(cmd_buffer, &inspector->billboard_pipeline, 1);
 
   eg_transform_comp_t *transforms =
-      EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
+      EG_COMP_ARRAY(entity_manager, eg_transform_comp_t);
 
-  for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
-    if (EG_HAS_TAG(inspector->world, e, EG_TAG_HIDDEN)) {
+  for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+    if (EG_HAS_TAG(entity_manager, e, EG_TAG_HIDDEN)) {
       continue;
     }
 
-    if (EG_HAS_COMP(inspector->world, eg_point_light_comp_t, e) &&
-        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, eg_point_light_comp_t, e) &&
+        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
       struct {
         mat4_t model;
         uint32_t index;
@@ -286,7 +287,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
   }
 
   if (!EG_HAS_COMP(
-          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
     return;
   }
 
@@ -322,8 +323,8 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
     uint32_t index;
   } push_constant;
 
-  eg_transform_comp_t *transform = EG_COMP(
-      inspector->world, eg_transform_comp_t, inspector->selected_entity);
+  eg_transform_comp_t *transform =
+      EG_COMP(entity_manager, eg_transform_comp_t, inspector->selected_entity);
 
   mat4_t object_mat = eg_transform_comp_mat4(transform);
 
@@ -339,8 +340,8 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
     push_constant.mvp = mat4_mul(
         mat,
         mat4_mul(
-            inspector->world->camera.uniform.view,
-            inspector->world->camera.uniform.proj));
+            inspector->scene->camera.uniform.view,
+            inspector->scene->camera.uniform.proj));
     push_constant.index = color_indices[i];
 
     re_cmd_push_constants(
@@ -363,25 +364,27 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     return;
   }
 
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
+
   re_cmd_buffer_t *cmd_buffer = eg_picker_begin(&inspector->picker);
 
   re_cmd_bind_pipeline(cmd_buffer, &inspector->picking_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera, cmd_buffer, &inspector->picking_pipeline, 0);
+      &inspector->scene->camera, cmd_buffer, &inspector->picking_pipeline, 0);
 
   eg_transform_comp_t *transforms =
-      EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
-  eg_gltf_comp_t *gltf_models = EG_COMP_ARRAY(inspector->world, eg_gltf_comp_t);
-  eg_mesh_comp_t *meshes      = EG_COMP_ARRAY(inspector->world, eg_mesh_comp_t);
+      EG_COMP_ARRAY(entity_manager, eg_transform_comp_t);
+  eg_gltf_comp_t *gltf_models = EG_COMP_ARRAY(entity_manager, eg_gltf_comp_t);
+  eg_mesh_comp_t *meshes      = EG_COMP_ARRAY(entity_manager, eg_mesh_comp_t);
 
 #define PUSH_CONSTANT()                                                        \
   re_cmd_push_constants(                                                       \
       cmd_buffer, &inspector->picking_pipeline, 0, sizeof(uint32_t), &e);
 
-  for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
-    if (EG_HAS_COMP(inspector->world, eg_mesh_comp_t, e) &&
-        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+  for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+    if (EG_HAS_COMP(entity_manager, eg_mesh_comp_t, e) &&
+        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
       PUSH_CONSTANT();
 
       eg_mesh_comp_draw_no_mat(
@@ -391,8 +394,8 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           eg_transform_comp_mat4(&transforms[e]));
     }
 
-    if (EG_HAS_COMP(inspector->world, eg_gltf_comp_t, e) &&
-        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, eg_gltf_comp_t, e) &&
+        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
       PUSH_CONSTANT();
 
       eg_gltf_comp_draw_no_mat(
@@ -428,11 +431,11 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
       EG_HAS_COMP(
-          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
     eg_transform_comp_t *transform = EG_COMP(
-        inspector->world, eg_transform_comp_t, inspector->selected_entity);
+        entity_manager, eg_transform_comp_t, inspector->selected_entity);
     vec3_t transform_ndc =
-        eg_camera_world_to_ndc(&inspector->world->camera, transform->position);
+        eg_camera_world_to_ndc(&inspector->scene->camera, transform->position);
 
     float width  = (float)inspector->drawing_render_target->width;
     float height = (float)inspector->drawing_render_target->height;
@@ -441,7 +444,7 @@ static void mouse_pressed(eg_inspector_t *inspector) {
     float ny          = (((float)cursor_y / height) * 2.0f) - 1.0f;
     vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
     vec3_t cursor_world =
-        eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
+        eg_camera_ndc_to_world(&inspector->scene->camera, cursor_ndc);
 
     inspector->pos_delta = vec3_sub(transform->position, cursor_world);
   }
@@ -475,17 +478,19 @@ void eg_inspector_process_event(
 }
 
 void eg_inspector_update(eg_inspector_t *inspector) {
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
+
   if (inspector->drag_direction == EG_DRAG_DIRECTION_NONE ||
       inspector->selected_entity >= EG_MAX_ENTITIES ||
       !EG_HAS_COMP(
-          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
     return;
   }
 
-  eg_transform_comp_t *transform = EG_COMP(
-      inspector->world, eg_transform_comp_t, inspector->selected_entity);
+  eg_transform_comp_t *transform =
+      EG_COMP(entity_manager, eg_transform_comp_t, inspector->selected_entity);
   vec3_t transform_ndc =
-      eg_camera_world_to_ndc(&inspector->world->camera, transform->position);
+      eg_camera_world_to_ndc(&inspector->scene->camera, transform->position);
 
   double cursor_x, cursor_y;
   re_window_get_cursor_pos(inspector->window, &cursor_x, &cursor_y);
@@ -497,7 +502,7 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   float ny          = (((float)cursor_y / height) * 2.0f) - 1.0f;
   vec3_t cursor_ndc = {nx, ny, transform_ndc.z};
   vec3_t cursor_world =
-      eg_camera_ndc_to_world(&inspector->world->camera, cursor_ndc);
+      eg_camera_ndc_to_world(&inspector->scene->camera, cursor_ndc);
 
 #define SNAP(x) (inspector->snap ? (x - fmodf((x), inspector->snapping)) : (x))
 
@@ -522,30 +527,31 @@ void eg_inspector_update(eg_inspector_t *inspector) {
 
 void eg_inspector_draw_gizmos(
     eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
 
   re_cmd_bind_pipeline(cmd_buffer, &inspector->billboard_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera, cmd_buffer, &inspector->billboard_pipeline, 0);
+      &inspector->scene->camera, cmd_buffer, &inspector->billboard_pipeline, 0);
 
   re_cmd_bind_image(cmd_buffer, 1, 0, &inspector->light_billboard_image);
   re_cmd_bind_descriptor_set(cmd_buffer, &inspector->billboard_pipeline, 1);
 
   eg_transform_comp_t *transforms =
-      EG_COMP_ARRAY(inspector->world, eg_transform_comp_t);
+      EG_COMP_ARRAY(entity_manager, eg_transform_comp_t);
   eg_point_light_comp_t *point_lights =
-      EG_COMP_ARRAY(inspector->world, eg_point_light_comp_t);
+      EG_COMP_ARRAY(entity_manager, eg_point_light_comp_t);
 
   static eg_entity_t light_entities[EG_MAX_POINT_LIGHTS];
   uint32_t light_count = 0;
 
-  for (eg_entity_t e = 0; e < inspector->world->entity_max; e++) {
-    if (EG_HAS_TAG(inspector->world, e, EG_TAG_HIDDEN)) {
+  for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+    if (EG_HAS_TAG(entity_manager, e, EG_TAG_HIDDEN)) {
       continue;
     }
 
-    if (EG_HAS_COMP(inspector->world, eg_point_light_comp_t, e) &&
-        EG_HAS_COMP(inspector->world, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, eg_point_light_comp_t, e) &&
+        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
       light_entities[light_count++] = e;
     }
   }
@@ -555,10 +561,10 @@ void eg_inspector_draw_gizmos(
     for (uint32_t j = 0; j < light_count - i; j++) {
       if (vec3_distance(
               transforms[light_entities[i]].position,
-              inspector->world->camera.uniform.pos.xyz) >
+              inspector->scene->camera.uniform.pos.xyz) >
           vec3_distance(
               transforms[light_entities[j]].position,
-              inspector->world->camera.uniform.pos.xyz)) {
+              inspector->scene->camera.uniform.pos.xyz)) {
         eg_entity_t t     = light_entities[i];
         light_entities[i] = light_entities[j];
         light_entities[j] = t;
@@ -591,7 +597,7 @@ void eg_inspector_draw_gizmos(
   }
 
   if (!EG_HAS_COMP(
-          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
     return;
   }
 
@@ -627,8 +633,8 @@ void eg_inspector_draw_gizmos(
     vec4_t color;
   } push_constant;
 
-  eg_transform_comp_t *transform = EG_COMP(
-      inspector->world, eg_transform_comp_t, inspector->selected_entity);
+  eg_transform_comp_t *transform =
+      EG_COMP(entity_manager, eg_transform_comp_t, inspector->selected_entity);
 
   mat4_t object_mat = eg_transform_comp_mat4(transform);
 
@@ -645,8 +651,8 @@ void eg_inspector_draw_gizmos(
     push_constant.mvp = mat4_mul(
         mat,
         mat4_mul(
-            inspector->world->camera.uniform.view,
-            inspector->world->camera.uniform.proj));
+            inspector->scene->camera.uniform.view,
+            inspector->scene->camera.uniform.proj));
     push_constant.color = colors[i];
 
     re_cmd_push_constants(
@@ -663,10 +669,12 @@ void eg_inspector_draw_gizmos(
 
 void eg_inspector_draw_selected_outline(
     eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
+
   re_cmd_bind_pipeline(cmd_buffer, &inspector->outline_pipeline);
 
   eg_camera_bind(
-      &inspector->world->camera, cmd_buffer, &inspector->outline_pipeline, 0);
+      &inspector->scene->camera, cmd_buffer, &inspector->outline_pipeline, 0);
 
   vec4_t color = {1.0f, 0.5f, 0.0f, 1.0f};
 
@@ -674,14 +682,13 @@ void eg_inspector_draw_selected_outline(
       cmd_buffer, &inspector->outline_pipeline, 0, sizeof(color), &color);
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
+      EG_HAS_COMP(entity_manager, eg_gltf_comp_t, inspector->selected_entity) &&
       EG_HAS_COMP(
-          inspector->world, eg_gltf_comp_t, inspector->selected_entity) &&
-      EG_HAS_COMP(
-          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
     eg_gltf_comp_t *model =
-        EG_COMP(inspector->world, eg_gltf_comp_t, inspector->selected_entity);
+        EG_COMP(entity_manager, eg_gltf_comp_t, inspector->selected_entity);
     eg_transform_comp_t *transform = EG_COMP(
-        inspector->world, eg_transform_comp_t, inspector->selected_entity);
+        entity_manager, eg_transform_comp_t, inspector->selected_entity);
 
     eg_gltf_comp_draw_no_mat(
         model,
@@ -691,14 +698,13 @@ void eg_inspector_draw_selected_outline(
   }
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
+      EG_HAS_COMP(entity_manager, eg_mesh_comp_t, inspector->selected_entity) &&
       EG_HAS_COMP(
-          inspector->world, eg_mesh_comp_t, inspector->selected_entity) &&
-      EG_HAS_COMP(
-          inspector->world, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
     eg_mesh_comp_t *mesh =
-        EG_COMP(inspector->world, eg_mesh_comp_t, inspector->selected_entity);
+        EG_COMP(entity_manager, eg_mesh_comp_t, inspector->selected_entity);
     eg_transform_comp_t *transform = EG_COMP(
-        inspector->world, eg_transform_comp_t, inspector->selected_entity);
+        entity_manager, eg_transform_comp_t, inspector->selected_entity);
 
     eg_mesh_comp_draw_no_mat(
         mesh,
@@ -832,6 +838,8 @@ static void inspect_settings(eg_inspector_t *inspector) {
 }
 
 void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
+
   if (igButton(
           "Add component", (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
     igOpenPopup("addcomp");
@@ -839,12 +847,12 @@ void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
 
   if (igBeginPopup("addcomp", 0)) {
     for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
-      if (EG_HAS_COMP_ID(inspector->world, comp_id, entity)) {
+      if (EG_HAS_COMP_ID(entity_manager, comp_id, entity)) {
         continue;
       }
       if (igSelectable(
               EG_COMP_NAMES[comp_id], false, 0, (ImVec2){0.0f, 0.0f})) {
-        eg_world_add_comp(inspector->world, comp_id, entity);
+        eg_comp_add(entity_manager, comp_id, entity);
       }
     }
 
@@ -855,19 +863,20 @@ void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
 void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   static char str[256] = "";
 
-  re_window_t *window               = inspector->window;
-  eg_world_t *world                 = inspector->world;
-  eg_asset_manager_t *asset_manager = inspector->asset_manager;
+  re_window_t *window                 = inspector->window;
+  eg_scene_t *scene                   = inspector->scene;
+  eg_asset_manager_t *asset_manager   = inspector->asset_manager;
+  eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
 
   if (igBegin("Inspector", NULL, 0)) {
     if (igBeginTabBar("Inspector", 0)) {
-      if (igBeginTabItem("World", NULL, 0)) {
+      if (igBeginTabItem("Scene", NULL, 0)) {
         if (igCollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
-          inspect_camera(&world->camera);
+          inspect_camera(&scene->camera);
         }
 
         if (igCollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen)) {
-          inspect_environment(&world->environment);
+          inspect_environment(&scene->environment);
         }
 
         igEndTabItem();
@@ -883,11 +892,12 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
         if (igButton(
                 "Add entity",
                 (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
-          eg_world_add(world);
+          eg_entity_add(entity_manager);
         }
 
-        for (eg_entity_t entity = 0; entity < world->entity_max; entity++) {
-          if (!eg_world_exists(world, entity)) {
+        for (eg_entity_t entity = 0; entity < entity_manager->entity_max;
+             entity++) {
+          if (!eg_entity_exists(entity_manager, entity)) {
             continue;
           }
 
@@ -948,7 +958,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
 
   igEnd();
 
-  if (!eg_world_exists(world, inspector->selected_entity)) {
+  if (!eg_entity_exists(entity_manager, inspector->selected_entity)) {
     return;
   }
 
@@ -958,7 +968,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
     igText("Entity #%u", inspector->selected_entity);
     igSameLine(0.0f, -1.0f);
     if (igSmallButton("Remove")) {
-      eg_world_remove(world, inspector->selected_entity);
+      eg_entity_remove(entity_manager, inspector->selected_entity);
       set_selected(inspector, UINT32_MAX);
       igEnd();
       return;
@@ -969,14 +979,14 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
     if (igCollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
       for (eg_tag_t tag = 0; tag < EG_TAG_MAX; tag++) {
         bool has_tag =
-            EG_HAS_TAG(inspector->world, inspector->selected_entity, tag);
+            EG_HAS_TAG(entity_manager, inspector->selected_entity, tag);
         igCheckbox(EG_TAG_NAMES[tag], &has_tag);
-        EG_SET_TAG(inspector->world, inspector->selected_entity, tag, has_tag);
+        EG_SET_TAG(entity_manager, inspector->selected_entity, tag, has_tag);
       }
     }
 
     for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
-      if (!EG_HAS_COMP_ID(world, comp_id, entity)) {
+      if (!EG_HAS_COMP_ID(entity_manager, comp_id, entity)) {
         continue;
       }
 
@@ -989,14 +999,14 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
       igSameLine(igGetWindowWidth() - 25.0f, 0.0f);
 
       if (igSmallButton("×")) {
-        eg_world_remove_comp(world, comp_id, entity);
+        eg_comp_remove(entity_manager, comp_id, entity);
         igPopID();
         continue;
       }
 
       if (header_open && EG_COMP_INSPECTORS[comp_id] != NULL) {
         EG_COMP_INSPECTORS[comp_id](
-            EG_COMP_BY_ID(world, comp_id, inspector->selected_entity),
+            EG_COMP_BY_ID(entity_manager, comp_id, inspector->selected_entity),
             inspector);
       }
 
