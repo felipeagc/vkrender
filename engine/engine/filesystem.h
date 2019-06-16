@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 
 typedef struct eg_file_t {
@@ -9,6 +10,8 @@ typedef struct eg_file_t {
 void eg_fs_init(const char *argv0);
 
 void eg_fs_destroy();
+
+int eg_file_exists(const char *path);
 
 // path_to_archive is relative to the directory the executable is in.
 int eg_fs_mount(const char *path_to_archive, const char *mount_point);
@@ -20,3 +23,4 @@ int eg_file_close(eg_file_t *path);
 size_t eg_file_size(eg_file_t *file);
 
 size_t eg_file_read_bytes(eg_file_t *file, void *buffer, size_t length);
+

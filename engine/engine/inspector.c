@@ -1,6 +1,8 @@
 #include "inspector.h"
 
 #include "asset_manager.h"
+#include "assets/gltf_asset.h"
+#include "assets/image_asset.h"
 #include "comps/gltf_comp.h"
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
@@ -917,7 +919,71 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
       if (igBeginTabItem("Assets", NULL, 0)) {
         if (igButton(
                 "Add asset", (ImVec2){igGetContentRegionAvailWidth(), 30.0f})) {
-          // TODO: add asset
+          igOpenPopup("addasset");
+        }
+
+        static const eg_asset_type_t valid_asset_types[] = {
+            EG_ASSET_TYPE(eg_gltf_asset_t),
+            EG_ASSET_TYPE(eg_image_asset_t),
+        };
+
+        static eg_asset_type_t selected_asset_type = EG_ASSET_TYPE_MAX;
+
+        if (igBeginPopup("addasset", 0)) {
+          static char path_buf[512];
+
+          if (selected_asset_type == EG_ASSET_TYPE_MAX) {
+            for (uint32_t i = 0; i < ARRAY_SIZE(valid_asset_types); i++) {
+              if (igSelectable(
+                      EG_ASSET_NAMES[valid_asset_types[i]],
+                      false,
+                      ImGuiSelectableFlags_DontClosePopups,
+                      (ImVec2){0.0f, 0.0f})) {
+                selected_asset_type = valid_asset_types[i];
+                memset(path_buf, 0, sizeof(path_buf));
+              }
+            }
+          } else {
+            igInputTextWithHint(
+                "Path",
+                "Insert asset path",
+                path_buf,
+                sizeof(path_buf),
+                0,
+                NULL,
+                NULL);
+
+            if (igSmallButton("Add")) {
+              if (eg_file_exists(path_buf)) {
+                switch (selected_asset_type) {
+                case EG_ASSET_TYPE(eg_gltf_asset_t): {
+                  eg_asset_manager_create(
+                      inspector->asset_manager,
+                      EG_ASSET_TYPE(eg_gltf_asset_t),
+                      path_buf,
+                      &(eg_gltf_asset_options_t){.path     = path_buf,
+                                                 .flip_uvs = false});
+                  break;
+                }
+                case EG_ASSET_TYPE(eg_image_asset_t): {
+                  eg_asset_manager_create(
+                      inspector->asset_manager,
+                      EG_ASSET_TYPE(eg_image_asset_t),
+                      path_buf,
+                      &(eg_image_asset_options_t){.path = path_buf});
+                  break;
+                }
+                default: break;
+                }
+              }
+
+              selected_asset_type = EG_ASSET_TYPE_MAX;
+            }
+          }
+
+          igEndPopup();
+        } else {
+          selected_asset_type = EG_ASSET_TYPE_MAX;
         }
 
         for (uint32_t i = 0; i < asset_manager->count; i++) {
