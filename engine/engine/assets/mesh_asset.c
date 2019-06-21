@@ -2,6 +2,7 @@
 
 #include "../asset_manager.h"
 #include "../serializer.h"
+#include "../util.h"
 #include <renderer/context.h>
 #include <renderer/window.h>
 #include <string.h>
@@ -89,6 +90,9 @@ void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
 
 void eg_mesh_asset_serialize(
     eg_mesh_asset_t *mesh, eg_serializer_t *serializer) {
+  EG_LOG_DEBUG("Vertex count: %u", mesh->vertex_count);
+  EG_LOG_DEBUG("Index count: %u", mesh->index_count);
+
   // Vertices
   eg_serializer_append(
       serializer, &mesh->vertex_count, sizeof(mesh->vertex_count));

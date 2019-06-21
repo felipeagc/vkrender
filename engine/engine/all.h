@@ -5,6 +5,7 @@
 #include "engine/entity_manager.h"
 #include "engine/filesystem.h"
 #include "engine/scene.h"
+#include "engine/serializer.h"
 
 #include "engine/imgui.h"
 

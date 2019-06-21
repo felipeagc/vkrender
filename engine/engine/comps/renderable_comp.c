@@ -2,6 +2,7 @@
 
 #include "../assets/pipeline_asset.h"
 #include "../inspector_utils.h"
+#include "../serializer.h"
 
 void eg_renderable_comp_default(eg_renderable_comp_t *renderable) {
   renderable->pipeline = NULL;
@@ -22,6 +23,14 @@ void eg_renderable_comp_inspect(
 
 void eg_renderable_comp_destroy(eg_renderable_comp_t *renderable) {
   renderable->pipeline = NULL;
+}
+
+void eg_renderable_comp_serialize(
+    eg_renderable_comp_t *renderable, eg_serializer_t *serializer) {
+  eg_asset_uid_t uid = EG_NULL_ASSET_UID;
+  if (renderable->pipeline) uid = renderable->pipeline->asset.uid;
+
+  eg_serializer_append(serializer, &uid, sizeof(uid));
 }
 
 void eg_renderable_comp_init(

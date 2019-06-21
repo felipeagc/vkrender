@@ -3,6 +3,7 @@
 #include "../assets/gltf_asset.h"
 #include "../inspector_utils.h"
 #include "../pipelines.h"
+#include "../serializer.h"
 #include <fstd_util.h>
 #include <renderer/context.h>
 #include <renderer/pipeline.h>
@@ -25,6 +26,14 @@ void eg_gltf_comp_inspect(eg_gltf_comp_t *model, eg_inspector_t *inspector) {
 }
 
 void eg_gltf_comp_destroy(eg_gltf_comp_t *model) {}
+
+void eg_gltf_comp_serialize(
+    eg_gltf_comp_t *model, eg_serializer_t *serializer) {
+  eg_asset_uid_t uid = EG_NULL_ASSET_UID;
+  if (model->asset) uid = model->asset->asset.uid;
+
+  eg_serializer_append(serializer, &uid, sizeof(uid));
+}
 
 static void draw_node(
     eg_gltf_comp_t *model,

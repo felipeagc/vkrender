@@ -12,3 +12,6 @@ void eg_terrain_comp_inspect(
     eg_terrain_comp_t *terrain, eg_inspector_t *inspector) {}
 
 void eg_terrain_comp_destroy(eg_terrain_comp_t *terrain) {}
+
+void eg_terrain_comp_serialize(
+    eg_terrain_comp_t *terrain, eg_serializer_t *serializer) {}

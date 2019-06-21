@@ -1,6 +1,7 @@
 #include "transform_comp.h"
 
 #include "../imgui.h"
+#include "../serializer.h"
 
 void eg_transform_comp_default(eg_transform_comp_t *transform) {
   transform->position = vec3_zero();
@@ -19,3 +20,12 @@ void eg_transform_comp_inspect(
 }
 
 void eg_transform_comp_destroy(eg_transform_comp_t *transform) {}
+
+void eg_transform_comp_serialize(
+    eg_transform_comp_t *transform, eg_serializer_t *serializer) {
+  eg_serializer_append(
+      serializer, &transform->position, sizeof(transform->position));
+  eg_serializer_append(serializer, &transform->axis, sizeof(transform->axis));
+  eg_serializer_append(serializer, &transform->angle, sizeof(transform->angle));
+  eg_serializer_append(serializer, &transform->scale, sizeof(transform->scale));
+}

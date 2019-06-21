@@ -12,7 +12,7 @@ typedef struct eg_asset_manager_t {
 
   uint32_t cap;   /* The amount of allocated slots in the `assets` vector */
   uint32_t count; /* The index of the last asset in the `assets` vector + 1 */
-  uint32_t last_uid; /* The last asset UID (incremented after every asset
+  eg_asset_uid_t last_uid; /* The last asset UID (incremented after every asset
                         creation) */
 } eg_asset_manager_t;
 

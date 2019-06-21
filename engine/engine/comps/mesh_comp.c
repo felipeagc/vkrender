@@ -3,6 +3,7 @@
 #include "../assets/mesh_asset.h"
 #include "../assets/pbr_material_asset.h"
 #include "../inspector_utils.h"
+#include "../serializer.h"
 #include <renderer/context.h>
 #include <string.h>
 
@@ -25,6 +26,18 @@ void eg_mesh_comp_inspect(eg_mesh_comp_t *mesh, eg_inspector_t *inspector) {
 }
 
 void eg_mesh_comp_destroy(eg_mesh_comp_t *mesh) {}
+
+void eg_mesh_comp_serialize(eg_mesh_comp_t *mesh, eg_serializer_t *serializer) {
+  eg_asset_uid_t material_uid = EG_NULL_ASSET_UID;
+  if (mesh->material) material_uid = mesh->material->asset.uid;
+
+  eg_serializer_append(serializer, &material_uid, sizeof(material_uid));
+
+  eg_asset_uid_t mesh_uid = EG_NULL_ASSET_UID;
+  if (mesh->asset) mesh_uid = mesh->asset->asset.uid;
+
+  eg_serializer_append(serializer, &mesh_uid, sizeof(mesh_uid));
+}
 
 void eg_mesh_comp_init(
     eg_mesh_comp_t *mesh,

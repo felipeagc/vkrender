@@ -7,6 +7,7 @@ typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_pbr_material_asset_t eg_pbr_material_asset_t;
 typedef struct eg_mesh_asset_t eg_mesh_asset_t;
 typedef struct eg_inspector_t eg_inspector_t;
+typedef struct eg_serializer_t eg_serializer_t;
 
 typedef struct eg_mesh_comp_t {
   eg_pbr_material_asset_t *material;
@@ -21,6 +22,8 @@ void eg_mesh_comp_default(eg_mesh_comp_t *mesh);
 void eg_mesh_comp_inspect(eg_mesh_comp_t *mesh, eg_inspector_t *inspector);
 
 void eg_mesh_comp_destroy(eg_mesh_comp_t *mesh);
+
+void eg_mesh_comp_serialize(eg_mesh_comp_t *mesh, eg_serializer_t *serializer);
 
 /*
  * Specific functions

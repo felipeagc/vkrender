@@ -9,6 +9,9 @@ typedef struct eg_serializer_t eg_serializer_t;
 
 extern const char *const EG_DEFAULT_ASSET_NAME;
 
+typedef uint32_t eg_asset_uid_t;
+#define EG_NULL_ASSET_UID UINT32_MAX
+
 typedef void *(*eg_asset_constructor_t)(eg_asset_manager_t *, void *);
 typedef void (*eg_asset_inspector_t)(void *, eg_inspector_t *inspector);
 typedef void (*eg_asset_destructor_t)(void *);
@@ -71,7 +74,8 @@ extern const eg_asset_serializer_t EG_ASSET_SERIALIZERS[EG_ASSET_TYPE_MAX];
 
 typedef struct eg_asset_t {
   eg_asset_type_t type;
-  uint32_t uid; /* not associated with asset's position in the asset_manager */
+  eg_asset_uid_t
+      uid; /* not associated with asset's position in the asset_manager */
   uint32_t index;
   char *name;
 } eg_asset_t;

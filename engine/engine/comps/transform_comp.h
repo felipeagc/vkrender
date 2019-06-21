@@ -3,6 +3,7 @@
 #include <gmath.h>
 
 typedef struct eg_inspector_t eg_inspector_t;
+typedef struct eg_serializer_t eg_serializer_t;
 
 typedef struct eg_transform_comp_t {
   vec3_t position;
@@ -20,6 +21,9 @@ void eg_transform_comp_inspect(
     eg_transform_comp_t *transform, eg_inspector_t *inspector);
 
 void eg_transform_comp_destroy(eg_transform_comp_t *transform);
+
+void eg_transform_comp_serialize(
+    eg_transform_comp_t *transform, eg_serializer_t *serializer);
 
 /*
  * Specific functions

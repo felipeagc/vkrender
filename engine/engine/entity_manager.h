@@ -8,17 +8,17 @@
 #define EG_COMP_ARRAY(entity_manager, comp)                                    \
   ((comp *)(entity_manager)->pools[EG_COMP_TYPE(comp)].data)
 
-#define EG_COMP(entity_manager, comp, entity)                                  \
-  (&((comp *)(entity_manager)->pools[EG_COMP_TYPE(comp)].data)[entity])
-
 #define EG_COMP_BY_ID(entity_manager, comp_id, entity)                         \
   (&(entity_manager)->pools[comp_id].data[entity * EG_COMP_SIZES[comp_id]])
 
-#define EG_HAS_COMP(entity_manager, comp, entity)                              \
-  fstd_bitset_at((entity_manager)->comp_masks[EG_COMP_TYPE(comp)].bytes, entity)
+#define EG_COMP(entity_manager, comp, entity)                                  \
+  ((comp *)EG_COMP_BY_ID(entity_manager, EG_COMP_TYPE(comp), entity))
 
 #define EG_HAS_COMP_ID(entity_manager, comp_id, entity)                        \
   fstd_bitset_at((entity_manager)->comp_masks[comp_id].bytes, entity)
+
+#define EG_HAS_COMP(entity_manager, comp, entity)                              \
+  EG_HAS_COMP_ID(entity_manager, EG_COMP_TYPE(comp), entity)
 
 #define EG_ADD_COMP(entity_manager, comp, entity)                              \
   eg_comp_add((entity_manager), EG_COMP_TYPE(comp), entity)

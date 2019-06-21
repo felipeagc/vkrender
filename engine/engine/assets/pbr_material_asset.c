@@ -60,18 +60,29 @@ typedef struct {
 
 void eg_pbr_material_asset_serialize(
     eg_pbr_material_asset_t *material, eg_serializer_t *serializer) {
-  serialized_data_t data = {
-      .uniform = material->uniform,
+  eg_serializer_append(
+      serializer, &material->uniform, sizeof(material->uniform));
 
-      .albedo_texture = material->albedo_texture->asset.uid,
-      .normal_texture = material->normal_texture->asset.uid,
-      .metallic_roughness_texture =
-          material->metallic_roughness_texture->asset.uid,
-      .occlusion_texture = material->occlusion_texture->asset.uid,
-      .emissive_texture  = material->emissive_texture->asset.uid,
-  };
+  eg_asset_uid_t albedo_uid = EG_NULL_ASSET_UID;
+  if (material->albedo_texture)
+    albedo_uid = material->albedo_texture->asset.uid;
+  eg_serializer_append(serializer, &albedo_uid, sizeof(albedo_uid));
 
-  eg_serializer_append(serializer, &data, sizeof(data));
+  eg_asset_uid_t normal_uid = EG_NULL_ASSET_UID;
+  if (material->normal_texture)
+    normal_uid = material->normal_texture->asset.uid;
+  eg_serializer_append(serializer, &normal_uid, sizeof(normal_uid));
+
+  eg_asset_uid_t metallic_roughness_uid = EG_NULL_ASSET_UID;
+  if (material->metallic_roughness_texture)
+    metallic_roughness_uid = material->metallic_roughness_texture->asset.uid;
+  eg_serializer_append(
+      serializer, &metallic_roughness_uid, sizeof(metallic_roughness_uid));
+
+  eg_asset_uid_t emissive_uid = EG_NULL_ASSET_UID;
+  if (material->emissive_texture)
+    emissive_uid = material->emissive_texture->asset.uid;
+  eg_serializer_append(serializer, &emissive_uid, sizeof(emissive_uid));
 }
 
 void eg_pbr_material_asset_bind(
