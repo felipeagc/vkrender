@@ -4,11 +4,15 @@
 #include "../filesystem.h"
 #include "../imgui.h"
 #include "../pipelines.h"
+#include "../serializer.h"
 
 eg_pipeline_asset_t *eg_pipeline_asset_create(
     eg_asset_manager_t *asset_manager, eg_pipeline_asset_options_t *options) {
   eg_pipeline_asset_t *pipeline_asset =
       eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
+
+  pipeline_asset->vert_path = strdup(options->vert);
+  pipeline_asset->frag_path = strdup(options->frag);
 
   uint8_t *vert_code, *frag_code;
   re_shader_t vert_shader, frag_shader;
@@ -79,4 +83,14 @@ void eg_pipeline_asset_inspect(
 
 void eg_pipeline_asset_destroy(eg_pipeline_asset_t *pipeline_asset) {
   re_pipeline_destroy(&pipeline_asset->pipeline);
+
+  if (pipeline_asset->vert_path) free(pipeline_asset->vert_path);
+  if (pipeline_asset->frag_path) free(pipeline_asset->frag_path);
+}
+
+void eg_pipeline_asset_serialize(
+    eg_pipeline_asset_t *pipeline_asset, eg_serializer_t *serializer) {
+  // Vertex shader path
+  eg_serializer_append_string(serializer, pipeline_asset->vert_path);
+  eg_serializer_append_string(serializer, pipeline_asset->frag_path);
 }

@@ -3,6 +3,7 @@
 #include "../asset_manager.h"
 #include "../filesystem.h"
 #include "../imgui.h"
+#include "../serializer.h"
 #include "../util.h"
 #include "../util/tinyktx.h"
 #include <assert.h>
@@ -71,6 +72,10 @@ void eg_image_asset_inspect(
 
 void eg_image_asset_destroy(eg_image_asset_t *image) {
   re_image_destroy(&image->image);
+
+  if (image->path) {
+    free(image->path);
+  }
 }
 
 eg_image_asset_t *eg_image_asset_create(
@@ -109,6 +114,7 @@ eg_image_asset_t *eg_image_asset_create(
 
     eg_image_asset_t *image =
         eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+    image->path = strdup(options->path);
 
     re_image_init(
         &image->image,
@@ -148,6 +154,7 @@ eg_image_asset_t *eg_image_asset_create(
 
     eg_image_asset_t *image =
         eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+    image->path = strdup(options->path);
 
     re_image_init(
         &image->image,
@@ -172,4 +179,9 @@ eg_image_asset_t *eg_image_asset_create(
   }
 
   return NULL;
+}
+
+void eg_image_asset_serialize(
+    eg_image_asset_t *image, eg_serializer_t *serializer) {
+  eg_serializer_append_string(serializer, image->path);
 }

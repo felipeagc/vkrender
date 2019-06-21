@@ -59,7 +59,7 @@ typedef struct eg_comp_pool_t {
 } eg_comp_pool_t;
 
 typedef struct eg_entity_manager_t {
-  eg_entity_t entity_max;
+  eg_entity_t entity_max; // Largest entity index + 1
 
   eg_comp_pool_t pools[EG_COMP_TYPE_MAX];
   eg_entity_mask_t comp_masks[EG_COMP_TYPE_MAX];

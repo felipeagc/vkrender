@@ -4,6 +4,7 @@
 #include "../engine.h"
 #include "../filesystem.h"
 #include "../imgui.h"
+#include "../serializer.h"
 #include <assert.h>
 #include <cgltf.h>
 #include <float.h>
@@ -496,6 +497,9 @@ eg_gltf_asset_t *eg_gltf_asset_create(
   eg_gltf_asset_t *model =
       eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_gltf_asset_t));
 
+  model->path     = strdup(options->path);
+  model->flip_uvs = options->flip_uvs;
+
   model->vertex_buffer = (re_buffer_t){0};
   model->index_buffer  = (re_buffer_t){0};
 
@@ -747,4 +751,14 @@ void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {
   free(model->images);
 
   free(model->materials);
+
+  if (model->path) {
+    free(model->path);
+  }
+}
+
+void eg_gltf_asset_serialize(
+    eg_gltf_asset_t *model, eg_serializer_t *serializer) {
+  eg_serializer_append(serializer, &model->flip_uvs, sizeof(model->flip_uvs));
+  eg_serializer_append_string(serializer, model->path);
 }

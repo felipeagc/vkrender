@@ -9,8 +9,11 @@ typedef struct eg_asset_manager_t {
   mtx_t mutex;
   fstd_allocator_t allocator;
   eg_asset_t **assets;
-  uint32_t cap;
-  uint32_t count;
+
+  uint32_t cap;   /* The amount of allocated slots in the `assets` vector */
+  uint32_t count; /* The index of the last asset in the `assets` vector + 1 */
+  uint32_t last_uid; /* The last asset UID (incremented after every asset
+                        creation) */
 } eg_asset_manager_t;
 
 void eg_asset_manager_init(eg_asset_manager_t *asset_manager);

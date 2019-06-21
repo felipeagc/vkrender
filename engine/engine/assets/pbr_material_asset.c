@@ -3,6 +3,7 @@
 #include "../asset_manager.h"
 #include "../engine.h"
 #include "../imgui.h"
+#include "../serializer.h"
 #include "image_asset.h"
 #include <renderer/buffer.h>
 #include <renderer/image.h>
@@ -47,6 +48,31 @@ void eg_pbr_material_asset_inspect(
 }
 
 void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {}
+
+typedef struct {
+  eg_pbr_material_uniform_t uniform;
+  uint32_t albedo_texture;
+  uint32_t normal_texture;
+  uint32_t metallic_roughness_texture;
+  uint32_t occlusion_texture;
+  uint32_t emissive_texture;
+} serialized_data_t;
+
+void eg_pbr_material_asset_serialize(
+    eg_pbr_material_asset_t *material, eg_serializer_t *serializer) {
+  serialized_data_t data = {
+      .uniform = material->uniform,
+
+      .albedo_texture = material->albedo_texture->asset.uid,
+      .normal_texture = material->normal_texture->asset.uid,
+      .metallic_roughness_texture =
+          material->metallic_roughness_texture->asset.uid,
+      .occlusion_texture = material->occlusion_texture->asset.uid,
+      .emissive_texture  = material->emissive_texture->asset.uid,
+  };
+
+  eg_serializer_append(serializer, &data, sizeof(data));
+}
 
 void eg_pbr_material_asset_bind(
     eg_pbr_material_asset_t *material,

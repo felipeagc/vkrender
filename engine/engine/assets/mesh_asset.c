@@ -1,6 +1,7 @@
 #include "mesh_asset.h"
 
 #include "../asset_manager.h"
+#include "../serializer.h"
 #include <renderer/context.h>
 #include <renderer/window.h>
 #include <string.h>
@@ -10,7 +11,19 @@ eg_mesh_asset_t *eg_mesh_asset_create(
   eg_mesh_asset_t *mesh =
       eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_mesh_asset_t));
 
-  mesh->index_count = options->index_count;
+  mesh->vertex_count = options->vertex_count;
+  mesh->index_count  = options->index_count;
+  mesh->vertices     = malloc(sizeof(*mesh->vertices) * mesh->vertex_count);
+  mesh->indices      = malloc(sizeof(*mesh->indices) * mesh->index_count);
+
+  memcpy(
+      mesh->vertices,
+      options->vertices,
+      sizeof(*mesh->vertices) * mesh->vertex_count);
+  memcpy(
+      mesh->indices,
+      options->indices,
+      sizeof(*mesh->indices) * mesh->index_count);
 
   size_t vertex_buffer_size = sizeof(re_vertex_t) * options->vertex_count;
   size_t index_buffer_size  = sizeof(uint32_t) * options->index_count;
@@ -69,6 +82,24 @@ void eg_mesh_asset_inspect(eg_mesh_asset_t *mesh, eg_inspector_t *inspector) {}
 void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
   re_buffer_destroy(&mesh->vertex_buffer);
   re_buffer_destroy(&mesh->index_buffer);
+
+  free(mesh->vertices);
+  free(mesh->indices);
+}
+
+void eg_mesh_asset_serialize(
+    eg_mesh_asset_t *mesh, eg_serializer_t *serializer) {
+  // Vertices
+  eg_serializer_append(
+      serializer, &mesh->vertex_count, sizeof(mesh->vertex_count));
+  eg_serializer_append(
+      serializer, mesh->vertices, sizeof(*mesh->vertices) * mesh->vertex_count);
+
+  // Indices
+  eg_serializer_append(
+      serializer, &mesh->index_count, sizeof(mesh->index_count));
+  eg_serializer_append(
+      serializer, mesh->indices, sizeof(*mesh->indices) * mesh->index_count);
 }
 
 void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, re_cmd_buffer_t *cmd_buffer) {

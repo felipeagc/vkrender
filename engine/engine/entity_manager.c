@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define EG__HAS_COMP(entity_manager, entity, comp_type)                        \
-  fstd_bitset_at(&entity_manager->comp_masks[comp_type], entity)
-
 void eg_entity_manager_init(eg_entity_manager_t *entity_manager) {
   memset(entity_manager, 0, sizeof(*entity_manager));
 
@@ -35,7 +32,7 @@ void eg_entity_manager_update(eg_entity_manager_t *entity_manager) {
       }
 
       for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
-        if (EG__HAS_COMP(entity_manager, entity, c)) {
+        if (EG_HAS_COMP_ID(entity_manager, entity, c)) {
           EG_COMP_DESTRUCTORS[c](
               &entity_manager->pools[c].data[entity * EG_COMP_SIZES[c]]);
           fstd_bitset_set(&entity_manager->comp_masks[c], entity, false);
@@ -103,7 +100,7 @@ void eg_comp_remove(
     eg_entity_manager_t *entity_manager,
     eg_comp_type_t comp,
     eg_entity_t entity) {
-  if (!EG__HAS_COMP(entity_manager, entity, comp)) {
+  if (!EG_HAS_COMP_ID(entity_manager, entity, comp)) {
     return;
   }
 

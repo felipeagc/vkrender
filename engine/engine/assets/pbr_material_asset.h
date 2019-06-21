@@ -6,6 +6,7 @@
 typedef struct re_cmd_buffer_t re_cmd_buffer_t;
 typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_image_asset_t eg_image_asset_t;
+typedef struct eg_serializer_t eg_serializer_t;
 
 typedef struct eg_pbr_material_uniform_t {
   vec4_t base_color_factor;
@@ -44,6 +45,9 @@ void eg_pbr_material_asset_inspect(
     eg_pbr_material_asset_t *material, eg_inspector_t *inspector);
 
 void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material);
+
+void eg_pbr_material_asset_serialize(
+    eg_pbr_material_asset_t *material, eg_serializer_t *serializer);
 
 /*
  * Specific functions

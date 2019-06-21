@@ -9,28 +9,41 @@
 
 const char *const EG_DEFAULT_ASSET_NAME = "Unnamed asset";
 
-#define E(t, constructor, inspector, destructor, name) sizeof(t),
+#define E(                                                                     \
+    t, constructor, inspector, destructor, serializer, deserializer, name)     \
+  sizeof(t),
 const size_t EG_ASSET_SIZES[] = {EG__ASSETS};
 #undef E
 
-#define E(t, constructor, inspector, destructor, name) name,
+#define E(                                                                     \
+    t, constructor, inspector, destructor, serializer, deserializer, name)     \
+  name,
 const char *EG_ASSET_NAMES[] = {EG__ASSETS};
 #undef E
 
-#define E(t, constructor, inspector, destructor, name)                         \
+#define E(                                                                     \
+    t, constructor, inspector, destructor, serializer, deserializer, name)     \
   ((eg_asset_constructor_t)constructor),
 const eg_asset_constructor_t EG_ASSET_CONSTRUCTORS[EG_ASSET_TYPE_MAX] = {
     EG__ASSETS};
 #undef E
 
-#define E(t, constructor, inspector, destructor, name)                         \
+#define E(                                                                     \
+    t, constructor, inspector, destructor, serializer, deserializer, name)     \
   ((eg_asset_inspector_t)inspector),
 const eg_asset_inspector_t EG_ASSET_INSPECTORS[] = {EG__ASSETS};
 #undef E
 
-#define E(t, constructor, inspector, destructor, name)                         \
+#define E(                                                                     \
+    t, constructor, inspector, destructor, serializer, deserializer, name)     \
   ((eg_asset_destructor_t)destructor),
 const eg_asset_destructor_t EG_ASSET_DESTRUCTORS[] = {EG__ASSETS};
+#undef E
+
+#define E(                                                                     \
+    t, constructor, inspector, destructor, serializer, deserializer, name)     \
+  ((eg_asset_serializer_t)serializer),
+const eg_asset_serializer_t EG_ASSET_SERIALIZERS[] = {EG__ASSETS};
 #undef E
 
 void eg_asset_set_name(eg_asset_t *asset, const char *name) {

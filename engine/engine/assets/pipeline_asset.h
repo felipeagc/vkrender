@@ -4,7 +4,10 @@
 #include <renderer/pipeline.h>
 
 typedef struct eg_inspector_t eg_inspector_t;
+typedef struct eg_serializer_t eg_serializer_t;
 
+// TODO: make this asset independent of render target
+// TODO: make params a simpler struct, only with important options
 typedef struct eg_pipeline_asset_options_t {
   const re_render_target_t *render_target;
   const char *vert;
@@ -16,6 +19,9 @@ typedef struct eg_pipeline_asset_t {
   eg_asset_t asset;
 
   re_pipeline_t pipeline;
+
+  char *vert_path;
+  char *frag_path;
 } eg_pipeline_asset_t;
 
 /*
@@ -28,3 +34,6 @@ void eg_pipeline_asset_inspect(
     eg_pipeline_asset_t *pipeline_asset, eg_inspector_t *inspector);
 
 void eg_pipeline_asset_destroy(eg_pipeline_asset_t *pipeline_asset);
+
+void eg_pipeline_asset_serialize(
+    eg_pipeline_asset_t *pipeline_asset, eg_serializer_t *serializer);

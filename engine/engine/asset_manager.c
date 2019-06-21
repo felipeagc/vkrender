@@ -11,9 +11,10 @@ void eg_asset_manager_init(eg_asset_manager_t *asset_manager) {
   // Allocator with 16k blocks
   fstd_allocator_init(&asset_manager->allocator, 16384);
 
-  asset_manager->cap    = 128;
-  asset_manager->count  = 0;
-  asset_manager->assets = realloc(
+  asset_manager->cap      = 128;
+  asset_manager->count    = 0;
+  asset_manager->last_uid = 0;
+  asset_manager->assets   = realloc(
       asset_manager->assets,
       asset_manager->cap * sizeof(*asset_manager->assets));
   memset(
@@ -32,6 +33,7 @@ void *eg_asset_manager_alloc(
 
   uint32_t index = UINT32_MAX;
 
+  // Look for the first empty asset slot
   for (uint32_t i = 0; i < asset_manager->cap; i++) {
     if (asset_manager->assets[i] == NULL) {
       index = i;
@@ -41,16 +43,19 @@ void *eg_asset_manager_alloc(
 
   // If no available slot was found
   if (index == UINT32_MAX) {
+    // Double the amount of slots
     asset_manager->cap *= 2;
-
     asset_manager->assets = realloc(
         asset_manager->assets,
         asset_manager->cap * sizeof(*asset_manager->assets));
+
+    // Set the new ones to NULL
     memset(
         &asset_manager->assets[asset_manager->cap / 2],
         0,
         (asset_manager->cap / 2) * sizeof(*asset_manager->assets));
 
+    // Set the index to the first newly created slot
     index = asset_manager->cap / 2;
   }
 
@@ -61,6 +66,7 @@ void *eg_asset_manager_alloc(
 
   asset->type  = asset_type;
   asset->index = index;
+  asset->uid   = asset_manager->last_uid++;
 
   mtx_unlock(&asset_manager->mutex);
 
@@ -90,6 +96,7 @@ void eg_asset_manager_free(
 
   uint32_t index = asset->index;
 
+  // shorten the count if possible
   if (asset_manager->count == index) {
     for (uint32_t i = index; i > 0; i--) {
       if (asset_manager->assets[i - 1] != NULL) {

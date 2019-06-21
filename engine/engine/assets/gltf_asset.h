@@ -60,6 +60,9 @@ typedef struct eg_gltf_asset_options_t {
 typedef struct eg_gltf_asset_t {
   eg_asset_t asset;
 
+  char *path;
+  bool flip_uvs;
+
   re_buffer_t vertex_buffer;
   re_buffer_t index_buffer;
   uint32_t vertex_count;
@@ -89,3 +92,6 @@ eg_gltf_asset_t *eg_gltf_asset_create(
 void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector);
 
 void eg_gltf_asset_destroy(eg_gltf_asset_t *model);
+
+void eg_gltf_asset_serialize(
+    eg_gltf_asset_t *model, eg_serializer_t *serializer);

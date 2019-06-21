@@ -997,10 +997,10 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
           snprintf(
               str,
               sizeof(str),
-              "%s: %s [%u]",
+              "%s: %s [UID: %u]",
               EG_ASSET_NAMES[asset->type],
               eg_asset_get_name(asset),
-              asset->index);
+              asset->uid);
           if (igCollapsingHeader(str, 0)) {
             EG_ASSET_INSPECTORS[asset->type](asset, inspector);
           }
