@@ -1,5 +1,6 @@
 #include "entity_manager.h"
 
+#include "util.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,7 +19,7 @@ void eg_entity_manager_update(eg_entity_manager_t *entity_manager) {
     eg_entity_t entity = entity_manager->to_remove[i];
 
     if (eg_entity_exists(entity_manager, entity)) {
-      fstd_bitset_set(&entity_manager->existence, entity, false);
+      entity_manager->existence[entity] = false;
 
       if (entity_manager->entity_max == entity + 1) {
         uint32_t new_max = 0;
@@ -35,7 +36,8 @@ void eg_entity_manager_update(eg_entity_manager_t *entity_manager) {
         if (EG_HAS_COMP_ID(entity_manager, entity, c)) {
           EG_COMP_DESTRUCTORS[c](
               &entity_manager->pools[c].data[entity * EG_COMP_SIZES[c]]);
-          fstd_bitset_set(&entity_manager->comp_masks[c], entity, false);
+
+          entity_manager->comp_masks[c][entity] = false;
         }
       }
     }
@@ -59,7 +61,7 @@ void eg_entity_manager_destroy(eg_entity_manager_t *entity_manager) {
 eg_entity_t eg_entity_add(eg_entity_manager_t *entity_manager) {
   for (uint32_t e = 0; e < EG_MAX_ENTITIES; e++) {
     if (!eg_entity_exists(entity_manager, e)) {
-      fstd_bitset_set(&entity_manager->existence, e, true);
+      entity_manager->existence[e] = true;
       if (entity_manager->entity_max <= e) {
         entity_manager->entity_max = e + 1;
       }
@@ -80,14 +82,15 @@ bool eg_entity_exists(eg_entity_manager_t *entity_manager, eg_entity_t entity) {
   if (entity >= EG_MAX_ENTITIES) {
     return false;
   }
-  return fstd_bitset_at(&entity_manager->existence, entity);
+
+  return entity_manager->existence[entity];
 }
 
 void *eg_comp_add(
     eg_entity_manager_t *entity_manager,
     eg_comp_type_t comp,
     eg_entity_t entity) {
-  fstd_bitset_set(&entity_manager->comp_masks[comp], entity, true);
+  entity_manager->comp_masks[comp][entity] = true;
 
   void *comp_ptr =
       &entity_manager->pools[comp].data[entity * EG_COMP_SIZES[comp]];
@@ -100,24 +103,9 @@ void eg_comp_remove(
     eg_entity_manager_t *entity_manager,
     eg_comp_type_t comp,
     eg_entity_t entity) {
-  if (!EG_HAS_COMP_ID(entity_manager, entity, comp)) {
-    return;
+  if (EG_HAS_COMP_ID(entity_manager, entity, comp)) {
+    EG_COMP_DESTRUCTORS[comp](EG_COMP_BY_ID(entity_manager, comp, entity));
   }
 
-  const size_t comp_size = EG_COMP_SIZES[comp];
-
-  bool zeroed = true;
-  for (uint32_t i = 0; i < comp_size; i++) {
-    if (entity_manager->pools[comp].data[entity * comp_size + i] != 0) {
-      zeroed = false;
-      break;
-    }
-  }
-
-  if (!zeroed) {
-    EG_COMP_DESTRUCTORS[comp](
-        &entity_manager->pools[comp].data[entity * comp_size]);
-  }
-
-  fstd_bitset_set(&entity_manager->comp_masks[comp], entity, false);
+  entity_manager->comp_masks[comp][entity] = false;
 }

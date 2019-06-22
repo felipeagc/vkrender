@@ -1,7 +1,8 @@
 #pragma once
 
 #include "comps/comp_types.h"
-#include <fstd_bitset.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #define EG_MAX_ENTITIES 128
 
@@ -15,7 +16,7 @@
   ((comp *)EG_COMP_BY_ID(entity_manager, EG_COMP_TYPE(comp), entity))
 
 #define EG_HAS_COMP_ID(entity_manager, comp_id, entity)                        \
-  fstd_bitset_at((entity_manager)->comp_masks[comp_id].bytes, entity)
+  ((entity_manager)->comp_masks[comp_id][entity])
 
 #define EG_HAS_COMP(entity_manager, comp, entity)                              \
   EG_HAS_COMP_ID(entity_manager, EG_COMP_TYPE(comp), entity)
@@ -52,8 +53,6 @@
 
 typedef uint32_t eg_entity_t;
 
-typedef FSTD_BITSET(EG_MAX_ENTITIES) eg_entity_mask_t;
-
 typedef struct eg_comp_pool_t {
   uint8_t *data;
 } eg_comp_pool_t;
@@ -62,8 +61,8 @@ typedef struct eg_entity_manager_t {
   eg_entity_t entity_max; // Largest entity index + 1
 
   eg_comp_pool_t pools[EG_COMP_TYPE_MAX];
-  eg_entity_mask_t comp_masks[EG_COMP_TYPE_MAX];
-  eg_entity_mask_t existence;
+  bool comp_masks[EG_COMP_TYPE_MAX][EG_MAX_ENTITIES];
+  bool existence[EG_MAX_ENTITIES];
   uint64_t tags[EG_MAX_ENTITIES];
 
   eg_entity_t to_remove[EG_MAX_ENTITIES];
