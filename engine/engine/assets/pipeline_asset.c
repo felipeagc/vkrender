@@ -13,6 +13,7 @@ eg_pipeline_asset_t *eg_pipeline_asset_create(
 
   pipeline_asset->vert_path = strdup(options->vert_path);
   pipeline_asset->frag_path = strdup(options->frag_path);
+  pipeline_asset->params    = options->params;
 
   eg_init_pipeline_spv(
       &pipeline_asset->pipeline,
@@ -59,5 +60,11 @@ void eg_pipeline_asset_serialize(
     eg_pipeline_asset_t *pipeline_asset, eg_serializer_t *serializer) {
   // Vertex shader path
   eg_serializer_append_string(serializer, pipeline_asset->vert_path);
+
+  // Fragment shader path
   eg_serializer_append_string(serializer, pipeline_asset->frag_path);
+
+  // Pipeline params
+  eg_serializer_append(
+      serializer, &pipeline_asset->params, sizeof(pipeline_asset->params));
 }

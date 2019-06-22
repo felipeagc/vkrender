@@ -5,6 +5,7 @@
 #include "canvas.h"
 #include "context.h"
 #include "descriptor_set.h"
+#include "hasher.h"
 #include "image.h"
 #include "limits.h"
 #include "pipeline.h"
