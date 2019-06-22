@@ -10,6 +10,7 @@
 #include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
+#include "serializer.h"
 #include <float.h>
 #include <renderer/context.h>
 #include <renderer/window.h>
@@ -863,6 +864,25 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
   eg_scene_t *scene                   = inspector->scene;
   eg_asset_manager_t *asset_manager   = inspector->asset_manager;
   eg_entity_manager_t *entity_manager = &inspector->scene->entity_manager;
+
+  if (igBeginMainMenuBar()) {
+    if (igBeginMenu("Scene", true)) {
+      if (igMenuItemBool("Save", NULL, false, true)) {
+        eg_serializer_t serializer;
+        eg_serializer_init(&serializer);
+
+        eg_serialize_scene(&serializer, scene, asset_manager, entity_manager);
+
+        eg_serializer_save(&serializer, "scene.bin");
+
+        eg_serializer_destroy(&serializer);
+      }
+
+      igEndMenu();
+    }
+
+    igEndMainMenuBar();
+  }
 
   if (igBegin("Inspector", NULL, 0)) {
     if (igBeginTabBar("Inspector", 0)) {

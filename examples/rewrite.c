@@ -267,21 +267,6 @@ int main(int argc, const char *argv[]) {
 
   bool inspector_enabled = true;
 
-  {
-    eg_serializer_t serializer;
-    eg_serializer_init(&serializer);
-
-    eg_serialize_scene(
-        &serializer,
-        &game.scene,
-        &game.asset_manager,
-        &game.scene.entity_manager);
-
-    eg_serializer_save(&serializer, "scene.bin");
-
-    eg_serializer_destroy(&serializer);
-  }
-
   while (!re_window_should_close(&game.window)) {
     re_window_poll_events(&game.window);
 
