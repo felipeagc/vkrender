@@ -87,15 +87,25 @@ void eg_mesh_asset_destroy(eg_mesh_asset_t *mesh) {
   free(mesh->indices);
 }
 
+enum {
+  PROP_VERTICES,
+  PROP_INDICES,
+  PROP_MAX,
+};
+
 void eg_mesh_asset_serialize(
     eg_mesh_asset_t *mesh, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
   // Vertices
+  eg_serializer_append_u32(serializer, PROP_VERTICES);
   eg_serializer_append(
       serializer, &mesh->vertex_count, sizeof(mesh->vertex_count));
   eg_serializer_append(
       serializer, mesh->vertices, sizeof(*mesh->vertices) * mesh->vertex_count);
 
   // Indices
+  eg_serializer_append_u32(serializer, PROP_INDICES);
   eg_serializer_append(
       serializer, &mesh->index_count, sizeof(mesh->index_count));
   eg_serializer_append(

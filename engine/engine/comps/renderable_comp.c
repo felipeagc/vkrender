@@ -25,11 +25,19 @@ void eg_renderable_comp_destroy(eg_renderable_comp_t *renderable) {
   renderable->pipeline = NULL;
 }
 
+enum {
+  PROP_PIPELINE,
+  PROP_MAX,
+};
+
 void eg_renderable_comp_serialize(
     eg_renderable_comp_t *renderable, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
   eg_asset_uid_t uid = EG_NULL_ASSET_UID;
   if (renderable->pipeline) uid = renderable->pipeline->asset.uid;
 
+  eg_serializer_append_u32(serializer, PROP_PIPELINE);
   eg_serializer_append(serializer, &uid, sizeof(uid));
 }
 

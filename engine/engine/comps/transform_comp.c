@@ -21,11 +21,28 @@ void eg_transform_comp_inspect(
 
 void eg_transform_comp_destroy(eg_transform_comp_t *transform) {}
 
+enum {
+  PROP_POS,
+  PROP_AXIS,
+  PROP_ANGLE,
+  PROP_SCALE,
+  PROP_MAX,
+};
+
 void eg_transform_comp_serialize(
     eg_transform_comp_t *transform, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
+  eg_serializer_append_u32(serializer, PROP_POS);
   eg_serializer_append(
       serializer, &transform->position, sizeof(transform->position));
+
+  eg_serializer_append_u32(serializer, PROP_AXIS);
   eg_serializer_append(serializer, &transform->axis, sizeof(transform->axis));
+
+  eg_serializer_append_u32(serializer, PROP_ANGLE);
   eg_serializer_append(serializer, &transform->angle, sizeof(transform->angle));
+
+  eg_serializer_append_u32(serializer, PROP_SCALE);
   eg_serializer_append(serializer, &transform->scale, sizeof(transform->scale));
 }

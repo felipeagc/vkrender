@@ -49,36 +49,50 @@ void eg_pbr_material_asset_inspect(
 
 void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material) {}
 
-typedef struct {
-  eg_pbr_material_uniform_t uniform;
-  uint32_t albedo_texture;
-  uint32_t normal_texture;
-  uint32_t metallic_roughness_texture;
-  uint32_t occlusion_texture;
-  uint32_t emissive_texture;
-} serialized_data_t;
+enum {
+  PROP_UNIFORM,
+  PROP_ALBEDO,
+  PROP_NORMAL,
+  PROP_METALLIC_ROUGHNESS,
+  PROP_OCCLUSION,
+  PROP_EMISSIVE,
+  PROP_MAX,
+};
 
 void eg_pbr_material_asset_serialize(
     eg_pbr_material_asset_t *material, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
+  eg_serializer_append_u32(serializer, PROP_UNIFORM);
   eg_serializer_append(
       serializer, &material->uniform, sizeof(material->uniform));
 
+  eg_serializer_append_u32(serializer, PROP_ALBEDO);
   eg_asset_uid_t albedo_uid = EG_NULL_ASSET_UID;
   if (material->albedo_texture)
     albedo_uid = material->albedo_texture->asset.uid;
   eg_serializer_append(serializer, &albedo_uid, sizeof(albedo_uid));
 
+  eg_serializer_append_u32(serializer, PROP_NORMAL);
   eg_asset_uid_t normal_uid = EG_NULL_ASSET_UID;
   if (material->normal_texture)
     normal_uid = material->normal_texture->asset.uid;
   eg_serializer_append(serializer, &normal_uid, sizeof(normal_uid));
 
+  eg_serializer_append_u32(serializer, PROP_METALLIC_ROUGHNESS);
   eg_asset_uid_t metallic_roughness_uid = EG_NULL_ASSET_UID;
   if (material->metallic_roughness_texture)
     metallic_roughness_uid = material->metallic_roughness_texture->asset.uid;
   eg_serializer_append(
       serializer, &metallic_roughness_uid, sizeof(metallic_roughness_uid));
 
+  eg_serializer_append_u32(serializer, PROP_OCCLUSION);
+  eg_asset_uid_t occlusion_uid = EG_NULL_ASSET_UID;
+  if (material->occlusion_texture)
+    occlusion_uid = material->occlusion_texture->asset.uid;
+  eg_serializer_append(serializer, &occlusion_uid, sizeof(occlusion_uid));
+
+  eg_serializer_append_u32(serializer, PROP_EMISSIVE);
   eg_asset_uid_t emissive_uid = EG_NULL_ASSET_UID;
   if (material->emissive_texture)
     emissive_uid = material->emissive_texture->asset.uid;

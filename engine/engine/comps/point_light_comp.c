@@ -16,9 +16,20 @@ void eg_point_light_comp_inspect(
 
 void eg_point_light_comp_destroy(eg_point_light_comp_t *light) {}
 
+enum {
+  PROP_COLOR,
+  PROP_INTENSITY,
+  PROP_MAX,
+};
+
 void eg_point_light_comp_serialize(
     eg_point_light_comp_t *light, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
+  eg_serializer_append_u32(serializer, PROP_COLOR);
   eg_serializer_append(serializer, &light->color, sizeof(light->color));
+
+  eg_serializer_append_u32(serializer, PROP_INTENSITY);
   eg_serializer_append(serializer, &light->intensity, sizeof(light->intensity));
 }
 

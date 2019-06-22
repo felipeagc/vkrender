@@ -139,3 +139,7 @@ void eg_serializer_append_string(eg_serializer_t *serializer, char *string) {
   eg_serializer_append(serializer, &byte_length, sizeof(byte_length));
   eg_serializer_append(serializer, string, byte_length);
 }
+
+void eg_serializer_append_u32(eg_serializer_t *serializer, uint32_t data) {
+  eg_serializer_append(serializer, &data, sizeof(data));
+}

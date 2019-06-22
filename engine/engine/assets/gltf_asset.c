@@ -757,8 +757,19 @@ void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {
   }
 }
 
+enum {
+  PROP_FLIP_UVS,
+  PROP_PATH,
+  PROP_MAX,
+};
+
 void eg_gltf_asset_serialize(
     eg_gltf_asset_t *model, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
+  eg_serializer_append_u32(serializer, PROP_FLIP_UVS);
   eg_serializer_append(serializer, &model->flip_uvs, sizeof(model->flip_uvs));
+
+  eg_serializer_append_u32(serializer, PROP_PATH);
   eg_serializer_append_string(serializer, model->path);
 }

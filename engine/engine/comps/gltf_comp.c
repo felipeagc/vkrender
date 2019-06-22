@@ -27,11 +27,19 @@ void eg_gltf_comp_inspect(eg_gltf_comp_t *model, eg_inspector_t *inspector) {
 
 void eg_gltf_comp_destroy(eg_gltf_comp_t *model) {}
 
+enum {
+  PROP_GLTF,
+  PROP_MAX,
+};
+
 void eg_gltf_comp_serialize(
     eg_gltf_comp_t *model, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
   eg_asset_uid_t uid = EG_NULL_ASSET_UID;
   if (model->asset) uid = model->asset->asset.uid;
 
+  eg_serializer_append_u32(serializer, PROP_GLTF);
   eg_serializer_append(serializer, &uid, sizeof(uid));
 }
 

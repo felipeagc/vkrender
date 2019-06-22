@@ -181,7 +181,15 @@ eg_image_asset_t *eg_image_asset_create(
   return NULL;
 }
 
+enum {
+  PROP_PATH,
+  PROP_MAX,
+};
+
 void eg_image_asset_serialize(
     eg_image_asset_t *image, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
+  eg_serializer_append_u32(serializer, PROP_PATH);
   eg_serializer_append_string(serializer, image->path);
 }

@@ -38,3 +38,5 @@ void eg_serializer_append(eg_serializer_t *serializer, void *data, size_t size);
 
 // Includes the null terminator
 void eg_serializer_append_string(eg_serializer_t *serializer, char *string);
+
+void eg_serializer_append_u32(eg_serializer_t *serializer, uint32_t data);

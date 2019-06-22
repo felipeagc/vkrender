@@ -56,15 +56,27 @@ void eg_pipeline_asset_destroy(eg_pipeline_asset_t *pipeline_asset) {
   if (pipeline_asset->frag_path) free(pipeline_asset->frag_path);
 }
 
+enum {
+  PROP_VERT_PATH,
+  PROP_FRAG_PATH,
+  PROP_PARAMS,
+  PROP_MAX,
+};
+
 void eg_pipeline_asset_serialize(
     eg_pipeline_asset_t *pipeline_asset, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
   // Vertex shader path
+  eg_serializer_append_u32(serializer, PROP_VERT_PATH);
   eg_serializer_append_string(serializer, pipeline_asset->vert_path);
 
   // Fragment shader path
+  eg_serializer_append_u32(serializer, PROP_FRAG_PATH);
   eg_serializer_append_string(serializer, pipeline_asset->frag_path);
 
   // Pipeline params
+  eg_serializer_append_u32(serializer, PROP_PARAMS);
   eg_serializer_append(
       serializer, &pipeline_asset->params, sizeof(pipeline_asset->params));
 }

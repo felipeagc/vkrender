@@ -27,15 +27,25 @@ void eg_mesh_comp_inspect(eg_mesh_comp_t *mesh, eg_inspector_t *inspector) {
 
 void eg_mesh_comp_destroy(eg_mesh_comp_t *mesh) {}
 
+enum {
+  PROP_MATERIAL,
+  PROP_MESH,
+  PROP_MAX,
+};
+
 void eg_mesh_comp_serialize(eg_mesh_comp_t *mesh, eg_serializer_t *serializer) {
+  eg_serializer_append_u32(serializer, PROP_MAX);
+
   eg_asset_uid_t material_uid = EG_NULL_ASSET_UID;
   if (mesh->material) material_uid = mesh->material->asset.uid;
-
-  eg_serializer_append(serializer, &material_uid, sizeof(material_uid));
 
   eg_asset_uid_t mesh_uid = EG_NULL_ASSET_UID;
   if (mesh->asset) mesh_uid = mesh->asset->asset.uid;
 
+  eg_serializer_append_u32(serializer, PROP_MATERIAL);
+  eg_serializer_append(serializer, &material_uid, sizeof(material_uid));
+
+  eg_serializer_append_u32(serializer, PROP_MESH);
   eg_serializer_append(serializer, &mesh_uid, sizeof(mesh_uid));
 }
 
