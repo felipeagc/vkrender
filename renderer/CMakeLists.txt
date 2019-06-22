@@ -54,6 +54,9 @@ add_library(
 
 	renderer/util.c
 	renderer/util.h 
+
+	renderer/hasher.c
+	renderer/hasher.h 
 	)
 
 target_link_libraries(
