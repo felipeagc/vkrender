@@ -62,11 +62,23 @@ void re_end_cmd_buffer(re_cmd_buffer_t *cmd_buffer) {
  *
  */
 
+void re_cmd_begin_render_target(
+    re_cmd_buffer_t *cmd_buffer,
+    const re_render_target_t *render_target,
+    VkRenderPassBeginInfo *begin_info,
+    VkSubpassContents subpass_contents) {
+  cmd_buffer->render_target = render_target;
+
+  vkCmdBeginRenderPass(cmd_buffer->cmd_buffer, begin_info, subpass_contents);
+}
+
 void re_cmd_bind_pipeline(
     re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline) {
   assert(pipeline != NULL);
-  vkCmdBindPipeline(
-      cmd_buffer->cmd_buffer, pipeline->bind_point, pipeline->pipeline);
+  VkPipeline vk_pipeline = re_pipeline_get(pipeline, cmd_buffer->render_target);
+
+  assert(vk_pipeline != VK_NULL_HANDLE);
+  vkCmdBindPipeline(cmd_buffer->cmd_buffer, pipeline->bind_point, vk_pipeline);
 }
 
 void re_cmd_bind_descriptor_set(

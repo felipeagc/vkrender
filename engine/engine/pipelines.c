@@ -8,7 +8,6 @@
 
 void eg_init_pipeline_spv(
     re_pipeline_t *pipeline,
-    const re_render_target_t *render_target,
     const char *paths[],
     uint32_t path_count,
     const re_pipeline_parameters_t params) {
@@ -26,12 +25,10 @@ void eg_init_pipeline_spv(
     re_shader_init_spv(&shaders[i], (uint32_t *)codes[i], size);
   }
 
-  re_pipeline_init_graphics(
-      pipeline, render_target, shaders, path_count, params);
+  re_pipeline_init_graphics(pipeline, shaders, path_count, params);
 
   for (uint32_t i = 0; i < path_count; i++) {
     free(codes[i]);
-    re_shader_destroy(&shaders[i]);
   }
 }
 

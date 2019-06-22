@@ -1232,8 +1232,9 @@ void re_window_begin_render_pass(re_window_t *window) {
       clear_values,             // pClearValues
   };
 
-  vkCmdBeginRenderPass(
-      command_buffer->cmd_buffer,
+  re_cmd_begin_render_target(
+      command_buffer,
+      &window->render_target,
       &render_pass_begin_info,
       VK_SUBPASS_CONTENTS_INLINE);
 

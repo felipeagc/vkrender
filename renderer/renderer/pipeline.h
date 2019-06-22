@@ -70,23 +70,33 @@ typedef struct re_pipeline_layout_t {
 } re_pipeline_layout_t;
 
 typedef struct re_pipeline_t {
-  VkPipeline pipeline;
   re_pipeline_layout_t layout;
+  re_pipeline_parameters_t parameters;
   VkPipelineBindPoint bind_point;
+
+  re_shader_t shaders[RE_MAX_SHADER_STAGES];
+  uint32_t shader_count;
+
+  uint32_t pipeline_count;
+  struct {
+    // TODO: replace this with a hash of the renderpass
+    const re_render_target_t *render_target;
+    VkPipeline pipeline;
+  } pipelines[RE_MAX_RENDER_TARGETS];
 } re_pipeline_t;
 
 void re_pipeline_layout_init(
-    re_pipeline_layout_t *layout,
-    const re_shader_t *shaders,
-    uint32_t shader_count);
+    re_pipeline_layout_t *layout, re_shader_t *shaders, uint32_t shader_count);
 
 void re_pipeline_layout_destroy(re_pipeline_layout_t *layout);
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
-    const re_render_target_t *render_target,
-    const re_shader_t *shaders,
+    re_shader_t *shaders,
     uint32_t shader_count,
     const re_pipeline_parameters_t parameters);
+
+VkPipeline re_pipeline_get(
+    re_pipeline_t *pipeline, const re_render_target_t *render_target);
 
 void re_pipeline_destroy(re_pipeline_t *pipeline);

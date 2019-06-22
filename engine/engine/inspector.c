@@ -97,14 +97,12 @@ void eg_inspector_init(
 
   eg_init_pipeline_spv(
       &inspector->gizmo_pipeline,
-      inspector->drawing_render_target,
       (const char *[]){"/shaders/gizmo.vert.spv", "/shaders/gizmo.frag.spv"},
       2,
       eg_gizmo_pipeline_parameters());
 
   eg_init_pipeline_spv(
       &inspector->gizmo_picking_pipeline,
-      &inspector->picker.canvas.render_target,
       (const char *[]){"/shaders/gizmo_picking.vert.spv",
                        "/shaders/gizmo_picking.frag.spv"},
       2,
@@ -112,7 +110,6 @@ void eg_inspector_init(
 
   eg_init_pipeline_spv(
       &inspector->billboard_pipeline,
-      inspector->drawing_render_target,
       (const char *[]){"/shaders/billboard.vert.spv",
                        "/shaders/billboard.frag.spv"},
       2,
@@ -120,7 +117,6 @@ void eg_inspector_init(
 
   eg_init_pipeline_spv(
       &inspector->billboard_picking_pipeline,
-      &inspector->picker.canvas.render_target,
       (const char *[]){"/shaders/billboard_picking.vert.spv",
                        "/shaders/billboard_picking.frag.spv"},
       2,
@@ -128,7 +124,6 @@ void eg_inspector_init(
 
   eg_init_pipeline_spv(
       &inspector->outline_pipeline,
-      inspector->drawing_render_target,
       (const char *[]){"/shaders/outline.vert.spv",
                        "/shaders/outline.frag.spv"},
       2,
@@ -136,7 +131,6 @@ void eg_inspector_init(
 
   eg_init_pipeline_spv(
       &inspector->picking_pipeline,
-      &inspector->picker.canvas.render_target,
       (const char *[]){"/shaders/picking.vert.spv",
                        "/shaders/picking.frag.spv"},
       2,

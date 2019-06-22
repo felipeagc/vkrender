@@ -170,9 +170,7 @@ re_pipeline_parameters_t re_default_pipeline_parameters() {
 }
 
 void re_pipeline_layout_init(
-    re_pipeline_layout_t *layout,
-    const re_shader_t *shaders,
-    uint32_t shader_count) {
+    re_pipeline_layout_t *layout, re_shader_t *shaders, uint32_t shader_count) {
   memset(layout, 0, sizeof(*layout));
   assert(shader_count <= RE_MAX_SHADER_STAGES);
 
@@ -299,23 +297,45 @@ void re_pipeline_layout_destroy(re_pipeline_layout_t *layout) {
 
 void re_pipeline_init_graphics(
     re_pipeline_t *pipeline,
-    const re_render_target_t *render_target,
-    const re_shader_t *shaders,
+    re_shader_t *shaders,
     uint32_t shader_count,
     const re_pipeline_parameters_t parameters) {
   assert(shader_count <= RE_MAX_SHADER_STAGES);
 
+  memset(pipeline, 0, sizeof(*pipeline));
+
   pipeline->bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  pipeline->parameters = parameters;
+
+  pipeline->shader_count = shader_count;
+  memcpy(pipeline->shaders, shaders, sizeof(*shaders) * shader_count);
 
   re_pipeline_layout_init(&pipeline->layout, shaders, shader_count);
+}
+
+VkPipeline re_pipeline_get(
+    re_pipeline_t *pipeline, const re_render_target_t *render_target) {
+
+  for (uint32_t i = 0; i < pipeline->pipeline_count; i++) {
+    if (pipeline->pipelines[i].render_target == render_target) {
+      return pipeline->pipelines[i].pipeline;
+    }
+  }
+
+  pipeline->pipeline_count++;
+
+  assert(pipeline->pipeline_count < RE_MAX_RENDER_TARGETS);
+
+  pipeline->pipelines[pipeline->pipeline_count - 1].render_target =
+      render_target;
 
   VkPipelineShaderStageCreateInfo pipeline_stages[RE_MAX_SHADER_STAGES];
 
-  for (uint32_t i = 0; i < shader_count; i++) {
+  for (uint32_t i = 0; i < pipeline->shader_count; i++) {
     pipeline_stages[i] = (VkPipelineShaderStageCreateInfo){
         .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage  = pipeline->layout.stage_flags[i],
-        .module = shaders[i].module,
+        .module = pipeline->shaders[i].module,
         .pName  = "main",
         .pSpecializationInfo = NULL,
     };
@@ -326,17 +346,17 @@ void re_pipeline_init_graphics(
 
   VkGraphicsPipelineCreateInfo pipeline_create_info = {
       .sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      .stageCount          = shader_count,
+      .stageCount          = pipeline->shader_count,
       .pStages             = pipeline_stages,
-      .pVertexInputState   = &parameters.vertex_input_state,
-      .pInputAssemblyState = &parameters.input_assembly_state,
+      .pVertexInputState   = &pipeline->parameters.vertex_input_state,
+      .pInputAssemblyState = &pipeline->parameters.input_assembly_state,
       .pTessellationState  = NULL,
-      .pViewportState      = &parameters.viewport_state,
-      .pRasterizationState = &parameters.rasterization_state,
+      .pViewportState      = &pipeline->parameters.viewport_state,
+      .pRasterizationState = &pipeline->parameters.rasterization_state,
       .pMultisampleState   = &multisample_state,
-      .pDepthStencilState  = &parameters.depth_stencil_state,
-      .pColorBlendState    = &parameters.color_blend_state,
-      .pDynamicState       = &parameters.dynamic_state,
+      .pDepthStencilState  = &pipeline->parameters.depth_stencil_state,
+      .pColorBlendState    = &pipeline->parameters.color_blend_state,
+      .pDynamicState       = &pipeline->parameters.dynamic_state,
       .layout              = pipeline->layout.layout,
       .renderPass          = render_target->render_pass,
       .subpass             = 0,
@@ -350,7 +370,9 @@ void re_pipeline_init_graphics(
       1,
       &pipeline_create_info,
       NULL,
-      &pipeline->pipeline));
+      &pipeline->pipelines[pipeline->pipeline_count - 1].pipeline));
+
+  return pipeline->pipelines[pipeline->pipeline_count - 1].pipeline;
 }
 
 void re_pipeline_destroy(re_pipeline_t *pipeline) {
@@ -358,7 +380,13 @@ void re_pipeline_destroy(re_pipeline_t *pipeline) {
 
   re_pipeline_layout_destroy(&pipeline->layout);
 
-  if (pipeline->pipeline != VK_NULL_HANDLE) {
-    vkDestroyPipeline(g_ctx.device, pipeline->pipeline, NULL);
+  for (uint32_t i = 0; i < pipeline->pipeline_count; i++) {
+    if (pipeline->pipelines[i].pipeline != VK_NULL_HANDLE) {
+      vkDestroyPipeline(g_ctx.device, pipeline->pipelines[i].pipeline, NULL);
+    }
+  }
+
+  for (uint32_t i = 0; i < pipeline->shader_count; i++) {
+    re_shader_destroy(&pipeline->shaders[i]);
   }
 }

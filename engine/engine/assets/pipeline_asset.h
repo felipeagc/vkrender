@@ -6,12 +6,10 @@
 typedef struct eg_inspector_t eg_inspector_t;
 typedef struct eg_serializer_t eg_serializer_t;
 
-// TODO: make this asset independent of render target
 // TODO: make params a simpler struct, only with important options
 typedef struct eg_pipeline_asset_options_t {
-  const re_render_target_t *render_target;
-  const char *vert;
-  const char *frag;
+  const char *vert_path;
+  const char *frag_path;
   const re_pipeline_parameters_t params;
 } eg_pipeline_asset_options_t;
 

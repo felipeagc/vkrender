@@ -209,10 +209,9 @@ int main(int argc, const char *argv[]) {
       EG_ASSET_TYPE(eg_pipeline_asset_t),
       "PBR pipeline",
       &(eg_pipeline_asset_options_t){
-          .render_target = &game.window.render_target,
-          .vert          = "/shaders/pbr.vert.spv",
-          .frag          = "/shaders/pbr.frag.spv",
-          .params        = eg_standard_pipeline_parameters(),
+          .vert_path = "/shaders/pbr.vert.spv",
+          .frag_path = "/shaders/pbr.frag.spv",
+          .params    = eg_standard_pipeline_parameters(),
       });
 
   eg_pipeline_asset_t *terrain_pipeline = eg_asset_manager_create(
@@ -220,10 +219,9 @@ int main(int argc, const char *argv[]) {
       EG_ASSET_TYPE(eg_pipeline_asset_t),
       "Terrain pipeline",
       &(eg_pipeline_asset_options_t){
-          .render_target = &game.window.render_target,
-          .vert          = "/shaders/terrain.vert.spv",
-          .frag          = "/shaders/terrain.frag.spv",
-          .params        = eg_standard_pipeline_parameters(),
+          .vert_path = "/shaders/terrain.vert.spv",
+          .frag_path = "/shaders/terrain.frag.spv",
+          .params    = eg_standard_pipeline_parameters(),
       });
 
   eg_pipeline_asset_t *skybox_pipeline = eg_asset_manager_create(
@@ -231,10 +229,9 @@ int main(int argc, const char *argv[]) {
       EG_ASSET_TYPE(eg_pipeline_asset_t),
       "Skybox pipeline",
       &(eg_pipeline_asset_options_t){
-          .render_target = &game.window.render_target,
-          .vert          = "/shaders/skybox.vert.spv",
-          .frag          = "/shaders/skybox.frag.spv",
-          .params        = eg_skybox_pipeline_parameters(),
+          .vert_path = "/shaders/skybox.vert.spv",
+          .frag_path = "/shaders/skybox.frag.spv",
+          .params    = eg_skybox_pipeline_parameters(),
       });
 
   game.scene.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};

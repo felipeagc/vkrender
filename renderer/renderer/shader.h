@@ -4,7 +4,7 @@
 
 typedef struct re_shader_t {
   VkShaderModule module;
-  const uint32_t *code;
+  uint32_t *code;
   size_t code_size;
 } re_shader_t;
 

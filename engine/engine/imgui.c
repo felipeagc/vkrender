@@ -191,14 +191,9 @@ void eg_imgui_init(re_window_t *window, re_render_target_t *render_target) {
 
     re_pipeline_init_graphics(
         &g_pipeline,
-        &window->render_target,
         shaders,
         ARRAY_SIZE(shaders),
         eg_imgui_pipeline_parameters());
-
-    for (uint32_t i = 0; i < 2; i++) {
-      re_shader_destroy(&shaders[i]);
-    }
   }
 
   // Load font

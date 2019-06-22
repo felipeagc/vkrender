@@ -4,7 +4,6 @@
 
 void eg_init_pipeline_spv(
     re_pipeline_t *pipeline,
-    const re_render_target_t *render_target,
     const char *paths[],
     uint32_t path_count,
     const re_pipeline_parameters_t params);

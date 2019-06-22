@@ -17,6 +17,8 @@ typedef struct re_cmd_buffer_t {
 
   re_viewport_t viewport;
   re_rect_2d_t scissor;
+
+  const re_render_target_t *render_target;
 } re_cmd_buffer_t;
 
 typedef enum re_cmd_buffer_usage_t {
@@ -58,6 +60,13 @@ void re_end_cmd_buffer(re_cmd_buffer_t *cmd_buffer);
  * Commands
  *
  */
+
+// TODO: fix this up
+void re_cmd_begin_render_target(
+    re_cmd_buffer_t *cmd_buffer,
+    const re_render_target_t *render_target,
+    VkRenderPassBeginInfo *begin_info,
+    VkSubpassContents subpass_contents);
 
 void re_cmd_bind_pipeline(re_cmd_buffer_t *cmd_buffer, re_pipeline_t *pipeline);
 

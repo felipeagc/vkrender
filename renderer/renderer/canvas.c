@@ -266,8 +266,9 @@ void re_canvas_begin(re_canvas_t *canvas, re_cmd_buffer_t *cmd_buffer) {
     render_pass_begin_info.clearValueCount -= 1;
   }
 
-  vkCmdBeginRenderPass(
-      cmd_buffer->cmd_buffer,
+  re_cmd_begin_render_target(
+      cmd_buffer,
+      &canvas->render_target,
       &render_pass_begin_info,
       VK_SUBPASS_CONTENTS_INLINE);
 
