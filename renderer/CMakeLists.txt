@@ -42,6 +42,7 @@ add_library(
 	renderer/pipeline.h
 
 	renderer/render_target.h
+	renderer/render_target.c
 
 	renderer/shader.c
 	renderer/shader.h

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "descriptor_set.h"
+#include "hasher.h"
 #include "limits.h"
 #include "render_target.h"
 #include "shader.h"
@@ -79,8 +80,7 @@ typedef struct re_pipeline_t {
 
   uint32_t pipeline_count;
   struct {
-    // TODO: replace this with a hash of the renderpass
-    const re_render_target_t *render_target;
+    re_hash_t render_target_hash;
     VkPipeline pipeline;
   } pipelines[RE_MAX_RENDER_TARGETS];
 } re_pipeline_t;

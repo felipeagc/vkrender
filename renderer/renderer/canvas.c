@@ -115,6 +115,8 @@ static inline void create_resources(re_canvas_t *canvas) {
         .pDependencies   = dependencies,
     };
 
+    canvas->render_target.hash = re_hash_renderpass(&render_pass_create_info);
+
     if (canvas->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
       render_pass_create_info.attachmentCount -= 1;
     }

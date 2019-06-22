@@ -317,7 +317,7 @@ VkPipeline re_pipeline_get(
     re_pipeline_t *pipeline, const re_render_target_t *render_target) {
 
   for (uint32_t i = 0; i < pipeline->pipeline_count; i++) {
-    if (pipeline->pipelines[i].render_target == render_target) {
+    if (pipeline->pipelines[i].render_target_hash == render_target->hash) {
       return pipeline->pipelines[i].pipeline;
     }
   }
@@ -326,8 +326,8 @@ VkPipeline re_pipeline_get(
 
   assert(pipeline->pipeline_count < RE_MAX_RENDER_TARGETS);
 
-  pipeline->pipelines[pipeline->pipeline_count - 1].render_target =
-      render_target;
+  pipeline->pipelines[pipeline->pipeline_count - 1].render_target_hash =
+      render_target->hash;
 
   VkPipelineShaderStageCreateInfo pipeline_stages[RE_MAX_SHADER_STAGES];
 

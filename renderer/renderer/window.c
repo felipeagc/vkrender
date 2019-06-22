@@ -489,70 +489,70 @@ static inline void create_render_pass(re_window_t *window) {
   VkAttachmentDescription attachment_descriptions[] = {
       // Resolved color attachment
       (VkAttachmentDescription){
-          0,                                // flags
-          window->swapchain_image_format,   // format
-          VK_SAMPLE_COUNT_1_BIT,            // samples
-          VK_ATTACHMENT_LOAD_OP_CLEAR,      // loadOp
-          VK_ATTACHMENT_STORE_OP_STORE,     // storeOp
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // stencilLoadOp
-          VK_ATTACHMENT_STORE_OP_DONT_CARE, // stencilStoreOp
-          VK_IMAGE_LAYOUT_UNDEFINED,        // initialLayout
-          VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,  // finalLayout
+          .flags          = 0,
+          .format         = window->swapchain_image_format,
+          .samples        = VK_SAMPLE_COUNT_1_BIT,
+          .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+          .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+          .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+          .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+          .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
       },
 
       // Multisampled depth attachment
       (VkAttachmentDescription){
-          0,                                                // flags
-          window->depth_format,                             // format
-          window->render_target.sample_count,               // samples
-          VK_ATTACHMENT_LOAD_OP_CLEAR,                      // loadOp
-          VK_ATTACHMENT_STORE_OP_STORE,                     // storeOp
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,                  // stencilLoadOp
-          VK_ATTACHMENT_STORE_OP_DONT_CARE,                 // stencilStoreOp
-          VK_IMAGE_LAYOUT_UNDEFINED,                        // initialLayout
-          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // finalLayout
+          .flags          = 0,
+          .format         = window->depth_format,
+          .samples        = window->render_target.sample_count,
+          .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+          .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+          .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+          .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+          .finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
       },
 
       // Multisampled color attachment
       (VkAttachmentDescription){
-          0,                                  // flags
-          window->swapchain_image_format,     // format
-          window->render_target.sample_count, // samples
-          VK_ATTACHMENT_LOAD_OP_CLEAR,        // loadOp
-          VK_ATTACHMENT_STORE_OP_STORE,       // storeOp
-          VK_ATTACHMENT_LOAD_OP_DONT_CARE,    // stencilLoadOp
-          VK_ATTACHMENT_STORE_OP_DONT_CARE,   // stencilStoreOp
-          VK_IMAGE_LAYOUT_UNDEFINED,          // initialLayout
-          VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,    // finalLayout
+          .flags          = 0,
+          .format         = window->swapchain_image_format,
+          .samples        = window->render_target.sample_count,
+          .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+          .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+          .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+          .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+          .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
       },
   };
 
   VkAttachmentReference color_attachment_reference = {
-      0,                                        // attachment
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
+      .attachment = 0,
+      .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
   };
 
   VkAttachmentReference depth_attachment_reference = {
-      1,                                                // attachment
-      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, // layout
+      .attachment = 1,
+      .layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
   };
 
   VkAttachmentReference multisampled_color_attachment_reference = {
-      2,                                        // attachment
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
+      .attachment = 2,
+      .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
   };
 
   VkSubpassDescription subpass_description = {
-      0,                               // flags
-      VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
-      0,                               // inputAttachmentCount
-      NULL,                            // pInputAttachments
-      1,                               // colorAttachmentCount
-      &color_attachment_reference,     // pColorAttachments
-      NULL,                            // pResolveAttachments
-      &depth_attachment_reference,     // pDepthStencilAttachment
-      0,                               // preserveAttachmentCount
-      NULL,                            // pPreserveAttachments
+      .flags                   = 0,
+      .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+      .inputAttachmentCount    = 0,
+      .pInputAttachments       = NULL,
+      .colorAttachmentCount    = 1,
+      .pColorAttachments       = &color_attachment_reference,
+      .pResolveAttachments     = NULL,
+      .pDepthStencilAttachment = &depth_attachment_reference,
+      .preserveAttachmentCount = 0,
+      .pPreserveAttachments    = NULL,
   };
 
   if (window->render_target.sample_count != VK_SAMPLE_COUNT_1_BIT) {
@@ -563,38 +563,40 @@ static inline void create_render_pass(re_window_t *window) {
 
   VkSubpassDependency dependencies[] = {
       (VkSubpassDependency){
-          VK_SUBPASS_EXTERNAL,                           // srcSubpass
-          0,                                             // dstSubpass
-          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // srcStageMask
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
-          VK_ACCESS_MEMORY_READ_BIT,                     // srcAccessMask
-          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // dstAccessMask
-          VK_DEPENDENCY_BY_REGION_BIT,              // dependencyFlags
+          .srcSubpass    = VK_SUBPASS_EXTERNAL,
+          .dstSubpass    = 0,
+          .srcStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+          .dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          .srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+          .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+          .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
       },
       (VkSubpassDependency){
-          0,                                             // srcSubpass
-          VK_SUBPASS_EXTERNAL,                           // dstSubpass
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
-          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
-          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // srcAccessMask
-          VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
-          VK_DEPENDENCY_BY_REGION_BIT,              // dependencyFlags
+          .srcSubpass    = 0,
+          .dstSubpass    = VK_SUBPASS_EXTERNAL,
+          .srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          .dstStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+          .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+          .dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT,
+          .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
       },
   };
 
   VkRenderPassCreateInfo render_pass_create_info = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,     // sType
-      NULL,                                          // pNext
-      0,                                             // flags
-      (uint32_t)ARRAY_SIZE(attachment_descriptions), // attachmentCount
-      attachment_descriptions,                       // pAttachments
-      1,                                             // subpassCount
-      &subpass_description,                          // pSubpasses
-      (uint32_t)ARRAY_SIZE(dependencies),            // dependencyCount
-      dependencies,                                  // pDependencies
+      .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+      .pNext           = NULL,
+      .flags           = 0,
+      .attachmentCount = (uint32_t)ARRAY_SIZE(attachment_descriptions),
+      .pAttachments    = attachment_descriptions,
+      .subpassCount    = 1,
+      .pSubpasses      = &subpass_description,
+      .dependencyCount = (uint32_t)ARRAY_SIZE(dependencies),
+      .pDependencies   = dependencies,
   };
+
+  window->render_target.hash = re_hash_renderpass(&render_pass_create_info);
 
   if (window->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
     render_pass_create_info.attachmentCount -= 1;
