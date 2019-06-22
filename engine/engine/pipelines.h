@@ -2,15 +2,6 @@
 
 #include <renderer/pipeline.h>
 
-// Common parameters:
-// - blend enable (bool)
-// - depth testing (bool)
-// - cull mode (enum)
-// - front face(enum)
-// - polygon mode (enum)
-// - line width (float)
-// - vertex type
-
 typedef enum {
   EG_CULL_MODE_BACK = 0,
   EG_CULL_MODE_FRONT,

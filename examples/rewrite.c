@@ -114,7 +114,7 @@ add_terrain(game_t *game, uint32_t dim, eg_pipeline_asset_t *pipeline_asset) {
       &game->asset_manager,
       EG_ASSET_TYPE(eg_pbr_material_asset_t),
       "Terrain material",
-      &(eg_pbr_material_asset_options_t){});
+      &(eg_pbr_material_asset_options_t){0});
 
   mat_asset->uniform.base_color_factor = (vec4_t){0.0f, 0.228f, 0.456f, 1.0f};
 
