@@ -14,47 +14,17 @@ eg_pipeline_asset_t *eg_pipeline_asset_create(
   pipeline_asset->vert_path = strdup(options->vert_path);
   pipeline_asset->frag_path = strdup(options->frag_path);
 
-  uint8_t *vert_code, *frag_code;
-  re_shader_t vert_shader, frag_shader;
-
-  {
-    eg_file_t *file = eg_file_open_read(options->vert_path);
-    assert(file);
-    size_t size = eg_file_size(file);
-    vert_code   = calloc(1, size);
-    eg_file_read_bytes(file, vert_code, size);
-    eg_file_close(file);
-
-    re_shader_init_spv(&vert_shader, (uint32_t *)vert_code, size);
-  }
-
-  {
-    eg_file_t *file = eg_file_open_read(options->frag_path);
-    assert(file);
-    size_t size = eg_file_size(file);
-    frag_code   = calloc(1, size);
-    eg_file_read_bytes(file, frag_code, size);
-    eg_file_close(file);
-
-    re_shader_init_spv(&frag_shader, (uint32_t *)frag_code, size);
-  }
-
-  re_pipeline_init_graphics(
+  eg_init_pipeline_spv(
       &pipeline_asset->pipeline,
-      (re_shader_t[]){vert_shader, frag_shader},
+      (const char *[]){options->vert_path, options->frag_path},
       2,
       options->params);
-
-  free(vert_code);
-  free(frag_code);
 
   return pipeline_asset;
 }
 
 void eg_pipeline_asset_inspect(
     eg_pipeline_asset_t *pipeline_asset, eg_inspector_t *inspector) {
-  /* igText("Pipeline: %#010x", (uint64_t)pipeline_asset->pipeline.pipeline); */
-
   static const float indent = 8.0f;
 
   const re_pipeline_layout_t *const layout = &pipeline_asset->pipeline.layout;

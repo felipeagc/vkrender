@@ -211,7 +211,7 @@ int main(int argc, const char *argv[]) {
       &(eg_pipeline_asset_options_t){
           .vert_path = "/shaders/pbr.vert.spv",
           .frag_path = "/shaders/pbr.frag.spv",
-          .params    = eg_standard_pipeline_parameters(),
+          .params    = eg_default_pipeline_params(),
       });
 
   eg_pipeline_asset_t *terrain_pipeline = eg_asset_manager_create(
@@ -221,7 +221,7 @@ int main(int argc, const char *argv[]) {
       &(eg_pipeline_asset_options_t){
           .vert_path = "/shaders/terrain.vert.spv",
           .frag_path = "/shaders/terrain.frag.spv",
-          .params    = eg_standard_pipeline_parameters(),
+          .params    = eg_default_pipeline_params(),
       });
 
   eg_pipeline_asset_t *skybox_pipeline = eg_asset_manager_create(
@@ -231,7 +231,7 @@ int main(int argc, const char *argv[]) {
       &(eg_pipeline_asset_options_t){
           .vert_path = "/shaders/skybox.vert.spv",
           .frag_path = "/shaders/skybox.frag.spv",
-          .params    = eg_skybox_pipeline_parameters(),
+          .params    = eg_skybox_pipeline_params(),
       });
 
   game.scene.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};

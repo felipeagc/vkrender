@@ -309,18 +309,17 @@ static inline void create_swapchain_image_views(re_window_t *window) {
 
   for (uint32_t i = 0; i < window->swapchain_image_count; i++) {
     VkImageViewCreateInfo create_info = {
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        NULL,                                     // pNext
-        0,                                        // flags
-        window->swapchain_images[i],
-        VK_IMAGE_VIEW_TYPE_2D,
-        window->swapchain_image_format,
-        {
-            VK_COMPONENT_SWIZZLE_IDENTITY, // r
-            VK_COMPONENT_SWIZZLE_IDENTITY, // g
-            VK_COMPONENT_SWIZZLE_IDENTITY, // b
-            VK_COMPONENT_SWIZZLE_IDENTITY, // a
-        },
+        .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image    = window->swapchain_images[i],
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format   = window->swapchain_image_format,
+        .components =
+            {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+            },
         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
     VK_CHECK(vkCreateImageView(
@@ -384,9 +383,7 @@ static inline void create_depth_stencil_image(re_window_t *window) {
         NULL));
 
     VkImageViewCreateInfo image_view_create_info = {
-        .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
-        .pNext    = NULL,                                     // pNext
-        .flags    = 0,                                        // flags
+        .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image    = window->frame_resources[i].depth_stencil.image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format   = window->depth_format,
@@ -422,14 +419,15 @@ static inline void create_multisampled_color_image(re_window_t *window) {
   for (uint32_t i = 0; i < RE_MAX_FRAMES_IN_FLIGHT; ++i) {
 
     VkImageCreateInfo image_create_info = {
-        .sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext       = NULL,
-        .flags       = 0,
-        .imageType   = VK_IMAGE_TYPE_2D,
-        .format      = window->swapchain_image_format,
-        .extent      = {window->swapchain_extent.width,
-                   window->swapchain_extent.height,
-                   1},
+        .sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format    = window->swapchain_image_format,
+        .extent =
+            {
+                window->swapchain_extent.width,
+                window->swapchain_extent.height,
+                1,
+            },
         .mipLevels   = 1,
         .arrayLayers = 1,
         .samples     = window->render_target.sample_count,
@@ -457,8 +455,6 @@ static inline void create_multisampled_color_image(re_window_t *window) {
 
     VkImageViewCreateInfo image_view_create_info = {
         .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext    = NULL,
-        .flags    = 0,
         .image    = window->frame_resources[i].multisampled_color.image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format   = window->swapchain_image_format,
@@ -489,7 +485,6 @@ static inline void create_render_pass(re_window_t *window) {
   VkAttachmentDescription attachment_descriptions[] = {
       // Resolved color attachment
       (VkAttachmentDescription){
-          .flags          = 0,
           .format         = window->swapchain_image_format,
           .samples        = VK_SAMPLE_COUNT_1_BIT,
           .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -502,7 +497,6 @@ static inline void create_render_pass(re_window_t *window) {
 
       // Multisampled depth attachment
       (VkAttachmentDescription){
-          .flags          = 0,
           .format         = window->depth_format,
           .samples        = window->render_target.sample_count,
           .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -515,7 +509,6 @@ static inline void create_render_pass(re_window_t *window) {
 
       // Multisampled color attachment
       (VkAttachmentDescription){
-          .flags          = 0,
           .format         = window->swapchain_image_format,
           .samples        = window->render_target.sample_count,
           .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -543,7 +536,6 @@ static inline void create_render_pass(re_window_t *window) {
   };
 
   VkSubpassDescription subpass_description = {
-      .flags                   = 0,
       .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
       .inputAttachmentCount    = 0,
       .pInputAttachments       = NULL,
@@ -586,8 +578,6 @@ static inline void create_render_pass(re_window_t *window) {
 
   VkRenderPassCreateInfo render_pass_create_info = {
       .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-      .pNext           = NULL,
-      .flags           = 0,
       .attachmentCount = (uint32_t)ARRAY_SIZE(attachment_descriptions),
       .pAttachments    = attachment_descriptions,
       .subpassCount    = 1,
@@ -621,15 +611,13 @@ static inline void regen_framebuffer(re_window_t *window) {
   };
 
   VkFramebufferCreateInfo create_info = {
-      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
-      NULL,                                      // pNext
-      0,                                         // flags
-      window->render_target.render_pass,         // renderPass
-      (uint32_t)ARRAY_SIZE(attachments),         // attachmentCount
-      attachments,                               // pAttachments
-      window->swapchain_extent.width,            // width
-      window->swapchain_extent.height,           // height
-      1,                                         // layers
+      .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+      .renderPass      = window->render_target.render_pass,
+      .attachmentCount = (uint32_t)ARRAY_SIZE(attachments),
+      .pAttachments    = attachments,
+      .width           = window->swapchain_extent.width,
+      .height          = window->swapchain_extent.height,
+      .layers          = 1,
   };
 
   if (window->render_target.sample_count == VK_SAMPLE_COUNT_1_BIT) {
@@ -1070,11 +1058,11 @@ void re_window_begin_frame(re_window_t *window) {
   }
 
   VkImageSubresourceRange image_subresource_range = {
-      VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
-      0,                         // baseMipLevel
-      1,                         // levelCount
-      0,                         // baseArrayLayer
-      1,                         // layerCount
+      .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel   = 0,
+      .levelCount     = 1,
+      .baseArrayLayer = 0,
+      .layerCount     = 1,
   };
 
   regen_framebuffer(window);
@@ -1090,16 +1078,15 @@ void re_window_begin_frame(re_window_t *window) {
 
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrier_from_present_to_draw = {
-        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
-        NULL,                                     // pNext
-        VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
-        VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
-        VK_IMAGE_LAYOUT_UNDEFINED,                // oldLayout
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // newLayout
-        g_ctx.present_queue_family_index,         // srcQueueFamilyIndex
-        g_ctx.graphics_queue_family_index,        // dstQueueFamilyIndex
-        window->swapchain_images[window->current_image_index], // image
-        image_subresource_range, // subresourceRange
+        .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .srcAccessMask       = VK_ACCESS_MEMORY_READ_BIT,
+        .dstAccessMask       = VK_ACCESS_MEMORY_READ_BIT,
+        .oldLayout           = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .srcQueueFamilyIndex = g_ctx.present_queue_family_index,
+        .dstQueueFamilyIndex = g_ctx.graphics_queue_family_index,
+        .image = window->swapchain_images[window->current_image_index],
+        .subresourceRange = image_subresource_range,
     };
 
     vkCmdPipelineBarrier(
@@ -1121,25 +1108,24 @@ void re_window_end_frame(re_window_t *window) {
       &window->frame_resources[window->current_frame].command_buffer;
 
   VkImageSubresourceRange image_subresource_range = {
-      VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
-      0,                         // baseMipLevel
-      1,                         // levelCount
-      0,                         // baseArrayLayer
-      1,                         // layerCount
+      .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel   = 0,
+      .levelCount     = 1,
+      .baseArrayLayer = 0,
+      .layerCount     = 1,
   };
 
   if (g_ctx.present_queue != g_ctx.graphics_queue) {
     VkImageMemoryBarrier barrierFromDrawToPresent = {
-        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,   // sType
-        NULL,                                     // pNext
-        VK_ACCESS_MEMORY_READ_BIT,                // srcAccessMask
-        VK_ACCESS_MEMORY_READ_BIT,                // dstAccessMask
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // oldLayout
-        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,          // newLayout
-        g_ctx.graphics_queue_family_index,        // srcQueueFamilyIndex
-        g_ctx.present_queue_family_index,         // dstQueueFamilyIndex
-        window->swapchain_images[window->current_image_index], // image
-        image_subresource_range, // subresourceRange
+        .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .srcAccessMask       = VK_ACCESS_MEMORY_READ_BIT,
+        .dstAccessMask       = VK_ACCESS_MEMORY_READ_BIT,
+        .oldLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .srcQueueFamilyIndex = g_ctx.graphics_queue_family_index,
+        .dstQueueFamilyIndex = g_ctx.present_queue_family_index,
+        .image = window->swapchain_images[window->current_image_index],
+        .subresourceRange = image_subresource_range,
     };
 
     vkCmdPipelineBarrier(
@@ -1162,17 +1148,16 @@ void re_window_end_frame(re_window_t *window) {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
   VkSubmitInfo submit_info = {
-      VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
-      NULL,                          // pNext
-      1,                             // waitSemaphoreCount
-      &window->frame_resources[window->current_frame]
-           .image_available_semaphore, // pWaitSemaphores
-      &wait_dst_stage_mask,            // pWaitDstStageMask
-      1,                               // commandBufferCount
-      &command_buffer->cmd_buffer,     // pCommandBuffers
-      1,                               // signalSemaphoreCount
-      &window->frame_resources[window->current_frame]
-           .rendering_finished_semaphore, // pSignalSemaphores
+      .sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores    = &window->frame_resources[window->current_frame]
+                              .image_available_semaphore,
+      .pWaitDstStageMask    = &wait_dst_stage_mask,
+      .commandBufferCount   = 1,
+      .pCommandBuffers      = &command_buffer->cmd_buffer,
+      .signalSemaphoreCount = 1,
+      .pSignalSemaphores    = &window->frame_resources[window->current_frame]
+                                .rendering_finished_semaphore,
   };
 
   mtx_lock(&g_ctx.queue_mutex);
@@ -1184,14 +1169,13 @@ void re_window_end_frame(re_window_t *window) {
 
   VkPresentInfoKHR presentInfo = {
       VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-      NULL, // pNext
-      1,    // waitSemaphoreCount
-      &window->frame_resources[window->current_frame]
-           .rendering_finished_semaphore, // pWaitSemaphores
-      1,                                  // swapchainCount
-      &window->swapchain,                 // pSwapchains
-      &window->current_image_index,       // pImageIndices
-      NULL,                               // pResults
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores    = &window->frame_resources[window->current_frame]
+                              .rendering_finished_semaphore,
+      .swapchainCount = 1,
+      .pSwapchains    = &window->swapchain,
+      .pImageIndices  = &window->current_image_index,
+      .pResults       = NULL,
   };
 
   VkResult result = vkQueuePresentKHR(g_ctx.present_queue, &presentInfo);
@@ -1225,13 +1209,12 @@ void re_window_begin_render_pass(re_window_t *window) {
   };
 
   VkRenderPassBeginInfo render_pass_begin_info = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,                   // sType
-      NULL,                                                       // pNext
-      window->render_target.render_pass,                          // renderPass
-      window->frame_resources[window->current_frame].framebuffer, // framebuffer
-      {{0, 0}, window->swapchain_extent},                         // renderArea
-      ARRAY_SIZE(clear_values), // clearValueCount
-      clear_values,             // pClearValues
+      .sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+      .renderPass  = window->render_target.render_pass,
+      .framebuffer = window->frame_resources[window->current_frame].framebuffer,
+      .renderArea  = {{0, 0}, window->swapchain_extent},
+      .clearValueCount = ARRAY_SIZE(clear_values),
+      .pClearValues    = clear_values,
   };
 
   re_cmd_begin_render_target(

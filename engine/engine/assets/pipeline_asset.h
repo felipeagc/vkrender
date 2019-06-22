@@ -1,6 +1,7 @@
 #pragma once
 
 #include "asset_types.h"
+#include "../pipelines.h"
 #include <renderer/pipeline.h>
 
 typedef struct eg_inspector_t eg_inspector_t;
@@ -10,7 +11,7 @@ typedef struct eg_serializer_t eg_serializer_t;
 typedef struct eg_pipeline_asset_options_t {
   const char *vert_path;
   const char *frag_path;
-  const re_pipeline_parameters_t params;
+  const eg_pipeline_params_t params;
 } eg_pipeline_asset_options_t;
 
 typedef struct eg_pipeline_asset_t {
