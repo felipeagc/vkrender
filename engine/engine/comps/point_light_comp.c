@@ -1,5 +1,6 @@
 #include "point_light_comp.h"
 
+#include "../deserializer.h"
 #include "../imgui.h"
 #include "../serializer.h"
 
@@ -31,6 +32,28 @@ void eg_point_light_comp_serialize(
 
   eg_serializer_append_u32(serializer, PROP_INTENSITY);
   eg_serializer_append(serializer, &light->intensity, sizeof(light->intensity));
+}
+
+void eg_point_light_comp_deserialize(
+    eg_point_light_comp_t *light, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_COLOR: {
+      eg_deserializer_read(deserializer, &light->color, sizeof(light->color));
+      break;
+    }
+    case PROP_INTENSITY: {
+      eg_deserializer_read(
+          deserializer, &light->intensity, sizeof(light->intensity));
+      break;
+    }
+    default: break;
+    }
+  }
 }
 
 void eg_point_light_comp_init(

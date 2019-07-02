@@ -1,4 +1,5 @@
 #include "comp_types.h"
+
 #include "gltf_comp.h"
 #include "mesh_comp.h"
 #include "point_light_comp.h"
@@ -40,6 +41,12 @@ const eg_comp_destructor_t EG_COMP_DESTRUCTORS[] = {EG__COMPS};
     t, initializer, inspector, destructor, serializer, deserializer, name)     \
   ((eg_comp_serializer_t)serializer),
 const eg_comp_serializer_t EG_COMP_SERIALIZERS[] = {EG__COMPS};
+#undef E
+
+#define E(                                                                     \
+    t, initializer, inspector, destructor, serializer, deserializer, name)     \
+  ((eg_comp_deserializer_t)deserializer),
+const eg_comp_deserializer_t EG_COMP_DESERIALIZERS[] = {EG__COMPS};
 #undef E
 
 #define E(enum_name, name) name,

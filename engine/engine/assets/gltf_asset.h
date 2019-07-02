@@ -86,8 +86,8 @@ typedef struct eg_gltf_asset_t {
 /*
  * Required asset functions
  */
-eg_gltf_asset_t *eg_gltf_asset_create(
-    eg_asset_manager_t *asset_manager, eg_gltf_asset_options_t *options);
+void eg_gltf_asset_init(
+    eg_gltf_asset_t *model, eg_gltf_asset_options_t *options);
 
 void eg_gltf_asset_inspect(eg_gltf_asset_t *model, eg_inspector_t *inspector);
 
@@ -95,3 +95,6 @@ void eg_gltf_asset_destroy(eg_gltf_asset_t *model);
 
 void eg_gltf_asset_serialize(
     eg_gltf_asset_t *model, eg_serializer_t *serializer);
+
+void eg_gltf_asset_deserialize(
+    eg_gltf_asset_t *model, eg_deserializer_t *deserializer);

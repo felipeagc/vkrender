@@ -6,7 +6,6 @@
 typedef struct re_cmd_buffer_t re_cmd_buffer_t;
 typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_image_asset_t eg_image_asset_t;
-typedef struct eg_serializer_t eg_serializer_t;
 
 typedef struct eg_pbr_material_uniform_t {
   vec4_t base_color_factor;
@@ -37,8 +36,8 @@ typedef struct eg_pbr_material_asset_t {
 /*
  * Required asset functions
  */
-eg_pbr_material_asset_t *eg_pbr_material_asset_create(
-    eg_asset_manager_t *asset_manager,
+void eg_pbr_material_asset_init(
+    eg_pbr_material_asset_t *material,
     eg_pbr_material_asset_options_t *options);
 
 void eg_pbr_material_asset_inspect(
@@ -48,6 +47,9 @@ void eg_pbr_material_asset_destroy(eg_pbr_material_asset_t *material);
 
 void eg_pbr_material_asset_serialize(
     eg_pbr_material_asset_t *material, eg_serializer_t *serializer);
+
+void eg_pbr_material_asset_deserialize(
+    eg_pbr_material_asset_t *material, eg_deserializer_t *deserializer);
 
 /*
  * Specific functions

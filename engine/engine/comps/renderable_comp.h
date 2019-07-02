@@ -6,6 +6,7 @@ typedef struct eg_inspector_t eg_inspector_t;
 typedef struct eg_pipeline_asset_t eg_pipeline_asset_t;
 typedef struct re_pipeline_t re_pipeline_t;
 typedef struct eg_serializer_t eg_serializer_t;
+typedef struct eg_deserializer_t eg_deserializer_t;
 
 typedef struct eg_renderable_comp_t {
   eg_pipeline_asset_t *pipeline;
@@ -23,6 +24,9 @@ void eg_renderable_comp_destroy(eg_renderable_comp_t *renderable);
 
 void eg_renderable_comp_serialize(
     eg_renderable_comp_t *renderable, eg_serializer_t *serializer);
+
+void eg_renderable_comp_deserialize(
+    eg_renderable_comp_t *renderable, eg_deserializer_t *deserializer);
 
 /*
  * Specific functions

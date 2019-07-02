@@ -1,6 +1,7 @@
 #include "gltf_asset.h"
 
 #include "../asset_manager.h"
+#include "../deserializer.h"
 #include "../engine.h"
 #include "../filesystem.h"
 #include "../imgui.h"
@@ -491,12 +492,8 @@ static void get_scene_dimensions(eg_gltf_asset_t *model) {
       vec3_distance(model->dimensions.min, model->dimensions.max) / 2.0f;
 }
 
-eg_gltf_asset_t *eg_gltf_asset_create(
-    eg_asset_manager_t *asset_manager, eg_gltf_asset_options_t *options) {
-
-  eg_gltf_asset_t *model =
-      eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_gltf_asset_t));
-
+void eg_gltf_asset_init(
+    eg_gltf_asset_t *model, eg_gltf_asset_options_t *options) {
   model->path     = strdup(options->path);
   model->flip_uvs = options->flip_uvs;
 
@@ -727,8 +724,6 @@ eg_gltf_asset_t *eg_gltf_asset_create(
   if (indices != NULL) {
     free(indices);
   }
-
-  return model;
 }
 
 void eg_gltf_asset_destroy(eg_gltf_asset_t *model) {
@@ -768,8 +763,40 @@ void eg_gltf_asset_serialize(
   eg_serializer_append_u32(serializer, PROP_MAX);
 
   eg_serializer_append_u32(serializer, PROP_FLIP_UVS);
-  eg_serializer_append(serializer, &model->flip_uvs, sizeof(model->flip_uvs));
+  eg_serializer_append_u32(serializer, (uint32_t)model->flip_uvs);
 
   eg_serializer_append_u32(serializer, PROP_PATH);
   eg_serializer_append_string(serializer, model->path);
+}
+
+void eg_gltf_asset_deserialize(
+    eg_gltf_asset_t *model, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  char *path    = NULL;
+  bool flip_uvs = false;
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+    switch (prop) {
+    case PROP_PATH: {
+      path = eg_deserializer_read_string(deserializer);
+      break;
+    }
+    case PROP_FLIP_UVS: {
+      flip_uvs = (bool)eg_deserializer_read_u32(deserializer);
+      break;
+    }
+    default: break;
+    }
+  }
+
+  assert(path != NULL);
+
+  eg_gltf_asset_init(
+      model,
+      &(eg_gltf_asset_options_t){
+          .path     = path,
+          .flip_uvs = flip_uvs,
+      });
 }

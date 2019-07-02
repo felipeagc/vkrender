@@ -8,11 +8,13 @@
 
 typedef struct eg_inspector_t eg_inspector_t;
 typedef struct eg_serializer_t eg_serializer_t;
+typedef struct eg_deserializer_t eg_deserializer_t;
 
 typedef void (*eg_comp_destructor_t)(void *);
 typedef void (*eg_comp_initializer_t)(void *);
 typedef void (*eg_comp_inspector_t)(void *, eg_inspector_t *);
 typedef void (*eg_comp_serializer_t)(void *, eg_serializer_t *);
+typedef void (*eg_comp_deserializer_t)(void *, eg_deserializer_t *);
 
 #define EG_COMP_TYPE(comp) EG_COMP_TYPE_##comp
 #define EG_COMP_NAME(comp) EG_COMP_NAMES[EG_COMP_TYPE(comp)]
@@ -75,6 +77,7 @@ extern const eg_comp_initializer_t EG_COMP_INITIALIZERS[EG_COMP_TYPE_MAX];
 extern const eg_comp_inspector_t EG_COMP_INSPECTORS[EG_COMP_TYPE_MAX];
 extern const eg_comp_destructor_t EG_COMP_DESTRUCTORS[EG_COMP_TYPE_MAX];
 extern const eg_comp_serializer_t EG_COMP_SERIALIZERS[EG_COMP_TYPE_MAX];
+extern const eg_comp_deserializer_t EG_COMP_DESERIALIZERS[EG_COMP_TYPE_MAX];
 
 #define E(enum_name, name) enum_name,
 typedef enum eg_tag_t { EG__TAGS EG_TAG_MAX } eg_tag_t;

@@ -23,25 +23,26 @@ static eg_entity_t add_gltf(
     vec3_t position,
     vec3_t scale,
     bool flip_uvs) {
-  eg_gltf_asset_t *model_asset = eg_asset_manager_create(
-      &game->asset_manager,
-      EG_ASSET_TYPE(eg_gltf_asset_t),
-      path,
+  eg_gltf_asset_t *model_asset = eg_asset_manager_alloc(
+      &game->asset_manager, EG_ASSET_TYPE(eg_gltf_asset_t));
+  eg_gltf_asset_init(
+      model_asset,
       &(eg_gltf_asset_options_t){.path = path, .flip_uvs = flip_uvs});
+  eg_asset_set_name(&model_asset->asset, path);
 
   eg_entity_t ent = eg_entity_add(&game->scene.entity_manager);
 
   eg_transform_comp_t *transform =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_transform_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_transform_comp_t);
   transform->position = position;
   transform->scale    = scale;
 
   eg_gltf_comp_t *model =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_gltf_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_gltf_comp_t);
   eg_gltf_comp_init(model, model_asset);
 
   eg_renderable_comp_t *renderable =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_renderable_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_renderable_comp_t);
   eg_renderable_comp_init(renderable, pipeline_asset);
 
   return ent;
@@ -52,11 +53,11 @@ add_light(game_t *game, vec3_t position, vec3_t color, float intensity) {
   eg_entity_t ent = eg_entity_add(&game->scene.entity_manager);
 
   eg_transform_comp_t *transform_comp =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_transform_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_transform_comp_t);
   transform_comp->position = position;
 
   eg_point_light_comp_t *light_comp =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_point_light_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_point_light_comp_t);
   eg_point_light_comp_init(
       light_comp, (vec4_t){.xyz = color, .w = 1.0f}, intensity);
 
@@ -96,43 +97,43 @@ add_terrain(game_t *game, uint32_t dim, eg_pipeline_asset_t *pipeline_asset) {
     }
   }
 
-  eg_mesh_asset_t *mesh_asset = eg_asset_manager_create(
-      &game->asset_manager,
-      EG_ASSET_TYPE(eg_mesh_asset_t),
-      "Terrain mesh",
+  eg_mesh_asset_t *mesh_asset = eg_asset_manager_alloc(
+      &game->asset_manager, EG_ASSET_TYPE(eg_mesh_asset_t));
+  eg_mesh_asset_init(
+      mesh_asset,
       &(eg_mesh_asset_options_t){
           .vertices     = vertices,
           .vertex_count = vertex_count,
           .indices      = indices,
           .index_count  = index_count,
       });
+  eg_asset_set_name(&mesh_asset->asset, "Terrain mesh");
 
   free(indices);
   free(vertices);
 
-  eg_pbr_material_asset_t *mat_asset = eg_asset_manager_create(
-      &game->asset_manager,
-      EG_ASSET_TYPE(eg_pbr_material_asset_t),
-      "Terrain material",
-      &(eg_pbr_material_asset_options_t){0});
+  eg_pbr_material_asset_t *mat_asset = eg_asset_manager_alloc(
+      &game->asset_manager, EG_ASSET_TYPE(eg_pbr_material_asset_t));
+  eg_pbr_material_asset_init(mat_asset, &(eg_pbr_material_asset_options_t){0});
+  eg_asset_set_name(&mat_asset->asset, "Terrain material");
 
   mat_asset->uniform.base_color_factor = (vec4_t){0.0f, 0.228f, 0.456f, 1.0f};
 
   eg_entity_t ent = eg_entity_add(&game->scene.entity_manager);
 
   eg_transform_comp_t *transform =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_transform_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_transform_comp_t);
   transform->position = (vec3_t){0.0f, -2.0f, 0.0f};
 
   eg_mesh_comp_t *mesh =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_mesh_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_mesh_comp_t);
   eg_mesh_comp_init(mesh, mesh_asset, mat_asset);
 
   eg_terrain_comp_t *terrain =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_terrain_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_terrain_comp_t);
 
   eg_renderable_comp_t *renderable =
-      EG_ADD_COMP(&game->scene.entity_manager, eg_renderable_comp_t, ent);
+      EG_ADD_COMP(&game->scene.entity_manager, ent, eg_renderable_comp_t);
   eg_renderable_comp_init(renderable, pipeline_asset);
 
   return ent;
@@ -166,32 +167,35 @@ int main(int argc, const char *argv[]) {
 
   eg_asset_manager_init(&game.asset_manager);
 
-  eg_image_asset_t *skybox = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_image_asset_t),
-      "Skybox",
+  eg_image_asset_t *skybox = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+  eg_image_asset_init(
+      skybox,
       &(eg_image_asset_options_t){
           .path = "/assets/environments/bridge_skybox.ktx"});
+  eg_asset_set_name(&skybox->asset, "Skybox");
 
-  eg_image_asset_t *irradiance = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_image_asset_t),
-      "Irradiance",
+  eg_image_asset_t *irradiance = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+  eg_image_asset_init(
+      irradiance,
       &(eg_image_asset_options_t){
           .path = "/assets/environments/bridge_irradiance.ktx"});
+  eg_asset_set_name(&irradiance->asset, "Irradiance");
 
-  eg_image_asset_t *radiance = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_image_asset_t),
-      "Radiance",
+  eg_image_asset_t *radiance = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+  eg_image_asset_init(
+      radiance,
       &(eg_image_asset_options_t){
           .path = "/assets/environments/bridge_radiance.ktx"});
+  eg_asset_set_name(&radiance->asset, "Radiance");
 
-  eg_image_asset_t *brdf = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_image_asset_t),
-      "BRDF LuT",
-      &(eg_image_asset_options_t){.path = "/assets/brdf_lut.png"});
+  eg_image_asset_t *brdf = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+  eg_image_asset_init(
+      brdf, &(eg_image_asset_options_t){.path = "/assets/brdf_lut.png"});
+  eg_asset_set_name(&brdf->asset, "BRDF LuT");
 
   eg_scene_init(&game.scene, skybox, irradiance, radiance, brdf);
 
@@ -204,35 +208,38 @@ int main(int argc, const char *argv[]) {
       &game.asset_manager);
   eg_fps_camera_system_init(&game.fps_system, &game.scene.camera);
 
-  eg_pipeline_asset_t *pbr_pipeline = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_pipeline_asset_t),
-      "PBR pipeline",
+  eg_pipeline_asset_t *pbr_pipeline = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
+  eg_pipeline_asset_init(
+      pbr_pipeline,
       &(eg_pipeline_asset_options_t){
           .vert_path = "/shaders/pbr.vert.spv",
           .frag_path = "/shaders/pbr.frag.spv",
           .params    = eg_default_pipeline_params(),
       });
+  eg_asset_set_name(&pbr_pipeline->asset, "PBR pipeline");
 
-  eg_pipeline_asset_t *terrain_pipeline = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_pipeline_asset_t),
-      "Terrain pipeline",
+  eg_pipeline_asset_t *terrain_pipeline = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
+  eg_pipeline_asset_init(
+      terrain_pipeline,
       &(eg_pipeline_asset_options_t){
           .vert_path = "/shaders/terrain.vert.spv",
           .frag_path = "/shaders/terrain.frag.spv",
           .params    = eg_default_pipeline_params(),
       });
+  eg_asset_set_name(&terrain_pipeline->asset, "Terrain pipeline");
 
-  eg_pipeline_asset_t *skybox_pipeline = eg_asset_manager_create(
-      &game.asset_manager,
-      EG_ASSET_TYPE(eg_pipeline_asset_t),
-      "Skybox pipeline",
+  eg_pipeline_asset_t *skybox_pipeline = eg_asset_manager_alloc(
+      &game.asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
+  eg_pipeline_asset_init(
+      skybox_pipeline,
       &(eg_pipeline_asset_options_t){
           .vert_path = "/shaders/skybox.vert.spv",
           .frag_path = "/shaders/skybox.frag.spv",
           .params    = eg_skybox_pipeline_params(),
       });
+  eg_asset_set_name(&skybox_pipeline->asset, "Skybox pipeline");
 
   game.scene.environment.uniform.sun_direction = (vec3_t){1.0f, -1.0f, 1.0f};
 
@@ -287,8 +294,6 @@ int main(int argc, const char *argv[]) {
     }
 
     re_cmd_buffer_t *cmd_buffer = re_window_get_cmd_buffer(&game.window);
-
-    eg_entity_manager_update(&game.scene.entity_manager);
 
     eg_imgui_begin();
     if (inspector_enabled) {

@@ -2,6 +2,7 @@
 
 #include "../assets/mesh_asset.h"
 #include "../assets/pbr_material_asset.h"
+#include "../deserializer.h"
 #include "../inspector_utils.h"
 #include "../serializer.h"
 #include <renderer/context.h>
@@ -43,10 +44,35 @@ void eg_mesh_comp_serialize(eg_mesh_comp_t *mesh, eg_serializer_t *serializer) {
   if (mesh->asset) mesh_uid = mesh->asset->asset.uid;
 
   eg_serializer_append_u32(serializer, PROP_MATERIAL);
-  eg_serializer_append(serializer, &material_uid, sizeof(material_uid));
+  eg_serializer_append_u32(serializer, material_uid);
 
   eg_serializer_append_u32(serializer, PROP_MESH);
-  eg_serializer_append(serializer, &mesh_uid, sizeof(mesh_uid));
+  eg_serializer_append_u32(serializer, mesh_uid);
+}
+
+void eg_mesh_comp_deserialize(
+    eg_mesh_comp_t *mesh, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_MATERIAL: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      mesh->material =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    case PROP_MESH: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      mesh->asset =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    default: break;
+    }
+  }
 }
 
 void eg_mesh_comp_init(

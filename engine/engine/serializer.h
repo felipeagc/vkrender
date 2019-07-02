@@ -25,18 +25,11 @@ void eg_serialize_scene(
 
 void eg_serializer_save(eg_serializer_t *serializer, const char *path);
 
-// Appends an asset header
-void eg_serializer_add_asset(eg_serializer_t *serializer, eg_asset_t *asset);
-
-// Appends an entity header
-void eg_serializer_add_entity(eg_serializer_t *serializer, uint32_t comp_count);
-
-// Appends a component header
-void eg_serializer_add_comp(eg_serializer_t *serializer, eg_comp_type_t type);
-
 void eg_serializer_append(eg_serializer_t *serializer, void *data, size_t size);
 
 // Includes the null terminator
 void eg_serializer_append_string(eg_serializer_t *serializer, char *string);
 
 void eg_serializer_append_u32(eg_serializer_t *serializer, uint32_t data);
+
+void eg_serializer_append_u64(eg_serializer_t *serializer, uint64_t data);

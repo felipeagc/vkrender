@@ -1,6 +1,7 @@
 #include "gltf_comp.h"
 
 #include "../assets/gltf_asset.h"
+#include "../deserializer.h"
 #include "../inspector_utils.h"
 #include "../pipelines.h"
 #include "../serializer.h"
@@ -40,7 +41,26 @@ void eg_gltf_comp_serialize(
   if (model->asset) uid = model->asset->asset.uid;
 
   eg_serializer_append_u32(serializer, PROP_GLTF);
-  eg_serializer_append(serializer, &uid, sizeof(uid));
+  eg_serializer_append_u32(serializer, (uint32_t)uid);
+}
+
+void eg_gltf_comp_deserialize(
+    eg_gltf_comp_t *model, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_GLTF: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      model->asset =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    default: break;
+    }
+  }
 }
 
 static void draw_node(

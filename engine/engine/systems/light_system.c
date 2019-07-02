@@ -20,8 +20,8 @@ void eg_light_system(eg_scene_t *scene) {
       continue;
     }
 
-    if (EG_HAS_COMP(entity_manager, eg_point_light_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, e, eg_point_light_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
       eg_environment_add_point_light(
           &scene->environment,
           transforms[e].position,

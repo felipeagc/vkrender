@@ -32,11 +32,15 @@ void eg_rendering_system(eg_scene_t *scene, re_cmd_buffer_t *cmd_buffer) {
 
   // Draw all meshes
   for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+    if (!eg_entity_exists(entity_manager, e)) {
+      continue;
+    }
+
     if (EG_HAS_TAG(entity_manager, e, EG_TAG_HIDDEN)) {
       continue;
     }
 
-    if (!EG_HAS_COMP(entity_manager, eg_renderable_comp_t, e)) {
+    if (!EG_HAS_COMP(entity_manager, e, eg_renderable_comp_t)) {
       continue;
     }
 
@@ -54,10 +58,10 @@ void eg_rendering_system(eg_scene_t *scene, re_cmd_buffer_t *cmd_buffer) {
     }
 
     // Render mesh
-    if (EG_HAS_COMP(entity_manager, eg_mesh_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, e, eg_mesh_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
 
-      if (EG_HAS_COMP(entity_manager, eg_terrain_comp_t, e)) {
+      if (EG_HAS_COMP(entity_manager, e, eg_terrain_comp_t)) {
         struct {
           float time;
         } pc;
@@ -74,8 +78,8 @@ void eg_rendering_system(eg_scene_t *scene, re_cmd_buffer_t *cmd_buffer) {
           eg_transform_comp_mat4(&transforms[e]));
     }
 
-    if (EG_HAS_COMP(entity_manager, eg_gltf_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, e, eg_gltf_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
       eg_gltf_comp_draw(
           &gltf_models[e],
           cmd_buffer,

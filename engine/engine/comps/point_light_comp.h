@@ -4,6 +4,7 @@
 
 typedef struct eg_inspector_t eg_inspector_t;
 typedef struct eg_serializer_t eg_serializer_t;
+typedef struct eg_deserializer_t eg_deserializer_t;
 
 typedef struct eg_point_light_comp_t {
   vec4_t color;
@@ -22,6 +23,9 @@ void eg_point_light_comp_destroy(eg_point_light_comp_t *light);
 
 void eg_point_light_comp_serialize(
     eg_point_light_comp_t *light, eg_serializer_t *serializer);
+
+void eg_point_light_comp_deserialize(
+    eg_point_light_comp_t *light, eg_deserializer_t *deserializer);
 
 /*
  * Specific functions

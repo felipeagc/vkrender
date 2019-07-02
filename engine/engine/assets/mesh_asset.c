@@ -1,16 +1,14 @@
 #include "mesh_asset.h"
 
 #include "../asset_manager.h"
+#include "../deserializer.h"
 #include "../serializer.h"
 #include <renderer/context.h>
 #include <renderer/window.h>
 #include <string.h>
 
-eg_mesh_asset_t *eg_mesh_asset_create(
-    eg_asset_manager_t *asset_manager, eg_mesh_asset_options_t *options) {
-  eg_mesh_asset_t *mesh =
-      eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_mesh_asset_t));
-
+void eg_mesh_asset_init(
+    eg_mesh_asset_t *mesh, eg_mesh_asset_options_t *options) {
   mesh->vertex_count = options->vertex_count;
   mesh->index_count  = options->index_count;
   mesh->vertices     = malloc(sizeof(*mesh->vertices) * mesh->vertex_count);
@@ -73,8 +71,6 @@ eg_mesh_asset_t *eg_mesh_asset_create(
   re_buffer_unmap_memory(&staging_buffer);
 
   re_buffer_destroy(&staging_buffer);
-
-  return mesh;
 }
 
 void eg_mesh_asset_inspect(eg_mesh_asset_t *mesh, eg_inspector_t *inspector) {}
@@ -99,17 +95,53 @@ void eg_mesh_asset_serialize(
 
   // Vertices
   eg_serializer_append_u32(serializer, PROP_VERTICES);
-  eg_serializer_append(
-      serializer, &mesh->vertex_count, sizeof(mesh->vertex_count));
+  eg_serializer_append_u32(serializer, mesh->vertex_count);
   eg_serializer_append(
       serializer, mesh->vertices, sizeof(*mesh->vertices) * mesh->vertex_count);
 
   // Indices
   eg_serializer_append_u32(serializer, PROP_INDICES);
-  eg_serializer_append(
-      serializer, &mesh->index_count, sizeof(mesh->index_count));
+  eg_serializer_append_u32(serializer, mesh->index_count);
   eg_serializer_append(
       serializer, mesh->indices, sizeof(*mesh->indices) * mesh->index_count);
+}
+
+void eg_mesh_asset_deserialize(
+    eg_mesh_asset_t *mesh, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  eg_mesh_asset_options_t options = {0};
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_VERTICES: {
+      options.vertex_count = eg_deserializer_read_u32(deserializer);
+      options.vertices     = malloc(sizeof(re_vertex_t) * options.vertex_count);
+      eg_deserializer_read(
+          deserializer,
+          options.vertices,
+          sizeof(re_vertex_t) * options.vertex_count);
+      break;
+    }
+    case PROP_INDICES: {
+      options.index_count = eg_deserializer_read_u32(deserializer);
+      options.indices     = malloc(sizeof(uint32_t) * options.index_count);
+      eg_deserializer_read(
+          deserializer,
+          options.indices,
+          sizeof(uint32_t) * options.index_count);
+      break;
+    }
+    default: break;
+    }
+  }
+
+  eg_mesh_asset_init(mesh, &options);
+
+  free(options.vertices);
+  free(options.indices);
 }
 
 void eg_mesh_asset_draw(eg_mesh_asset_t *mesh, re_cmd_buffer_t *cmd_buffer) {

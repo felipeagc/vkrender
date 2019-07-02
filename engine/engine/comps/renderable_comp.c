@@ -1,6 +1,7 @@
 #include "renderable_comp.h"
 
 #include "../assets/pipeline_asset.h"
+#include "../deserializer.h"
 #include "../inspector_utils.h"
 #include "../serializer.h"
 
@@ -38,7 +39,26 @@ void eg_renderable_comp_serialize(
   if (renderable->pipeline) uid = renderable->pipeline->asset.uid;
 
   eg_serializer_append_u32(serializer, PROP_PIPELINE);
-  eg_serializer_append(serializer, &uid, sizeof(uid));
+  eg_serializer_append_u32(serializer, (uint32_t)uid);
+}
+
+void eg_renderable_comp_deserialize(
+    eg_renderable_comp_t *renderable, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_PIPELINE: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      renderable->pipeline =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    default: break;
+    }
+  }
 }
 
 void eg_renderable_comp_init(

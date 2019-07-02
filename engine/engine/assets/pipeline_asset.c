@@ -1,16 +1,14 @@
 #include "pipeline_asset.h"
 
 #include "../asset_manager.h"
+#include "../deserializer.h"
 #include "../filesystem.h"
 #include "../imgui.h"
 #include "../pipelines.h"
 #include "../serializer.h"
 
-eg_pipeline_asset_t *eg_pipeline_asset_create(
-    eg_asset_manager_t *asset_manager, eg_pipeline_asset_options_t *options) {
-  eg_pipeline_asset_t *pipeline_asset =
-      eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_pipeline_asset_t));
-
+void eg_pipeline_asset_init(
+    eg_pipeline_asset_t *pipeline_asset, eg_pipeline_asset_options_t *options) {
   pipeline_asset->vert_path = strdup(options->vert_path);
   pipeline_asset->frag_path = strdup(options->frag_path);
   pipeline_asset->params    = options->params;
@@ -20,8 +18,6 @@ eg_pipeline_asset_t *eg_pipeline_asset_create(
       (const char *[]){options->vert_path, options->frag_path},
       2,
       options->params);
-
-  return pipeline_asset;
 }
 
 void eg_pipeline_asset_inspect(
@@ -79,4 +75,34 @@ void eg_pipeline_asset_serialize(
   eg_serializer_append_u32(serializer, PROP_PARAMS);
   eg_serializer_append(
       serializer, &pipeline_asset->params, sizeof(pipeline_asset->params));
+}
+
+void eg_pipeline_asset_deserialize(
+    eg_pipeline_asset_t *pipeline_asset, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  eg_pipeline_asset_options_t options = {0};
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_VERT_PATH: {
+      options.vert_path = eg_deserializer_read_string(deserializer);
+      break;
+    }
+    case PROP_FRAG_PATH: {
+      options.frag_path = eg_deserializer_read_string(deserializer);
+      break;
+    }
+    case PROP_PARAMS: {
+      eg_deserializer_read(
+          deserializer, &options.params, sizeof(options.params));
+      break;
+    }
+    default: break;
+    }
+  }
+
+  eg_pipeline_asset_init(pipeline_asset, &options);
 }

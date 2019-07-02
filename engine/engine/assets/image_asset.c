@@ -1,6 +1,7 @@
 #include "image_asset.h"
 
 #include "../asset_manager.h"
+#include "../deserializer.h"
 #include "../filesystem.h"
 #include "../imgui.h"
 #include "../serializer.h"
@@ -78,8 +79,8 @@ void eg_image_asset_destroy(eg_image_asset_t *image) {
   }
 }
 
-eg_image_asset_t *eg_image_asset_create(
-    eg_asset_manager_t *asset_manager, eg_image_asset_options_t *options) {
+void eg_image_asset_init(
+    eg_image_asset_t *image, eg_image_asset_options_t *options) {
   char ext[128] = "";
   get_ext(options->path, ext);
 
@@ -112,8 +113,6 @@ eg_image_asset_t *eg_image_asset_create(
     }
     }
 
-    eg_image_asset_t *image =
-        eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
     image->path = strdup(options->path);
 
     re_image_init(
@@ -130,8 +129,6 @@ eg_image_asset_t *eg_image_asset_create(
     upload_ktx(&image->image, g_ctx.transient_command_pool, &ktx_data);
 
     ktx_data_destroy(&ktx_data);
-
-    return image;
   }
 
   if (strcmp(ext, "png") == 0 || strcmp(ext, "jpeg") == 0 ||
@@ -152,8 +149,6 @@ eg_image_asset_t *eg_image_asset_create(
 
     free(raw_data);
 
-    eg_image_asset_t *image =
-        eg_asset_manager_alloc(asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
     image->path = strdup(options->path);
 
     re_image_init(
@@ -174,11 +169,7 @@ eg_image_asset_t *eg_image_asset_create(
         0);
 
     free(data);
-
-    return image;
   }
-
-  return NULL;
 }
 
 enum {
@@ -192,4 +183,25 @@ void eg_image_asset_serialize(
 
   eg_serializer_append_u32(serializer, PROP_PATH);
   eg_serializer_append_string(serializer, image->path);
+}
+
+void eg_image_asset_deserialize(
+    eg_image_asset_t *image, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  eg_image_asset_options_t options = {0};
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_PATH: {
+      options.path = eg_deserializer_read_string(deserializer);
+      break;
+    }
+    default: break;
+    }
+  }
+
+  eg_image_asset_init(image, &options);
 }

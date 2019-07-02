@@ -1,6 +1,7 @@
 #include "pbr_material_asset.h"
 
 #include "../asset_manager.h"
+#include "../deserializer.h"
 #include "../engine.h"
 #include "../imgui.h"
 #include "../serializer.h"
@@ -10,12 +11,9 @@
 #include <renderer/pipeline.h>
 #include <string.h>
 
-eg_pbr_material_asset_t *eg_pbr_material_asset_create(
-    eg_asset_manager_t *asset_manager,
+void eg_pbr_material_asset_init(
+    eg_pbr_material_asset_t *material,
     eg_pbr_material_asset_options_t *options) {
-  eg_pbr_material_asset_t *material = eg_asset_manager_alloc(
-      asset_manager, EG_ASSET_TYPE(eg_pbr_material_asset_t));
-
   material->uniform.base_color_factor  = (vec4_t){1.0, 1.0, 1.0, 1.0};
   material->uniform.metallic           = 1.0;
   material->uniform.roughness          = 1.0;
@@ -27,8 +25,6 @@ eg_pbr_material_asset_t *eg_pbr_material_asset_create(
   material->occlusion_texture          = options->occlusion_texture;
   material->metallic_roughness_texture = options->metallic_roughness_texture;
   material->emissive_texture           = options->emissive_texture;
-
-  return material;
 }
 
 void eg_pbr_material_asset_inspect(
@@ -71,32 +67,84 @@ void eg_pbr_material_asset_serialize(
   eg_asset_uid_t albedo_uid = EG_NULL_ASSET_UID;
   if (material->albedo_texture)
     albedo_uid = material->albedo_texture->asset.uid;
-  eg_serializer_append(serializer, &albedo_uid, sizeof(albedo_uid));
+  eg_serializer_append_u32(serializer, albedo_uid);
 
   eg_serializer_append_u32(serializer, PROP_NORMAL);
   eg_asset_uid_t normal_uid = EG_NULL_ASSET_UID;
   if (material->normal_texture)
     normal_uid = material->normal_texture->asset.uid;
-  eg_serializer_append(serializer, &normal_uid, sizeof(normal_uid));
+  eg_serializer_append_u32(serializer, normal_uid);
 
   eg_serializer_append_u32(serializer, PROP_METALLIC_ROUGHNESS);
   eg_asset_uid_t metallic_roughness_uid = EG_NULL_ASSET_UID;
   if (material->metallic_roughness_texture)
     metallic_roughness_uid = material->metallic_roughness_texture->asset.uid;
-  eg_serializer_append(
-      serializer, &metallic_roughness_uid, sizeof(metallic_roughness_uid));
+  eg_serializer_append_u32(serializer, metallic_roughness_uid);
 
   eg_serializer_append_u32(serializer, PROP_OCCLUSION);
   eg_asset_uid_t occlusion_uid = EG_NULL_ASSET_UID;
   if (material->occlusion_texture)
     occlusion_uid = material->occlusion_texture->asset.uid;
-  eg_serializer_append(serializer, &occlusion_uid, sizeof(occlusion_uid));
+  eg_serializer_append_u32(serializer, occlusion_uid);
 
   eg_serializer_append_u32(serializer, PROP_EMISSIVE);
   eg_asset_uid_t emissive_uid = EG_NULL_ASSET_UID;
   if (material->emissive_texture)
     emissive_uid = material->emissive_texture->asset.uid;
-  eg_serializer_append(serializer, &emissive_uid, sizeof(emissive_uid));
+  eg_serializer_append_u32(serializer, emissive_uid);
+}
+
+void eg_pbr_material_asset_deserialize(
+    eg_pbr_material_asset_t *material, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  eg_pbr_material_asset_options_t options = {0};
+  eg_pbr_material_uniform_t uniform       = {0};
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_UNIFORM: {
+      eg_deserializer_read(deserializer, &uniform, sizeof(uniform));
+      break;
+    }
+    case PROP_ALBEDO: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      options.albedo_texture =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    case PROP_NORMAL: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      options.normal_texture =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    case PROP_METALLIC_ROUGHNESS: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      options.metallic_roughness_texture =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    case PROP_OCCLUSION: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      options.occlusion_texture =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    case PROP_EMISSIVE: {
+      eg_asset_uid_t uid = eg_deserializer_read_u32(deserializer);
+      options.emissive_texture =
+          eg_asset_manager_get_by_uid(deserializer->asset_manager, uid);
+      break;
+    }
+    default: break;
+    }
+  }
+
+  eg_pbr_material_asset_init(material, &options);
+  material->uniform = uniform;
 }
 
 void eg_pbr_material_asset_bind(

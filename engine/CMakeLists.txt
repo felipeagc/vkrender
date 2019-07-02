@@ -37,6 +37,8 @@ add_library(
 
 	engine/serializer.c
 	engine/serializer.h
+	engine/deserializer.c
+	engine/deserializer.h
 
 	engine/util/tinyktx.c
 	engine/util/tinyktx.h

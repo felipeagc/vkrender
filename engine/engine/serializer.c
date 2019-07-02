@@ -49,18 +49,26 @@ void eg_serialize_scene(
   }
 
   // Write asset count
-  eg_serializer_append(serializer, &asset_count, sizeof(asset_count));
+  eg_serializer_append_u32(serializer, asset_count);
   // Write entity count
-  eg_serializer_append(serializer, &entity_count, sizeof(entity_count));
+  eg_serializer_append_u32(serializer, entity_count);
 
   // Second pass (write the actual data)
   for (uint32_t i = 0; i < asset_manager->count; i++) {
     eg_asset_t *asset = eg_asset_manager_get(asset_manager, i);
     if (!asset) continue;
 
-    eg_serializer_add_asset(serializer, asset);
+    // Type
+    eg_serializer_append_u32(serializer, (uint32_t)asset->type);
+    // UID
+    eg_serializer_append_u32(serializer, (uint32_t)asset->uid);
+    // Name
+    eg_serializer_append_string(serializer, asset->name);
+
     EG_ASSET_SERIALIZERS[asset->type](asset, serializer);
   }
+
+  eg_scene_serialize(scene, serializer);
 
   for (uint32_t e = 0; e < entity_manager->entity_max; e++) {
     if (!eg_entity_exists(entity_manager, e)) continue;
@@ -68,19 +76,30 @@ void eg_serialize_scene(
     uint32_t comp_count = 0;
 
     for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
-      if (!EG_HAS_COMP_ID(entity_manager, e, c)) continue;
-      comp_count += 1;
+      if (EG_HAS_COMP_ID(entity_manager, e, c)) {
+        comp_count += 1;
+      }
     }
 
-    eg_serializer_add_entity(serializer, comp_count);
+    // Tags
+    eg_serializer_append_u64(serializer, entity_manager->tags[e]);
+
+    // Component count
+    eg_serializer_append_u32(serializer, comp_count);
+
+    printf("Entity %u (%u comps):\n", e, comp_count);
 
     for (uint32_t c = 0; c < EG_COMP_TYPE_MAX; c++) {
-      if (EG_HAS_COMP_ID(entity_manager, e, c)) {
-        void *comp = EG_COMP_BY_ID(entity_manager, c, e);
+      if (!EG_HAS_COMP_ID(entity_manager, e, c)) continue;
 
-        eg_serializer_add_comp(serializer, c);
-        EG_COMP_SERIALIZERS[c](comp, serializer);
-      }
+      void *comp = EG_COMP_BY_ID(entity_manager, e, c);
+
+      printf("  %s\n", EG_COMP_NAMES[c]);
+
+      // Component type
+      eg_serializer_append_u32(serializer, c);
+
+      EG_COMP_SERIALIZERS[c](comp, serializer);
     }
   }
 }
@@ -92,26 +111,6 @@ void eg_serializer_save(eg_serializer_t *serializer, const char *path) {
   fwrite(serializer->buffer, serializer->buffer_offset, 1, file);
 
   fclose(file);
-}
-
-void eg_serializer_add_asset(eg_serializer_t *serializer, eg_asset_t *asset) {
-  // Type
-  eg_serializer_append(serializer, &asset->type, sizeof(asset->type));
-  // UID
-  eg_serializer_append(serializer, &asset->uid, sizeof(asset->uid));
-  // Name
-  eg_serializer_append_string(serializer, asset->name);
-}
-
-void eg_serializer_add_entity(
-    eg_serializer_t *serializer, uint32_t comp_count) {
-  // Component count
-  eg_serializer_append(serializer, &comp_count, sizeof(comp_count));
-}
-
-void eg_serializer_add_comp(eg_serializer_t *serializer, eg_comp_type_t type) {
-  // Component type
-  eg_serializer_append(serializer, &type, sizeof(type));
 }
 
 void eg_serializer_append(
@@ -130,16 +129,20 @@ void eg_serializer_append_string(eg_serializer_t *serializer, char *string) {
   if (string == NULL) {
     uint32_t byte_length = 1;
     char null_char       = '\0';
-    eg_serializer_append(serializer, &byte_length, sizeof(byte_length));
+    eg_serializer_append_u32(serializer, byte_length);
     eg_serializer_append(serializer, &null_char, byte_length);
     return;
   }
 
   uint32_t byte_length = strlen(string) + 1;
-  eg_serializer_append(serializer, &byte_length, sizeof(byte_length));
+  eg_serializer_append_u32(serializer, byte_length);
   eg_serializer_append(serializer, string, byte_length);
 }
 
 void eg_serializer_append_u32(eg_serializer_t *serializer, uint32_t data) {
+  eg_serializer_append(serializer, &data, sizeof(data));
+}
+
+void eg_serializer_append_u64(eg_serializer_t *serializer, uint64_t data) {
   eg_serializer_append(serializer, &data, sizeof(data));
 }

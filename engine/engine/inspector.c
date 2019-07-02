@@ -7,6 +7,7 @@
 #include "comps/mesh_comp.h"
 #include "comps/point_light_comp.h"
 #include "comps/transform_comp.h"
+#include "deserializer.h"
 #include "filesystem.h"
 #include "imgui.h"
 #include "pipelines.h"
@@ -254,12 +255,16 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
       EG_COMP_ARRAY(entity_manager, eg_transform_comp_t);
 
   for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+    if (!eg_entity_exists(entity_manager, e)) {
+      continue;
+    }
+
     if (EG_HAS_TAG(entity_manager, e, EG_TAG_HIDDEN)) {
       continue;
     }
 
-    if (EG_HAS_COMP(entity_manager, eg_point_light_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, e, eg_point_light_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
       struct {
         mat4_t model;
         uint32_t index;
@@ -284,7 +289,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
   }
 
   if (!EG_HAS_COMP(
-          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, inspector->selected_entity, eg_transform_comp_t)) {
     return;
   }
 
@@ -321,7 +326,7 @@ draw_gizmos_picking(eg_inspector_t *inspector, re_cmd_buffer_t *cmd_buffer) {
   } push_constant;
 
   eg_transform_comp_t *transform =
-      EG_COMP(entity_manager, eg_transform_comp_t, inspector->selected_entity);
+      EG_COMP(entity_manager, inspector->selected_entity, eg_transform_comp_t);
 
   mat4_t object_mat = eg_transform_comp_mat4(transform);
 
@@ -380,8 +385,12 @@ static void mouse_pressed(eg_inspector_t *inspector) {
       cmd_buffer, &inspector->picking_pipeline, 0, sizeof(uint32_t), &e);
 
   for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
-    if (EG_HAS_COMP(entity_manager, eg_mesh_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (!eg_entity_exists(entity_manager, e)) {
+      continue;
+    }
+
+    if (EG_HAS_COMP(entity_manager, e, eg_mesh_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
       PUSH_CONSTANT();
 
       eg_mesh_comp_draw_no_mat(
@@ -391,8 +400,8 @@ static void mouse_pressed(eg_inspector_t *inspector) {
           eg_transform_comp_mat4(&transforms[e]));
     }
 
-    if (EG_HAS_COMP(entity_manager, eg_gltf_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, e, eg_gltf_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
       PUSH_CONSTANT();
 
       eg_gltf_comp_draw_no_mat(
@@ -428,9 +437,9 @@ static void mouse_pressed(eg_inspector_t *inspector) {
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
       EG_HAS_COMP(
-          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, inspector->selected_entity, eg_transform_comp_t)) {
     eg_transform_comp_t *transform = EG_COMP(
-        entity_manager, eg_transform_comp_t, inspector->selected_entity);
+        entity_manager, inspector->selected_entity, eg_transform_comp_t);
     vec3_t transform_ndc =
         eg_camera_world_to_ndc(&inspector->scene->camera, transform->position);
 
@@ -480,12 +489,12 @@ void eg_inspector_update(eg_inspector_t *inspector) {
   if (inspector->drag_direction == EG_DRAG_DIRECTION_NONE ||
       inspector->selected_entity >= EG_MAX_ENTITIES ||
       !EG_HAS_COMP(
-          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, inspector->selected_entity, eg_transform_comp_t)) {
     return;
   }
 
   eg_transform_comp_t *transform =
-      EG_COMP(entity_manager, eg_transform_comp_t, inspector->selected_entity);
+      EG_COMP(entity_manager, inspector->selected_entity, eg_transform_comp_t);
   vec3_t transform_ndc =
       eg_camera_world_to_ndc(&inspector->scene->camera, transform->position);
 
@@ -543,12 +552,16 @@ void eg_inspector_draw_gizmos(
   uint32_t light_count = 0;
 
   for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+    if (!eg_entity_exists(entity_manager, e)) {
+      continue;
+    }
+
     if (EG_HAS_TAG(entity_manager, e, EG_TAG_HIDDEN)) {
       continue;
     }
 
-    if (EG_HAS_COMP(entity_manager, eg_point_light_comp_t, e) &&
-        EG_HAS_COMP(entity_manager, eg_transform_comp_t, e)) {
+    if (EG_HAS_COMP(entity_manager, e, eg_point_light_comp_t) &&
+        EG_HAS_COMP(entity_manager, e, eg_transform_comp_t)) {
       light_entities[light_count++] = e;
     }
   }
@@ -594,7 +607,7 @@ void eg_inspector_draw_gizmos(
   }
 
   if (!EG_HAS_COMP(
-          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, inspector->selected_entity, eg_transform_comp_t)) {
     return;
   }
 
@@ -631,7 +644,7 @@ void eg_inspector_draw_gizmos(
   } push_constant;
 
   eg_transform_comp_t *transform =
-      EG_COMP(entity_manager, eg_transform_comp_t, inspector->selected_entity);
+      EG_COMP(entity_manager, inspector->selected_entity, eg_transform_comp_t);
 
   mat4_t object_mat = eg_transform_comp_mat4(transform);
 
@@ -679,13 +692,13 @@ void eg_inspector_draw_selected_outline(
       cmd_buffer, &inspector->outline_pipeline, 0, sizeof(color), &color);
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
-      EG_HAS_COMP(entity_manager, eg_gltf_comp_t, inspector->selected_entity) &&
+      EG_HAS_COMP(entity_manager, inspector->selected_entity, eg_gltf_comp_t) &&
       EG_HAS_COMP(
-          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, inspector->selected_entity, eg_transform_comp_t)) {
     eg_gltf_comp_t *model =
-        EG_COMP(entity_manager, eg_gltf_comp_t, inspector->selected_entity);
+        EG_COMP(entity_manager, inspector->selected_entity, eg_gltf_comp_t);
     eg_transform_comp_t *transform = EG_COMP(
-        entity_manager, eg_transform_comp_t, inspector->selected_entity);
+        entity_manager, inspector->selected_entity, eg_transform_comp_t);
 
     eg_gltf_comp_draw_no_mat(
         model,
@@ -695,13 +708,13 @@ void eg_inspector_draw_selected_outline(
   }
 
   if (inspector->selected_entity < EG_MAX_ENTITIES &&
-      EG_HAS_COMP(entity_manager, eg_mesh_comp_t, inspector->selected_entity) &&
+      EG_HAS_COMP(entity_manager, inspector->selected_entity, eg_mesh_comp_t) &&
       EG_HAS_COMP(
-          entity_manager, eg_transform_comp_t, inspector->selected_entity)) {
+          entity_manager, inspector->selected_entity, eg_transform_comp_t)) {
     eg_mesh_comp_t *mesh =
-        EG_COMP(entity_manager, eg_mesh_comp_t, inspector->selected_entity);
+        EG_COMP(entity_manager, inspector->selected_entity, eg_mesh_comp_t);
     eg_transform_comp_t *transform = EG_COMP(
-        entity_manager, eg_transform_comp_t, inspector->selected_entity);
+        entity_manager, inspector->selected_entity, eg_transform_comp_t);
 
     eg_mesh_comp_draw_no_mat(
         mesh,
@@ -844,12 +857,12 @@ void add_component_button(eg_inspector_t *inspector, eg_entity_t entity) {
 
   if (igBeginPopup("addcomp", 0)) {
     for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
-      if (EG_HAS_COMP_ID(entity_manager, comp_id, entity)) {
+      if (EG_HAS_COMP_ID(entity_manager, entity, comp_id)) {
         continue;
       }
       if (igSelectable(
               EG_COMP_NAMES[comp_id], false, 0, (ImVec2){0.0f, 0.0f})) {
-        eg_comp_add(entity_manager, comp_id, entity);
+        eg_comp_add(entity_manager, entity, comp_id);
       }
     }
 
@@ -876,6 +889,29 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
         eg_serializer_save(&serializer, "scene.bin");
 
         eg_serializer_destroy(&serializer);
+      }
+
+      if (igMenuItemBool("Load", NULL, false, true)) {
+        for (eg_entity_t e = 0; e < entity_manager->entity_max; e++) {
+          eg_entity_remove(entity_manager, e);
+        }
+
+        for (uint32_t i = 0; i < asset_manager->count; i++) {
+          eg_asset_t *asset = eg_asset_manager_get(asset_manager, i);
+          eg_asset_manager_free(asset_manager, asset);
+        }
+
+        VK_CHECK(vkDeviceWaitIdle(g_ctx.device));
+
+        eg_deserializer_t deserializer;
+        eg_deserializer_init(&deserializer);
+
+        eg_deserializer_load(&deserializer, "scene.bin");
+
+        eg_deserialize_scene(
+            &deserializer, scene, asset_manager, entity_manager);
+
+        eg_deserializer_destroy(&deserializer);
       }
 
       igEndMenu();
@@ -971,20 +1007,25 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
               if (eg_file_exists(path_buf)) {
                 switch (selected_asset_type) {
                 case EG_ASSET_TYPE(eg_gltf_asset_t): {
-                  eg_asset_manager_create(
-                      inspector->asset_manager,
-                      EG_ASSET_TYPE(eg_gltf_asset_t),
-                      path_buf,
+                  eg_gltf_asset_t *asset = eg_asset_manager_alloc(
+                      asset_manager, EG_ASSET_TYPE(eg_gltf_asset_t));
+
+                  eg_gltf_asset_init(
+                      asset,
                       &(eg_gltf_asset_options_t){.path     = path_buf,
                                                  .flip_uvs = false});
+
+                  eg_asset_set_name(&asset->asset, path_buf);
                   break;
                 }
                 case EG_ASSET_TYPE(eg_image_asset_t): {
-                  eg_asset_manager_create(
-                      inspector->asset_manager,
-                      EG_ASSET_TYPE(eg_image_asset_t),
-                      path_buf,
-                      &(eg_image_asset_options_t){.path = path_buf});
+                  eg_image_asset_t *asset = eg_asset_manager_alloc(
+                      asset_manager, EG_ASSET_TYPE(eg_image_asset_t));
+
+                  eg_image_asset_init(
+                      asset, &(eg_image_asset_options_t){.path = path_buf});
+
+                  eg_asset_set_name(&asset->asset, path_buf);
                   break;
                 }
                 default: break;
@@ -1066,7 +1107,7 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
     }
 
     for (uint32_t comp_id = 0; comp_id < EG_COMP_TYPE_MAX; comp_id++) {
-      if (!EG_HAS_COMP_ID(entity_manager, comp_id, entity)) {
+      if (!EG_HAS_COMP_ID(entity_manager, entity, comp_id)) {
         continue;
       }
 
@@ -1079,14 +1120,14 @@ void eg_inspector_draw_ui(eg_inspector_t *inspector) {
       igSameLine(igGetWindowWidth() - 25.0f, 0.0f);
 
       if (igSmallButton("×")) {
-        eg_comp_remove(entity_manager, comp_id, entity);
+        eg_comp_remove(entity_manager, entity, comp_id);
         igPopID();
         continue;
       }
 
       if (header_open && EG_COMP_INSPECTORS[comp_id] != NULL) {
         EG_COMP_INSPECTORS[comp_id](
-            EG_COMP_BY_ID(entity_manager, comp_id, inspector->selected_entity),
+            EG_COMP_BY_ID(entity_manager, inspector->selected_entity, comp_id),
             inspector);
       }
 

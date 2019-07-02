@@ -4,6 +4,7 @@
 
 typedef struct eg_inspector_t eg_inspector_t;
 typedef struct eg_serializer_t eg_serializer_t;
+typedef struct eg_deserializer_t eg_deserializer_t;
 
 typedef struct eg_transform_comp_t {
   vec3_t position;
@@ -24,6 +25,9 @@ void eg_transform_comp_destroy(eg_transform_comp_t *transform);
 
 void eg_transform_comp_serialize(
     eg_transform_comp_t *transform, eg_serializer_t *serializer);
+
+void eg_transform_comp_deserialize(
+    eg_transform_comp_t *transform, eg_deserializer_t *deserializer);
 
 /*
  * Specific functions

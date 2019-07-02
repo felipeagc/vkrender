@@ -1,5 +1,6 @@
 #include "transform_comp.h"
 
+#include "../deserializer.h"
 #include "../imgui.h"
 #include "../serializer.h"
 
@@ -45,4 +46,37 @@ void eg_transform_comp_serialize(
 
   eg_serializer_append_u32(serializer, PROP_SCALE);
   eg_serializer_append(serializer, &transform->scale, sizeof(transform->scale));
+}
+
+void eg_transform_comp_deserialize(
+    eg_transform_comp_t *transform, eg_deserializer_t *deserializer) {
+  uint32_t prop_count = eg_deserializer_read_u32(deserializer);
+
+  for (uint32_t i = 0; i < prop_count; i++) {
+    uint32_t prop = eg_deserializer_read_u32(deserializer);
+
+    switch (prop) {
+    case PROP_POS: {
+      eg_deserializer_read(
+          deserializer, &transform->position, sizeof(transform->position));
+      break;
+    }
+    case PROP_AXIS: {
+      eg_deserializer_read(
+          deserializer, &transform->axis, sizeof(transform->axis));
+      break;
+    }
+    case PROP_ANGLE: {
+      eg_deserializer_read(
+          deserializer, &transform->angle, sizeof(transform->angle));
+      break;
+    }
+    case PROP_SCALE: {
+      eg_deserializer_read(
+          deserializer, &transform->scale, sizeof(transform->scale));
+      break;
+    }
+    default: break;
+    }
+  }
 }
